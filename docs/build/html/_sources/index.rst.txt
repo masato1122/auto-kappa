@@ -9,5 +9,6 @@ aiida-alamode
     :maxdepth: 2
     :caption: Contents:
 
-    example
+    installation
+    tutorial
 
