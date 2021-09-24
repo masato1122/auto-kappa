@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pymatgen
 from ..units import AToBohr
+from monty.serialization import loadfn
 
 #__all__ = ['alm_variables', 'str_vars', 'int_vars', 'double_vars',
 #        'array_str_vars', 'array_int_vars', 'array_double_vars', 
@@ -104,7 +105,7 @@ class AlmInput(MSONable, dict):
         ------
         structure (pymatgen.core.structure.Structure object): structure
         filename (str): structure file name
-            format must be supported by pymatgen.loadfn module
+            format must be supported by pymatgen's loadfn module
         kwargs (dict): other alm parameters. Some parameters have to be given to
             run alm.
             - mode
@@ -115,7 +116,12 @@ class AlmInput(MSONable, dict):
             self.structure = structure
         else:
             if filename is not None:
-                self.structure = pymatgen.loadfn(filename)
+                self.structure = pymatgen.core.structure.Structure() 
+                #self.structure.from_file(filename)
+
+                exit()
+                #
+                self.structure = loadfn(filename)
         
         ## parameters determined by the structure
         if self.structure is not None:
