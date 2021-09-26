@@ -11,7 +11,7 @@ from pymatgen.core.structure import IStructure
 from ase import Atoms
 
 from ..units import AToBohr
-from ..structure import convert_to_pymatgen_structure
+from ..structure import (change_structure_format, get_primitive_structure)
 
 try:
     import f90nml
@@ -118,6 +118,13 @@ class AlmInput(MSONable, dict):
         
         self.update(kwargs)
     
+    @property
+    def primitive(self):
+        return self.get_primitive()
+
+    def get_primitive(self):
+        return get_primitive_structure(self.structure)
+
     @classmethod
     def from_dict(cls, alm_dict: Dict):
         """ Write a ALM input file
@@ -166,8 +173,7 @@ class AlmInput(MSONable, dict):
         kwargs['norder'] = norder
         
         ## set a structure
-        from aiida_alamode.structure import convert_to_pymatgen_structure
-        cls.structure = convert_to_pymatgen_structure(structure)
+        cls.structure = change_structure_format(structure, format='IStructure')
         
         ## parameters determined by the structure
         params_str = get_alm_variables_from_structure(
@@ -491,6 +497,13 @@ class AnphonInput(MSONable, dict):
     def as_dict(self):
         return dict(self)
     
+    @property
+    def primitive(self):
+        return self.get_primitive()
+
+    def get_primitive(self):
+        return get_primitive_structure(self.structure)
+
     @classmethod
     def from_dict(cls, alm_dict: Dict):
         """ Write a ALM input file
@@ -510,8 +523,6 @@ class AnphonInput(MSONable, dict):
         cls.structure = IStructure.from_file(filename)
         
         ## get the primitive structure
-        from ..structure import get_primitive_structure
-        cls.primitive = get_primitive_structure(cls.structure)
         anp_dict = dict(cls.from_structure(cls.primitive))
         anp_dict.update(kwargs)
         return AnphonInput(**anp_dict)
