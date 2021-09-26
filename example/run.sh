@@ -2,5 +2,7 @@
 PYTHONPATH=$PYTHONPATH:/Users/masato/work/aiida_alamode
 export PYTHONPATH
 
-python test.py
+rm *.in
+python test1.py
+python test2.py
 

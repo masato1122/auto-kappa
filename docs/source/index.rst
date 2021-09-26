@@ -7,6 +7,8 @@ aiida-alamode
 
 .. toctree::
     :maxdepth: 2
+    :numbered: 2
+    :glob:
     :caption: Contents:
 
     installation

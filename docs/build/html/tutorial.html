@@ -1,30 +1,72 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to Use aiida-alamode &mdash; aiida-alamode Sept. 13th, 2021 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  
+  <title>2. Tutorial &mdash; aiida-alamode Sept. 13th, 2021 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    <script src="_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Installation" href="installation.html" /> 
+    <link rel="prev" title="1. Installation" href="installation.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="index.html" class="icon icon-home"> aiida-alamode
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -32,69 +74,218 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">How to Use aiida-alamode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-make-input-scripts">2.1. How to Make Input Scripts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#alm-input-script">ALM Input Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anphon-input-script">ANPHON Input Script</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">aiida-alamode</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
+    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>How to Use aiida-alamode</li>
+        
+      <li><span class="section-number">2. </span>Tutorial</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="_sources/tutorial.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
-  <div class="section" id="how-to-use-aiida-alamode">
-<h1>How to Use aiida-alamode<a class="headerlink" href="#how-to-use-aiida-alamode" title="Permalink to this headline">¶</a></h1>
+            
+  <div class="section" id="tutorial">
+<h1><span class="section-number">2. </span>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="how-to-make-input-scripts">
+<h2><span class="section-number">2.1. </span>How to Make Input Scripts<a class="headerlink" href="#how-to-make-input-scripts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="alm-input-script">
+<h3>ALM Input Script<a class="headerlink" href="#alm-input-script" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiida_alamode.io</span> <span class="kn">import</span> <span class="n">AlmInput</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;POSCAR-supercell&#39;</span>
+<span class="n">dfset</span> <span class="o">=</span> <span class="s1">&#39;dfset.txt&#39;</span>
+
+<span class="c1">## mode &quot;suggest&quot;</span>
+<span class="n">alminp</span> <span class="o">=</span> <span class="n">AlmInput</span><span class="o">.</span><span class="n">from_structure_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;suggest&#39;</span><span class="p">,</span>
+        <span class="n">norder</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+<span class="n">alminp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
+<span class="c1">#alminp.to_file(filename=&#39;filename.in&#39;)</span>
+
+<span class="c1">## mode &quot;optimize&quot;</span>
+<span class="c1">## Note: Cutoff should be given for high-order IFCs.</span>
+<span class="n">alminp</span> <span class="o">=</span> <span class="n">AlmInput</span><span class="o">.</span><span class="n">from_structure_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;optimize&#39;</span><span class="p">,</span>
+        <span class="n">norder</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">cutoff</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Si-Si&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]},</span>
+        <span class="n">dfset</span><span class="o">=</span><span class="s1">&#39;dfset.txt&#39;</span>
+        <span class="p">)</span>
+<span class="n">alminp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="anphon-input-script">
+<h3>ANPHON Input Script<a class="headerlink" href="#anphon-input-script" title="Permalink to this headline">¶</a></h3>
+<p>AnphonInput class can be used with a similar manner as that for AlmInput.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiida_alamode.io</span> <span class="kn">import</span> <span class="n">AnphonInput</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;POSCAR-supercell&#39;</span>
+<span class="n">fcsxml</span> <span class="o">=</span> <span class="s1">&#39;IFCs.xml&#39;</span>
+
+<span class="c1">## to calculate band</span>
+<span class="n">anpinp</span> <span class="o">=</span> <span class="n">AnphonInput</span><span class="o">.</span><span class="n">from_structure_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;phonons&#39;</span><span class="p">,</span>
+        <span class="n">kpmode</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">fcsxml</span><span class="o">=</span><span class="n">fcsxml</span>
+        <span class="p">)</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">set_kpoint</span><span class="p">(</span><span class="n">deltak</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
+
+<span class="c1">## to calculate DOS</span>
+<span class="n">anpinp</span> <span class="o">=</span> <span class="n">AnphonInput</span><span class="o">.</span><span class="n">from_structure_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;phonons&#39;</span><span class="p">,</span>
+        <span class="n">kpmode</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">fcsxml</span><span class="o">=</span><span class="n">fcsxml</span>
+        <span class="p">)</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">set_kpoint</span><span class="p">(</span><span class="n">deltak</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="c1">#anpinp.update({&#39;kpts&#39;:[10, 10, 10]})</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
+
+<span class="c1">## to calculate thermal conductivity</span>
+<span class="n">anpinp</span> <span class="o">=</span> <span class="n">AnphonInput</span><span class="o">.</span><span class="n">from_structure_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;RTA&#39;</span><span class="p">,</span>
+        <span class="n">kpmode</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">fcsxml</span><span class="o">=</span><span class="n">fcsxml</span>
+        <span class="p">)</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">set_kpoint</span><span class="p">()</span>
+<span class="n">anpinp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
 </div>
 
 
            </div>
+           
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="installation.html" class="btn btn-neutral float-left" title="1. Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, M. Ohnishi.</p>
-  </div>
+    <p>
+        &#169; Copyright 2021, M. Ohnishi.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
