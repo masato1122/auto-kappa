@@ -5,6 +5,9 @@ Tutorial
 How to Make Input Scripts
 ===========================
 
+You can find example scripts in example directory of aiida-alamode package.
+
+
 ALM Input Script
 -------------------
 
