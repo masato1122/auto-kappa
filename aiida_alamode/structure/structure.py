@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from alm import ALM
 
 from phonopy.structure.cells import get_smallest_vectors
 
 
 def analyze_cutoff(supercell, primitive, symprec=1e-3):
     
+
+
+    print("AAAAAAAA")
+    exit()
+
+
 
     #print(supercell) 
     #for d in dir(supercell):
@@ -28,23 +35,32 @@ def analyze_cutoff(supercell, primitive, symprec=1e-3):
     #import (
     #        get_symmetrized_structure)
     
-
-    #SpacegroupAnalyzer(supercell)
-    pointops = get_site_symmetries(
-            Structure(
-                supercell.lattice.matrix,
-                supercell.species,
-                supercell.frac_coords
-                )
+    structure = Structure(
+            supercell.lattice.matrix,
+            supercell.species,
+            supercell.frac_coords
             )
-    #print(pointops)
     
-    for d in dir(pointops):
-        print(d)
+    #print(structure.sites[0])
+    #exit()
+    
+    #SpacegroupAnalyzer(supercell)
+    pointops = get_site_symmetries(structure)
+    print(pointops[0][0])
+    print(pointops[0][1])
+    print("")
+    print(pointops[1][0])
+    print(pointops[1][1])
+    #print(len(supercell))
+    #print(len(pointops[0]))
+    
+    #for ia in range(len(supercell)):
+    #    print(len(pointops[ia]))
+
+    #for d in dir(pointops):
+    #    print(d)
 
     exit()
-
-
 
     pcell = primitive.lattice.matrix
     
@@ -64,20 +80,20 @@ def analyze_cutoff(supercell, primitive, symprec=1e-3):
     print(len(supercell), len(idx_prim))
 
 
-def get_smallest_vector_of_atom_pair(
-        idx_scell, idx_prim, supercell, symprec=1e-3):
-    """Return smallest vectors of an atom pair in supercell."""
-    
-    s_pos = supercell.frac_coords    
-    
-    svecs, multi = get_smallest_vectors(
-            supercell.lattice.matrix,
-            [s_pos[idx_scell]], 
-            [s_pos[idx_prim]], 
-            store_dense_svecs=True, 
-            symprec=symprec
-            )
-    
-    print(svecs, multi)
-    return svecs[0]
+#def get_smallest_vector_of_atom_pair(
+#        idx_scell, idx_prim, supercell, symprec=1e-3):
+#    """Return smallest vectors of an atom pair in supercell."""
+#    
+#    s_pos = supercell.frac_coords    
+#    
+#    svecs, multi = get_smallest_vectors(
+#            supercell.lattice.matrix,
+#            [s_pos[idx_scell]], 
+#            [s_pos[idx_prim]], 
+#            store_dense_svecs=True, 
+#            symprec=symprec
+#            )
+#    
+#    print(svecs, multi)
+#    return svecs[0]
 

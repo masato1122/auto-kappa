@@ -1,9 +1,9 @@
 from aiida_alamode.io import AnphonInput
 
 filename = 'POSCAR-supercell'
-fcsxml = 'IFCs.xml'
+fcsxml = 'fcs.xml'
 
-## to calculate band
+### to calculate band
 anpinp = AnphonInput.from_structure_file(
         filename,
         mode='phonons',
@@ -13,7 +13,7 @@ anpinp = AnphonInput.from_structure_file(
 anpinp.set_kpoint(deltak=0.01)
 anpinp.to_file()
 
-## to calculate DOS
+### to calculate DOS
 anpinp = AnphonInput.from_structure_file(
         filename,
         mode='phonons',
@@ -21,10 +21,11 @@ anpinp = AnphonInput.from_structure_file(
         fcsxml=fcsxml
         )
 anpinp.set_kpoint(deltak=0.1)
+## You can update parameters:
 #anpinp.update({'kpts':[10, 10, 10]})
 anpinp.to_file()
 
-## to calculate thermal conductivity
+### to calculate thermal conductivity
 anpinp = AnphonInput.from_structure_file(
         filename,
         mode='RTA',

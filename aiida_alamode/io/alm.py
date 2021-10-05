@@ -1,10 +1,18 @@
-# Copyright (c) ppdb Team.
+# Copyright (c) aiida-alamode Team.
 # Distributed under the terms of the MIT License.
 # Written by M. Ohnishi
+#
+# To Do:
+# 1. Make suggest_cutoff module in AnphonInput class
+#   - analyze cutoff and nubmer of FCs
+#   - suggest a cutoff which may ensure both of the accuracy and computational 
+#   const.
+#
 
 from typing import Any, Dict, List, Optional, Union
 from monty.json import MSONable
 import warnings
+import re
 import numpy as np
 import pymatgen
 from pymatgen.core.structure import IStructure
@@ -224,6 +232,7 @@ class AlmInput(MSONable, dict):
         if mode == 'optimize':
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
+
          
     def to_file(self, filename: str = None):
         """ Make ALM input file
@@ -279,7 +288,14 @@ class AlmInput(MSONable, dict):
         return dict(self)
     
     def _get_formula(self):
-        return self.structure.get_primitive_structure().formula
+        words = self.structure.get_primitive_structure().formula.split()
+        if len(words) == 1:
+            return re.sub(r"[123456789]", "", words[0])
+        else:
+            prefix = ""
+            for i in range(len(words)):
+                prefix += words[i].replace("1", "")
+            return prefix
     
     #def suggest_cutoff(self):
     #    cutoff = suggest_alm_cutoff(self.structure)
@@ -500,7 +516,7 @@ class AnphonInput(MSONable, dict):
     @property
     def primitive(self):
         return self.get_primitive()
-
+    
     def get_primitive(self):
         return get_primitive_structure(self.structure)
 
@@ -523,8 +539,14 @@ class AnphonInput(MSONable, dict):
         cls.structure = IStructure.from_file(filename)
         
         ## get the primitive structure
-        anp_dict = dict(cls.from_structure(cls.primitive))
+        primitive = cls.get_primitive(cls)
+        
+        ## get structure parameters with the primitive structure
+        anp_dict = dict(cls.from_structure(primitive))
+        
+        ## update parameters
         anp_dict.update(kwargs)
+        
         return AnphonInput(**anp_dict)
     
     @classmethod
@@ -560,7 +582,7 @@ class AnphonInput(MSONable, dict):
         ## kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
         If kpmode == 0, separated kpoints should be given
         If kpmode == 1, deltak (default: 0.01) and kpath will be set.
-        If kpmode == 2, deltak (default: 0.1) and kpts will be set.
+        If kpmode == 2, deltak (default: 0.2) and kpts will be set.
         """
         ## set kpmode
         if _check_dict_contents(
@@ -596,7 +618,7 @@ class AnphonInput(MSONable, dict):
             if self['kpmode'] == 1:
                 self['deltak'] = 0.01
             elif self['kpmode'] == 2:
-                self['deltak'] = 0.1
+                self['deltak'] = 0.2
         
         ## set k-points
         if self['kpmode'] == 0:
@@ -614,7 +636,12 @@ class AnphonInput(MSONable, dict):
                 n = max(2, int(np.ceil(leng/self['deltak'])))
                 kpts.append(n)
             self['kpts'] = kpts
-    
+        
+        self.update(kwargs)
+
+    #def guess_cutoff(self):
+    #    pass
+
     def check_parameters(self):
         
         ## check required parameters
@@ -627,6 +654,15 @@ class AnphonInput(MSONable, dict):
         if self['kpmode'] == 0:
             _check_dict_contents(self.as_dict(), 'kpoints')
         
+        ## This part helps to set BONRINFO parameter, when nonanalytic term will
+        ## be considered.
+        try:
+            if self['nonanalytic'] != 0:
+                if _check_dict_contents(self.as_dict(), 'borninfo') == False:
+                    self['borninfo'] = 'BORNINFO'
+        except:
+            pass
+
     def to_file(self, filename: str = None):
         """ Make ANPHON input file
         Args

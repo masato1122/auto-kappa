@@ -5,6 +5,6 @@ Tutorial
 .. toctree::
     :glob:
 
-    tutorial/input
+    input
 
 
