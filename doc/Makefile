@@ -6,8 +6,8 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-BUILDDIR      = build
-#../../aiida-alamode-docs
+#BUILDDIR      = build
+BUILDDIR      = ../../Docs
 #PDFBUILDDIR   = /tmp
 #PDF           = ../manual.pdf
 
