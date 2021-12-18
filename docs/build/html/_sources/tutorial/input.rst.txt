@@ -43,9 +43,14 @@ VASP
 
 .. code-block:: python
     
-    from aiida_alamode.io.vasp import Vasprun
-    vasprun = Vasprun('../vasprun.xml')
-    vasprun.write_born_info(filename='BORNINFO')
+    from aiida_alamode.io.vasp import write_born_info
+    filename = 'vasprun.xml'
+    write_born_info(filename, outfile='BORNINFO')
+    
+    ## old version
+    #from aiida_alamode.io.vasp import Vasprun
+    #vasprun = Vasprun('../vasprun.xml')
+    #vasprun.write_born_info(filename='BORNINFO')
 
 QuantumEspresso
 -----------------

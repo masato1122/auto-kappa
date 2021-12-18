@@ -30,12 +30,22 @@ def get_primitive_structure(structure, symprec=1e-5):
     numbers = istr.atomic_numbers
     species = istr.species
     
+    print("")
+    print(" WARNING: get_primitive_structure may not work properly!!!")
+    print("")
+
     ## make a cell parameter
     cell = (cell, scaled_positions, numbers)
     
     ## find the primitive cell
     prim_cell = spglib.find_primitive(cell)
     
+    ### compare with the result of this
+    #from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+    #sga = SpacegroupAnalyzer(structure)
+    #prim = sga.find_primitive()
+
+
     ## make pymatgen's IStructure
     prim_species = []
     for num in prim_cell[2]:
