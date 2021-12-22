@@ -6,10 +6,8 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-#BUILDDIR      = build
-BUILDDIR      = ../../Docs
-#PDFBUILDDIR   = /tmp
-#PDF           = ../manual.pdf
+BUILDDIR      = build
+#BUILDDIR      = ../../Docs
 
 # Put it first so that "make" without argument is like "make help".
 help:

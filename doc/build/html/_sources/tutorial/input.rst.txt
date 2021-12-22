@@ -4,7 +4,7 @@ How to Prepare Input Scripts
 
 You can find example scripts in example directory of aiida-alamode package.
 
-ALM Input Script
+Input Scripts for ALM
 ===========================
 
 .. code-block:: python
@@ -21,6 +21,7 @@ ALM Input Script
             norder=2
             )
     alminp.to_file()
+    ## If you want to change the file name,
     #alminp.to_file(filename='suggest.in')
     
     ### mode "optimize"
@@ -35,11 +36,11 @@ ALM Input Script
     alminp.to_file()
 
 
-BORNINFO for ALM
+BORNINFO file for ALM
 ===========================
 
-VASP
-----------
+from vasprun.xml
+------------------
 
 .. code-block:: python
     
@@ -52,17 +53,15 @@ VASP
     #vasprun = Vasprun('../vasprun.xml')
     #vasprun.write_born_info(filename='BORNINFO')
 
-QuantumEspresso
------------------
-
-.. code-block:: python
-    
-    from aiida_alamode.io.qe import ***
-
-
+.. QuantumEspresso
+.. -----------------
+.. 
+.. .. code-block:: python
+..     
+..     from aiida_alamode.io.qe import ***
 
 
-ANPHON Input Script
+Inpu Scripts for ANPHON
 =========================
  
 AnphonInput class can be used with a similar manner as that for AlmInput.
@@ -73,7 +72,10 @@ AnphonInput class can be used with a similar manner as that for AlmInput.
     
     filename = 'POSCAR-primitive'
     fcsxml = 'IFCs_anharm.xml'
+    
+    ## with non-analytical term correction
     nac = 1; borninfo = 'BORNINFO'
+    ## w/o non-analytical term correction
     #nac = 0; borninfo = None
     
     nk = 10
@@ -98,10 +100,12 @@ AnphonInput class can be used with a similar manner as that for AlmInput.
             fcsxml=fcsxml,
             nonanalytic=nac, borninfo=borninfo
             )
+    ## kpts is calculated with deltak.
     #anpinp.set_kpoint(deltak=deltak)
+    ## kpts is given explicitly.
     anpinp.update({'kpts':[nk, nk, nk]})
     anpinp.to_file(filename='dos.in')
-
+    
     ### to calculate thermal conductivity
     anpinp = AnphonInput.from_structure_file(
             filename,
