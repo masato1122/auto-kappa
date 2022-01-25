@@ -61,7 +61,7 @@ from vasprun.xml
 ..     from aiida_alamode.io.qe import ***
 
 
-Inpu Scripts for ANPHON
+Input Scripts for ANPHON
 =========================
  
 AnphonInput class can be used with a similar manner as that for AlmInput.

@@ -44,8 +44,7 @@ def get_primitive_structure(structure, symprec=1e-5):
     #from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
     #sga = SpacegroupAnalyzer(structure)
     #prim = sga.find_primitive()
-
-
+    
     ## make pymatgen's IStructure
     prim_species = []
     for num in prim_cell[2]:

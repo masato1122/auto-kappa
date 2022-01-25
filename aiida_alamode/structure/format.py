@@ -25,29 +25,31 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
             isinstance(structure, str_pmg.IStructure)):
         ## from pymatgen's (I)Structure object
         lattice = structure.lattice.matrix
-        species = structure.species
+        all_symbols = []
+        for specie in structure.species:
+            all_symbols.append(specie.name)
         coords = structure.frac_coords
     elif (isinstance(structure, Atoms) or
             isinstance(structure, PhonopyAtoms)):
         ## from ase's Atoms and phonopy's PhonopyAtoms
         lattice = structure.cell
-        species = structure.get_chemical_symbols()
+        all_symbols = structure.get_chemical_symbols()
         coords = structure.get_scaled_positions()
     else:
         warnings.warn(" Structure type {} is not supported".format(
             type(structure)))
-
+    
     ## set atomic numbers
     numbers = []
-    for specie in species:
-        numbers.append(atomic_numbers[specie.name])
+    for name in all_symbols:
+        numbers.append(atomic_numbers[name])
     
     ## return the structure
     form = format.lower()
     if 'istructure' in form:
-        return str_pmg.IStructure(lattice, species, coords)
+        return str_pmg.IStructure(lattice, all_symbols, coords)
     elif form == 'pymatgen-structure':
-        return str_pmg.Structure(lattice, species, coords)
+        return str_pmg.Structure(lattice, all_symbols, coords)
     elif form == 'ase' or form == 'atoms':
         return Atoms(
             cell=lattice,
@@ -58,7 +60,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
     elif form == 'phonopyatoms' or form == 'phonopy':
         return PhonopyAtoms(
             cell=lattice,
-            symbols=species,
+            symbols=all_symbols,
             scaled_positions=coords,
             pbc=True
             )

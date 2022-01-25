@@ -555,7 +555,9 @@ class AnphonInput(MSONable, dict):
         Args
         --------
         structure (structure object)
-        """ 
+        """
+        cls.structure = structure
+        
         ## Get parameters determined by structure
         alm_dict = dict(AlmInput.from_structure(structure))
         
@@ -568,10 +570,11 @@ class AnphonInput(MSONable, dict):
         ## Parameters for k-point
         if 'kpmode' not in kwargs.keys():
             kpmode = None
-
+        
         ## update
         anp_dict.update(kwargs)
-        return AnphonInput(**alm_dict)
+        
+        return AnphonInput(**anp_dict)
      
     #@classmethod
     #def from_file(cls, filepath: str):
@@ -627,8 +630,10 @@ class AnphonInput(MSONable, dict):
             else:
                 self['kpoints'] = [[0,0,0]]
         elif self['kpmode'] == 1:
-            self['kpath'] = get_kpoint_path(
-                    self.primitive, deltak=self['deltak'])
+            if 'kpath' not in self.keys():
+                print(" kpath is set automatically.")
+                self['kpath'] = get_kpoint_path(
+                        self.primitive, deltak=self['deltak'])
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []
@@ -723,7 +728,7 @@ def _write_kpoint(params, kpoint=None):
             lines.append("")
             for j in range(2):
                 key = list(k[j].keys())[0]
-                lines[-1] += "    %s" % key
+                lines[-1] += "    %5s" % key
                 lines[-1] += " %10.7f " * 3 % tuple(k[j][key])
             lines[-1] += " %d " % k[2]
     elif params['kpmode'] == 2:

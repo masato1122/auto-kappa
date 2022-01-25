@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2.1. How to Prepare Input Scripts &mdash; aiida-alamode Sept. 13th, 2021 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>2.1. How to Prepare Input Scripts &mdash; aiida-alamode Sept. 13th, 2021 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -42,7 +45,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#from-vasprun-xml">from vasprun.xml</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#inpu-scripts-for-anphon">2.1.3. Inpu Scripts for ANPHON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input-scripts-for-anphon">2.1.3. Input Scripts for ANPHON</a></li>
 </ul>
 </li>
 </ul>
@@ -74,11 +77,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="how-to-prepare-input-scripts">
-<h1><span class="section-number">2.1. </span>How to Prepare Input Scripts<a class="headerlink" href="#how-to-prepare-input-scripts" title="Permalink to this headline">¶</a></h1>
+  <section id="how-to-prepare-input-scripts">
+<h1><span class="section-number">2.1. </span>How to Prepare Input Scripts<a class="headerlink" href="#how-to-prepare-input-scripts" title="Permalink to this headline"></a></h1>
 <p>You can find example scripts in example directory of aiida-alamode package.</p>
-<div class="section" id="input-scripts-for-alm">
-<h2><span class="section-number">2.1.1. </span>Input Scripts for ALM<a class="headerlink" href="#input-scripts-for-alm" title="Permalink to this headline">¶</a></h2>
+<section id="input-scripts-for-alm">
+<h2><span class="section-number">2.1.1. </span>Input Scripts for ALM<a class="headerlink" href="#input-scripts-for-alm" title="Permalink to this headline"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiida_alamode.io</span> <span class="kn">import</span> <span class="n">AlmInput</span>
 
 <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;POSCAR-supercell&#39;</span>
@@ -106,11 +109,11 @@
 <span class="n">alminp</span><span class="o">.</span><span class="n">to_file</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="borninfo-file-for-alm">
-<h2><span class="section-number">2.1.2. </span>BORNINFO file for ALM<a class="headerlink" href="#borninfo-file-for-alm" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="from-vasprun-xml">
-<h3>from vasprun.xml<a class="headerlink" href="#from-vasprun-xml" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="borninfo-file-for-alm">
+<h2><span class="section-number">2.1.2. </span>BORNINFO file for ALM<a class="headerlink" href="#borninfo-file-for-alm" title="Permalink to this headline"></a></h2>
+<section id="from-vasprun-xml">
+<h3>from vasprun.xml<a class="headerlink" href="#from-vasprun-xml" title="Permalink to this headline"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiida_alamode.io.vasp</span> <span class="kn">import</span> <span class="n">write_born_info</span>
 <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;vasprun.xml&#39;</span>
 <span class="n">write_born_info</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;BORNINFO&#39;</span><span class="p">)</span>
@@ -121,10 +124,10 @@
 <span class="c1">#vasprun.write_born_info(filename=&#39;BORNINFO&#39;)</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="inpu-scripts-for-anphon">
-<h2><span class="section-number">2.1.3. </span>Inpu Scripts for ANPHON<a class="headerlink" href="#inpu-scripts-for-anphon" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="input-scripts-for-anphon">
+<h2><span class="section-number">2.1.3. </span>Input Scripts for ANPHON<a class="headerlink" href="#input-scripts-for-anphon" title="Permalink to this headline"></a></h2>
 <p>AnphonInput class can be used with a similar manner as that for AlmInput.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aiida_alamode.io</span> <span class="kn">import</span> <span class="n">AnphonInput</span>
 
@@ -176,8 +179,8 @@
 <span class="n">anpinp</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;RTA.in&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
