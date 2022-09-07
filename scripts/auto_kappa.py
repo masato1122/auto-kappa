@@ -101,7 +101,7 @@ almcalc.plot_bandos()
 ### Check negative frequency
 if almcalc.frequency_range[0] < -0.001:
     print("")
-    print(" Eigenvalues are negative. Stop the calculation.")
+    print(" Negative eigenvalues were found. Stop the calculation.")
     print("")
     exit()
 
