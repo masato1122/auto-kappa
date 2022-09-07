@@ -1,6 +1,3 @@
-# Copyright (c) aiida-alamode Team.
-# Distributed under the terms of the MIT License.
-# Written by M. Ohnishi
 #
 # To Do:
 # 1. Make suggest_cutoff module in AnphonInput class
@@ -509,14 +506,21 @@ class AnphonInput(MSONable, dict):
         """
         super().__init__()
         self.update(kwargs)
+
+        self._primitive = None
     
     def as_dict(self):
         return dict(self)
     
     @property
     def primitive(self):
-        return self.get_primitive()
+        if self._primitive is None:
+            self._primitive = self.get_primitive()
+        return self._primitive
     
+    def set_primitive(self, structure):
+        self._primitive = structure
+
     def get_primitive(self):
         return get_primitive_structure(self.structure)
 

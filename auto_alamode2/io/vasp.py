@@ -1,11 +1,146 @@
 # Copyright (c) aiida-alamode Team.
 # Distributed under the terms of the MIT License.
 # Written by M. Ohnishi
-
+import glob
 import numpy as np
 import xmltodict
 import warnings
 from pymatgen.io.vasp.outputs import Vasprun
+from phonopy.interface.vasp import read_vasp
+from pymatgen.io.vasp.inputs import Incar, Kpoints
+import ase.io
+from ..units import BohrToA, RyToEv
+
+def get_dfset(directory, offset_xml=None, outfile=None):
+    """ 
+    Args
+    ======
+    directory : string
+        vasprun.xml can be found under ${directory}/*/ 
+    offset_xml : string
+        vasprun.xml name for offset
+    outfile : string
+        if given, dfset is saved.
+    """
+    from ase.geometry import get_distances
+    
+    line = directory + '/*/vasprun.xml'
+    all_dirs = glob.glob(line)
+    
+    ## get keys
+    all_keys = []
+    for dd in all_dirs:
+        key = dd.split('/')[-2]
+        if key == 'prist':
+            continue
+        all_keys.append(key)
+    all_keys = sorted(all_keys, key=int)
+    
+    ## get offset data
+    try:
+        atoms0 = ase.io.read(offset_xml, format='vasp-xml')
+    except Exception:
+        warnings.warn(" Cannot find %s" % (offset_xml))
+    
+    forces0 = atoms0.get_forces()
+    positions0 = atoms0.get_positions()
+    
+    ## 
+    def _get_diagonal_elements(flarge):
+        n = len(flarge)
+        fdiag = np.zeros((n,3))
+        for i in range(n):
+            fdiag[i,:] = flarge[i,i,:]
+        return fdiag
+    
+    ## read all dfset
+    all_disps = []
+    all_forces = []
+    all_energies = []
+    all_lines = []
+    for ii, key in enumerate(all_keys):
+        fn = "%s/%s/vasprun.xml" % (directory, key)
+        atoms1 = ase.io.read(fn, format='vasp-xml')
+        
+        disp_large, _ = get_distances(
+                positions0, p2=atoms1.get_positions(),
+                cell=atoms0.cell, pbc=True)
+        displacements = _get_diagonal_elements(disp_large) / BohrToA  ## Bohr
+        forces = (atoms1.get_forces() - forces0) \
+                * BohrToA / RyToEv                         ## Bohr/Ry
+        
+        ene = atoms1.get_potential_energy()
+        all_energies.append(ene)     ## eV
+        
+        all_disps.append(displacements)
+        all_forces.append(forces)
+
+        ## get lines
+        all_lines.append("# Filename: %s, Snapshot: %d, E_pot (eV): %.7f" % (
+            fn, ii+1, ene))
+        for (d, f) in zip(displacements, forces):
+            line = "%16.13f " * 3 % tuple(d)
+            line += "  "
+            line += "%20.13e " * 3 % tuple(f)
+            all_lines.append(line)
+     
+    ##
+    all_disps = np.asarray(all_disps)
+    all_forces = np.asarray(all_forces)
+    
+    ##
+    if outfile is not None:
+        ofs = open(outfile, 'w')
+        ofs.write("\n".join(all_lines))
+        ofs.close()
+        print(" Output", outfile)
+
+    return all_disps, all_forces
+
+def wasfinished(directory, filename='vasprun.xml'):
+    try:
+        fn = directory + '/' + filename
+        lines = open(fn, 'r').readlines()
+    except Exception:
+        return False
+
+    n = len(lines)
+    for i in range(n):
+        num = n - 1 - i
+        data = lines[num].split()
+        if len(data) != 0:
+            if data[0] == '</modeling>':
+                return True
+            else:
+                return False
+    return False
+
+def read_poscar(filename):
+    """ Read filename
+    filename : string, POSCAR filename
+    """
+    structure = None
+    try:
+        structure = read_vasp(filename)
+    except Exception:
+        warnings.warn(" Warning: cannot find %s" % filename)
+    return structure
+
+def read_incar(filename):
+    incar = None
+    try:
+        incar = Incar.from_file(filename)
+    except Exception:
+        warnings.warn(" Warning: cannot find %s" % filename)
+    return incar
+
+def read_kpoints(filename):
+    kpoints = None
+    try:
+        kpoints = Kpoints.from_file(filename)
+    except Exception:
+        warnings.warn(" Warning: cannot find %s" % filename)
+    return kpoints
 
 def write_born_info(filename, outfile='BORNINFO'):
     """
@@ -64,7 +199,12 @@ def get_born_charges(filename):
         borns.append(born)
     return borns
 
-
+def print_vasp_params(params):
+    
+    print("")
+    for name in params.keys():
+        print(" ", name.upper().ljust(13), "=", params[name])
+    print("")
 
 #
 #class Vasprun:

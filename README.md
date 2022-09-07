@@ -1,12 +1,19 @@
-AiiDA Plugin for ALAMODE
-=============================
+Auto-ALAMODE2
+=====================
 
-This plugin helps to calculate phonon properties with ALAMODE package, both of harmonic and anharmonic properties.
+This is a software for an automated calculation of thermal conductivity with VASP and ALAMODE.
 
+Prerequisite
+--------------
+
+* VASP
+* Alamode (alm>=1.4.1, anphon>=1.4.1, and ALM>=1.4.0)
+* Phonopy   >= 2.15.1
+* Pymatgen  >= 2022.3.24
+* Custodian >= 2022.5.26
 
 To Do
-----------
+--------
 
-* Try to use ALM python package. Understand phonopy.interface.io.alm
-
+* Implementation of an automated LASSO calculation
 

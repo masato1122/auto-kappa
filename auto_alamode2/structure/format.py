@@ -38,7 +38,8 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
     else:
         warnings.warn(" Structure type {} is not supported".format(
             type(structure)))
-    
+        exit()
+
     ## set atomic numbers
     numbers = []
     for name in all_symbols:
