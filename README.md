@@ -11,6 +11,7 @@ Prerequisites
 * Phonopy   >= 2.15.1
 * ASE       >= 3.22.1
 * Pymatgen  >= 2022.3.24
+* Spglib    >= 1.16.5
 * Custodian >= 2022.5.26
 
 To Do
