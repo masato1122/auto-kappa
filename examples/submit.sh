@@ -18,5 +18,5 @@ dir_db=./phonondb-20180417/${mpid}
 python ../scripts/auto_kappa.py \
     --directory $dir_db \
     --mpid $mpid \
-    --nprocs $nprocs
+    --nprocs $nprocs > log_${mpid}.txt
 
