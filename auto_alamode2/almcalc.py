@@ -262,8 +262,13 @@ class AlmCalc():
                     )
         else:
             print("")
-            print(" Random displacement method")
-
+            print(" Random displacement method, which is not implemented yet.")
+            print("")
+            # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+            #all_disps = get_random_displacements(
+            #        structure,
+            #        maxmag=self.mag      ## Ang
+            #        )
             exit()
         
         ## get pristine structure

@@ -108,7 +108,7 @@ if almcalc.frequency_range[0] < -0.001:
 ### calculate forces for cubic IFCs
 mode = 'force'
 almcalc.calc_forces(2, calc_force, out_dirs['cube'][mode],
-        suggest_number_limit=1000, npattern_random=160)
+        suggest_number_limit=120, npattern_random=120)
 almcalc.calc_cubic_force_constants()
 
 ### calculate kappa
