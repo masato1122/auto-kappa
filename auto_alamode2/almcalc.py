@@ -329,31 +329,35 @@ class AlmCalc():
         else:
             warnings.warning(" WARNING: Output directory is not defined.")
         
+        print("")
+        msg = " Force calculation (order: %s)" % order
+        border = "=" * (len(msg) + 2)
+        print(msg)
+        print(border)
+
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
         lasso = 0
         structures = self.get_suggested_structures(order)
         nsuggest =  len(structures)
-            
-        logger.log(20, ""
-        logger.log(20, " Number of the suggested "\
-                "structures with ALM : %d" % (nsuggest))
-        logger.log(20, ""
+        
+        ###
+        msg = "Number of the suggested structures with ALM : %d" % (nsuggest)
+        print("\n", msg)
         
         ### LASSO is used when the number of the suggested structure is too large.
         if nsuggest > suggest_number_limit:
             lasso = 1
+            msg = "Number of suggested structures, %d, "\
+                    "exceeds the limit, %d." % (nsuggest, suggest_number_limit)
+            print("\n", msg)
             structures = self.get_suggested_structures(
                     order, random=True, npattern_random=npattern_random
                     )
             
             exit()
         
-        print("")
-        print(" ### Calculate forces...")
-        print(" order: %d" % (order))
-        print(" Number of structures: %d" % (nsuggest))
-        print("")
+        nsuggest =  len(structures)
         for ii, key in enumerate(list(structures.keys())):
             
             outdir = outdir0 + '/' + str(key)
@@ -585,9 +589,12 @@ class AlmCalc():
             print("ERROR")
             exit()
         
-        ##
+        ### print title
         print("")
-        print(" ### Run anphon with mode = %s " % propt)
+        msg = " Run anphon with mode = %s " % propt
+        border = "-" * (len(msg) + 2)
+        print(msg)
+        print(border)
         
         filename = "%s.in" % propt
         
@@ -657,8 +664,13 @@ class AlmCalc():
         for key in args.keys():
             setattr(options, key, args[key])
         
+        ### output title
         print("")
-        print(" ### Plot band and DOS")
+        msg = " Plot band and DOS"
+        border = "-" * (len(msg) + 2)
+        print(msg)
+        print(border)
+
         fig = plot_bandos(options.figname, band, dos, options)
 
     def plot_kappa(self):

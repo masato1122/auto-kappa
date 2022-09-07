@@ -177,8 +177,12 @@ class ApdbVasp():
         """
         from .io.vasp import wasfinished
         print("")
-        print(" ### VASP calculation (%s)" % (mode))
-        
+        msg = "VASP calculation (%s)" % (mode)
+        border = "=" * (len(msg) + 2)
+        print("", msg)
+        print(border)
+
+
         if wasfinished(directory, filename='vasprun.xml') and force == False:
             print("")
             print(" The calculation had been already finished.")
