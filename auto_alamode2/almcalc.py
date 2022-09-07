@@ -25,6 +25,7 @@ To Do
 import os
 import numpy as np
 import warnings
+import logging
 
 import ase, pymatgen
 from ase.build import make_supercell
@@ -333,6 +334,11 @@ class AlmCalc():
         lasso = 0
         structures = self.get_suggested_structures(order)
         nsuggest =  len(structures)
+            
+        logger.log(20, ""
+        logger.log(20, " Number of the suggested "\
+                "structures with ALM : %d" % (nsuggest))
+        logger.log(20, ""
         
         ### LASSO is used when the number of the suggested structure is too large.
         if nsuggest > suggest_number_limit:
