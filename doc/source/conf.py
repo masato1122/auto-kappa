@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../auto_alamode2'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
@@ -15,9 +16,10 @@ release = 'Sept. 13th, 2021'
 
 
 # -- General configuration 
-
 extensions = [
-]
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary"
+    ]
 
 templates_path = ['_templates']
 

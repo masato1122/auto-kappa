@@ -209,8 +209,8 @@ class ApdbVasp():
         
         if os.path.exists(filename) == False:
             print("")
-            message = " WARNING: %s calculation might not work properly." % mode
-            warnings.warning(message)
+            msg = " WARNING: %s calculation might not work properly." % mode
+            warnings.warning(msg)
             print("")
             return None
         

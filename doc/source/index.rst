@@ -12,4 +12,5 @@ aiida-alamode
 
     installation
     tutorial/index
+    ./auto_alamode2/modules
 
