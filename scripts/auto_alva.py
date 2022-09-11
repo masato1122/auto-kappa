@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 import numpy as np
 from optparse import OptionParser
 
@@ -10,6 +10,8 @@ from auto_alamode2 import output_directories
 def main(options):
     
     ### Read data of phonondb
+    ### phonondb is used to obtain structures (primitive, unit, and super cells)
+    ### and k-points.
     phdb = Phonondb(options.directory, mpid=options.mpid)
 
     pmat = phdb.primitive_matrix
@@ -27,15 +29,18 @@ def main(options):
                 values2 = values1[k2]
                 out_dirs[k1][k2] = './' + options.mpid + '/' + values2
     
-    ### command to run a VASP job
-    vasp_cmd = {'mpirun': 'mpirun', 'nprocs': options.nprocs, 'vasp': 'vasp'}
+    ### command to run VASP jobs
+    command = {
+            'mpirun': 'mpirun', 'nprocs': options.ncores, 
+            'nthreads': 1, 'vasp': 'vasp'
+            }
     
     ### Set ApdbVasp object
     apdb = ApdbVasp(
             phdb.get_unitcell(format='ase'), 
             primitive_matrix=pmat,
             scell_matrix=smat,
-            command=vasp_cmd)
+            command=command)
     
     ### Relaxation calculation
     mode = 'relax'
@@ -55,14 +60,20 @@ def main(options):
                 )
     
     ### Set AlmCalc
+    command = {
+            'mpirun': 'mpirun', 'nprocs': 1, 
+            'nthreads': options.ncores, 'anphon': 'anphon'
+            }
     almcalc = AlmCalc(
             apdb.primitive,
             mpid=options.mpid,
             primitive_matrix=pmat,
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
-            nbody=[2,3], mag=0.01,
-            nac=phdb.nac
+            nbody=[2,3,3,2], mag=0.01,
+            nac=phdb.nac,
+            command=command,
+            verbosity=0
             )
     
     ### ASE calculator for forces
@@ -78,16 +89,12 @@ def main(options):
 
     ##### calculate band and DOS
     almcalc.write_anphon_input(propt='band')
-    almcalc.run_anphon(
-            propt='band', force=True, 
-            nprocs=1, nthreads=options.nprocs,
-            )
+    almcalc.run_anphon(propt='band', force=True)
+    
     ##
     almcalc.write_anphon_input(propt='dos')
-    almcalc.run_anphon(propt='dos',
-            nprocs=1, nthreads=options.nprocs,
-            )
-    #almcalc.plot_bandos()
+    almcalc.run_anphon(propt='dos')
+    almcalc.plot_bandos()
     
     ### Check negative frequency
     if almcalc.frequency_range[0] < -0.001:
@@ -108,8 +115,8 @@ def main(options):
     almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
-    almcalc.write_anphon_input(propt='kappa')
-    almcalc.run_anphon(propt='kappa', nprocs=1, nthreads=options.nprocs)
+    almcalc.write_anphon_input(propt='kappa', kpts=[15,15,15])
+    almcalc.run_anphon(propt='kappa')
     almcalc.plot_kappa()
 
 if __name__ == '__main__':
@@ -125,8 +132,8 @@ if __name__ == '__main__':
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, help="cutoff3, unit=Ang [4.3]")
     
-    parser.add_option("-n", "--nprocs", dest="nprocs", type="int",
-            default=2, help="nprocs [2]")
+    parser.add_option("-n", "--ncores", dest="ncores", type="int",
+            default=2, help="ncores [2]")
             
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=200, 

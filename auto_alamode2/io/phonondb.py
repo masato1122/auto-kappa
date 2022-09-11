@@ -7,8 +7,7 @@ import glob
 import ase.io
 from phonopy import Phonopy
 from ase.calculators.vasp import Vasp
-from .. import output_directories, calculator_parameters
-#from ..calculator import calculator_parameters
+from .. import output_directories
 from ..structure.format import change_structure_format
 from .vasp import read_incar, read_poscar, read_kpoints, wasfinished
 

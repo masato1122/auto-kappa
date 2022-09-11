@@ -47,21 +47,21 @@ class AlamodeDisplace(object):
         self._qlist_uniq = []
         self._mass = None
         self._nmode = None
-
+        
         self._displacement_mode = displacement_mode.lower()
         self._supercell = codeobj_base
-
+        
         self._BOHR_TO_ANGSTROM = 0.5291772108
         self._K_BOLTZMANN = 1.3806488e-23
         self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
         amu = 1.660538782e-27
         electron_mass = 9.10938215e-31
         self._AMU_RYD = amu / electron_mass / 2.0
-
+        
         if file_primitive:
             primitive_cell = copy.deepcopy(codeobj_base)
             primitive_cell.load_initial_structure(file_primitive)
-
+            
             self._primitive_lattice_vector = primitive_cell._lattice_vector
             self._inverse_primitive_lattice_vector = primitive_cell._inverse_lattice_vector
             self._xp_fractional = primitive_cell.x_fractional
@@ -69,14 +69,15 @@ class AlamodeDisplace(object):
             self._primitive_kd = primitive_cell._kd
             self._find_commensurate_q()
             self._generate_mapping_s2p()
-
+            
         elif primitive:
-
-            self._primitive_lattice_vector = primitive.cell
-            self._inverse_primitive_lattice_vector = np.linalg.inv(primitive.cell)
+            
+            pcell = primitive.cell.array.copy()
+            self._primitive_lattice_vector = pcell.T
+            self._inverse_primitive_lattice_vector = np.linalg.inv(pcell.T)
             self._xp_fractional = primitive.get_scaled_positions()
             self._nat_primitive = len(primitive)
-            
+        
             ### get kd
             all_symbols = primitive.get_chemical_symbols()
             elements = []
@@ -646,7 +647,7 @@ class AlamodeDisplace(object):
                            self._primitive_lattice_vector)
         nmax = 10
         qlist = []
-
+        
         for i in range(3):
             for j in range(3):
                 frac = abs(convertor[i, j])

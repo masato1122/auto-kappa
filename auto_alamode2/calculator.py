@@ -3,8 +3,6 @@ import os.path
 import numpy as np
 from pymatgen.io.vasp.inputs import Kpoints
 
-from . import calculator_parameters
-
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 import re
@@ -158,7 +156,7 @@ def get_enmax(ppp_list):
     return np.max(enmaxes)
 
 #def get_calculator(
-#        xc=calculator_parameters['xc'], 
+#        xc=default_vaspcalc_parameters['xc'], 
 #        outdir='./out',
 #        print_comment=True
 #        ):
@@ -181,12 +179,12 @@ def get_enmax(ppp_list):
 #    """
 #    from ase.calculators.vasp import Vasp
 #    cmd = "%s -np %d %s" % (
-#            calculator_parameters['mpirun'], nprocs, 
-#            calculator_parameters['vasp'])
+#            default_vaspcalc_parameters['mpirun'], nprocs, 
+#            default_vaspcalc_parameters['vasp'])
 #    
 #    ##
 #    calc = Vasp(
-#            setups=calculator_parameters['setups'], 
+#            setups=default_vaspcalc_parameters['setups'], 
 #            command=cmd, directory=outdir, xc=xc)
 #    ##
 #    #xml = outdir + '/vasprun.xml'

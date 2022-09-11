@@ -47,12 +47,19 @@ class ApdbVasp():
                 }
         
         ### VASP command
-        self.command = command
+        self._command = command
         
         ### parameters
         self.encut_factor = encut_scale_factor
         self.lreal_size = auto_lreal_scell_size
-        
+    
+    @property
+    def command(self):
+        return self._command
+
+    def update_command(self, val):
+        self._command.update(val)
+
     @property
     def primitive(self):
         """ Relaxed structures are returned in prior to original structures.
@@ -197,7 +204,9 @@ class ApdbVasp():
             if print_params:
                 print_vasp_params(calc.asdict()['inputs'])
             
+            os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
             run_vasp(calc, self.primitive, method=method)
+            os.environ.pop("OMP_NUM_THREADS", None)
         
         ### Read the relaxed structure
         if mode.lower() == 'relax':

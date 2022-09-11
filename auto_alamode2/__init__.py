@@ -20,12 +20,12 @@ output_directories = {
         'result': 'result'
         }
 
-calculator_parameters = {
-        'setups': 'recommended',
-        'mpirun': 'mpirun',
-        'vasp': 'vasp',
-        'xc': 'pbesol',
-        }
+#default_vaspcalc_parameters = {
+#        'setups': 'recommended',
+#        'mpirun': 'mpirun',
+#        'vasp': 'vasp',
+#        'xc': 'pbesol',
+#        }
 
 default_vasp_parameters = {
         'relax':{

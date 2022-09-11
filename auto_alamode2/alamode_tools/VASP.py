@@ -71,7 +71,7 @@ class VaspParser(object):
         ------
         structure : ASE Atoms object
         """
-        lavec = structure.cell
+        lavec = structure.cell.array.copy()   ## Angstrom
         invlavec = np.linalg.inv(lavec)
         
         all_symbols = structure.get_chemical_symbols()
@@ -102,7 +102,7 @@ class VaspParser(object):
         self._nat = np.sum(nat_elem)
         self._x_fractional = structure.get_scaled_positions()
         self._initial_structure_loaded = True
-         
+        
     def load_initial_structure(self, file_in):
 
         with open(file_in, 'r') as file_pos:
@@ -152,7 +152,7 @@ class VaspParser(object):
         self._nat = np.sum(nat_elem)
         self._x_fractional = xf
         self._initial_structure_loaded = True
-    
+
     def generate_structures(self, prefix, header_list, disp_list):
 
         self._set_number_of_zerofill(len(disp_list))

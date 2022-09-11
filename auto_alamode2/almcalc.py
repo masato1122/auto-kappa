@@ -1,24 +1,7 @@
 """
 To Do
 =============
-1. Unknow error in mp-190. 
-    The relaxation calculation was stopped.
-    phonon dispersion was not calculated properly.
-    
-    cutoff : shape=(order, num_elems, num_elems)
-        how to determine the order of elements???
-        
-        example for AlN:
-        
-        cutoff_radii = [np.ones((2, 2)) * -1, np.ones((2, 2)) * 4.8]
-    
-    nbody : shape=(maxorder)
-
-    https://kitchingroup.cheme.cmu.edu/blog/2013/02/19/Subclassing-an-ase-calculators-vasp-calculator-to-do-post-analysis/
-
-2. If the number of patterns is too large, use lasso regression with random
-    displacement.
-3. Use different supercell size for 3rd-order force constants
+1. Use different (larger) supercell size for 3rd-order force constants
 
 """
 # -*- coding: utf-8 -*-
@@ -32,7 +15,7 @@ from ase.build import make_supercell
 import subprocess
 import pandas as pd
 
-from . import output_directories, calculator_parameters, output_files
+from . import output_directories, output_files
 from .units import AToBohr, BohrToA
 from .structure.format import change_structure_format
 from .io.vasp import wasfinished, get_dfset, print_vasp_params
@@ -46,32 +29,86 @@ class AlmCalc():
     def __init__(self, prim_given, mpid='mp', 
             scell_matrix=None, primitive_matrix=None,
             scell_matrix3=None,
-            cutoffs=None, nbody=[2,3,2], mag=0.01,
+            cutoffs=None, nbody=[2,3,3,2], mag=0.01,
             cutoff2=-1, cutoff3=4.3, 
-            nac=None, verbosity=0
+            nac=None, 
+            verbosity=0,
+            command={
+                'mpirun': 'mpirun', "nprocs": 1, 
+                "nthreads": 1, "anphon": "anphon",
+                }
             ):
         """ Calculations with ALM and Anphon are managed with this class.
          
         Args
         =======
         prim_given : primitive structure
-            different formats such as pymatgen and ASE are accepted.
+            Different formats such as pymatgen and ASE are accepted while the
+            format is changed to ase-Atoms in this module.
+
+        mpid : string
+            Material ID, which is used just to determine the directory name.
+            It can be anything such as the composition.
         
+        scell_matrix : array of float, shape=(3,3)
+            supercell matrix wrt unitcell
+
+        primitive_matrix : array of float, shape=(3,3)
+            primitive matrix wrt unitcell
+
+        scell_matrix3 : array of float, shape=(3,3)
+            supercell matrix wrt unitcell.
+            This supercell is used for cubic FCs.
+
         cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
             cutoff radii for force constants. If it's not given, it will be set
             automatically with cutoff2 and cutoff3. Default cutoff radii are 
             "-1" and "4.3" Angstrom for harmonic and cubid FCs, respectively.
         
+        ndoby : list of int
+            nbody[i]-body interaction is considered for {i+2}-order FCs.
+            If it is not given, default value is [2,3,3,2,2,...].
+            See the tutorial of Alamode for details.
+         
         cutoff2, cutoff3 : float, unit=[Ang]
             cutoff radii.
             If cutoffs is None, cutoff2 and cutoff3 are used.
             For lasso calculation, cuttoff3 is used for higher order FCs.
         
-        ndoby : list of int
-            nbody[i]-body interaction is considered for {i+2}-order FCs.
-            If it is not given, default value is [2,3,3,2,2,...]
-        """
+        nac : int
+            If nac=0, nac is not considered while, if nac=1, nac is considered.
+    
+        verbosity : int
+            If verbosity=1, details are output while, if 0, not.
 
+        command : dict
+            Number of processes and threads are given.
+            default={
+                'mpirun': 'mpirun', "nprocs": 1, 
+                "nthreads": 1, "anphon": "anphon",
+                }
+        
+        Example
+        ----------
+        >>> almcalc = AlmCalc(
+        >>>     primitive,
+        >>>     mpid='mpid-149',
+        >>>     primitive_matrix=pmat,
+        >>>     scell_matrix=smat,
+        >>>     cutoff2=-1, cutoff3=4.3,
+        >>>     nbody=[2,3,3,2], mag=0.01,
+        >>>     nac=1,
+        >>>     command={'mpirun':'mpirun', 'nprocs':1, 'nthreads':1,'anphon':'anphon'},
+        >>>     verbosity=0
+        >>>     )
+        >>> calc_force = apdb.get_calculator('force', 
+        >>>     "./mp-149/harm/force", [4,4,4],
+        >>>     )
+        >>> almcalc.calc_forces(1, calc_force)
+        >>> almcalc.calc_harmonic_force_constants()
+        >>> almcalc.write_anphon_input(propt='dos')
+        >>> almcalc.run_anphon(propt='dos')
+        """
         ### output directories
         dir_init = os.getcwd()
         self.out_dirs = {}
@@ -120,12 +157,22 @@ class AlmCalc():
         self.nac = nac
 
         self.lasso = False
+
+        self._command = command
         
         ###
         self._prefix = None      ## prefix for input files
         self._frequency_range = None
         
         self.verbosity = verbosity
+    
+    @property
+    def command(self):
+        return self._command
+    
+    def update_command(self, val):
+        """ Command is update """
+        self._command.update(val)
     
     @property
     def num_elems(self):
@@ -294,7 +341,7 @@ class AlmCalc():
             ### 
             propt = 'evec_commensurate'
             self.write_anphon_input(propt=propt)
-            self.run_anphon(propt=propt, nprocs=1, nthreads=1)
+            self.run_anphon(propt=propt)
 
             ###
             fevec = self.out_dirs['lasso']['evec'] + '/' + self.prefix + '.evec'
@@ -328,28 +375,33 @@ class AlmCalc():
     def _get_random_displacements_normal_coordinate(self, file_evec: None,
             number_of_displacements=1, temperature=500., classical=False,
             ):
-        from .alamode_tools.interface.VASP import VaspParser
+        from .alamode_tools.VASP import VaspParser
         from .alamode_tools.GenDisplacement import AlamodeDisplace
         
-        code = 'VASP'
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
-
+        
         almdisp = AlamodeDisplace(
                 'random_normalcoordinate', codeobj,
                 file_evec=file_evec,
                 primitive=self.primitive,
                 verbosity=self.verbosity
                 )
-        print("")
-        print(" Generate random displacements with an Alamode tool")
-        print("")
+        
+        msg = "\n"
+        msg += " Generate random displacements with an Alamode tool\n"
+        msg += "\n"
+        msg += " %d patterns will be generated.\n" % (number_of_displacements)
+        msg += "\n"
+        print(msg)
+        
         header_list, disp_list = almdisp.generate(
                 temperature=temperature,
                 number_of_displacements=number_of_displacements,
                 classical=classical
                 )
         print("")
+        
         all_disps = np.zeros_like(disp_list)
         for i, each in enumerate(disp_list):
             all_disps[i] = np.dot(each, self.supercell.cell)
@@ -633,7 +685,7 @@ class AlmCalc():
             dir_work = self.out_dirs['cube']['kappa']
             fcsxml = '../../result/' + output_files['cube_xml']
             mode = 'RTA'
-        
+
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
         
@@ -680,7 +732,7 @@ class AlmCalc():
         
         ###
         self._prefix = anpinp['prefix']
-        
+         
         ## set kpoints and write a file
         filename = dir_work + '/' + propt + '.in'
         if propt == 'band':
@@ -723,10 +775,13 @@ class AlmCalc():
             print(" Error: %s is not supported." % propt)
             exit()
     
-    def run_anphon(self, propt='band', nprocs=1, nthreads=None, force=False):
+    def run_anphon(self, propt=None, force=False):
         """ Run anphon
         Args
         ---------
+        propt : string
+            "band", "dos", "evec_commensurate", or "kappa"
+
         force : bool
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
@@ -762,21 +817,23 @@ class AlmCalc():
         
         filename = "%s.in" % propt
         
-        ## get number of threads
-        if nthreads is None:
-            nthreads = os.cpu_count()
+        ### get number of threads
+        #if nthreads is None:
+        #    nthreads = os.cpu_count()
         
         ## prepare command and environment
         logfile = propt + '.log'
-        cmd = "%s -np %d anphon %s" %(
-                calculator_parameters['mpirun'],
-                nprocs, filename)
+        cmd = "%s -np %d %s %s" %(
+                self.command['mpirun'],
+                self.command['nprocs'], 
+                self.command['anphon'],
+                filename)
         
         ## If the job has been finished, the same calculation is not conducted.
         ## The job status is judged from *.log file.
         if _anphon_finished(logfile) == False or force:
         
-            os.environ['OMP_NUM_THREADS'] = str(nthreads)
+            os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
             
             ## run the job!!
             with open(logfile, 'w') as f:
@@ -916,28 +973,6 @@ def _anphon_finished(logfile):
     except Exception:
         return False
 
-#def calc_force_constants(alm,
-#        displacements=None, forces=None,
-#        order=None, cutoff=None, nbody=None, outfile=None):
-#    """ Calculate force constants
-#    Args
-#    ======
-#    order : int
-#    cutoff : float, unit=Bohr
-#    nbody : shape=(order)
-#    outfile : string
-#    """
-#    #alm.define(order, cutoff_radii=cutoff, nbody=nbody,
-#    #        symmetrization_basis="Cartesian")
-#    #alm.displacements = displacements
-#    #alm.forces = forces
-#    #info = alm.optimize()
-#    #if info == 1:
-#    #    warnings.warn(" Fitting with ALM was not successful.")
-#    if outfile is not None:
-#        alm.save_fc(outfile, format='alamode')
-#        print(" Output", outfile)
-#    return alm
 
 def run_alm(structure, order, cutoffs, nbody, mode=None,
         displacements=None, forces=None, outfile=None,
@@ -1059,6 +1094,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
         
         else:
             warnings.warn(" WARNING: mode %s is nto supported" % (mode))
+
 
 def get_finite_displacements(structure, order, cutoffs=None, nbody=None, mag=None):
     """ Generate displacement patterns with ALM for FCs calculation
