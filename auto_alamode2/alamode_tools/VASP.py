@@ -71,7 +71,7 @@ class VaspParser(object):
         ------
         structure : ASE Atoms object
         """
-        lavec = structure.cell.array.copy()   ## Angstrom
+        lavec = structure.cell.array.T.copy()   ## Angstrom
         invlavec = np.linalg.inv(lavec)
         
         all_symbols = structure.get_chemical_symbols()
