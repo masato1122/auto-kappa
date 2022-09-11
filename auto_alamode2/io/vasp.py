@@ -149,7 +149,7 @@ def write_born_info(filename, outfile='BORNINFO'):
     filename (str) : vasprun.xml
     """
     lines = []
-
+    
     vasprun = Vasprun(filename)
     get_born_charges(filename)
     dielectric_tensor = vasprun.epsilon_static

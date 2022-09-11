@@ -145,7 +145,7 @@ class AlmInput(MSONable, dict):
         Args
         -------
         filename (str): filename
-            Object should be supported by pymatgen's IStructure module: POSCAR,
+            Format must be supported by pymatgen's IStructure module: POSCAR,
             .cif. etc.
         """
         ## set norder
@@ -163,10 +163,11 @@ class AlmInput(MSONable, dict):
     @classmethod
     def from_structure(cls, structure, norder=None, **kwargs):
         """ Creat ALM variables from a structure object or a structure file
+        
         Args
         --------
-        param (str, pymatgen's (I)Structure, ase's Atoms, or structure file such
-        as POSCAR, .cif, etc.):
+        structure (str, pymatgen's (I)Structure, ase's Atoms, or structure file 
+        such as POSCAR, .cif, etc.):
             If param is string (structure file), the file will be read with
             pymatgen.loadfn.
         guess_primitive (bool):

@@ -12,6 +12,14 @@ structure.ase module
    :undoc-members:
    :show-inheritance:
 
+structure.crystal module
+------------------------
+
+.. automodule:: structure.crystal
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 structure.format module
 -----------------------
 

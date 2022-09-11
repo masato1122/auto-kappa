@@ -11,6 +11,12 @@ output_directories = {
             'force': 'cube/force',
             'kappa': 'cube/kappa',
             },
+        'lasso':{    
+            'evec' : 'lasso/evec',
+            'force': 'lasso/force',
+            'cv'   : 'lasso/cv',
+            'lasso': 'lasso/lasso',
+            },
         'result': 'result'
         }
 
@@ -61,8 +67,23 @@ default_vasp_parameters = {
 
 output_files = {
         'harm_dfset': 'DFSET.harm',
-        'cube_dfset': 'DFSET.cube',
         'harm_xml': "FCs_harm.xml",
+        'cube_dfset': 'DFSET.cube',
         'cube_xml': "FCs_cube.xml",
+        'lasso_dfset': 'DFSET.lasso',
+        'lasso_xml': "FCs_lasso.xml",
         }
+
+default_lasso_parameters = {
+        'linear_model': 2,
+        'cross_validation': 5,
+        'num_l1_alpha': 50
+        }
+
+#default_lassobyscikit_parameters = {
+#        'n_alphas': 100,
+#        'eps': 1.e-7,
+#        'n_splits': 5,
+#        'standardize': True,
+#        }
 

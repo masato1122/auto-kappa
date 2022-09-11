@@ -15,7 +15,10 @@ setup(name='auto_alamode2',
       author='Masato Ohnishi',
       author_email='ohnishi@photon.t.u-tokyo.ac.jp',
       packages=packages_pyscat,
-      requires=['numpy', 'ALM', 'phonopy', 'ase', 'pymatgen', 'custodian'],
+      requires=[
+          'numpy', 'ALM', 'phonopy', 'spglib', 
+          'ase', 'pymatgen', 'custodian'
+          ],
       url='https://github.com/masato1122/auto_alamode2.git',
       license='MIT',
       provides=['auto_alamode2']

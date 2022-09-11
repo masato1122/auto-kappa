@@ -12,6 +12,14 @@ auto\_alamode2.structure.ase module
    :undoc-members:
    :show-inheritance:
 
+auto\_alamode2.structure.crystal module
+---------------------------------------
+
+.. automodule:: auto_alamode2.structure.crystal
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 auto\_alamode2.structure.format module
 --------------------------------------
 

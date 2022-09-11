@@ -27,16 +27,13 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     
     ### change directory
     cwd = os.getcwd()
-    outdir = cwd + '/' + calc.directory
+    outdir = calc.directory
     os.chdir(outdir)
     
     ### set handlers and run VASP
     handlers = [VaspErrorHandler(), UnconvergedErrorHandler()]
-
-    vjob = VaspJob(
-            calc.command.split(),
-            auto_npar=True,
-            )
+    
+    vjob = VaspJob(calc.command.split(), auto_npar=True)
     
     c = Custodian(handlers, [vjob], max_errors=max_errors)
     c.run()
