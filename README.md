@@ -7,8 +7,8 @@ Version 0.0
 Auto_ALAMODE2 is a software for automated calculations of thermal conductivity with VASP and ALAMODE.
 In future version, other codes such as QuantumEspress, Phono3py, and ShenBTE, may be able to be called.
 
-Prerequisite
-----------------
+Requirements
+-------------
 
 * VASP
 * Alamode (alm>=1.4.1, anphon>=1.4.1, and ALM>=1.4.0)
