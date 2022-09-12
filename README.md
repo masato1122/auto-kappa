@@ -27,10 +27,9 @@ ALAMODE:
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
 
-
-
 To Do
 --------
 
 * LASSO with a command, but not from python
+* Log using logger?
 
