@@ -32,5 +32,5 @@ ALAMODE:
 To Do
 --------
 
-* Implementation of an automated LASSO calculation
+* LASSO with a command, but not from python
 
