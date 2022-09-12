@@ -86,7 +86,7 @@ def main(options):
     ### calculate forces for harmonic FCs
     almcalc.calc_forces(1, calc_force)
     almcalc.calc_harmonic_force_constants()
-
+    
     ### calculate band 
     almcalc.write_anphon_input(propt='band')
     almcalc.run_anphon(propt='band', force=True)

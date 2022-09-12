@@ -597,16 +597,16 @@ class AlmCalc():
         structure = ase.io.read(offset_xml)
         
         ## calculate force constants
-        fc2_values, elem2_indices = run_alm(
+        ## out = [fc2_values, elem2_indices]
+        out = run_alm(
                 structure, 1, self.cutoffs[0], [self.nbody[0]], 
                 mode='optimize',
                 displacements=disps, forces=forces, 
                 outfile=out_xml,
                 verbosity=self.verbosity
                 )
-        
-        return fc2_values, elem2_indices
-    
+        return out
+     
     def calc_anharm_force_constants(self, maxorder=5):
         """ calculate cubic IFCs and return ALM 
         
@@ -685,15 +685,16 @@ class AlmCalc():
         structure = ase.io.read(offset_xml)
         
         ## 3rd order model
-        fcs_values, fcs_indices = run_alm(
+        ## out = [fcs_values, fcs_indices]
+        out = run_alm(
                 structure, order, cutoffs, nbody, mode='optimize',
                 displacements=disps, forces=forces,
                 fc2info=[fc2_values, elem2_indices],
                 outfile=out_xml, lasso=self.lasso,
                 verbosity=self.verbosity)
         
-        return fcs_values, fcs_indices
-
+        return out
+    
     def write_anphon_input(self, propt='band', kpts=[15,15,15], **kwargs):
         """ Write Anphon Input
 
@@ -715,8 +716,12 @@ class AlmCalc():
             fcsxml = '../../result/' + output_files['harm_xml']
             mode = 'phonons'
         elif propt == 'kappa':
-            dir_work = self.out_dirs['cube']['kappa']
-            fcsxml = '../../result/' + output_files['cube_xml']
+            if self.lasso == False:
+                dir_work = self.out_dirs['cube']['kappa']
+                fcsxml = '../../result/' + output_files['cube_xml']
+            else:
+                dir_work = self.out_dirs['lasso']['kappa']
+                fcsxml = '../../result/' + output_files['lasso_xml']
             mode = 'RTA'
 
         ##
@@ -833,7 +838,10 @@ class AlmCalc():
                 ext = propt
          
         elif propt == 'kappa':
-            os.chdir(self.out_dirs['cube']['kappa'])
+            if self.lasso == False:
+                os.chdir(self.out_dirs['cube']['kappa'])
+            else:
+                os.chdir(self.out_dirs['lasso']['kappa'])
             
         elif propt == 'evec_commensurate':
             os.chdir(self.out_dirs['lasso']['evec'])
@@ -1040,6 +1048,15 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
     alm.get_fc(order), which are fc*_values, elem*_indices
     
     """
+    if outfile is not None:
+        if os.path.exists(outfile):
+            msg = "\n"
+            msg += " ALM calculation (%s) has been already finished.\n" % (mode)
+            msg += " See: %s" % (outfile)
+            msg += "\n"
+            print(msg)
+            return None
+    
     from alm import ALM
 
     if type(structure) == "ase.atoms.Atoms":
