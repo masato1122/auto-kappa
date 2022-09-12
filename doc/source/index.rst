@@ -1,16 +1,16 @@
-.. AiiDA-plugin for ALAMODE 
-    Written by Masato Ohnishi
-    September 23, 2021.
+.. auto-alamode2
+    Written by M. Ohnishi
+    September 13, 2022.
 
 aiida-alamode
 ====================
 
 .. toctree::
     :maxdepth: 2
-    :numbered: 3
+    :numbered: 2
     :glob:
 
     installation
     tutorial/index
-    ./auto_alamode2/modules
+    aa2
 

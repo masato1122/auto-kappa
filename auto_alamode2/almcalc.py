@@ -1,7 +1,8 @@
 """
 To Do
 =============
-1. Use different (larger) supercell size for 3rd-order force constants
+1. LASSO may need to be used with alm command, but not from python command.
+2. Use different (larger) supercell size for 3rd-order force constants
 
 """
 # -*- coding: utf-8 -*-
@@ -158,6 +159,8 @@ class AlmCalc():
 
         self.lasso = False
 
+        self._nmax_suggest = None
+
         self._command = command
         
         ###
@@ -174,6 +177,14 @@ class AlmCalc():
         """ Command is update """
         self._command.update(val)
     
+    @property
+    def nmax_suggest(self):
+        return self._nmax_suggest
+
+    @nmax_suggest.setter
+    def nmax_suggest(self, val):
+        self._nmax_suggest = val
+
     @property
     def num_elems(self):
         if self._num_elems is None:
@@ -303,12 +314,13 @@ class AlmCalc():
     def get_suggested_structures(self, order: None, nrandom=0, disp_mode='fd',
             temperature=None, number_of_displacements=1, classical=False,
             ):
-        """ Get structures suggested with ALM or a random displacement 
-         
+        """ Return structures in which atoms are displaced with the given method,
+        ``disp_mode``.
+        
         order : int 
             1 (harmonic) or 2 (cubic)
-
-        disp_mode : strin
+        
+        disp_mode : string
             "fd" for finite displacement or
             "random_normalcoordinate" for random displacement in normal 
             coordinates
@@ -414,6 +426,12 @@ class AlmCalc():
             ):
         """ Calculate forces for harmonic or cubic IFCs.
         VASP output will be stored in self.out_dirs['harm/cube']['force'].
+        When the number of suggested patterns with ALM, nsuggest, is larger than
+        ``nmax_suggest``, LASSO will be used and atoms are displaced with a random 
+        displacement with normal coordinate at the given temperature. This
+        method is implemanted in displace.py, an Alamode tool. The number of 
+        the generated patterns for LASSO is 
+        max(int(``nsuggest`` * ``frac_nrandom`` + 0.5), ``nmax_suggest``).
         
         Args
         ======
@@ -448,6 +466,8 @@ class AlmCalc():
         border = "=" * (len(msg) + 2)
         print(msg)
         print(border)
+        
+        self._nmax_suggest = nmax_suggest
         
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
@@ -534,10 +554,12 @@ class AlmCalc():
     
     def calc_harmonic_force_constants(self, output=True):
         """ calculate harmonic FCs and return ALM 
+        
         Args
-        =========
+        -----
         output : bool
             If True, fcs.xml file is stored, if False, not.
+        
         """
         print("")
         print(" ### Calculate harmonic force constants")
@@ -599,6 +621,7 @@ class AlmCalc():
         mode = 'optimize'
         
         if self.lasso == False:
+            
             order = 2
             cutoffs = self.cutoffs[:2].copy()
 
@@ -606,7 +629,9 @@ class AlmCalc():
             out_dfset = self.out_dirs['result'] + '/' + output_files['cube_dfset']
             out_xml = self.out_dirs['result'] + '/' + output_files['cube_xml']
             offset_xml = self.out_dirs['cube']['force'] + '/prist/vasprun.xml'
+            
         else:
+            
             order = maxorder
             cutoffs = []
             n = self.num_elems
@@ -624,7 +649,7 @@ class AlmCalc():
             out_dfset = self.out_dirs['result'] + '/' + output_files['lasso_dfset']
             out_xml = self.out_dirs['result'] + '/' + output_files['lasso_xml']
             offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
-        
+            
         ## set nbody
         nbody = []
         for i in range(order):
@@ -642,7 +667,15 @@ class AlmCalc():
         
         ## get dfset
         disps, forces = get_dfset(
-                directory, offset_xml=offset_xml, outfile=out_dfset)
+                directory, 
+                offset_xml=offset_xml, 
+                outfile=out_dfset)
+        
+        ### [lasso] extract only required data
+        if self.lasso and self.nmax_suggest is not None:
+            if len(disps) > self.nmax_suggest:
+                disps = disps[:self.nmax_suggest]
+                forces = forces[:self.nmax_suggest]
         
         ## get fc2 and elem2
         fc2_values, elem2_indices = \
@@ -777,6 +810,7 @@ class AlmCalc():
     
     def run_anphon(self, propt=None, force=False):
         """ Run anphon
+        
         Args
         ---------
         propt : string
@@ -785,6 +819,7 @@ class AlmCalc():
         force : bool
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
+        
         """
         ## change directory
         dir_init = os.getcwd()
@@ -1042,9 +1077,9 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
     ###
     with ALM(lave, xcoord, kd) as alm:
         
-        alm.set_verbosity(verbosity)
         alm.define(order, cutoff_radii=cutoffs, nbody=nbody,
                 symmetrization_basis="Cartesian")
+        alm.set_verbosity(verbosity)
         
         if mode == 'suggest':
             info = alm.suggest()
@@ -1057,7 +1092,6 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             
         elif mode == 'optimize':
             
-            alm.set_verbosity(1)
             alm.displacements = displacements
             alm.forces = forces
             
@@ -1080,7 +1114,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
                 alm.optimize()
                 
                 ### prepare for optimization with lasso
-                optcontrol['linear_model'] = 0      ## change 2 -> 0
+                optcontrol['cross_validation'] = 0      ## change N -> 0
                 optcontrol['l1_alpha'] = alm.get_cv_l1_alpha()
                 alm.set_optimizer_control(optcontrol)
                 

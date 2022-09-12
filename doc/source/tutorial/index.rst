@@ -1,7 +1,6 @@
 Tutorial
 =================
 
-
 .. toctree::
     :glob:
 

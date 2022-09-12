@@ -2,18 +2,22 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../auto_alamode2'))
+#sys.path.insert(0, os.path.abspath('../../auto_alamode2/io'))
+#sys.path.insert(0, os.path.abspath('../../auto_alamode2/plot'))
+#sys.path.insert(0, os.path.abspath('../../auto_alamode2/plot/alamode'))
+#sys.path.insert(0, os.path.abspath('../../auto_alamode2/structure'))
+#sys.path.insert(0, os.path.abspath('../../auto_alamode2/alamode_tools'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 # -- Project information 
 
-project = 'aiida-alamode'
-copyright = '2021, M. Ohnishi'
+project = 'auto-alamode'
+copyright = '2022, M. Ohnishi'
 author = 'M. Ohnishi'
 
 # The full version, including alpha/beta/rc tags
-release = 'Sept. 13th, 2021'
-
+release = 'Sept. 13th, 2022'
 
 # -- General configuration 
 extensions = [

@@ -73,7 +73,7 @@ def main(options):
             nbody=[2,3,3,2], mag=0.01,
             nac=phdb.nac,
             command=command,
-            verbosity=0
+            verbosity=options.verbosity
             )
     
     ### ASE calculator for forces
@@ -82,34 +82,35 @@ def main(options):
             out_dirs['harm'][mode],
             phdb.get_kpoints(mode=mode).kpts[0]
             )
-
-    ### calculate forces for harmonic IFCs
+    
+    ### calculate forces for harmonic FCs
     almcalc.calc_forces(1, calc_force)
     almcalc.calc_harmonic_force_constants()
 
-    ##### calculate band and DOS
+    ### calculate band 
     almcalc.write_anphon_input(propt='band')
     almcalc.run_anphon(propt='band', force=True)
     
-    ##
+    ### calculate DOS
     almcalc.write_anphon_input(propt='dos')
     almcalc.run_anphon(propt='dos')
     almcalc.plot_bandos()
     
     ### Check negative frequency
-    if almcalc.frequency_range[0] < -0.001:
+    if almcalc.frequency_range[0] < options.negative_freq:
         print("")
         print(" Negative eigenvalues were found. Stop the calculation.")
+        print(" Minimum frequency : %.2f" % (almcalc.frequency_range[0]))
         print("")
         exit()
     
-    ### calculate forces for cubic IFCs
+    ### calculate forces for cubic FCs
     mode = 'force'
     almcalc.calc_forces(
             2, calc_force, 
             nmax_suggest=options.nmax_suggest,
             frac_nrandom=options.frac_nrandom,
-            temperature=500.,
+            temperature=options.random_disp_temperature,
             )
     
     almcalc.calc_anharm_force_constants()
@@ -123,18 +124,24 @@ if __name__ == '__main__':
     
     parser = OptionParser()
 
+    ### parameters which need to be modified for each.
     parser.add_option("-d", "--directory", dest="directory", type="string",
             default="../mp-149", help="directory of phonondb")
-
+    
     parser.add_option("--mpid", dest="mpid", type="string",
-            default="mp-149", help="material ID [mp-149]")
-
-    parser.add_option("--cutoff3", dest="cutoff3", type="float",
-            default=4.3, help="cutoff3, unit=Ang [4.3]")
+            default="mp-149", 
+            help="material ID, which is used for the name of directory [mp-149]")
     
     parser.add_option("-n", "--ncores", dest="ncores", type="int",
             default=2, help="ncores [2]")
-            
+    
+    parser.add_option("--verbosity", dest="verbosity", type="int",
+            default=1, help="verbosity [0]")
+    
+    ### parameters which may not need to be changed.
+    parser.add_option("--cutoff3", dest="cutoff3", type="float",
+            default=4.3, help="cutoff3, unit=Ang [4.3]")
+    
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=200, 
             help="Maximum number of suggested patterns for cubic FCs [200]")
@@ -144,7 +151,16 @@ if __name__ == '__main__':
             help="Ratio of the number of generated patterns with random "\
                     "displacement to the number for the suggested patterns "
                     "with ALM [0.02]")
-
+    
+    ### parameters which do not need to be changed.
+    parser.add_option("--nagative_freq", dest="negative_freq", type="float",
+            default=-0.001, help="threshold of negative frequency [-0.001]")
+            
+    parser.add_option("--random_disp_temperature", 
+            dest="random_disp_temperature", type="float",
+            default=500., 
+            help="temperature for random displacement [500]")
+            
     (options, args) = parser.parse_args()
 
     main(options)

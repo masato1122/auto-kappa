@@ -83,7 +83,7 @@ def get_dfset(directory, offset_xml=None, outfile=None):
             line += "  "
             line += "%20.13e " * 3 % tuple(f)
             all_lines.append(line)
-     
+        
     ##
     all_disps = np.asarray(all_disps)
     all_forces = np.asarray(all_forces)
