@@ -34,7 +34,8 @@ def main(options):
     
     ### command to run VASP jobs
     command = {
-            'mpirun': 'mpirun', 'nprocs': options.ncores, 
+            'mpirun': options.mpirun, 
+            'nprocs': options.ncores, 
             'nthreads': 1, 'vasp': 'vasp'
             }
     
@@ -64,7 +65,7 @@ def main(options):
     
     ### Set AlmCalc
     command = {
-            'mpirun': 'mpirun', 'nprocs': 1, 
+            'mpirun': options.mpirun, 'nprocs': 1, 
             'nthreads': options.ncores, 'anphon': 'anphon'
             }
     almcalc = AlmCalc(
@@ -134,6 +135,9 @@ if __name__ == '__main__':
     parser.add_option("--mpid", dest="mpid", type="string",
             default="mp-149", 
             help="material ID, which is used for the name of directory [mp-149]")
+    
+    parser.add_option("--mpirun", dest="mpirun", type="string",
+            default="mpirun", help="MPI command [mpirun]")
     
     parser.add_option("-n", "--ncores", dest="ncores", type="int",
             default=2, help="ncores [2]")
