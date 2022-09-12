@@ -1,7 +1,7 @@
 Auto-ALAMODE2
 =====================
 
-Version 0.0.0
+Version 0.0
 ---------------
 
 Auto_ALAMODE2 is a software for an automated calculation of thermal conductivity with VASP and ALAMODE.
