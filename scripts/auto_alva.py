@@ -2,10 +2,13 @@
 import numpy as np
 from optparse import OptionParser
 
+from auto_alamode2.cui.scripts import start_aa2
 from auto_alamode2.io.phonondb import Phonondb
 from auto_alamode2.apdb import ApdbVasp
 from auto_alamode2.almcalc import AlmCalc
 from auto_alamode2 import output_directories
+
+start_aa2()
 
 def main(options):
     
