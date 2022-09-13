@@ -368,6 +368,12 @@ class AlmCalc():
                     (disp_mode))
             exit()
         
+        ### error
+        if all_disps is None:
+            msg = "\n Error: Failed to obtain displacement patterns.\n"
+            print(msg)
+            exit()
+
         ## get pristine structure
         structures = {}
         structures['prist'] = structure.copy()
@@ -393,13 +399,33 @@ class AlmCalc():
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
         
+        ###########################################################
+        ###########################################################
+        ###########################################################
+        ##
+        ## This part need to be fixed.
+        ##
+        #print(self.scell_matrix)
+        #print(self.primitive.get_positions()[:5])
+        #print(self.supercell.get_positions()[:5])
+        #print(self.supercell.cell)
+        #aa = np.dot(self.supercell.cell, np.linalg.inv(self.primitive.cell))
+        #print(aa)
+        #exit()
+        #file_prim = "./mp-160/harm/force/prist/POSCAR"
         almdisp = AlamodeDisplace(
                 'random_normalcoordinate', codeobj,
                 file_evec=file_evec,
+                #file_primitive=file_prim,
                 primitive=self.primitive,
                 verbosity=self.verbosity
                 )
-        
+        if almdisp is None:
+            return None
+        ###########################################################
+        ###########################################################
+        ###########################################################
+
         msg = "\n"
         msg += " Generate random displacements with an Alamode tool\n"
         msg += "\n"

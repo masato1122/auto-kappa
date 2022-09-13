@@ -58,3 +58,15 @@ Installation of ALM
     $ python setup.py install
     
 
+Modification of .bash_profile
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Add the following line. In the directory, potpaw_PBE exists.
+
+.. code-block:: bash
+
+    $ export VASP_PP_PATH=$HOME/.../.../Potentials
+    
+    $ source activate alm
+
+

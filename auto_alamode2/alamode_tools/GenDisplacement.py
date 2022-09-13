@@ -663,10 +663,19 @@ class AlamodeDisplace(object):
                     if found_nnp:
                         convertor[i, j] = np.sign(convertor[i, j]) / float(nnp)
                     else:
-                        raise RuntimeError("Failed to express the inverse transformation matrix"
-                                           "by using fractional numbers.\n\n"
-                                           "Please make sure that the lattice parameters of \n"
-                                           "the supercell and primitive cell are consistent.\n")
+                        #raise RuntimeError("Failed to express the inverse transformation matrix"
+                        #                   "by using fractional numbers.\n\n"
+                        #                   "Please make sure that the lattice parameters of \n"
+                        #                   "the supercell and primitive cell are consistent.\n")
+                        msg = "Failed to express the inverse transformation " \
+                            "matrix by using fractional numbers.\n\n" \
+                            "Please make sure that the lattice parameters of \n"\
+                            "the supercell and primitive cell are consistent.\n"
+                        print("")
+                        print(msg)
+                        print("")
+                        ### Added to avoid a bug
+                        exit()
 
         comb = []
         for Lx in range(nmax):

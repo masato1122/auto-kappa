@@ -17,7 +17,8 @@ setup(name='auto_alamode2',
       packages=packages_pyscat,
       requires=[
           'numpy', 'ALM', 'phonopy', 'spglib', 
-          'ase', 'pymatgen', 'custodian'
+          'ase', 'pymatgen', 'custodian',
+          'monty', 'xmltodict',
           ],
       url='https://github.com/masato1122/auto_alamode2.git',
       license='MIT',
