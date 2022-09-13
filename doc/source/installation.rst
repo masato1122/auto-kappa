@@ -60,6 +60,7 @@ Setting for VASP with pymatgen
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add the following line. In the directory, potpaw_PBE exists.
+See https://pymatgen.org/installation.html#potcar-setup for details.
 
 .. code-block:: bash
     
