@@ -647,7 +647,7 @@ class AlmCalc():
         mode = 'optimize'
         
         if self.lasso == False:
-            
+
             order = 2
             cutoffs = self.cutoffs[:2].copy()
 
@@ -676,6 +676,12 @@ class AlmCalc():
             out_xml = self.out_dirs['result'] + '/' + output_files['lasso_xml']
             offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
             
+        ### print    
+        msg = "\n"
+        msg += " ### Calculate anharmonic FCs (order=%d)\n" % (order)
+        msg += "\n"
+        print(msg)
+        
         ## set nbody
         nbody = []
         for i in range(order):
