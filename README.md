@@ -32,4 +32,5 @@ To Do
 
 * LASSO with a command, but not from python
 * Log using logger?
+* Primitive cell with an atom may lead to an error of the treatment of crystal structure such as Born effective charge.
 

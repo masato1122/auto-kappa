@@ -81,11 +81,11 @@ Installation of ALM
     $ cd ./python
     $ python setup.py install
 
-For Grand-Chariot, the following line may need to be added in setup.py.
-
-.. code-block:: bash
-
-    os.environ["CC"] = /usr/bin/gcc
+.. For Grand-Chariot, the following line may need to be added in setup.py.
+.. 
+.. .. code-block:: bash
+.. 
+..     os.environ["CC"] = /usr/bin/gcc
 
 
 Modification of .bash_profile
