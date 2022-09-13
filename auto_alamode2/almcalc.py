@@ -892,7 +892,7 @@ class AlmCalc():
         
         ## prepare command and environment
         logfile = propt + '.log'
-        cmd = "%s -np %d %s %s" %(
+        cmd = "%s -n %d %s %s" %(
                 self.command['mpirun'],
                 self.command['nprocs'], 
                 self.command['anphon'],

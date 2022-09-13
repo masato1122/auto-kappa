@@ -14,6 +14,7 @@ Aiida-phonopy has been developped under the following conditions.
 * ase v3.22.1
 * spglib v1.16.5
 * seekpath
+* mkl
 
 Preparation
 -------------
@@ -54,9 +55,11 @@ Installation of ALM
 .. code-block:: bash
     
     $ git clone https://github.com/ttadano/ALM.git
-    $ cd ./ALM/python
+    $ cd ./ALM
+    $ git pull
+    $ cd ./python
     $ python setup.py install
-    
+
 
 Modification of .bash_profile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
