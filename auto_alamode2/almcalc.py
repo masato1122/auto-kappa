@@ -962,7 +962,10 @@ class AlmCalc():
 
     def plot_kappa(self):
         
-        fn_kappa = self.out_dirs['cube']['kappa'] + '/' + self.prefix + '.kl'
+        if self.lasso == False:
+            fn_kappa = self.out_dirs['cube']['kappa'] + '/' + self.prefix + '.kl'
+        else:
+            fn_kappa = self.out_dirs['lasso']['kappa'] + '/' + self.prefix + '.kl'
         
         figname = self.out_dirs['result'] + '/fig_kappa.png'
         

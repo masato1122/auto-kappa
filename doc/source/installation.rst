@@ -14,7 +14,6 @@ Aiida-phonopy has been developped under the following conditions.
 * ase v3.22.1
 * spglib v1.16.5
 * seekpath
-* mkl
 
 Preparation
 -------------
@@ -26,13 +25,21 @@ Installation of python libraries
 
 .. code-block:: bash
 
-    $ conda create -n alm python=3.7
+    $ conda create -n alm python=3.8.13
+    $ conda activate alm
     $ pip install pymatgen 
     $ conda install -c conda-forge phonopy
     $ pip install ase
     $ pip install seekpath
-    $ pip isntall custodian
+    $ pip install custodian
     $ conda install -c conda-forge eigen
+    $ conda install -c conda-forge gcc
+    $ pip install xmltodict
+    $
+    $ conda install -c conda-forge mkl
+    $
+    $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
+
 
 .. Installation of Eigen
 .. ^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,6 +56,20 @@ Installation of python libraries
 .. * Check /home/*****/usr/local/include/eigen3
 
 
+Setting for VASP with pymatgen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Add the following line. In the directory, potpaw_PBE exists.
+
+.. code-block:: bash
+    
+    $ cat ~/.bash_profile
+    
+    ...
+    export VASP_PP_PATH=$HOME/.../.../Potentials
+    ...
+
+
 Installation of ALM
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -60,16 +81,20 @@ Installation of ALM
     $ cd ./python
     $ python setup.py install
 
+For Grand-Chariot, the following line may need to be added in setup.py.
+
+.. code-block:: bash
+
+    os.environ["CC"] = /usr/bin/gcc
+
 
 Modification of .bash_profile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Add the following line. In the directory, potpaw_PBE exists.
-
-.. code-block:: bash
-
-    $ export VASP_PP_PATH=$HOME/.../.../Potentials
     
-    $ source activate alm
+You may also need to add .../alm/lib in LD_LIBRARY_PATH.
+
+.. conda-block:: bash
+    
 
 
