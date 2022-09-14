@@ -1129,8 +1129,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
     ###
     with ALM(lave, xcoord, kd) as alm:
         
-        alm.define(order, cutoff_radii=cutoffs, nbody=nbody,
-                symmetrization_basis="Cartesian")
+        alm.define(order, cutoff_radii=cutoffs, nbody=nbody)
         alm.set_verbosity(verbosity)
         
         if mode == 'suggest':
