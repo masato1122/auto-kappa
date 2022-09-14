@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    auto_alamode2.alamode_tools
+   auto_alamode2.cui
    auto_alamode2.io
    auto_alamode2.plot
    auto_alamode2.structure
