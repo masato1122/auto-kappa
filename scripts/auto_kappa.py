@@ -116,7 +116,8 @@ def main(options):
             frac_nrandom=options.frac_nrandom,
             temperature=options.random_disp_temperature,
             )
-    
+    if almcalc.lasso:
+        exit()
     almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
