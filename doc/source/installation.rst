@@ -67,7 +67,7 @@ See https://pymatgen.org/installation.html#potcar-setup for details.
     $ cat ~/.bash_profile
     
     ...
-    export VASP_PP_PATH=$HOME/.../.../Potentials
+    export VASP_PP_PATH=(directory in which pbesol_PBE is located.)
     ...
 
 
@@ -76,6 +76,7 @@ Installation of ALM
 
 .. code-block:: bash
     
+    $ source activate alm
     $ git clone https://github.com/ttadano/ALM.git
     $ cd ./ALM
     $ git pull

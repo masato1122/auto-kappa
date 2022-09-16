@@ -1,7 +1,9 @@
 """
 To Do
 =============
-1. LASSO may need to be used with alm command, but not from python command.
+1. alm may be faster than ALM.
+* LASSO may need to be used with alm command, but not from python command.
+
 2. Use different (larger) supercell size for 3rd-order force constants
 
 """
@@ -1203,18 +1205,6 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             ## lasso
             if lasso:
                 
-                print("")
-                print("=========================================")
-                print("")
-                print("")
-                print("             LASSO")
-                print("", os.environ['OMP_NUM_THREADS'])
-                print("")
-                print("")
-                print("=========================================")
-                print("")
-                print("")
-
                 ### cross-validation
                 optcontrol = {'linear_model': 2,
                               'cross_validation': 5,

@@ -8,9 +8,9 @@ from auto_alamode2.apdb import ApdbVasp
 from auto_alamode2.almcalc import AlmCalc
 from auto_alamode2 import output_directories
 
-start_aa2()
-
 def main(options):
+    
+    start_aa2()
     
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
@@ -118,7 +118,8 @@ def main(options):
             temperature=options.random_disp_temperature,
             )
     
-    #if almcalc.lasso:
+    if almcalc.lasso:
+        exit()
     #    for propt in ['cv', 'lasso']:
     #        almcalc.write_alm_input(propt=propt)
     #        almcalc.run_alm(propt)
