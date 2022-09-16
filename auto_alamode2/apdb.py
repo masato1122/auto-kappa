@@ -10,7 +10,7 @@ from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from ase.build import make_supercell
 from .structure.format import change_structure_format
-from .structure.ase import get_primitive
+from .structure.crystal import get_primitive
 from .calculator import run_vasp
 from .io.vasp import print_vasp_params
 
@@ -34,12 +34,17 @@ class ApdbVasp():
         self.scell_matrix = scell_matrix
         
         ### prepare dictionaries for structures
-        self.original_structure = {
-                'prim': get_primitive(unitcell, primitive_matrix),
-                'unit': unitcell.copy(),
-                'scell': make_supercell(unitcell, scell_matrix),
-                }
+        self.original_structure = {'prim': None, 'unit': None, 'scell': None}
         
+        if primitive_matrix is not None:
+            self.original_structure['prim'] = get_primitive(unitcell, primitive_matrix)
+        
+        self.original_structure['unit'] = unitcell.copy()
+        
+        if scell_matrix is not None:
+            self.original_structure['scell'] = make_supercell(unitcell, scell_matrix)
+        
+        ###
         self.relaxed_structure = {
                 'prim': None,
                 'unit': None,

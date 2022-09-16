@@ -77,6 +77,7 @@ def main(options):
             nbody=[2,3,3,2], mag=0.01,
             nac=phdb.nac,
             command=command,
+            ncores=options.ncores,
             verbosity=options.verbosity
             )
     
@@ -116,8 +117,13 @@ def main(options):
             frac_nrandom=options.frac_nrandom,
             temperature=options.random_disp_temperature,
             )
-    if almcalc.lasso:
-        exit()
+    
+    #if almcalc.lasso:
+    #    for propt in ['cv', 'lasso']:
+    #        almcalc.write_alm_input(propt=propt)
+    #        almcalc.run_alm(propt)
+    #        exit()
+    
     almcalc.calc_anharm_force_constants()
     
     ### calculate kappa

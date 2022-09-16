@@ -10,6 +10,7 @@ import os
 import numpy as np
 import warnings
 import logging
+import datetime
 
 import ase, pymatgen
 from ase.build import make_supercell
@@ -23,7 +24,7 @@ from .io.vasp import wasfinished, get_dfset, print_vasp_params
 from .calculator import run_vasp
 
 from .io.vasp import write_born_info
-from .io.alm import AnphonInput
+from .io.alm import AlmInput, AnphonInput
 
 class AlmCalc():
     
@@ -32,7 +33,8 @@ class AlmCalc():
             scell_matrix3=None,
             cutoffs=None, nbody=[2,3,3,2], mag=0.01,
             cutoff2=-1, cutoff3=4.3, 
-            nac=None, 
+            nac=None,
+            ncores=1,
             verbosity=0,
             command={
                 'mpirun': 'mpirun', "nprocs": 1, 
@@ -162,6 +164,8 @@ class AlmCalc():
         self._nmax_suggest = None
 
         self._command = command
+
+        self._ncores = ncores
         
         ###
         self._prefix = None      ## prefix for input files
@@ -169,6 +173,13 @@ class AlmCalc():
         
         self.verbosity = verbosity
     
+    @property
+    def ncores(self):
+        return self._ncores
+    
+    #@ncores.setter
+    #def ncores
+
     @property
     def command(self):
         return self._command
@@ -428,6 +439,7 @@ class AlmCalc():
 
         msg = "\n"
         msg += " Generate random displacements with an Alamode tool\n"
+        msg += " " + str(datetime.datetime.now()) + "\n"
         msg += "\n"
         msg += " %d patterns will be generated.\n" % (number_of_displacements)
         msg += "\n"
@@ -587,8 +599,11 @@ class AlmCalc():
             If True, fcs.xml file is stored, if False, not.
         
         """
-        print("")
-        print(" ### Calculate harmonic force constants")
+        msg = "\n"
+        msg += " ### Calculate harmonic force constants\n"
+        msg += " " + str(datetime.datetime.now()) + "\n"
+        msg += "\n"
+        print(msg)
         
         ### prepare directory and file names
         os.makedirs(self.out_dirs['result'], exist_ok=True)
@@ -624,6 +639,7 @@ class AlmCalc():
         
         ## calculate force constants
         ## out = [fc2_values, elem2_indices]
+        os.environ['OMP_NUM_THREADS'] = str(self.ncores)
         out = run_alm(
                 structure, 1, self.cutoffs[0], [self.nbody[0]], 
                 mode='optimize',
@@ -631,6 +647,7 @@ class AlmCalc():
                 outfile=out_xml,
                 verbosity=self.verbosity
                 )
+        os.environ.pop('OMP_NUM_THREADS', None)
         return out
      
     def calc_anharm_force_constants(self, maxorder=5):
@@ -679,6 +696,7 @@ class AlmCalc():
         ### print    
         msg = "\n"
         msg += " ### Calculate anharmonic FCs (order=%d)\n" % (order)
+        msg += " " + str(datetime.datetime.now()) + "\n"
         msg += "\n"
         print(msg)
         
@@ -718,14 +736,42 @@ class AlmCalc():
         
         ## 3rd order model
         ## out = [fcs_values, fcs_indices]
+        os.environ['OMP_NUM_THREADS'] = str(self.ncores)
         out = run_alm(
                 structure, order, cutoffs, nbody, mode='optimize',
                 displacements=disps, forces=forces,
                 fc2info=[fc2_values, elem2_indices],
                 outfile=out_xml, lasso=self.lasso,
                 verbosity=self.verbosity)
-        
+        os.environ.pop('OMP_NUM_THREADS', None)
         return out
+    
+    
+    def write_alm_input(self, propt='lasso', maxorder=5, **kwargs):
+        """ Write an input file for Alm
+    
+        Args
+        ------
+        propt : string
+            "cv", "lasso", ...
+        
+        """
+        
+        fc2xml = '../../result/' + output_files['harm_xml']
+        
+        ## set input file for anphon
+        alminp = AlmInput.from_structure(
+                self.supercell,
+                norder=maxorder,
+                fc2xml=fc2xml,
+                #nonanalytic=self.nac, borninfo=borninfo
+            )
+
+        outfile = propt + '.in'
+        alminp.to_file(outfile)
+        print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE") 
+        exit()
+
     
     def write_anphon_input(self, propt='band', kpts=[15,15,15], **kwargs):
         """ Write Anphon Input
@@ -1157,6 +1203,18 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             ## lasso
             if lasso:
                 
+                print("")
+                print("=========================================")
+                print("")
+                print("")
+                print("             LASSO")
+                print("", os.environ['OMP_NUM_THREADS'])
+                print("")
+                print("")
+                print("=========================================")
+                print("")
+                print("")
+
                 ### cross-validation
                 optcontrol = {'linear_model': 2,
                               'cross_validation': 5,
