@@ -18,7 +18,7 @@ setup(name='auto_alamode2',
       requires=[
           'numpy', 'ALM', 'phonopy', 'spglib', 
           'ase', 'pymatgen', 'custodian',
-          'xmltodict', 'mkl',
+          'xmltodict', 'mkl', 'f90nml'
           ],
       url='https://github.com/masato1122/auto_alamode2.git',
       license='MIT',
