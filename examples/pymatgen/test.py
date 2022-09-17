@@ -2,7 +2,7 @@
 from pymatgen.io.vasp.sets import MPRelaxSet
 from pymatgen.core import Structure
 
-s = Structure.from_file("POSCAR.orig")
+s = Structure.from_file("POSCAR.GaSmO")
 #print(s)
 
 mpr = MPRelaxSet(s)
