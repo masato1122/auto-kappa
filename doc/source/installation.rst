@@ -56,11 +56,11 @@ Installation of python libraries
 .. * Check /home/*****/usr/local/include/eigen3
 
 
-Setting for VASP with pymatgen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Setting for POTCAR with ASE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add the following line. In the directory, potpaw_PBE exists.
-See https://pymatgen.org/installation.html#potcar-setup for details.
+See https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html for details.
 
 .. code-block:: bash
     
@@ -70,6 +70,19 @@ See https://pymatgen.org/installation.html#potcar-setup for details.
     export VASP_PP_PATH=(directory in which pbesol_PBE is located.)
     ...
 
+Setting for POTCAR with pymatgen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+See https://pymatgen.org/installation.html#potcar-setup for details.
+
+.. code-block:: bash
+    
+    $ cat .pmgrc.yaml
+    
+    ...
+    PMG_VASP_PSP_DIR: (directory in which POT_GGA_PAW_PBE is located.)
+    PMG_MAPI_KEY: **********
+    ...
 
 Installation of ALM
 ^^^^^^^^^^^^^^^^^^^^
