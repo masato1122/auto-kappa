@@ -33,7 +33,8 @@ To Do and questions
 * Calculate only materials wihout negative frequencies!!
 * LASSO with a command which may be faster than ALM python package
 * Check non-analytical term (e.g. 5504, 5637): 
-Use dataset (displacements and forces) in phonondb and calculate phonon dispersion with Alamode.
+Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
+Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
 * Make directories, alamode and vasp, for the future expansion to other software
 * Obtain maximum frequency automatically for DOS
 * How to output log during the simulation (with logger?)
