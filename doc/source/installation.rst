@@ -1,8 +1,9 @@
+==============
 Installation
 ==============
 
 Requirements
--------------
+=============
 
 Aiida-phonopy has been developped under the following conditions.
 
@@ -16,16 +17,16 @@ Aiida-phonopy has been developped under the following conditions.
 * seekpath
 
 Preparation
--------------
+============
 
 * Download all the data of phonondb in .../phonondb-20180417/mp-***.
 
 Installation of python libraries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 .. code-block:: bash
 
-    $ conda create -n alm python=3.8.13
+    $ conda create -n alm python=3.8
     $ conda activate alm
     $ pip install pymatgen 
     $ conda install -c conda-forge phonopy
@@ -57,35 +58,32 @@ Installation of python libraries
 
 
 Setting for POTCAR with ASE
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Add the following line. In the directory, potpaw_PBE exists.
-See https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html for details.
+See the following pages for details:
+`1 (ASE) <https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html>`_ and
+`2 (pymatgen <https://pymatgen.org/installation.html#potcar-setup>`_.
 
 .. code-block:: bash
     
     $ cat ~/.bash_profile
     
     ...
-    export VASP_PP_PATH=(directory in which pbesol_PBE is located.)
+    export VASP_PP_PATH=(directory in which potpaw_PBE is located.)
     ...
-
-Setting for POTCAR with pymatgen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See https://pymatgen.org/installation.html#potcar-setup for details.
 
 .. code-block:: bash
     
     $ cat .pmgrc.yaml
     
     ...
-    PMG_VASP_PSP_DIR: (directory in which POT_GGA_PAW_PBE is located.)
+    PMG_VASP_PSP_DIR: (directory in which potpaw_PBE is located.)
     PMG_MAPI_KEY: **********
     ...
 
 Installation of ALM
-^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 .. code-block:: bash
     
@@ -104,12 +102,12 @@ Installation of ALM
 
 
 Modification of .bash_profile
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
-    
-You may also need to add .../alm/lib in LD_LIBRARY_PATH.
+You may also need to add (CODA_PREFIX)/alm/lib in LD_LIBRARY_PATH.
 
-.. conda-block:: bash
+.. .. code-block:: bash
+
     
 
 

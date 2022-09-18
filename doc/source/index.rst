@@ -12,5 +12,6 @@ aiida-alamode
 
     installation
     tutorial/index
+    parameters
     aa2
 

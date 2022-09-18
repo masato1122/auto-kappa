@@ -119,11 +119,10 @@ def main(options):
             )
     
     if almcalc.lasso:
-        exit()
-    #    for propt in ['cv', 'lasso']:
-    #        almcalc.write_alm_input(propt=propt)
+        for propt in ['cv', 'lasso']:
+            almcalc.write_alamode_input(propt=propt)
     #        almcalc.run_alm(propt)
-    #        exit()
+            exit()
     
     almcalc.calc_anharm_force_constants()
     

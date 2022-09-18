@@ -4,14 +4,6 @@ structure package
 Submodules
 ----------
 
-structure.ase module
---------------------
-
-.. automodule:: structure.ase
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 structure.crystal module
 ------------------------
 

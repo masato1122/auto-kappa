@@ -213,7 +213,7 @@ class AlmInput(MSONable, dict):
             if self['norder'] >= 4:
                 if _check_dict_contents(
                         self.as_dict(), 'nbody', message=False) == False:
-                    self['nbody'] = np.arange(2, self['norder']+1)
+                    self['nbody'] = list(np.arange(2, self['norder']+1))
         except:
             pass
         

@@ -4,14 +4,6 @@ auto\_alamode2.structure package
 Submodules
 ----------
 
-auto\_alamode2.structure.ase module
------------------------------------
-
-.. automodule:: auto_alamode2.structure.ase
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 auto\_alamode2.structure.crystal module
 ---------------------------------------
 

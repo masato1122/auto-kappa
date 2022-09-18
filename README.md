@@ -27,10 +27,25 @@ ALAMODE:
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
 
-To Do
---------
+To Do and questions
+--------------------
 
-* LASSO with a command, but not from python
-* Log using logger?
-* Primitive cell with an atom may lead to an error of the treatment of crystal structure such as Born effective charge.
+* Calculate only materials wihout negative frequencies!!
+* LASSO with a command which may be faster than ALM python package
+* Check non-analytical term (e.g. 5504, 5637): 
+Use dataset (displacements and forces) in phonondb and calculate phonon dispersion with Alamode.
+* Make directories, alamode and vasp, for the future expansion to other software
+* Obtain maximum frequency automatically for DOS
+* How to output log during the simulation (with logger?)
+* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
+such as Born effective charge.
+* How were the supercell size and k-mesh decided for Phonondb?
+* Claculate kappa with different k-points and extrapolate?
+* Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
+* Output analysis conditions (with json?)
+* Compression of results
+
+* Summary of output results including fitting error, etc.
+
+* Automated creation of the homepage with Sphinx
 

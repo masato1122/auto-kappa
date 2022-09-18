@@ -33,7 +33,7 @@ class AlmCalc():
     def __init__(self, prim_given, mpid='mp', 
             scell_matrix=None, primitive_matrix=None,
             scell_matrix3=None,
-            cutoffs=None, nbody=[2,3,3,2], mag=0.01,
+            cutoffs=None, nbody=[2,3,3,2,2], mag=0.01,
             cutoff2=-1, cutoff3=4.3, 
             nac=None,
             ncores=1,
@@ -111,7 +111,7 @@ class AlmCalc():
         >>>     )
         >>> almcalc.calc_forces(1, calc_force)
         >>> almcalc.calc_harmonic_force_constants()
-        >>> almcalc.write_anphon_input(propt='dos')
+        >>> almcalc.write_alamode_input(propt='dos')
         >>> almcalc.run_anphon(propt='dos')
         """
         ### output directories
@@ -365,7 +365,7 @@ class AlmCalc():
             
             ### 
             propt = 'evec_commensurate'
-            self.write_anphon_input(propt=propt)
+            self.write_alamode_input(propt=propt)
             self.run_anphon(propt=propt)
 
             ###
@@ -516,8 +516,8 @@ class AlmCalc():
         nsuggest =  len(structures)
         
         ###
-        msg = "Number of the suggested structures with ALM : %d" % (nsuggest)
-        print("\n", msg)
+        msg = "\nNumber of the suggested structures with ALM : %d\n" % (nsuggest)
+        print(msg)
         
         ### output directory
         if directory is not None:
@@ -749,33 +749,36 @@ class AlmCalc():
         return out
     
     
-    def write_alm_input(self, propt='lasso', maxorder=5, **kwargs):
-        """ Write an input file for Alm
-    
-        Args
-        ------
-        propt : string
-            "cv", "lasso", ...
-        
-        """
-        
-        fc2xml = '../../result/' + output_files['harm_xml']
-        
-        ## set input file for anphon
-        alminp = AlmInput.from_structure(
-                self.supercell,
-                norder=maxorder,
-                fc2xml=fc2xml,
-                #nonanalytic=self.nac, borninfo=borninfo
-            )
+    #def write_alm_input(self, propt='lasso', maxorder=5, **kwargs):
+    #    """ Write an input file for Alm
+    #
+    #    Args
+    #    ------
+    #    propt : string
+    #        "cv", "lasso", ...
+    #    
+    #    """
+    #    fc2xml = '../../result/' + output_files['harm_xml']
+    #
+    #    ### prepare parameters
+    #    if propt == 'lasso' or propt == 'cv':
+    #        dir_work = self.out_dirs['lasso'][propt]
+    #        mode = 'optimize'
+    #    
+    #    ## set input file for anphon
+    #    alminp = AlmInput.from_structure(
+    #            self.supercell,
+    #            norder=maxorder,
+    #            fc2xml=fc2xml,
+    #            #nonanalytic=self.nac, borninfo=borninfo
+    #        )
+    #
+    #    outfile = propt + '.in'
+    #    alminp.to_file(outfile)
+    #    print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE") 
+    #    exit()
 
-        outfile = propt + '.in'
-        alminp.to_file(outfile)
-        print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE") 
-        exit()
-
-    
-    def write_anphon_input(self, propt='band', kpts=[15,15,15], **kwargs):
+    def write_alamode_input(self, propt='band', kpts=[15,15,15], **kwargs):
         """ Write Anphon Input
 
         Args
@@ -786,24 +789,41 @@ class AlmCalc():
         kpts : list of int, shape=(3)
             k-points
         """ 
-        ## prepare filenames
+        ### prepare filenames
         if propt == 'band' or propt == 'dos':
+            
             dir_work = self.out_dirs['harm']['bandos']
             fcsxml = '../../result/' + output_files['harm_xml']
             mode = 'phonons'
+            alamode_type = 'anphon'
+
         elif propt == 'evec_commensurate':
+            
             dir_work = self.out_dirs['lasso']['evec']
             fcsxml = '../../result/' + output_files['harm_xml']
             mode = 'phonons'
+            alamode_type = 'anphon'
+        
         elif propt == 'kappa':
+            
             if self.lasso == False:
                 dir_work = self.out_dirs['cube']['kappa']
                 fcsxml = '../../result/' + output_files['cube_xml']
             else:
                 dir_work = self.out_dirs['lasso']['kappa']
                 fcsxml = '../../result/' + output_files['lasso_xml']
+            
             mode = 'RTA'
+            alamode_type = 'anphon'
 
+        elif propt == 'lasso' or propt == 'cv':
+            
+            dir_work = self.out_dirs['lasso'][propt]
+            dfset = '../../result/' + output_files['lasso_dfset']
+            fc2xml = '../../result/' + output_files['harm_xml']
+            mode = 'optimize'
+            alamode_type = 'alm'
+        
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
         
@@ -821,49 +841,60 @@ class AlmCalc():
         else:
             borninfo = None
         
-        ## property
+        ## set kpmode
+        kpmode = None
         if propt == 'band':
             kpmode = 1
         elif propt == 'dos' or propt == 'kappa':
             kpmode = 2
         elif propt == 'evec_commensurate':
             kpmode = 0
-        else:
-            print(" Error: \"%s\" is not supported." % propt)
-            exit()
         
-        ## set input file for anphon
-        anpinp = AnphonInput.from_structure(
-                self.primitive,
-                mode=mode,
-                kpmode=kpmode,
-                fcsxml=fcsxml,
-                nonanalytic=self.nac, borninfo=borninfo
-            )
+        if alamode_type == 'anphon':
+            
+            ### set input file for anphon
+            inp = AnphonInput.from_structure(
+                    self.primitive,
+                    mode=mode,
+                    kpmode=kpmode,
+                    fcsxml=fcsxml,
+                    nonanalytic=self.nac, borninfo=borninfo
+                )
         
-        ### set primitive cell 
-        anpinp.set_primitive(
-                change_structure_format(
-                    self.primitive, format="pymatgen-structure"
+            ### set primitive cell with Pymatgen-structure
+            inp.set_primitive(
+                    change_structure_format(
+                        self.primitive, format="pymatgen-structure"
+                        )
                     )
+        
+        elif alamode_type == 'alm':
+            
+            ### set input file for alm
+            inp = AlmInput.from_structure(
+                    self.supercell,
+                    mode=mode,
+                    dfset=dfset,
+                    fc2xml=fc2xml,
+                    nonanalytic=self.nac, borninfo=borninfo
                 )
         
         ###
-        self._prefix = anpinp['prefix']
+        self._prefix = inp['prefix']
          
         ## set kpoints and write a file
         filename = dir_work + '/' + propt + '.in'
         if propt == 'band':
             
-            anpinp.set_kpoint(deltak=0.01)
-            anpinp.to_file(filename=filename)
+            inp.set_kpoint(deltak=0.01)
+            inp.to_file(filename=filename)
         
         elif propt == 'dos':
             
-            anpinp.update({'kpts': kpts})
+            inp.update({'kpts': kpts})
             
-            anpinp.update({'pdos': 1})
-            anpinp.to_file(filename=filename)
+            inp.update({'pdos': 1})
+            inp.to_file(filename=filename)
         
         elif propt == 'evec_commensurate':
    
@@ -873,22 +904,55 @@ class AlmCalc():
             ### commensurate points
             from .structure.crystal import get_commensurate_points
             comm_pts = get_commensurate_points(smat)
-            anpinp.update({'printevec': 1})
-            anpinp.set_kpoint(kpoints=comm_pts)
-            anpinp.to_file(filename=filename)
+            inp.update({'printevec': 1})
+            inp.set_kpoint(kpoints=comm_pts)
+            inp.to_file(filename=filename)
         
         elif propt == 'kappa':
             
-            anpinp.update({'kpts': kpts})
-            anpinp.update({'nac':  self.nac})
-            anpinp.update({'isotope': 2})
-            anpinp.update({'kappa_coherent': 1})
-            anpinp.update({'restart': 0})
-            anpinp.update({'tmin': 50})
-            anpinp.update({'tmax': 1000})
-            anpinp.update({'dt': 50})
-            anpinp.to_file(filename=filename)
+            inp.update({'kpts': kpts})
+            inp.update({'nac':  self.nac})
+            inp.update({'isotope': 2})
+            inp.update({'kappa_coherent': 1})
+            inp.update({'restart': 0})
+            inp.update({'tmin': 50})
+            inp.update({'tmax': 1000})
+            inp.update({'dt': 50})
+            inp.to_file(filename=filename)
         
+        elif propt == 'cv' or propt == 'lasso':
+            
+            """
+            To Do
+            ======
+
+            * Adjust this part
+            * set nbody and cutoffs
+            
+            """
+            inp.update({'norder': 5})
+            
+            inp.update({'lmodel': 'enet'})
+            inp.update({'maxiter': 1000})
+            inp.update({'conv_tol': 1e-10})
+            inp.update({'l1_ratio': 1.0})
+            if propt == 'cv':
+                inp.update({'cv': 5})
+                inp.update({'cv_minalpha': 1e-8})
+                inp.update({'cv_maxalpha': 1e-2})
+                inp.update({'cv_nalpha': 50})
+            elif propt == 'lasso':
+                inp.update({'cv': 0})
+                inp.update({'l1_alpha': None})      ### read l1_alpha
+            
+            inp.to_file(filename=filename)
+            
+            print("")
+            print(" Output", filename)
+            print("")
+            print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE")
+            exit()
+
         else:
             print(" Error: %s is not supported." % propt)
             exit()

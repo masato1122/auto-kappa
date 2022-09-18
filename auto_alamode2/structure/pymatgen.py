@@ -1,7 +1,3 @@
-# Copyright (c) aiida-alamode Team.
-# Distributed under the terms of the MIT License.
-# Written by M. Ohnishi
-
 import numpy as np
 import spglib
 import warnings
@@ -33,7 +29,7 @@ def get_primitive_structure(structure, symprec=1e-5):
     print("")
     print(" WARNING: get_primitive_structure may not work properly!!!")
     print("")
-
+    
     ## make a cell parameter
     cell = (cell, scaled_positions, numbers)
     

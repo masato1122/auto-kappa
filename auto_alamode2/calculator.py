@@ -155,53 +155,7 @@ def get_enmax(ppp_list):
     enmaxes = np.asarray(enmaxes)
     return np.max(enmaxes)
 
-#def get_calculator(
-#        xc=default_vaspcalc_parameters['xc'], 
-#        outdir='./out',
-#        print_comment=True
-#        ):
-#    ##skipifexists=True,
-#    """ Calculator with ASE 
-#    Example
-#    ==============
-#    >>> calc = get_calculator()
-#    
-#    >>> calc.read_kpoints(fn_kp)
-#    or
-#    >>> Kpoints.automatic_density(structure)
-#    
-#    >>> calc.read_incar(fn_incar)
-#
-#    >>> atoms.calc = calc
-#    
-#    structure : Pymatgen Structure
-#    atoms : ASE Atoms
-#    """
-#    from ase.calculators.vasp import Vasp
-#    cmd = "%s -np %d %s" % (
-#            default_vaspcalc_parameters['mpirun'], nprocs, 
-#            default_vaspcalc_parameters['vasp'])
-#    
-#    ##
-#    calc = Vasp(
-#            setups=default_vaspcalc_parameters['setups'], 
-#            command=cmd, directory=outdir, xc=xc)
-#    ##
-#    #xml = outdir + '/vasprun.xml'
-#    #if os.path.exists(xml) and skipifexists:
-#    #    lines = open(xml, 'r').readlines()
-#    #    for il in range(len(lines)):
-#    #        num = len(lines) - 1 - il
-#    #        data = lines[num].split()
-#    #        if len(data) != 0:
-#    #            if data[0] == "</modeling>":
-#    #                if print_comment:
-#    #                    print(" Job in %s was finished. Skip..." % (outdir))
-#    #                return None
-#    #            else:
-#    #                return calc
-#    return calc
-#
+
 #def get_recommended_kpoints(struct_given):
 #    from .structure.format import change_structure_format
 #    structure = change_structure_format(
