@@ -75,7 +75,7 @@ class ApdbVasp():
             return self.relaxed_structure['prim']
         
         elif self.original_structure['prim'] is not None:
-            print(" Return original structure.")
+            print(" Return UNrelaxed structure.")
             return self.original_structure['prim']
         
         else:
@@ -100,7 +100,7 @@ class ApdbVasp():
             return self.relaxed_structure['unit']
         
         elif self.original_structure['unit'] is not None:
-            print(" Return original structure.")
+            print(" Return UNrelaxed structure.")
             return self.original_structure['unit']
         
         else:
@@ -123,7 +123,7 @@ class ApdbVasp():
             return self.relaxed_structure['scell']
         
         elif self.original_structure['scell'] is not None:
-            print(" Return original structure.")
+            print(" Return UNrelaxed structure.")
             return self.original_structure['scell']
         
         else:
