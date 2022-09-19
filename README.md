@@ -30,6 +30,9 @@ ALAMODE:
 To Do and questions
 --------------------
 
+* Recalculate materials which had negative frequencies in the current calculation, 
+but do not in phonondb. (EDIFFG was modified.)
+
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
@@ -43,12 +46,14 @@ such as Born effective charge.
 * How were the supercell size and k-mesh decided for Phonondb?
 Number of atoms? How can k-mesh be obtained from Materials Project?
 
+* Plot phonon dispersion with many lines, not with single line
+
 Additional
 ------------
 
 * Claculate kappa with different k-points and extrapolate?
 * Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
-* Output analysis conditions (with json?)
+* Output analysis conditions and the kind of used server? (with json?)
 
 * Compression of results
 
