@@ -33,6 +33,9 @@ To Do and questions
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
+
+Make phonopy_disp.yaml from DFSET of Alamode.
+
 * Make directories, alamode and vasp, for the future expansion to other software
 * LASSO with a command which may be faster than ALM python package
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 

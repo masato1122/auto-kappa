@@ -34,7 +34,7 @@ default_vasp_parameters = {
             'ibrion': 2,
             'nsw': 100,
             'isif': 3,
-            'ediffg': -0.0001,
+            'ediffg': -1e-8,
             'lreal': False,
             'addgrid': True,
             },
