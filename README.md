@@ -30,19 +30,23 @@ ALAMODE:
 To Do and questions
 --------------------
 
-* Calculate only materials wihout negative frequencies!!
-* LASSO with a command which may be faster than ALM python package
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
 * Make directories, alamode and vasp, for the future expansion to other software
-* How to output log during the simulation (with logger?)
+* LASSO with a command which may be faster than ALM python package
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge.
 * How were the supercell size and k-mesh decided for Phonondb?
+Number of atoms? How can k-mesh be obtained from Materials Project?
+
+Additional
+------------
+
 * Claculate kappa with different k-points and extrapolate?
 * Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
 * Output analysis conditions (with json?)
+
 * Compression of results
 
 * Summary of output results including fitting error, etc.
