@@ -36,7 +36,6 @@ To Do and questions
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
 * Make directories, alamode and vasp, for the future expansion to other software
-* Obtain maximum frequency automatically for DOS
 * How to output log during the simulation (with logger?)
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge.

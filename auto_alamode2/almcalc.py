@@ -891,8 +891,14 @@ class AlmCalc():
         
         elif propt == 'dos':
             
-            inp.update({'kpts': kpts})
+            if self.frequency_range is not None:
+                df = self.frequency_range[1] - self.frequency_range[0]
+                fmin = self.frequency_range[0] - df * 0.05
+                fmax = self.frequency_range[1] + df * 0.05
             
+            inp.update({'emin': fmin})
+            inp.update({'emax': fmax})
+            inp.update({'kpts': kpts})
             inp.update({'pdos': 1})
             inp.to_file(filename=filename)
         
@@ -1124,7 +1130,7 @@ class figure_options():
         self.yticks = None
         self.myticks = None
 
-        self.fig_width = 3.0
+        self.fig_width = 3.5
         self.fig_aspect = 0.5
         self.dpi = 300
         self.col = 'blue'
