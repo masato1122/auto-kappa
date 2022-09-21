@@ -5,7 +5,7 @@ from optparse import OptionParser
 from auto_alamode2.cui.scripts import start_aa2
 from auto_alamode2.io.phonondb import Phonondb
 from auto_alamode2.apdb import ApdbVasp
-from auto_alamode2.almcalc import AlmCalc
+from auto_alamode2.alamode.almcalc import AlmCalc
 from auto_alamode2 import output_directories
 
 def main(options):
@@ -66,7 +66,8 @@ def main(options):
     ### Set AlmCalc
     command = {
             'mpirun': options.mpirun, 'nprocs': 1, 
-            'nthreads': options.ncores, 'anphon': 'anphon'
+            'nthreads': options.ncores, 'anphon': 'anphon',
+            'alm': 'alm',
             }
     almcalc = AlmCalc(
             apdb.primitive,
@@ -74,7 +75,7 @@ def main(options):
             primitive_matrix=pmat,
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
-            nbody=[2,3,3,2], mag=0.01,
+            mag=0.01,
             nac=phdb.nac,
             command=command,
             ncores=options.ncores,
@@ -94,11 +95,11 @@ def main(options):
     
     ### calculate band 
     almcalc.write_alamode_input(propt='band')
-    almcalc.run_anphon(propt='band', force=True)
+    almcalc.run_alamode(propt='band', force=True)
     
     ### calculate DOS
     almcalc.write_alamode_input(propt='dos')
-    almcalc.run_anphon(propt='dos')
+    almcalc.run_alamode(propt='dos')
     almcalc.plot_bandos()
     
     ### Check negative frequency
@@ -121,14 +122,15 @@ def main(options):
     if almcalc.lasso:
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt)
-    #        almcalc.run_alm(propt)
-            exit()
+            ##alpha = almcalc.get_suggested_alpha()
+            #almcalc.run_alamode(propt)
+        exit()
     
     almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
-    almcalc.run_anphon(propt='kappa')
+    almcalc.run_alamode(propt='kappa')
     almcalc.plot_kappa()
 
 if __name__ == '__main__':

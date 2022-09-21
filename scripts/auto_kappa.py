@@ -5,7 +5,7 @@ from optparse import OptionParser
 from auto_alamode2.cui.scripts import start_aa2
 from auto_alamode2.io.phonondb import Phonondb
 from auto_alamode2.apdb import ApdbVasp
-from auto_alamode2.almcalc import AlmCalc
+from auto_alamode2.alamode.almcalc import AlmCalc
 from auto_alamode2 import output_directories
 
 def main(options):
@@ -74,7 +74,7 @@ def main(options):
             primitive_matrix=pmat,
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
-            nbody=[2,3,3,2], mag=0.01,
+            mag=0.01,
             nac=phdb.nac,
             command=command,
             ncores=options.ncores,

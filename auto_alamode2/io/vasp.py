@@ -9,11 +9,12 @@ import ase.io
 from ..units import BohrToA, RyToEv
 
 def get_dfset(directory, offset_xml=None, outfile=None):
-    """ 
+    """ Get dataset of displacements and forces from many vasprun.xml files.
     Args
     ======
     directory : string
         vasprun.xml can be found under ${directory}/*/ 
+        while ${directory}/prist/vasprun.xml is neglected.
     offset_xml : string
         vasprun.xml name for offset
     outfile : string
@@ -91,7 +92,7 @@ def get_dfset(directory, offset_xml=None, outfile=None):
         ofs.write("\n".join(all_lines))
         ofs.close()
         print(" Output", outfile)
-
+    
     return all_disps, all_forces
 
 def wasfinished(directory, filename='vasprun.xml'):

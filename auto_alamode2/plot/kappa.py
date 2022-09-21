@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 

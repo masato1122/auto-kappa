@@ -19,14 +19,14 @@ from ase.build import make_supercell
 import subprocess
 import pandas as pd
 
-from . import output_directories, output_files
-from .units import AToBohr, BohrToA
-from .structure.format import change_structure_format
-from .io.vasp import wasfinished, get_dfset, print_vasp_params
-from .calculator import run_vasp
+from .. import output_directories, output_files
+from ..units import AToBohr, BohrToA
+from ..structure.format import change_structure_format
+from ..io.vasp import wasfinished, get_dfset, print_vasp_params
+from ..calculator import run_vasp
 
-from .io.vasp import write_born_info
-from .io.alm import AlmInput, AnphonInput
+from ..io.vasp import write_born_info
+from ..io.alm import AlmInput, AnphonInput
 
 class AlmCalc():
     
@@ -40,7 +40,7 @@ class AlmCalc():
             verbosity=0,
             command={
                 'mpirun': 'mpirun', "nprocs": 1, 
-                "nthreads": 1, "anphon": "anphon",
+                "nthreads": 1, "anphon": "anphon", "alm": "alm",
                 }
             ):
         """ Calculations with ALM and Anphon are managed with this class.
@@ -90,7 +90,7 @@ class AlmCalc():
             Number of processes and threads are given.
             default={
                 'mpirun': 'mpirun', "nprocs": 1, 
-                "nthreads": 1, "anphon": "anphon",
+                "nthreads": 1, "anphon": "anphon", "alm": "alm",
                 }
         
         Example
@@ -112,7 +112,7 @@ class AlmCalc():
         >>> almcalc.calc_forces(1, calc_force)
         >>> almcalc.calc_harmonic_force_constants()
         >>> almcalc.write_alamode_input(propt='dos')
-        >>> almcalc.run_anphon(propt='dos')
+        >>> almcalc.run_alamode(propt='dos')
         """
         ### output directories
         dir_init = os.getcwd()
@@ -142,19 +142,19 @@ class AlmCalc():
          
         self._num_elems = None
         
+        ### nbody and cutoffs
         ### set cutoff radii: Ang => Bohr
+        nbody = None
+        if nbody is None:
+            self.set_nbody_automatically()
+        else:
+            self.nbody = nbody
+        
         self._cutoff2 = cutoff2
         self._cutoff3 = cutoff3
-        if cutoffs is not None:
-            self.cutoffs = cutoffs * AToBohr 
-        else:
-            n = self.num_elems
-            self.cutoffs = np.asarray([
-                np.ones((n,n)) * self._cutoff2 * AToBohr, 
-                np.ones((n,n)) * self._cutoff3 * AToBohr
-                ])
+        self._cutoffs = cutoffs
+        
         ##
-        self.nbody = nbody
         self.mag = mag            ### Ang
         
         self.force_calculators = {}
@@ -179,8 +179,57 @@ class AlmCalc():
     def ncores(self):
         return self._ncores
     
-    #@ncores.setter
-    #def ncores
+    @property
+    def nbody(self):
+        return self._nbody
+
+    @nbody.setter
+    def nbody(self, nbody):
+        self._nbody = nbody
+        
+    def set_nbody_automatically(self, order=5):
+        nbody = []
+        for i in range(order):
+            if i <= 1:
+                nbody.append(i+2)
+            elif i == 2:
+                nbody.append(3)
+            else:
+                nbody.append(2)
+        ## update
+        self._nbody = nbody
+     
+    @property
+    def cutoff2(self):
+        return self._cutoff2
+    @cutoff2.setter
+    def cutoffs(self, c2):
+        self._cutoff2 = c2
+
+    @property
+    def cutoff3(self):
+        return self._cutoff3
+    @cutoff3.setter
+    def cutoffs(self, c3):
+        self._cutoff3 = c3
+    
+    @property
+    def cutoffs(self):
+        if self._cutoffs is not None:
+            return self._cutoffs
+        else:
+            ### Bohr => Angstrom
+            self._cutoffs = get_cutoffs_automatically(
+                    cutoff2=self.cutoff2,
+                    cutoff3=self.cutoff3,
+                    num_elems=self.num_elems,
+                    order=len(self.nbody)
+                    ) * AToBohr
+        return self._cutoffs
+    
+    @cutoffs.setter
+    def cutoffs(self, matrix):
+        self._cutoffs = matrix
 
     @property
     def command(self):
@@ -366,7 +415,7 @@ class AlmCalc():
             ### 
             propt = 'evec_commensurate'
             self.write_alamode_input(propt=propt)
-            self.run_anphon(propt=propt)
+            self.run_alamode(propt=propt)
 
             ###
             fevec = self.out_dirs['lasso']['evec'] + '/' + self.prefix + '.evec'
@@ -406,8 +455,8 @@ class AlmCalc():
     def _get_random_displacements_normal_coordinate(self, file_evec: None,
             number_of_displacements=1, temperature=500., classical=False,
             ):
-        from .alamode_tools.VASP import VaspParser
-        from .alamode_tools.GenDisplacement import AlamodeDisplace
+        from .tools.VASP import VaspParser
+        from .tools.GenDisplacement import AlamodeDisplace
         
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
@@ -668,8 +717,7 @@ class AlmCalc():
         if self.lasso == False:
 
             order = 2
-            cutoffs = self.cutoffs[:2].copy()
-
+            
             directory = self.out_dirs['cube']['force']
             out_dfset = self.out_dirs['result'] + '/' + output_files['cube_dfset']
             out_xml = self.out_dirs['result'] + '/' + output_files['cube_xml']
@@ -678,17 +726,6 @@ class AlmCalc():
         else:
             
             order = maxorder
-            cutoffs = []
-            n = self.num_elems
-            for i in range(order):
-                if i < len(self.cutoffs):
-                    cutoffs.append(self.cutoffs[i])
-                else:
-                    cutoffs.append(np.ones((n,n)) * self._cutoff3 * AToBohr)
-            cutoffs = np.asarray(cutoffs)
-            
-            ### update cutoffs
-            self.cutoffs = cutoffs.copy()
             
             directory = self.out_dirs['lasso']['force']
             out_dfset = self.out_dirs['result'] + '/' + output_files['lasso_dfset']
@@ -702,22 +739,11 @@ class AlmCalc():
         msg += "\n"
         print(msg)
         
-        ## set nbody
-        nbody = []
-        for i in range(order):
-            if i < len(self.nbody) - 1:
-                nbody.append(self.nbody[i])
-            else:
-                if i <= 1:
-                    nbody.append(i+2)
-                elif i == 2:
-                    nbody.append(3)
-                else:
-                    nbody.append(2)
-        ## update
-        self.nbody = nbody.copy()
+        ### set nbody
+        if len(self.nbody) < order:
+            self.set_nbody_automatically(order=order)
         
-        ## get dfset
+        ### get dfset
         disps, forces = get_dfset(
                 directory, 
                 offset_xml=offset_xml, 
@@ -740,7 +766,7 @@ class AlmCalc():
         ## out = [fcs_values, fcs_indices]
         os.environ['OMP_NUM_THREADS'] = str(self.ncores)
         out = run_alm(
-                structure, order, cutoffs, nbody, mode='optimize',
+                structure, order, self.cutoffs[:order], nbody, mode='optimize',
                 displacements=disps, forces=forces,
                 fc2info=[fc2_values, elem2_indices],
                 outfile=out_xml, lasso=self.lasso,
@@ -748,36 +774,6 @@ class AlmCalc():
         os.environ.pop('OMP_NUM_THREADS', None)
         return out
     
-    
-    #def write_alm_input(self, propt='lasso', maxorder=5, **kwargs):
-    #    """ Write an input file for Alm
-    #
-    #    Args
-    #    ------
-    #    propt : string
-    #        "cv", "lasso", ...
-    #    
-    #    """
-    #    fc2xml = '../../result/' + output_files['harm_xml']
-    #
-    #    ### prepare parameters
-    #    if propt == 'lasso' or propt == 'cv':
-    #        dir_work = self.out_dirs['lasso'][propt]
-    #        mode = 'optimize'
-    #    
-    #    ## set input file for anphon
-    #    alminp = AlmInput.from_structure(
-    #            self.supercell,
-    #            norder=maxorder,
-    #            fc2xml=fc2xml,
-    #            #nonanalytic=self.nac, borninfo=borninfo
-    #        )
-    #
-    #    outfile = propt + '.in'
-    #    alminp.to_file(outfile)
-    #    print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE") 
-    #    exit()
-
     def write_alamode_input(self, propt='band', kpts=[15,15,15], **kwargs):
         """ Write Anphon Input
 
@@ -881,13 +877,12 @@ class AlmCalc():
         
         ###
         self._prefix = inp['prefix']
-         
+        
         ## set kpoints and write a file
         filename = dir_work + '/' + propt + '.in'
         if propt == 'band':
             
             inp.set_kpoint(deltak=0.01)
-            inp.to_file(filename=filename)
         
         elif propt == 'dos':
             
@@ -900,7 +895,6 @@ class AlmCalc():
             inp.update({'emax': fmax})
             inp.update({'kpts': kpts})
             inp.update({'pdos': 1})
-            inp.to_file(filename=filename)
         
         elif propt == 'evec_commensurate':
    
@@ -908,11 +902,10 @@ class AlmCalc():
             smat = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
             
             ### commensurate points
-            from .structure.crystal import get_commensurate_points
+            from ..structure.crystal import get_commensurate_points
             comm_pts = get_commensurate_points(smat)
             inp.update({'printevec': 1})
             inp.set_kpoint(kpoints=comm_pts)
-            inp.to_file(filename=filename)
         
         elif propt == 'kappa':
             
@@ -924,46 +917,75 @@ class AlmCalc():
             inp.update({'tmin': 50})
             inp.update({'tmax': 1000})
             inp.update({'dt': 50})
-            inp.to_file(filename=filename)
         
-        elif propt == 'cv' or propt == 'lasso':
-            
+        elif 'cv' in propt or propt == 'lasso':
             """
-            To Do
-            ======
+            Comments
+            =========
+            * maxalpha is automatically set by the code.
+            * minalpha = maxalpha * 1e-6 
 
-            * Adjust this part
             * set nbody and cutoffs
             
             """
-            inp.update({'norder': 5})
+            order = 5
+            if len(self.nbody) < order:
+                self.set_nbody_automatically()
+            inp.update({'norder': order})
+            inp.update({'nbody': [self.nbody[i] for i in range(order)]})
             
+            ### set cutoffs for alamode
+            cutoffs_alamode = {}
+            for i1 in range(self.num_elems):
+                for i2 in range(self.num_elems):
+                    lab = "%s-%s" % (
+                            inp.as_dict()['kd'][i1],
+                            inp.as_dict()['kd'][i2]
+                            )
+                    cutoffs_alamode[lab] = np.where(
+                            self.cutoffs[:,i1,i2]<0., 
+                            None, self.cutoffs[:,i1,i2]
+                            )
+            
+            inp.update({'cutoff': cutoffs_alamode})
             inp.update({'lmodel': 'enet'})
-            inp.update({'maxiter': 1000})
-            inp.update({'conv_tol': 1e-10})
             inp.update({'l1_ratio': 1.0})
+            inp.update({'maxiter': 2000})    ## smaller than the default, 10000
+            inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
             if propt == 'cv':
                 inp.update({'cv': 5})
-                inp.update({'cv_minalpha': 1e-8})
-                inp.update({'cv_maxalpha': 1e-2})
+                ### The code set automatically.
+                #inp.update({'cv_maxalpha': 1e-2})
+                #inp.update({'cv_minalpha': 1e-8})
                 inp.update({'cv_nalpha': 50})
             elif propt == 'lasso':
+                
+                alpha = self.get_suggested_l1alpha()
+                
                 inp.update({'cv': 0})
-                inp.update({'l1_alpha': None})      ### read l1_alpha
+                inp.update({'l1_alpha': alpha})      ### read l1_alpha
             
-            inp.to_file(filename=filename)
-            
-            print("")
-            print(" Output", filename)
-            print("")
-            print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE")
-            exit()
-
         else:
             print(" Error: %s is not supported." % propt)
             exit()
+        
+        inp.update(kwargs)
+        inp.to_file(filename=filename)
     
-    def run_anphon(self, propt=None, force=False):
+    def get_suggested_l1alpha(self):
+
+        fn = self.out_dirs['lasso']['cv']+'/'+self.prefix+'.cvscore'
+        try:
+            lines = open(fn, 'r').readlines()
+            for ll in lines:
+                if "Minimum CVSCORE" in ll:
+                    alpha = float(ll.split()[-1])
+                    return alpha
+            return None
+        except Exception:
+            return None
+    
+    def run_alamode(self, propt=None, force=False):
         """ Run anphon
         
         Args
@@ -976,37 +998,56 @@ class AlmCalc():
             conducted while, if True, anphon will be run forecely.
         
         """
+        ### anphon or alm
+        propt_for_anphon = ['band', 'dos', 'kappa', 'evec']
+        propt_for_alm = ['optimize', 'suggest', 'fitting', 'cv', 'lasso']
+        alamode_type = None
+        for key in propt_for_anphon:
+            if key in propt:
+                alamode_type = 'anphon'
+        for key in propt_for_alm:
+            if key in propt:
+                alamode_type = 'alm'
+        
         ## change directory
-        dir_init = os.getcwd()
         if propt == 'band' or propt == 'dos':
-            os.chdir(self.out_dirs['harm']['bandos'])
             
+            workdir = self.out_dirs['harm']['bandos']
+
             ### store output file names
             if propt == 'band':
                 ext = 'bands'
             else:
                 ext = propt
-         
+        
         elif propt == 'kappa':
             if self.lasso == False:
-                os.chdir(self.out_dirs['cube']['kappa'])
+                workdir = self.out_dirs['cube']['kappa']
             else:
-                os.chdir(self.out_dirs['lasso']['kappa'])
+                workdir = self.out_dirs['lasso']['kappa']
             
         elif propt == 'evec_commensurate':
-            os.chdir(self.out_dirs['lasso']['evec'])
             
+            workdir = self.out_dirs['lasso']['evec']
+        
+        elif propt == 'cv' or propt == 'lasso':
+            
+            workdir = self.out_dirs['lasso'][propt]
+        
         else:
             print("ERROR")
             warnings.warn(" WARNNING: %s property is not supported." % (propt))
             exit()
         
+        ### change directory
+        dir_init = os.getcwd()
+        os.chdir(workdir)
+         
         ### print title
-        print("")
-        msg = " Run anphon for %s " % propt
-        border = "-" * (len(msg) + 2)
+        msg = "\n"
+        msg += " Run %s for %s\n" % (alamode_type, propt)
+        msg += "-" * (len(msg) + 2) + "\n"
         print(msg)
-        print(border)
         
         filename = "%s.in" % propt
         
@@ -1019,7 +1060,7 @@ class AlmCalc():
         cmd = "%s -n %d %s %s" %(
                 self.command['mpirun'],
                 self.command['nprocs'], 
-                self.command['anphon'],
+                self.command[alamode_type],
                 filename)
         
         ## If the job has been finished, the same calculation is not conducted.
@@ -1044,36 +1085,13 @@ class AlmCalc():
 
     def plot_bandos(self, **args):
         
-        fn_band = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.bands'
-        fn_dos = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.dos'
-        
-        options = figure_options()
-        
         ### set figure name
         if 'figname' not in args.keys():
-            options.figname = self.out_dirs['result'] + '/fig_bandos.png'
+            figname = self.out_dirs['result'] + '/fig_bandos.png'
         else:
-            options.figname = args['figname']
+            figname = args['figname']
         
-        from .plot.bandos import plot_bandos
-        from .plot.alamode.band import Band
-        from .plot.alamode.dos import Dos
-        
-        band = Band(file=fn_band)
-        if os.path.exists(fn_dos):
-            dos = Dos(file=fn_dos)
-        else:
-            dos = None
-        
-        ##
-        options.prefix = self.prefix
-        df = self.frequency_range[1] - self.frequency_range[0]
-        options.y0 = self.frequency_range[0] - df * 0.05
-        options.y1 = self.frequency_range[1] + df * 0.05
-        
-        ##
-        for key in args.keys():
-            setattr(options, key, args[key])
+        from ..plot.bandos import plot_bandos
         
         ### output title
         print("")
@@ -1081,9 +1099,14 @@ class AlmCalc():
         border = "-" * (len(msg) + 2)
         print(msg)
         print(border)
-
-        fig = plot_bandos(options.figname, band, dos, options)
-
+        
+        fig = plot_bandos(
+                directory=self.out_dirs['harm']['bandos'], 
+                prefix=self.prefix, 
+                figname=figname,
+                **args
+                )
+    
     def plot_kappa(self):
         
         if self.lasso == False:
@@ -1111,37 +1134,54 @@ class AlmCalc():
         
         print("")
         print(" ### Plot kappa")
-        from .plot.kappa import plot_kappa
+        from ..plot.kappa import plot_kappa
         plot_kappa(df, figname=figname)
 
 
-class figure_options():
-    def __init__(self):
-        self.prefix = None
-        self.figname = None
-        self.plot_pdos = 1
-        self.prefix2 = None
-        self.pr_ratio = 0
-        self.y0 = None
-        self.y1 = None
-        self.maxdos = None
-        
-        self.lw = 0.5
-        self.yticks = None
-        self.myticks = None
+#def _get_default_figure_parameters():
+#    params = {
+#            'figname': None,
+#            'plot_pdos': 1,
+#            'prefix2': None,
+#            'maxdos': None,
+#            'lw': 0.5,
+#            'yticks': None,
+#            'myticks': None,
+#            'fig_width': 3.5,
+#            'fig_aspect': 0.5,
+#            'dpi': 300,
+#            'col': 'blue',
+#            'col2': 'grey',
+#            'wspace': 0.05,
+#            'unit': "cm",
+#            'colorbar': 1,
+#            'legend': 1,
+#            'legend_los': 'best',
+#            }
+#    return params
 
-        self.fig_width = 3.5
-        self.fig_aspect = 0.5
-        self.dpi = 300
-        self.col = 'blue'
-        self.col2 = 'grey'
-        self.wspace = 0.05
-        self.unit = "cm"
-
-        self.colorbar = 1
-        self.legend = 1
-        self.legend_los = 'best'
-
+def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
+    """ 
+    Args
+    -------
+    #cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
+    #    If cutoffs is given properly, cutoffs is used and cutoff2 and
+    #    cutoff3 are neglected.
+    #    If cutoffs is not given, cutoffs are given automatically with
+    #    cutoff2 and cutoff3.
+    cutoff2 : float, unit=Ang
+    cutoff3 : float, unit=Ang
+    """
+    cutoffs = []
+    n = num_elems
+    for i in range(order):
+        if i == 0:
+            cc = cutoff2
+        else:
+            cc = cutoff3
+        cutoffs.append(np.asarray(np.ones((n,n)) * cc))
+    return np.asarray(cutoffs)
+    
 def _read_frequency_range(filename, format='anphon'):
     """ read minimum and maximum frequencies from .bands file created by anphon 
     """

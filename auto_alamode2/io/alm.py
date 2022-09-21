@@ -343,7 +343,7 @@ def _write_cutoff(cutoff):
     lines = []
     lines.append("&cutoff")
     for k1 in cutoff.keys():
-        lines.append("    %s "%(k1))
+        lines.append("    %7s  "%(k1))
         for val in cutoff[k1]:
             if val is None:
                 lines[-1] += "None "
