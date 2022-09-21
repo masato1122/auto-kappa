@@ -26,7 +26,7 @@ def set_spaces(plt,
             left=left, bottom=bottom,
             right=right, top=top, wspace=wspace, hspace=hspace)
 
-def set_axis(ax, xformat="linear", yformat="linear", 
+def set_axis(ax, xscale="linear", yscale="linear", 
         xticks=None, mxticks=None, yticks=None, myticks=None,
         labelbottom=None, length=2.4, width=0.5):
     ax.tick_params(axis='both', which='major', 
@@ -48,10 +48,10 @@ def set_axis(ax, xformat="linear", yformat="linear",
         interval = float(yticks) / float(myticks)
         ax.yaxis.set_minor_locator(tick.MultipleLocator(interval))
     #--- for logscale
-    if xformat.lower() == "log":
+    if xscale.lower() == "log":
         ax.set_xscale("log")
         ax.xaxis.set_major_locator(tick.LogLocator(base=10.0, numticks=15))
-    if yformat.lower() == "log":
+    if yscale.lower() == "log":
         ax.set_yscale("log")
         ax.yaxis.set_major_locator(tick.LogLocator(base=10.0, numticks=15))
     return ax

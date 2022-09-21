@@ -25,7 +25,7 @@ def plot_kappa(df, figname='fig_kappa.png',
                 mfc='none', mew=lw, label=key
                 )
     
-    set_axis(ax, xformat='log', yformat='log')
+    set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6)
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')

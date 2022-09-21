@@ -54,5 +54,22 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
     
     Phonon dispersion with participation ratio and DOS of Silicon
 
+..
+
+
+Plot results of cross validation
+=================================
+
+.. code-block:: shell
+    
+    $ ls
+    ... **.cvset1 **.cvset2 ... **.cvscore ...
+
+.. code-block:: python
+
+    from auto_alamode2.plot.lasso import plot_cvsets
+    plot_cvsets('.', figname='fig_cvsets.png')
+    
+..
 
 
