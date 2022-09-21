@@ -87,7 +87,10 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         plot_dos2=False, 
         show_legend=True, show_colorbar=True
         ):
-    """
+    """ Plot phonon dispersion and DOS. If .band.pr file (participation ratio) 
+    is located in the given directory and ``plot_pr`` is True, it is shown with
+    colors on phonon dispersion.
+    
     Args
     -----
     directory : string, default=.
@@ -124,6 +127,13 @@ def plot_bandos(directory='.', prefix=None, figname=None,
 
     plot_dos, plot_pdos, plot_pr : default True
     show_legend, show_colorbar : default True
+    
+    How to Use
+    ------------
+    >>> plot_bandos(directory='.', prefix='Si',
+    >>>             figname='fig_bandos.png',
+    >>>             plot_pr=True)
+     
     """
     ### anphon file names
     filenames = _get_band_files(directory, prefix)
@@ -164,8 +174,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         fmin = f0 - df * 0.05
     
     if ymax is None:
-        if 'pr' in filenames or 'band.pr' in filenames:
-            fmax = f1 + df * 0.1
+        if ('pr' in filenames or 'band.pr' in filenames) and plot_pr:
+            fmax = f1 + df * 0.2
         else:
             fmax = f1 + df * 0.05
     

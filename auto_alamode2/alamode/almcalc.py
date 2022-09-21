@@ -22,7 +22,7 @@ import pandas as pd
 from .. import output_directories, output_files
 from ..units import AToBohr, BohrToA
 from ..structure.format import change_structure_format
-from ..io.vasp import wasfinished, get_dfset, print_vasp_params
+from ..io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
 from ..calculator import run_vasp
 
 from ..io.vasp import write_born_info
@@ -512,6 +512,7 @@ class AlmCalc():
             directory=None, force=False, 
             nmax_suggest=200, frac_nrandom=0.02, 
             temperature=500., classical=False,
+            output_dfset=True
             ):
         """ Calculate forces for harmonic or cubic IFCs.
         VASP output will be stored in self.out_dirs['harm/cube']['force'].
@@ -549,6 +550,9 @@ class AlmCalc():
                 ``frac_nrandom`` :math:`\\times` ``nsuggest``,
                 ``nsuggest`` :math:`)`
         
+        output_dfset : bool, default True
+            Output DFSET file after all suggested structures are calculated.
+
         """
         print("")
         msg = " Force calculation (order: %s)" % order
@@ -583,7 +587,9 @@ class AlmCalc():
             warnings.warning(" WARNING: Output directory is not defined.")
         
         ### Compressive sensing, LASSO, is used when the number of the 
-        ### suggested structure is too large.
+        ### suggested structure (nsuggest) excees nmax_suggest.
+        ### When nsuggest > nmax_suggest, max(nsuggest * frac_nrandom,
+        ### nmax_suggest) structures will be generated with normal coordinates.
         if order != 1 and nsuggest > nmax_suggest:
 
             self.lasso = True
@@ -596,10 +602,10 @@ class AlmCalc():
             msg += "\n"
             msg += " ### Number of suggested patterns exceeds the maximum limit.\n"
             msg += "\n"
-            msg += " ### Number of patterns ###\n"
-            msg += " * fractional number of the random patterns : %.3f\n" % (frac_nrandom)
-            msg += " * random    : %d\n" % (nrandom)
-            msg += " * generated : %d\n" % (ngenerated)
+            #msg += " ### Number of patterns ###\n"
+            msg += " Fractional number of the random patterns : %.3f\n" % (frac_nrandom)
+            #msg += " * random    : %d\n" % (nrandom)
+            #msg += " * generated : %d\n" % (ngenerated)
             print(msg)
             
             structures = self.get_suggested_structures(
@@ -639,6 +645,21 @@ class AlmCalc():
                 run_vasp(calculator, structure, method='custodian')
             print(" %s" % (outdir))
         
+        ### output DFSET
+        if output_dfset:
+            if order == 1:
+                df_prefix = 'harm'
+            elif order > 1:
+                if self.lasso:
+                    df_prefix = 'lasso'
+                else:
+                    df_prefix = 'cube'
+            
+            os.makedirs(self.out_dirs['result'], exist_ok=True)
+            offset_xml = outdir0 + '/prist/vasprun.xml'
+            outfile = self.out_dirs['result'] + "/DFSET." + df_prefix
+            get_dfset(outdir0, offset_xml=offset_xml, outfile=outfile)
+        
         print("")
     
     def calc_harmonic_force_constants(self, output=True):
@@ -671,19 +692,13 @@ class AlmCalc():
         offset_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
         
         if os.path.exists(out_dfset) == False:
+            
             disps, forces = get_dfset(
                     directory, offset_xml=offset_xml, outfile=out_dfset)
+        
         else:
-            natoms = len(self.supercell)
-            data = np.loadtxt(out_dfset).reshape((-1, natoms, 6))
             
-            nstruct = len(data)
-            
-            disps = np.zeros((nstruct, natoms, 3))
-            forces = np.zeros((nstruct, natoms, 3))
-            for ii in range(nstruct):
-                disps[ii,:,:] = data[ii,:,:3]
-                forces[ii,:,:] = data[ii,:,3:]
+            disps, forces = read_dfset(out_dfset, natoms=len(self.supercell))
             
         ## get structure
         structure = ase.io.read(offset_xml)
@@ -744,12 +759,24 @@ class AlmCalc():
             self.set_nbody_automatically(order=order)
         
         ### get dfset
-        disps, forces = get_dfset(
-                directory, 
-                offset_xml=offset_xml, 
-                outfile=out_dfset)
+        if os.path.exists(out_dfset):
+            
+            disps, forces = read_dfset(
+                    out_dfset,
+                    natoms=len(self.supercell3)
+                    )
         
-        ### [lasso] extract only required data
+        else:
+            
+            disps, forces = get_dfset(
+                    directory, 
+                    offset_xml=offset_xml, 
+                    outfile=out_dfset
+                    )
+        
+        ## For LASSO, extract only required data
+        ## This part is required when too many patterns were calculated, but
+        ## smaller data are needed for LASSO.
         if self.lasso and self.nmax_suggest is not None:
             if len(disps) > self.nmax_suggest:
                 disps = disps[:self.nmax_suggest]

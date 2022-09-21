@@ -36,7 +36,8 @@ def main(options):
     command = {
             'mpirun': options.mpirun, 
             'nprocs': options.ncores, 
-            'nthreads': 1, 'vasp': 'vasp'
+            'nthreads': 1, 
+            'vasp': options.command_vasp,
             }
     
     ### Set ApdbVasp object
@@ -66,8 +67,9 @@ def main(options):
     ### Set AlmCalc
     command = {
             'mpirun': options.mpirun, 'nprocs': 1, 
-            'nthreads': options.ncores, 'anphon': 'anphon',
-            'alm': 'alm',
+            'nthreads': options.ncores, 
+            'anphon': options.command_anphon,
+            'alm': options.command_alm,
             }
     almcalc = AlmCalc(
             apdb.primitive,
@@ -120,12 +122,12 @@ def main(options):
             )
     
     if almcalc.lasso:
+        from auto_alamode2.io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt)
-            ##alpha = almcalc.get_suggested_alpha()
-            #almcalc.run_alamode(propt)
-        exit()
+            almcalc.run_alamode(propt)
     
+    ###
     almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
@@ -167,6 +169,18 @@ if __name__ == '__main__':
             help="Ratio of the number of generated patterns with random "\
                     "displacement to the number for the suggested patterns "
                     "with ALM [0.02]")
+    
+    parser.add_option("--vasp_command", 
+            dest="vasp_command", type="string", default="vasp", 
+            help="command to run vasp [vasp]")
+    
+    parser.add_option("--anphon_command", 
+            dest="anphon_command", type="string", default="anphon", 
+            help="command to run anphon [anphon]")
+    
+    parser.add_option("--alm_command", 
+            dest="alm_command", type="string", default="alm", 
+            help="command to run alm [alm]")
     
     ### parameters which do not need to be changed.
     parser.add_option("--nagative_freq", dest="negative_freq", type="float",
