@@ -36,6 +36,14 @@ auto\_alamode2.plot.kappa module
    :undoc-members:
    :show-inheritance:
 
+auto\_alamode2.plot.lasso module
+--------------------------------
+
+.. automodule:: auto_alamode2.plot.lasso
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

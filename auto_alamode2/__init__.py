@@ -14,7 +14,7 @@ output_directories = {
         'lasso':{    
             'evec' : 'lasso/evec',
             'force': 'lasso/force',
-            'cv'   : 'lasso/cv',
+            'cv'   : 'lasso/lasso',
             'lasso': 'lasso/lasso',
             'kappa': 'lasso/kappa',
             },

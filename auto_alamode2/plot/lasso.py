@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
 
-def plot_cvsets(directory: None, 
-        figname='fig_cvsets.png',
+def plot_cvsets(directory='.', figname='fig_cvsets.png',
         dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=0.5,
         ):
     

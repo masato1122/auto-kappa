@@ -121,14 +121,14 @@ def main(options):
             temperature=options.random_disp_temperature,
             )
     
+    ### calculate anharmonic force constants
     if almcalc.lasso:
         from auto_alamode2.io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt)
             almcalc.run_alamode(propt)
-    
-    ###
-    almcalc.calc_anharm_force_constants()
+    else: 
+        almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
@@ -170,16 +170,16 @@ if __name__ == '__main__':
                     "displacement to the number for the suggested patterns "
                     "with ALM [0.02]")
     
-    parser.add_option("--vasp_command", 
-            dest="vasp_command", type="string", default="vasp", 
+    parser.add_option("--command_vasp", 
+            dest="command_vasp", type="string", default="vasp", 
             help="command to run vasp [vasp]")
     
-    parser.add_option("--anphon_command", 
-            dest="anphon_command", type="string", default="anphon", 
+    parser.add_option("--command_anphon", 
+            dest="command_anphon", type="string", default="anphon", 
             help="command to run anphon [anphon]")
     
-    parser.add_option("--alm_command", 
-            dest="alm_command", type="string", default="alm", 
+    parser.add_option("--command_alm", 
+            dest="command_alm", type="string", default="alm", 
             help="command to run alm [alm]")
     
     ### parameters which do not need to be changed.

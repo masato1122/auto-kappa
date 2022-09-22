@@ -49,7 +49,7 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
                 )
 
 .. figure:: ../files/fig_bandos.png
-    :height: 300px
+    :height: 250px
     :align: center
     
     Phonon dispersion with participation ratio and DOS of Silicon
@@ -68,8 +68,11 @@ Plot results of cross validation
 .. code-block:: python
 
     from auto_alamode2.plot.lasso import plot_cvsets
-    plot_cvsets('.', figname='fig_cvsets.png')
+    plot_cvsets(directory='.', figname='fig_cvsets.png')
     
-..
+.. figure:: ../files/fig_cvsets.png
+    :height: 250px
+    :align: center
 
+    Results for cross-valication
 

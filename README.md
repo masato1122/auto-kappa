@@ -30,6 +30,8 @@ ALAMODE:
 To Do and questions
 --------------------
 
+* Count calculation time at different steps
+
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
 
@@ -40,10 +42,6 @@ Use dataset (displacements and forces) in Phonondb and calculate phonon dispersi
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
 
 Make phonopy_disp.yaml from DFSET of Alamode.
-
-* LASSO:
-Run with a command which may be faster than ALM python package
-Plot CV results.
 
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge.

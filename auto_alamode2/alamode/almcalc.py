@@ -17,6 +17,7 @@ import datetime
 import ase, pymatgen
 from ase.build import make_supercell
 import subprocess
+import shutil
 import pandas as pd
 
 from .. import output_directories, output_files
@@ -658,8 +659,12 @@ class AlmCalc():
             os.makedirs(self.out_dirs['result'], exist_ok=True)
             offset_xml = outdir0 + '/prist/vasprun.xml'
             outfile = self.out_dirs['result'] + "/DFSET." + df_prefix
-            get_dfset(outdir0, offset_xml=offset_xml, outfile=outfile)
-        
+            if os.path.exists(outfile) == False:
+                get_dfset(outdir0, offset_xml=offset_xml, outfile=outfile)
+            else:
+                msg = "\n"
+                msg += " %s already exists\n\n" % (outfile)
+                print(msg)
         print("")
     
     def calc_harmonic_force_constants(self, output=True):
@@ -758,6 +763,10 @@ class AlmCalc():
         if len(self.nbody) < order:
             self.set_nbody_automatically(order=order)
         
+        nbody = []
+        for i in range(order):
+            nbody.append(self.nbody[i])
+
         ### get dfset
         if os.path.exists(out_dfset):
             
@@ -1104,11 +1113,35 @@ class AlmCalc():
                 proc.wait()
             
         else:
-            print(" %s has already been calculated." % propt)
+            print(" %s has been already calculated." % propt)
         
         ## Return to the original directory
         os.environ.pop('OMP_NUM_THREADS', None)
         os.chdir(dir_init)
+        
+        ###
+        if self.lasso and propt == 'lasso':
+            self.set_dfset_lasso()
+            self._plot_cvsets()
+
+    def set_dfset_lasso(self):
+        fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
+        fn2 = self.out_dirs['result']+'/FCs_lasso.xml'
+        if os.path.exists(fn1) == False:
+            warnings.warn(' %s does not exist.' % fn1)
+        else:
+            shutil.copy(fn1, fn2)
+    
+    def _plot_cvsets(self):
+        from ..plot.lasso import plot_cvsets
+        figname = self.out_dirs['result'] + '/fig_cvsets.png'
+        print("")
+        print(" ### Plot CV results ###")
+        plot_cvsets(
+                directory=self.out_dirs['lasso']['cv'],
+                figname=figname
+                )
+        print("")
 
     def plot_bandos(self, **args):
         

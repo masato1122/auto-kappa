@@ -36,7 +36,8 @@ def main(options):
     command = {
             'mpirun': options.mpirun, 
             'nprocs': options.ncores, 
-            'nthreads': 1, 'vasp': 'vasp'
+            'nthreads': 1, 
+            'vasp': options.command_vasp,
             }
     
     ### Set ApdbVasp object
@@ -66,7 +67,9 @@ def main(options):
     ### Set AlmCalc
     command = {
             'mpirun': options.mpirun, 'nprocs': 1, 
-            'nthreads': options.ncores, 'anphon': 'anphon'
+            'nthreads': options.ncores, 
+            'anphon': options.command_anphon,
+            'alm': options.command_alm,
             }
     almcalc = AlmCalc(
             apdb.primitive,
@@ -94,11 +97,11 @@ def main(options):
     
     ### calculate band 
     almcalc.write_alamode_input(propt='band')
-    almcalc.run_anphon(propt='band', force=True)
+    almcalc.run_alamode(propt='band', force=True)
     
     ### calculate DOS
     almcalc.write_alamode_input(propt='dos')
-    almcalc.run_anphon(propt='dos')
+    almcalc.run_alamode(propt='dos')
     almcalc.plot_bandos()
     
     ### Check negative frequency
@@ -118,18 +121,18 @@ def main(options):
             temperature=options.random_disp_temperature,
             )
     
+    ### calculate anharmonic force constants
     if almcalc.lasso:
-        exit()
-    #    for propt in ['cv', 'lasso']:
-    #        almcalc.write_alm_input(propt=propt)
-    #        almcalc.run_alm(propt)
-    #        exit()
-    
-    almcalc.calc_anharm_force_constants()
+        from auto_alamode2.io.vasp import get_dfset
+        for propt in ['cv', 'lasso']:
+            almcalc.write_alamode_input(propt=propt)
+            almcalc.run_alamode(propt)
+    else: 
+        almcalc.calc_anharm_force_constants()
     
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
-    almcalc.run_anphon(propt='kappa')
+    almcalc.run_alamode(propt='kappa')
     almcalc.plot_kappa()
 
 if __name__ == '__main__':
@@ -166,6 +169,18 @@ if __name__ == '__main__':
             help="Ratio of the number of generated patterns with random "\
                     "displacement to the number for the suggested patterns "
                     "with ALM [0.02]")
+    
+    parser.add_option("--command_vasp", 
+            dest="command_vasp", type="string", default="vasp", 
+            help="command to run vasp [vasp]")
+    
+    parser.add_option("--command_anphon", 
+            dest="command_anphon", type="string", default="anphon", 
+            help="command to run anphon [anphon]")
+    
+    parser.add_option("--command_alm", 
+            dest="command_alm", type="string", default="alm", 
+            help="command to run alm [alm]")
     
     ### parameters which do not need to be changed.
     parser.add_option("--nagative_freq", dest="negative_freq", type="float",

@@ -36,6 +36,14 @@ plot.kappa module
    :undoc-members:
    :show-inheritance:
 
+plot.lasso module
+-----------------
+
+.. automodule:: plot.lasso
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
