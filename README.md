@@ -32,6 +32,8 @@ To Do and questions
 
 * Count calculation time at different steps
 
+* Determine directory name automatically
+
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
 
