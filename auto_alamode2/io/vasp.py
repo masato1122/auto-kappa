@@ -9,11 +9,12 @@ import ase.io
 from ..units import BohrToA, RyToEv
 
 def get_dfset(directory, offset_xml=None, outfile=None):
-    """ 
+    """ Get dataset of displacements and forces from many vasprun.xml files.
     Args
     ======
     directory : string
         vasprun.xml can be found under ${directory}/*/ 
+        while ${directory}/prist/vasprun.xml is neglected.
     offset_xml : string
         vasprun.xml name for offset
     outfile : string
@@ -90,9 +91,48 @@ def get_dfset(directory, offset_xml=None, outfile=None):
         ofs = open(outfile, 'w')
         ofs.write("\n".join(all_lines))
         ofs.close()
+        print("")
         print(" Output", outfile)
-
+        print("")
+    
     return all_disps, all_forces
+
+def read_dfset(filename, natoms=None, nstructures=None):
+    """ Read DFSET with Alamode format and return displacements and forces.
+    If natoms and nstrctures are set, size of matrices are determined with
+    them.
+    """
+    data = np.loadtxt(filename)
+    ntot = len(data)
+    if nstructures is not None:
+        natoms = int(ntot / nstructures)
+    
+    ### Obtain natoms automatically
+    if natoms is None:
+        lines = open(filename, 'r').readlines()
+        nstructures = 0
+        for line in lines:
+            if "#" == line[0]:
+                nstructures += 1
+        if ntot%nstructures != 0:
+            warnings.warn(" Numbers of atoms and structures are "\
+                    "inconsistent in %s" % filename)
+        natoms = int(ntot / nstructures)
+    
+    nstructures = int(ntot / natoms)
+    
+    ###
+    data = data.reshape((-1, natoms, 6))
+    
+    ### extract displacements and forces
+    disps = np.zeros((nstructures, natoms, 3))
+    forces = np.zeros((nstructures, natoms, 3))
+    for ii in range(nstructures):
+        disps[ii,:,:] = data[ii,:,:3]
+        forces[ii,:,:] = data[ii,:,3:]
+    
+    return disps, forces
+
 
 def wasfinished(directory, filename='vasprun.xml'):
     try:

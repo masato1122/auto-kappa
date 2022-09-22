@@ -2,7 +2,7 @@
 import numpy as np
 
 class Dos():
-    def __init__(self, file=None):
+    def __init__(self, filename=None):
         """
         Variables
         ----------
@@ -25,8 +25,8 @@ class Dos():
         self.dos_atom = None
         self.elements = None
         self.nat_el = None
-        if file is not None:
-            self.read_dfile(file)
+        if filename is not None:
+            self.read_dfile(filename)
     
     def set_elements(self, dfile):
         self.elements, self.nat_el = get_elements(dfile)

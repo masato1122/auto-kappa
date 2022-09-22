@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 
@@ -26,7 +25,7 @@ def plot_kappa(df, figname='fig_kappa.png',
                 mfc='none', mew=lw, label=key
                 )
     
-    set_axis(ax, xformat='log', yformat='log')
+    set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6)
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')

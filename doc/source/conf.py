@@ -34,7 +34,7 @@ exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'
 
-#html_static_path = ['_static']
+html_static_path = ['_static']
 
 ## numbering
 numfig = True
@@ -53,4 +53,13 @@ latex_elements = {
 ''',
 }
 latex_show_urls = 'footnote'
+
+### open links with a new tab
+#window.addEventListener("load", func=()=>{
+#    const external_links = document.querySelectorAll("a.external");
+#    for(let i=0; i<external_links.length; i++){
+#        external_links[i].setAttribute("target", "_blank");
+#        external_links[i].setAttribute("rel", "noopener noreferrer");
+#    }
+#});
 

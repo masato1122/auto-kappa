@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from ..initialize import set_axis
 
 class Band():
-    def __init__(self, file=None):
+    def __init__(self, filename=None):
         """Band
         Variables
         -----------
@@ -36,8 +36,8 @@ class Band():
         # -- symmetry points
         self.label = None
         self.ksym = None
-        if file is not None:
-            self.read_bfile(file)
+        if filename is not None:
+            self.read_bfile(filename)
     
     def set_nk_nbands(self, bfile):
         self.nk, self.nbands = get_nk_nbands(bfile)
@@ -56,82 +56,82 @@ class Band():
         self.set_symmetry_points(bfile)
         self.set_eigen(bfile)
     
-    def plot_band(self, ax, lw=0.8, color='blue',
-            ylabel="Frequency (cm$^{-1}$)",
-            pr=None, fs_ticks=None
-            ):
-        """
-        pr : Participation object
-        """
-        
-        ## set ticks
-        ax.set_xticks(self.ksym)
-        if fs_ticks is not None:
-            ax.set_xticklabels(self.label, fontsize=fs_ticks)
-        else:
-            ax.set_xticklabels(self.label)
-        
-        ## plot band
-        if pr is None:
-            for ib in range(self.nbands):
-                ax.plot(self.kpoints, 
-                        self.frequencies[:,ib], 
-                        linestyle='-', lw=lw, 
-                        c=color,
-                        marker='None'
-                        )
-        else:
-            cdict = {'red':   ((0.0, 1.0, 1.0), (1.0, 0.0, 0.0)),
-                     'green': ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-                     'blue':  ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0))}
-            cmap = matplotlib.colors.LinearSegmentedColormap(
-                    'my_colormap', cdict, 256)
-            ##
-            kdump = np.zeros((self.nk, self.nbands))
-            fdump = np.zeros((self.nk, self.nbands))
-            cdump = np.zeros((self.nk, self.nbands))
-            for ib in range(self.nbands):
-                kdump[:,ib] = self.kpoints[:]
-                fdump[:,ib] = self.frequencies[:,ib]
-                cdump[:,ib] = pr.ratio[:,ib]
-            kdump = kdump.reshape(self.nk*self.nbands)
-            fdump = fdump.reshape(self.nk*self.nbands)
-            cdump = cdump.reshape(self.nk*self.nbands)
-            isort = np.argsort(cdump)[::-1]
-            sc = ax.scatter(
-                    kdump[isort], fdump[isort], c=cdump[isort],
-                    cmap=cmap, marker='.', s=0.15, lw=lw, zorder=2)
-            
-            ## color bar
-            from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-            axins = inset_axes(
-                    ax, width="50%", height="3%", loc="upper center",
-                    bbox_to_anchor=(0.0, -0.01, 1, 1),
-                    bbox_transform=ax.transAxes
-                    )
-            [axins.spines[k].set_visible(False) for k in axins.spines]
-            axins.set_facecolor([1,1,1,0.5])
-            axins.tick_params(
-                    axis = 'both',
-                    left = False,
-                    top = False,
-                    right = False,
-                    bottom = False,
-                    labelleft = False,
-                    labeltop = False,
-                    labelright = False,
-                    labelbottom = False
-                    )
-            sc.set_clim([0,1])
-            cb = plt.colorbar(
-                    sc, cax=axins, orientation='horizontal', 
-                    ticks=[0,0.5,1])
-            ## backgroud
-            set_axis(axins)
-
-        ##
-        ax.set_ylabel(ylabel)
-        set_axis(ax)
+    #def plot_band(self, ax, lw=0.8, color='blue',
+    #        ylabel="Frequency (cm$^{-1}$)",
+    #        pr=None, fs_ticks=None
+    #        ):
+    #    """
+    #    pr : Participation object
+    #    """
+    #    
+    #    ## set ticks
+    #    ax.set_xticks(self.ksym)
+    #    if fs_ticks is not None:
+    #        ax.set_xticklabels(self.label, fontsize=fs_ticks)
+    #    else:
+    #        ax.set_xticklabels(self.label)
+    #    
+    #    ## plot band
+    #    if pr is None:
+    #        for ib in range(self.nbands):
+    #            ax.plot(self.kpoints, 
+    #                    self.frequencies[:,ib], 
+    #                    linestyle='-', lw=lw, 
+    #                    c=color,
+    #                    marker='None'
+    #                    )
+    #    else:
+    #        cdict = {'red':   ((0.0, 1.0, 1.0), (1.0, 0.0, 0.0)),
+    #                 'green': ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+    #                 'blue':  ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0))}
+    #        cmap = matplotlib.colors.LinearSegmentedColormap(
+    #                'my_colormap', cdict, 256)
+    #        ##
+    #        kdump = np.zeros((self.nk, self.nbands))
+    #        fdump = np.zeros((self.nk, self.nbands))
+    #        cdump = np.zeros((self.nk, self.nbands))
+    #        for ib in range(self.nbands):
+    #            kdump[:,ib] = self.kpoints[:]
+    #            fdump[:,ib] = self.frequencies[:,ib]
+    #            cdump[:,ib] = pr.ratio[:,ib]
+    #        kdump = kdump.reshape(self.nk*self.nbands)
+    #        fdump = fdump.reshape(self.nk*self.nbands)
+    #        cdump = cdump.reshape(self.nk*self.nbands)
+    #        isort = np.argsort(cdump)[::-1]
+    #        sc = ax.scatter(
+    #                kdump[isort], fdump[isort], c=cdump[isort],
+    #                cmap=cmap, marker='.', s=0.15, lw=lw, zorder=2)
+    #        
+    #        ## color bar
+    #        from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    #        axins = inset_axes(
+    #                ax, width="50%", height="3%", loc="upper center",
+    #                bbox_to_anchor=(0.0, -0.01, 1, 1),
+    #                bbox_transform=ax.transAxes
+    #                )
+    #        [axins.spines[k].set_visible(False) for k in axins.spines]
+    #        axins.set_facecolor([1,1,1,0.5])
+    #        axins.tick_params(
+    #                axis = 'both',
+    #                left = False,
+    #                top = False,
+    #                right = False,
+    #                bottom = False,
+    #                labelleft = False,
+    #                labeltop = False,
+    #                labelright = False,
+    #                labelbottom = False
+    #                )
+    #        sc.set_clim([0,1])
+    #        cb = plt.colorbar(
+    #                sc, cax=axins, orientation='horizontal', 
+    #                ticks=[0,0.5,1])
+    #        ## backgroud
+    #        set_axis(axins)
+    #
+    #    ##
+    #    ax.set_ylabel(ylabel)
+    #    set_axis(ax)
 
 def get_nk_nbands(bfile):
     """Get nk and nbands from band file
@@ -183,11 +183,23 @@ def get_symmetry_points(bfile):
             if abs(kpoints[it] - kpoints[it-1]) < 1e-5:
                 lab = "%s|%s" % (label_tmp[it-1], lab0)
         if "gamma" in lab.lower() or 'G' in lab:
-            label.append("$\\Gamma$")
+            label.append("G")
         else:
-            label.append("${\\rm %s}$"%(lab))
-    ##
-    return label, kpoints
+            label.append("%s"%(lab))
+    
+    ### adjust
+    lab_new = []
+    knew = []
+    lab_new.append(label[0])
+    knew.append(kpoints[0])
+    for ii in range(1,len(label)):
+        if (abs(kpoints[ii] - kpoints[ii-1]) < 1e-5 and
+                label[ii] == label[ii-1]):
+            pass
+        else:
+            lab_new.append(label[ii])
+            knew.append(kpoints[ii])
+    return lab_new, knew
 
 def get_eigen(bfile, nk, nbands):
     """Get kpoints and eigenvalues from band file

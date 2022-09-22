@@ -5,5 +5,5 @@ Tutorial
     :glob:
 
     input
-
+    tips
 

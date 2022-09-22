@@ -26,7 +26,7 @@ def set_spaces(plt,
             left=left, bottom=bottom,
             right=right, top=top, wspace=wspace, hspace=hspace)
 
-def set_axis(ax, xformat="linear", yformat="linear", 
+def set_axis(ax, xscale="linear", yscale="linear", 
         xticks=None, mxticks=None, yticks=None, myticks=None,
         labelbottom=None, length=2.4, width=0.5):
     ax.tick_params(axis='both', which='major', 
@@ -48,31 +48,24 @@ def set_axis(ax, xformat="linear", yformat="linear",
         interval = float(yticks) / float(myticks)
         ax.yaxis.set_minor_locator(tick.MultipleLocator(interval))
     #--- for logscale
-    if xformat.lower() == "log":
+    if xscale.lower() == "log":
         ax.set_xscale("log")
         ax.xaxis.set_major_locator(tick.LogLocator(base=10.0, numticks=15))
-    if yformat.lower() == "log":
+    if yscale.lower() == "log":
         ax.set_yscale("log")
         ax.yaxis.set_major_locator(tick.LogLocator(base=10.0, numticks=15))
     return ax
 
-def get_both_axis(erange, ylabel, ksym, klabels, x2label):
-    gs = gridspec.GridSpec(1,3)
-    ax1 = plt.subplot(gs[0,:2])
-    ax2 = plt.subplot(gs[0,2])
+def get_both_axis(ratio="2:1"):
+    w1 = int(ratio.split(':')[0])
+    w2 = int(ratio.split(':')[1])
+    gs = gridspec.GridSpec(1,w1+w2)
+    ax1 = plt.subplot(gs[0,:w1])
+    ax2 = plt.subplot(gs[0,w1:])
     set_axis(ax1)
     set_axis(ax2)
-    if ksym is not None:
-        ax1.set_xticks(ksym)
-    if klabels is not None:
-        ax1.set_xticklabels(klabels)
-
-    ax1.set_ylim(erange)
-    ax2.set_ylim(erange)
     ax2.yaxis.set_major_formatter(NullFormatter())
-    ax1.set_ylabel(ylabel)
-    ax2.set_xlabel(x2label)
-    return ax1, ax2
+    return ax1, ax2 
 
 def set_legend(plt, ncol=1, fs=7, loc="best", loc2=None,
         alpha=1.0, lw=0.2, length=1.0, labelspacing=0.3, borderpad=None,

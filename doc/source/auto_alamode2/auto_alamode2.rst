@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   auto_alamode2.alamode_tools
+   auto_alamode2.alamode
    auto_alamode2.cui
    auto_alamode2.io
    auto_alamode2.plot
@@ -15,14 +15,6 @@ Subpackages
 
 Submodules
 ----------
-
-auto\_alamode2.almcalc module
------------------------------
-
-.. automodule:: auto_alamode2.almcalc
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 auto\_alamode2.apdb module
 --------------------------

@@ -14,19 +14,12 @@ output_directories = {
         'lasso':{    
             'evec' : 'lasso/evec',
             'force': 'lasso/force',
-            'cv'   : 'lasso/cv',
+            'cv'   : 'lasso/lasso',
             'lasso': 'lasso/lasso',
             'kappa': 'lasso/kappa',
             },
         'result': 'result'
         }
-
-#default_vaspcalc_parameters = {
-#        'setups': 'recommended',
-#        'mpirun': 'mpirun',
-#        'vasp': 'vasp',
-#        'xc': 'pbesol',
-#        }
 
 default_vasp_parameters = {
         'relax':{
@@ -75,11 +68,11 @@ output_files = {
         'lasso_xml': "FCs_lasso.xml",
         }
 
-default_lasso_parameters = {
-        'linear_model': 2,
-        'cross_validation': 5,
-        'num_l1_alpha': 50
-        }
+#default_lasso_parameters = {
+#        'lmodel': 'enet',
+#        'cv': 5,
+#        'num_l1_alpha': 50
+#        }
 
 #default_lassobyscikit_parameters = {
 #        'n_alphas': 100,

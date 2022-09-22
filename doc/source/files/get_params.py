@@ -34,7 +34,7 @@ def main(options):
             if name in params['shared']:
                 each.append(params['shared'][name])
             else:
-                each.append('-')
+                each.append('_')
 
             if name in params[key]:
                 each[-1] = params[key][name]

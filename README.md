@@ -30,8 +30,12 @@ ALAMODE:
 To Do and questions
 --------------------
 
+* Count calculation time at different steps
+
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
+
+* Relaxation caluclations for many materials were not finished in Chariot.
 
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
@@ -39,10 +43,9 @@ Use dataset (displacements and forces) in Apdb and calculate phonon dispersion w
 
 Make phonopy_disp.yaml from DFSET of Alamode.
 
-* Make directories, alamode and vasp, for the future expansion to other software
-* LASSO with a command which may be faster than ALM python package
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge.
+
 * How were the supercell size and k-mesh decided for Phonondb?
 Number of atoms? How can k-mesh be obtained from Materials Project?
 
