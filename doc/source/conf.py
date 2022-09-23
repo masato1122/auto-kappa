@@ -1,12 +1,12 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../auto_alamode2'))
-#sys.path.insert(0, os.path.abspath('../../auto_alamode2/io'))
-#sys.path.insert(0, os.path.abspath('../../auto_alamode2/plot'))
-#sys.path.insert(0, os.path.abspath('../../auto_alamode2/plot/alamode'))
-#sys.path.insert(0, os.path.abspath('../../auto_alamode2/structure'))
-#sys.path.insert(0, os.path.abspath('../../auto_alamode2/alamode_tools'))
+sys.path.insert(0, os.path.abspath('../../auto_kappa'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa/io'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot/alamode'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa/structure'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode_tools'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 

@@ -1,9 +1,9 @@
-.. auto-alamode2
+.. auto-kappa
     Written by M. Ohnishi
     September 13, 2022.
 
-aiida-alamode
-====================
+AUTO-KAPPA
+============
 
 .. toctree::
     :maxdepth: 2
@@ -13,5 +13,5 @@ aiida-alamode
     installation
     tutorial/index
     parameters
-    aa2
+    ak
 

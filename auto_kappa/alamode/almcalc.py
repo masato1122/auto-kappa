@@ -31,9 +31,11 @@ from ..io.alm import AlmInput, AnphonInput
 
 class AlmCalc():
     
-    def __init__(self, prim_given, mpid='mp', 
+    def __init__(self, prim_given, 
+            base_directory='mp',
             scell_matrix=None, primitive_matrix=None,
             scell_matrix3=None,
+            restart=1,
             cutoffs=None, nbody=[2,3,3,2,2], mag=0.01,
             cutoff2=-1, cutoff3=4.3, 
             nac=None,
@@ -42,7 +44,7 @@ class AlmCalc():
             command={
                 'mpirun': 'mpirun', "nprocs": 1, 
                 "nthreads": 1, "anphon": "anphon", "alm": "alm",
-                }
+                },
             ):
         """ Calculations with ALM and Anphon are managed with this class.
          
@@ -52,10 +54,14 @@ class AlmCalc():
             Different formats such as pymatgen and ASE are accepted while the
             format is changed to ase-Atoms in this module.
 
-        mpid : string
+        base_directory : string
             Material ID, which is used just to determine the directory name.
             It can be anything such as the composition.
         
+        restart : int, default 1
+            The calculation will restart (1) or NOT restart (0) when the
+            directory exists.
+
         scell_matrix : array of float, shape=(3,3)
             supercell matrix wrt unitcell
 
@@ -98,7 +104,7 @@ class AlmCalc():
         ----------
         >>> almcalc = AlmCalc(
         >>>     primitive,
-        >>>     mpid='mpid-149',
+        >>>     base_directory='mpid-149',
         >>>     primitive_matrix=pmat,
         >>>     scell_matrix=smat,
         >>>     cutoff2=-1, cutoff3=4.3,
@@ -115,18 +121,21 @@ class AlmCalc():
         >>> almcalc.write_alamode_input(propt='dos')
         >>> almcalc.run_alamode(propt='dos')
         """
+        ### set name of base directory
+        self.set_base_directory(base_directory, restart)
+
         ### output directories
         dir_init = os.getcwd()
         self.out_dirs = {}
         for k1 in output_directories.keys():
             values1 = output_directories[k1]
             if type(values1) == str:
-                self.out_dirs[k1] = dir_init + '/' + mpid + '/' + values1
+                self.out_dirs[k1] = dir_init+'/'+base_directory+'/'+values1
             else:
                 self.out_dirs[k1] = {}
                 for k2 in values1.keys():
                     values2 = values1[k2]
-                    self.out_dirs[k1][k2] = dir_init + '/' + mpid + '/' + values2
+                    self.out_dirs[k1][k2] = dir_init+'/'+base_directory+'/' + values2
         
         ### structures
         self._primitive = change_structure_format(prim_given, 'ase')
@@ -176,6 +185,23 @@ class AlmCalc():
         
         self.verbosity = verbosity
     
+    @property
+    def base_directory(self):
+        return self._base_directory
+
+    def set_base_directory(self, dir0, restart):
+        """
+        If restart is off, the directory name needs to be determined charefully.
+        """
+        if restart == 1:
+            self._base_directory = dir0
+        else:
+            if os.path.exists(dir0):
+                for i in range(2, 100):
+                    dir1 = dir0 + '_%d' % i
+                    if os.path.exists(dir1) == False:
+                        self._base_directory = dir1
+                        break
     @property
     def ncores(self):
         return self._ncores

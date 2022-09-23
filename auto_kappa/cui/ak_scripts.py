@@ -1,16 +1,34 @@
 #!/home/ohnishi/.conda/envs/alm/bin/python -u
 import numpy as np
-from optparse import OptionParser
 
-from auto_alamode2.cui.scripts import start_aa2
-from auto_alamode2.io.phonondb import Phonondb
-from auto_alamode2.apdb import ApdbVasp
-from auto_alamode2.alamode.almcalc import AlmCalc
-from auto_alamode2 import output_directories
+from ..io.phonondb import Phonondb
+from ..apdb import ApdbVasp
+from ..alamode.almcalc import AlmCalc
+from .. import output_directories
+from .ak_parser import get_parser
 
-def main(options):
+def start_autokappa():
+    """ Print the logo.
+    Font: stick letters
+    """
+    print("\n\
+                  ___  __                __   __       \n\
+         /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  \n\
+        /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ \n\
+        \n")
+
+def end_autokappa():
+    print("\n\
+         ___       __  \n\
+        |__  |\ | |  \ \n\
+        |___ | \| |__/ \n\
+        \n")
+
+def main():
     
-    start_aa2()
+    options = get_parser()
+
+    start_autokappa()
     
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
@@ -73,7 +91,8 @@ def main(options):
             }
     almcalc = AlmCalc(
             apdb.primitive,
-            mpid=options.mpid,
+            base_directory=options.mpid,
+            restart=options.restart,
             primitive_matrix=pmat,
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
@@ -121,6 +140,8 @@ def main(options):
             temperature=options.random_disp_temperature,
             )
     
+    exit()
+
     ### calculate anharmonic force constants
     if almcalc.lasso:
         from auto_alamode2.io.vasp import get_dfset
@@ -134,64 +155,6 @@ def main(options):
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
     almcalc.run_alamode(propt='kappa')
     almcalc.plot_kappa()
-
-if __name__ == '__main__':
     
-    parser = OptionParser()
-
-    ### parameters which need to be modified for each.
-    parser.add_option("-d", "--directory", dest="directory", type="string",
-            default="../mp-149", help="directory of phonondb")
-    
-    parser.add_option("--mpid", dest="mpid", type="string",
-            default="mp-149", 
-            help="material ID, which is used for the name of directory [mp-149]")
-    
-    parser.add_option("--mpirun", dest="mpirun", type="string",
-            default="mpirun", help="MPI command [mpirun]")
-    
-    parser.add_option("-n", "--ncores", dest="ncores", type="int",
-            default=2, help="ncores [2]")
-    
-    parser.add_option("--verbosity", dest="verbosity", type="int",
-            default=1, help="verbosity [0]")
-    
-    ### parameters which may not need to be changed.
-    parser.add_option("--cutoff3", dest="cutoff3", type="float",
-            default=4.3, help="cutoff3, unit=Ang [4.3]")
-    
-    parser.add_option("--nmax_suggest", 
-            dest="nmax_suggest", type="int", default=200, 
-            help="Maximum number of suggested patterns for cubic FCs [200]")
-
-    parser.add_option("--frac_nrandom", 
-            dest="frac_nrandom", type="float", default=0.02,
-            help="Ratio of the number of generated patterns with random "\
-                    "displacement to the number for the suggested patterns "
-                    "with ALM [0.02]")
-    
-    parser.add_option("--command_vasp", 
-            dest="command_vasp", type="string", default="vasp", 
-            help="command to run vasp [vasp]")
-    
-    parser.add_option("--command_anphon", 
-            dest="command_anphon", type="string", default="anphon", 
-            help="command to run anphon [anphon]")
-    
-    parser.add_option("--command_alm", 
-            dest="command_alm", type="string", default="alm", 
-            help="command to run alm [alm]")
-    
-    ### parameters which do not need to be changed.
-    parser.add_option("--nagative_freq", dest="negative_freq", type="float",
-            default=-0.001, help="threshold of negative frequency [-0.001]")
-            
-    parser.add_option("--random_disp_temperature", 
-            dest="random_disp_temperature", type="float",
-            default=500., 
-            help="temperature for random displacement [500]")
-            
-    (options, args) = parser.parse_args()
-
-    main(options)
+    end_autokappa()
 

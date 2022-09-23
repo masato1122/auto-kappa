@@ -30,6 +30,8 @@ ALAMODE:
 To Do and questions
 --------------------
 
+* Use alm command for FC2, too!! Python ALM may lead to the error of "basis of harmonic FCs".
+
 * Count calculation time at different steps
 
 * Recalculate materials which had negative frequencies in the current calculation, 

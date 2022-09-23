@@ -5,7 +5,7 @@ import pandas as pd
 
 def main(options):
     
-    from auto_alamode2 import default_vasp_parameters as params
+    from auto_kappa import default_vasp_parameters as params
     
     #######################
     keys_skip = ['md']

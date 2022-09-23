@@ -9,7 +9,7 @@ Input Scripts for ALM
 
 .. code-block:: python
 
-    from aiida_alamode.io import AlmInput
+    from auto_kappa.io import AlmInput
 
     filename = 'POSCAR-supercell'
     dfset = 'dfset.txt'
@@ -44,12 +44,12 @@ from vasprun.xml
 
 .. code-block:: python
     
-    from aiida_alamode.io.vasp import write_born_info
+    from auto_kappa.io.vasp import write_born_info
     filename = 'vasprun.xml'
     write_born_info(filename, outfile='BORNINFO')
     
     ## old version
-    #from aiida_alamode.io.vasp import Vasprun
+    #from auto_kappa.io.vasp import Vasprun
     #vasprun = Vasprun('../vasprun.xml')
     #vasprun.write_born_info(filename='BORNINFO')
 
@@ -58,7 +58,7 @@ from vasprun.xml
 .. 
 .. .. code-block:: python
 ..     
-..     from aiida_alamode.io.qe import ***
+..     from auto_kappa.io.qe import ***
 
 
 Input Scripts for ANPHON
@@ -68,7 +68,7 @@ AnphonInput class can be used with a similar manner as that for AlmInput.
 
 .. code-block:: python
     
-    from aiida_alamode.io import AnphonInput
+    from auto_kappa.io import AnphonInput
     
     filename = 'POSCAR-primitive'
     fcsxml = 'IFCs_anharm.xml'
