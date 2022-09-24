@@ -30,7 +30,8 @@ ALAMODE:
 To Do and questions
 --------------------
 
-* Use alm command for FC2, too!! Python ALM may lead to the error of "basis of harmonic FCs".
+* Use alm command for 'suggest', too!! 
+Then, python ALM library does not need to be installed.
 
 * Use Phonopy to treat phonondb
 
