@@ -1,4 +1,4 @@
-auto-kappa
+Auto-KAPPA
 ============
 
 Version 0.0
