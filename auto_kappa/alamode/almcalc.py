@@ -12,7 +12,6 @@ import os
 import numpy as np
 import warnings
 import logging
-import datetime
 
 import ase, pymatgen
 from ase.build import make_supercell
@@ -29,15 +28,28 @@ from ..calculator import run_vasp
 from ..io.vasp import write_born_info
 from ..io.alm import AlmInput, AnphonInput
 
-class AlmCalc():
+class AlamodeCalc():
+    
+    ### k1: alamode type, k2: mode, k3: propt
+    propts_mode_type = {
+            'anphon': {
+                'phonons': ['band', 'dos', 'evec_commensurate'],
+                'rta': ['kappa'],
+                'scph': ['scph'],
+                },
+            'alm':{
+                'optimize': ['fc2', 'fc3', 'cv', 'lasso'],
+                }
+            }
     
     def __init__(self, prim_given, 
-            base_directory='mp',
+            material_name='mp',
             scell_matrix=None, primitive_matrix=None,
             scell_matrix3=None,
             restart=1,
             cutoffs=None, nbody=[2,3,3,2,2], mag=0.01,
             cutoff2=-1, cutoff3=4.3, 
+            order_lasso=5,
             nac=None,
             ncores=1,
             verbosity=0,
@@ -54,7 +66,7 @@ class AlmCalc():
             Different formats such as pymatgen and ASE are accepted while the
             format is changed to ase-Atoms in this module.
 
-        base_directory : string
+        material_name : string
             Material ID, which is used just to determine the directory name.
             It can be anything such as the composition.
         
@@ -102,9 +114,9 @@ class AlmCalc():
         
         Example
         ----------
-        >>> almcalc = AlmCalc(
+        >>> almcalc = AlamodeCalc(
         >>>     primitive,
-        >>>     base_directory='mpid-149',
+        >>>     material_name='mpid-149',
         >>>     primitive_matrix=pmat,
         >>>     scell_matrix=smat,
         >>>     cutoff2=-1, cutoff3=4.3,
@@ -122,7 +134,7 @@ class AlmCalc():
         >>> almcalc.run_alamode(propt='dos')
         """
         ### set name of base directory
-        self.set_base_directory(base_directory, restart)
+        self.set_material_name(material_name, restart)
 
         ### output directories
         dir_init = os.getcwd()
@@ -130,12 +142,12 @@ class AlmCalc():
         for k1 in output_directories.keys():
             values1 = output_directories[k1]
             if type(values1) == str:
-                self.out_dirs[k1] = dir_init+'/'+base_directory+'/'+values1
+                self.out_dirs[k1] = dir_init+'/'+material_name+'/'+values1
             else:
                 self.out_dirs[k1] = {}
                 for k2 in values1.keys():
                     values2 = values1[k2]
-                    self.out_dirs[k1][k2] = dir_init+'/'+base_directory+'/' + values2
+                    self.out_dirs[k1][k2] = dir_init+'/'+material_name+'/' + values2
         
         ### structures
         self._primitive = change_structure_format(prim_given, 'ase')
@@ -178,6 +190,8 @@ class AlmCalc():
         self._command = command
 
         self._ncores = ncores
+
+        self._order_lasso = order_lasso
         
         ###
         self._prefix = None      ## prefix for input files
@@ -186,26 +200,30 @@ class AlmCalc():
         self.verbosity = verbosity
     
     @property
-    def base_directory(self):
-        return self._base_directory
+    def material_name(self):
+        return self._material_name
 
-    def set_base_directory(self, dir0, restart):
+    def set_material_name(self, dir0, restart):
         """
         If restart is off, the directory name needs to be determined charefully.
         """
         if restart == 1:
-            self._base_directory = dir0
+            self._material_name = dir0
         else:
             if os.path.exists(dir0):
                 for i in range(2, 100):
                     dir1 = dir0 + '_%d' % i
                     if os.path.exists(dir1) == False:
-                        self._base_directory = dir1
+                        self._material_name = dir1
                         break
     @property
     def ncores(self):
         return self._ncores
     
+    @property
+    def order_lasso(self):
+        return self._order_lasso
+
     @property
     def nbody(self):
         return self._nbody
@@ -517,7 +535,6 @@ class AlmCalc():
 
         msg = "\n"
         msg += " Generate random displacements with an Alamode tool\n"
-        msg += " " + str(datetime.datetime.now()) + "\n"
         msg += "\n"
         msg += " %d patterns will be generated.\n" % (number_of_displacements)
         msg += "\n"
@@ -539,9 +556,10 @@ class AlmCalc():
             directory=None, force=False, 
             nmax_suggest=200, frac_nrandom=0.02, 
             temperature=500., classical=False,
-            output_dfset=True
+            output_dfset=1
             ):
-        """ Calculate forces for harmonic or cubic IFCs.
+        """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
+        out_dirs['result'] directory.
         VASP output will be stored in self.out_dirs['harm/cube']['force'].
         When the number of suggested patterns with ALM, nsuggest, is larger than
         ``nmax_suggest``, LASSO will be used and atoms are displaced with a random 
@@ -577,8 +595,10 @@ class AlmCalc():
                 ``frac_nrandom`` :math:`\\times` ``nsuggest``,
                 ``nsuggest`` :math:`)`
         
-        output_dfset : bool, default True
-            Output DFSET file after all suggested structures are calculated.
+        output_dfset : int or bool, default=1
+            If False or 0, DFSET file is not written.
+            If 1, output DFSET file only when it doesn't exist.
+            If 2, output DFSET file even when it exists.
 
         """
         print("")
@@ -673,7 +693,7 @@ class AlmCalc():
             print(" %s" % (outdir))
         
         ### output DFSET
-        if output_dfset:
+        if output_dfset != False or output_dfset != 0:
             if order == 1:
                 df_prefix = 'harm'
             elif order > 1:
@@ -685,183 +705,187 @@ class AlmCalc():
             os.makedirs(self.out_dirs['result'], exist_ok=True)
             offset_xml = outdir0 + '/prist/vasprun.xml'
             outfile = self.out_dirs['result'] + "/DFSET." + df_prefix
-            if os.path.exists(outfile) == False:
+            if os.path.exists(outfile) == False or output_dfset == 2:
                 get_dfset(outdir0, offset_xml=offset_xml, outfile=outfile)
             else:
                 msg = "\n"
-                msg += " %s already exists\n\n" % (outfile)
+                msg += " %s already exists\n" % (outfile)
                 print(msg)
         print("")
     
-    def calc_harmonic_force_constants(self, output=True):
-        """ calculate harmonic FCs and return ALM 
-        
-        Args
-        -----
-        output : bool
-            If True, fcs.xml file is stored, if False, not.
-        
-        """
-        msg = "\n"
-        msg += " ### Calculate harmonic force constants\n"
-        msg += " " + str(datetime.datetime.now()) + "\n"
-        msg += "\n"
-        print(msg)
-        
-        ### prepare directory and file names
-        os.makedirs(self.out_dirs['result'], exist_ok=True)
-        
-        directory = self.out_dirs['harm']['force']
-        
-        out_dfset = self.out_dirs['result'] + '/' + output_files['harm_dfset']
-        if output:
-            out_xml = self.out_dirs['result'] + '/' + output_files['harm_xml']
-        else:
-            out_xml = None
-        
-        ## get dfset
-        offset_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        
-        if os.path.exists(out_dfset) == False:
-            
-            disps, forces = get_dfset(
-                    directory, offset_xml=offset_xml, outfile=out_dfset)
-        
-        else:
-            
-            disps, forces = read_dfset(out_dfset, natoms=len(self.supercell))
-            
-        ## get structure
-        structure = ase.io.read(offset_xml)
-        
-        ## calculate force constants
-        ## out = [fc2_values, elem2_indices]
-        os.environ['OMP_NUM_THREADS'] = str(self.ncores)
-        out = run_alm(
-                structure, 1, self.cutoffs[0], [self.nbody[0]], 
-                mode='optimize',
-                displacements=disps, forces=forces, 
-                outfile=out_xml,
-                verbosity=self.verbosity
-                )
-        os.environ.pop('OMP_NUM_THREADS', None)
-        return out
-     
-    def calc_anharm_force_constants(self, maxorder=5):
-        """ calculate cubic IFCs and return ALM 
-        
-        Args
-        ----
-        maxorder : int, default 5
-            order for lasso calculation
-        """
-        ### prepare directory and file names
-        os.makedirs(self.out_dirs['result'], exist_ok=True)
-        
-        mode = 'optimize'
-        
-        if self.lasso == False:
-
-            order = 2
-            
-            directory = self.out_dirs['cube']['force']
-            out_dfset = self.out_dirs['result'] + '/' + output_files['cube_dfset']
-            out_xml = self.out_dirs['result'] + '/' + output_files['cube_xml']
-            offset_xml = self.out_dirs['cube']['force'] + '/prist/vasprun.xml'
-            
-        else:
-            
-            order = maxorder
-            
-            directory = self.out_dirs['lasso']['force']
-            out_dfset = self.out_dirs['result'] + '/' + output_files['lasso_dfset']
-            out_xml = self.out_dirs['result'] + '/' + output_files['lasso_xml']
-            offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
-            
-        ### print    
-        msg = "\n"
-        msg += " ### Calculate anharmonic FCs (order=%d)\n" % (order)
-        msg += " " + str(datetime.datetime.now()) + "\n"
-        msg += "\n"
-        print(msg)
-        
-        ### set nbody
-        if len(self.nbody) < order:
-            self.set_nbody_automatically(order=order)
-        
-        nbody = []
-        for i in range(order):
-            nbody.append(self.nbody[i])
-
-        ### get dfset
-        if os.path.exists(out_dfset):
-            
-            disps, forces = read_dfset(
-                    out_dfset,
-                    natoms=len(self.supercell3)
-                    )
-        
-        else:
-            
-            disps, forces = get_dfset(
-                    directory, 
-                    offset_xml=offset_xml, 
-                    outfile=out_dfset
-                    )
-        
-        ## For LASSO, extract only required data
-        ## This part is required when too many patterns were calculated, but
-        ## smaller data are needed for LASSO.
-        if self.lasso and self.nmax_suggest is not None:
-            if len(disps) > self.nmax_suggest:
-                disps = disps[:self.nmax_suggest]
-                forces = forces[:self.nmax_suggest]
-        
-        ## get fc2 and elem2
-        fc2_values, elem2_indices = \
-                self.calc_harmonic_force_constants(output=False)
-        
-        ## structure
-        structure = ase.io.read(offset_xml)
-        
-        ## 3rd order model
-        ## out = [fcs_values, fcs_indices]
-        os.environ['OMP_NUM_THREADS'] = str(self.ncores)
-        out = run_alm(
-                structure, order, self.cutoffs[:order], nbody, mode='optimize',
-                displacements=disps, forces=forces,
-                fc2info=[fc2_values, elem2_indices],
-                outfile=out_xml, lasso=self.lasso,
-                verbosity=self.verbosity)
-        os.environ.pop('OMP_NUM_THREADS', None)
-        return out
+    #def calc_harmonic_force_constants_with_ALM(self, output=True):
+    #    """ calculate harmonic FCs with python ALM library and return ALM 
+    #    ALM library may incompatible with alm command when lmodel = enet for
+    #    some cases. Therefore, ALM library is not used in auto-kappa. 
+    #    
+    #    Args
+    #    -----
+    #    output : bool
+    #        If True, fcs.xml file is stored, if False, not.
+    #    
+    #    """
+    #    msg = "\n"
+    #    msg += " ### Calculate harmonic force constants\n"
+    #    msg += "\n"
+    #
+    #    ### prepare directory and file names
+    #    os.makedirs(self.out_dirs['result'], exist_ok=True)
+    #    
+    #    directory = self.out_dirs['harm']['force']
+    #    
+    #    out_dfset = self.out_dirs['result'] + '/' + output_files['harm_dfset']
+    #    if output:
+    #        out_xml = self.out_dirs['result'] + '/' + output_files['harm_xml']
+    #    else:
+    #        out_xml = None
+    #    
+    #    ## get dfset
+    #    offset_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+    #    
+    #    if os.path.exists(out_dfset) == False:
+    #        
+    #        disps, forces = get_dfset(
+    #                directory, offset_xml=offset_xml, outfile=out_dfset)
+    #    
+    #    else:
+    #        
+    #        disps, forces = read_dfset(out_dfset, natoms=len(self.supercell))
+    #        
+    #    ## get structure
+    #    structure = ase.io.read(offset_xml)
+    #    
+    #    ## calculate force constants
+    #    ## out = [fc2_values, elem2_indices]
+    #    os.environ['OMP_NUM_THREADS'] = str(self.ncores)
+    #    out = run_alm(
+    #            structure, 1, self.cutoffs[0], [self.nbody[0]], 
+    #            mode='optimize',
+    #            displacements=disps, forces=forces, 
+    #            outfile=out_xml,
+    #            verbosity=self.verbosity
+    #            )
+    #    os.environ.pop('OMP_NUM_THREADS', None)
+    #    return out
     
-    def write_alamode_input(self, propt='band', kpts=[15,15,15], **kwargs):
+    
+    #def calc_anharm_force_constants(self):
+    #    """ calculate cubic IFCs and return ALM 
+    #    
+    #    Args
+    #    ----
+    #    maxorder : int, default 5
+    #        order for lasso calculation
+    #    """
+    #    ### prepare directory and file names
+    #    os.makedirs(self.out_dirs['result'], exist_ok=True)
+    #    
+    #    mode = 'optimize'
+    #    
+    #    if self.lasso == False:
+    #
+    #        order = 2
+    #        
+    #        directory = self.out_dirs['cube']['force']
+    #        out_dfset = self.out_dirs['result'] + '/' + output_files['cube_dfset']
+    #        out_xml = self.out_dirs['result'] + '/' + output_files['cube_xml']
+    #        offset_xml = self.out_dirs['cube']['force'] + '/prist/vasprun.xml'
+    #        
+    #    else:
+    #        
+    #        order = self.order_lasso
+    #        
+    #        directory = self.out_dirs['lasso']['force']
+    #        out_dfset = self.out_dirs['result'] + '/' + output_files['lasso_dfset']
+    #        out_xml = self.out_dirs['result'] + '/' + output_files['lasso_xml']
+    #        offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
+    #        
+    #    ### print    
+    #    msg = "\n"
+    #    msg += " ### Calculate anharmonic FCs (order=%d)\n" % (order)
+    #    msg += "\n"
+    #    print(msg)
+    #    
+    #    ### set nbody
+    #    if len(self.nbody) < order:
+    #        self.set_nbody_automatically(order=order)
+    #    
+    #    nbody = []
+    #    for i in range(order):
+    #        nbody.append(self.nbody[i])
+    #
+    #    ### get dfset
+    #    if os.path.exists(out_dfset):
+    #        
+    #        disps, forces = read_dfset(
+    #                out_dfset,
+    #                natoms=len(self.supercell3)
+    #                )
+    #    
+    #    else:
+    #        
+    #        disps, forces = get_dfset(
+    #                directory, 
+    #                offset_xml=offset_xml, 
+    #                outfile=out_dfset
+    #                )
+    #    
+    #    ## For LASSO, extract only required data
+    #    ## This part is required when too many patterns were calculated, but
+    #    ## smaller data are needed for LASSO.
+    #    if self.lasso and self.nmax_suggest is not None:
+    #        if len(disps) > self.nmax_suggest:
+    #            disps = disps[:self.nmax_suggest]
+    #            forces = forces[:self.nmax_suggest]
+    #    
+    #    ## get fc2 and elem2
+    #    fc2_values, elem2_indices = \
+    #            self.calc_harmonic_force_constants(output=False)
+    #    
+    #    ## structure
+    #    structure = ase.io.read(offset_xml)
+    #    
+    #    ## 3rd order model
+    #    ## out = [fcs_values, fcs_indices]
+    #    os.environ['OMP_NUM_THREADS'] = str(self.ncores)
+    #    out = run_alm(
+    #            structure, order, self.cutoffs[:order], nbody, mode='optimize',
+    #            displacements=disps, forces=forces,
+    #            fc2info=[fc2_values, elem2_indices],
+    #            outfile=out_xml, lasso=self.lasso,
+    #            verbosity=self.verbosity)
+    #    os.environ.pop('OMP_NUM_THREADS', None)
+    #    return out
+    
+    def write_alamode_input(self, propt=None, kpts=[15,15,15], **kwargs):
         """ Write Anphon Input
 
         Args
         -----
         propt : string
-            "band", "phonons", or "RTA"
+            "band", "phonons", "kappa", 'evec_commensurate'
         
         kpts : list of int, shape=(3)
             k-points
-        """ 
+        """
+        ### get alamode_type and mode
+        out = self._get_alamodetype_mode(propt)
+        if out is None:
+            print(" Error: %s is not supported yet." % propt)
+            exit()
+        alamode_type = out[0]
+        mode = out[1]
+
         ### prepare filenames
         if propt == 'band' or propt == 'dos':
             
             dir_work = self.out_dirs['harm']['bandos']
             fcsxml = '../../result/' + output_files['harm_xml']
-            mode = 'phonons'
-            alamode_type = 'anphon'
-
+            
         elif propt == 'evec_commensurate':
             
             dir_work = self.out_dirs['lasso']['evec']
             fcsxml = '../../result/' + output_files['harm_xml']
-            mode = 'phonons'
-            alamode_type = 'anphon'
-        
+            
         elif propt == 'kappa':
             
             if self.lasso == False:
@@ -871,17 +895,29 @@ class AlmCalc():
                 dir_work = self.out_dirs['lasso']['kappa']
                 fcsxml = '../../result/' + output_files['lasso_xml']
             
-            mode = 'RTA'
-            alamode_type = 'anphon'
-
         elif propt == 'lasso' or propt == 'cv':
             
             dir_work = self.out_dirs['lasso'][propt]
             dfset = '../../result/' + output_files['lasso_dfset']
             fc2xml = '../../result/' + output_files['harm_xml']
-            mode = 'optimize'
-            alamode_type = 'alm'
         
+        elif propt == 'fc2':
+            
+            dir_work = self.out_dirs['harm']['force']
+            dfset = '../../result/' + output_files['harm_dfset']
+            fc2xml = None
+        
+        elif propt == 'fc3':
+            
+            dir_work = self.out_dirs['cube']['force']
+            dfset = '../../result/' + output_files['cube_dfset']
+            fc2xml = '../../result/' + output_files['harm_xml']
+            
+        else:
+            print("")
+            print(" Error: %s is not supported yet." % propt)
+            exit()
+
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
         
@@ -889,7 +925,7 @@ class AlmCalc():
         os.makedirs(dir_work, exist_ok=True)
         
         ## non-analytical term
-        if self.nac == 1:
+        if self.nac == 1 and alamode_type == 'anphon':
             
             borninfo = 'BORNINFO'
             
@@ -980,17 +1016,26 @@ class AlmCalc():
             inp.update({'tmax': 1000})
             inp.update({'dt': 50})
         
-        elif 'cv' in propt or propt == 'lasso':
+        elif propt in ['cv', 'lasso', 'fc2', 'fc3']:
             """
             Comments
-            =========
+            ---------
             * maxalpha is automatically set by the code.
             * minalpha = maxalpha * 1e-6 
 
             * set nbody and cutoffs
             
             """
-            order = 5
+            if propt == 'cv' or propt == 'lasso':
+                order = self.order_lasso
+            elif propt == 'fc2':
+                order = 1
+            elif propt == 'fc3':
+                order = 2
+            else:
+                print(" Error")
+                exit()
+            
             if len(self.nbody) < order:
                 self.set_nbody_automatically()
             inp.update({'norder': order})
@@ -1005,27 +1050,29 @@ class AlmCalc():
                             inp.as_dict()['kd'][i2]
                             )
                     cutoffs_alamode[lab] = np.where(
-                            self.cutoffs[:,i1,i2]<0., 
-                            None, self.cutoffs[:,i1,i2]
+                            self.cutoffs[:order,i1,i2]<0., 
+                            None, self.cutoffs[:order,i1,i2]
                             )
             
             inp.update({'cutoff': cutoffs_alamode})
-            inp.update({'lmodel': 'enet'})
-            inp.update({'l1_ratio': 1.0})
-            inp.update({'maxiter': 2000})    ## smaller than the default, 10000
-            inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
-            if propt == 'cv':
-                inp.update({'cv': 5})
-                ### The code set automatically.
-                #inp.update({'cv_maxalpha': 1e-2})
-                #inp.update({'cv_minalpha': 1e-8})
-                inp.update({'cv_nalpha': 50})
-            elif propt == 'lasso':
-                
-                alpha = self.get_suggested_l1alpha()
-                
-                inp.update({'cv': 0})
-                inp.update({'l1_alpha': alpha})      ### read l1_alpha
+            
+            if propt in ['cv', 'lasso']:
+                inp.update({'lmodel': 'enet'})
+                inp.update({'l1_ratio': 1.0})
+                inp.update({'maxiter': 2000})    ## smaller than the default, 10000
+                inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
+                if propt == 'cv':
+                    inp.update({'cv': 5})
+                    ### The code set automatically.
+                    #inp.update({'cv_maxalpha': 1e-2})
+                    #inp.update({'cv_minalpha': 1e-8})
+                    inp.update({'cv_nalpha': 50})
+                elif propt == 'lasso':
+                    
+                    alpha = self.get_suggested_l1alpha()
+                    
+                    inp.update({'cv': 0})
+                    inp.update({'l1_alpha': alpha})      ### read l1_alpha
             
         else:
             print(" Error: %s is not supported." % propt)
@@ -1047,6 +1094,17 @@ class AlmCalc():
         except Exception:
             return None
     
+    def _get_alamodetype_mode(self, propt):
+        
+        ### get alamode_type and mode 
+        flag = False
+        for k1 in self.propts_mode_type:
+            for k2 in self.propts_mode_type[k1]:
+                if propt in self.propts_mode_type[k1][k2]:
+                    return k1, k2
+        if flag == False:
+            return None
+     
     def run_alamode(self, propt=None, force=False):
         """ Run anphon
         
@@ -1060,17 +1118,14 @@ class AlmCalc():
             conducted while, if True, anphon will be run forecely.
         
         """
-        ### anphon or alm
-        propt_for_anphon = ['band', 'dos', 'kappa', 'evec']
-        propt_for_alm = ['optimize', 'suggest', 'fitting', 'cv', 'lasso']
-        alamode_type = None
-        for key in propt_for_anphon:
-            if key in propt:
-                alamode_type = 'anphon'
-        for key in propt_for_alm:
-            if key in propt:
-                alamode_type = 'alm'
-        
+        ### get alamode_type and mode
+        out = self._get_alamodetype_mode(propt)
+        if out is None:
+            print(" Error: %s is not supported yet." % propt)
+            exit()
+        alamode_type = out[0]
+        mode = out[1]
+
         ## change directory
         if propt == 'band' or propt == 'dos':
             
@@ -1096,66 +1151,77 @@ class AlmCalc():
             
             workdir = self.out_dirs['lasso'][propt]
         
+        elif propt == 'fc2':
+
+            workdir = self.out_dirs['harm']['force']
+        
+        elif propt == 'fc3':
+
+            workdir = self.out_dirs['cube']['force']
+
         else:
             print("ERROR")
             warnings.warn(" WARNNING: %s property is not supported." % (propt))
             exit()
         
-        ### change directory
-        dir_init = os.getcwd()
-        os.chdir(workdir)
-         
         ### print title
         msg = "\n"
         msg += " Run %s for %s\n" % (alamode_type, propt)
         msg += "-" * (len(msg) + 2) + "\n"
         print(msg)
-        
+            
         filename = "%s.in" % propt
-        
-        ### get number of threads
-        #if nthreads is None:
-        #    nthreads = os.cpu_count()
+        logfile = propt + '.log'
         
         ## prepare command and environment
-        logfile = propt + '.log'
-        cmd = "%s -n %d %s %s" %(
-                self.command['mpirun'],
-                self.command['nprocs'], 
-                self.command[alamode_type],
-                filename)
-        
-        ## If the job has been finished, the same calculation is not conducted.
-        ## The job status is judged from *.log file.
-        if _anphon_finished(logfile) == False or force:
-        
-            os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
-            
-            ## run the job!!
-            with open(logfile, 'w') as f:
-                proc = subprocess.Popen(
-                        cmd.split(), env=os.environ, stdout=f,
-                        stderr=subprocess.PIPE)
-                proc.wait()
-            
-        else:
+        val = run_alamode(filename, logfile, workdir=workdir, force=force,
+                mpirun=self.command['mpirun'], nprocs=self.command['nprocs'],
+                nthreads=self.command['nthreads'],
+                command=self.command[alamode_type],
+                )
+        if val == 2:
             print(" %s has been already calculated." % propt)
         
-        ## Return to the original directory
-        os.environ.pop('OMP_NUM_THREADS', None)
-        os.chdir(dir_init)
-        
-        ###
-        if self.lasso and propt == 'lasso':
-            self.set_dfset_lasso()
-            self._plot_cvsets()
+        ### copy the generated FCs file
+        if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
+            
+            self._copy_generated_fcsfiles(propt=propt)
+            
+            if propt in ['lasso']:
+                self._plot_cvsets()
 
-    def set_dfset_lasso(self):
-        fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
-        fn2 = self.out_dirs['result']+'/FCs_lasso.xml'
+    def _copy_generated_fcsfiles(self, propt=None):
+        """ Copyr a FCs file into the "result" directory.
+        """
+        ext = 'xml'
+        
+        if propt == 'lasso':
+            fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.'+ext
+            fn2 = self.out_dirs['result']+'/FCs_lasso.'+ext
+        
+        elif propt == 'fc2':
+            fn1 = self.out_dirs['harm']['force']+'/'+self.prefix+'.'+ext
+            fn2 = self.out_dirs['result']+'/FCs_harm.'+ext
+        
+        elif propt == 'fc3':
+            fn1 = self.out_dirs['cube']['force']+'/'+self.prefix+'.'+ext
+            fn2 = self.out_dirs['result']+'/FCs_cube.'+ext
+        
+        else:
+            print(" Error")
+            warnings.warn(" Error: %s is not supported yet." % propt)
+            exit()
+
         if os.path.exists(fn1) == False:
             warnings.warn(' %s does not exist.' % fn1)
         else:
+            if os.path.exists(fn2):
+                msg = "\n"
+                msg += " %s was overwritten.\n\n" % (fn2)
+            else:
+                msg = "\n"
+                msg += " %s was created.\n\n" % fn2
+            print(msg)
             shutil.copy(fn1, fn2)
     
     def _plot_cvsets(self):
@@ -1224,27 +1290,49 @@ class AlmCalc():
         plot_kappa(df, figname=figname)
 
 
-#def _get_default_figure_parameters():
-#    params = {
-#            'figname': None,
-#            'plot_pdos': 1,
-#            'prefix2': None,
-#            'maxdos': None,
-#            'lw': 0.5,
-#            'yticks': None,
-#            'myticks': None,
-#            'fig_width': 3.5,
-#            'fig_aspect': 0.5,
-#            'dpi': 300,
-#            'col': 'blue',
-#            'col2': 'grey',
-#            'wspace': 0.05,
-#            'unit': "cm",
-#            'colorbar': 1,
-#            'legend': 1,
-#            'legend_los': 'best',
-#            }
-#    return params
+def run_alamode(filename, logfile, workdir='.', force=False,
+        mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
+    """ Run alamode with a command (alm or anphon)
+    
+    Args
+    ======
+    filename : string
+        input script of Alamode in workdir
+    
+    logfile : string
+        log file name in workdir
+    
+    workdir : string
+        work directory
+    
+    """
+    cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
+    
+    ### change directory
+    dir_init = os.getcwd()
+    os.chdir(workdir)
+     
+    ## If the job has been finished, the same calculation is not conducted.
+    ## The job status is judged from *.log file.
+    if _anphon_finished(logfile) == False or force:
+    
+        os.environ['OMP_NUM_THREADS'] = str(nthreads)
+        
+        ## run the job!!
+        with open(logfile, 'w') as f:
+            proc = subprocess.Popen(
+                    cmd.split(), env=os.environ, stdout=f,
+                    stderr=subprocess.PIPE)
+            proc.wait()
+        val = 1
+
+    else:
+        val = 2
+    
+    ## Return to the original directory
+    os.environ.pop('OMP_NUM_THREADS', None)
+    os.chdir(dir_init)
+    return val
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     """ 
@@ -1267,7 +1355,8 @@ def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
             cc = cutoff3
         cutoffs.append(np.asarray(np.ones((n,n)) * cc))
     return np.asarray(cutoffs)
-    
+
+
 def _read_frequency_range(filename, format='anphon'):
     """ read minimum and maximum frequencies from .bands file created by anphon 
     """
@@ -1279,6 +1368,7 @@ def _read_frequency_range(filename, format='anphon'):
     else:
         print(" Error: %s is not supported yet." % format)
         exit()
+
 
 def _anphon_finished(logfile):
     try:

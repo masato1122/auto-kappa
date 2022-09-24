@@ -120,7 +120,6 @@ class AlmInput(MSONable, dict):
             - mode
         """
         super().__init__()
-        
         self.update(kwargs)
     
     @property
@@ -231,7 +230,6 @@ class AlmInput(MSONable, dict):
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
 
-         
     def to_file(self, filename: str = None):
         """ Make ALM input file
         Args
@@ -298,6 +296,7 @@ class AlmInput(MSONable, dict):
     #def suggest_cutoff(self):
     #    cutoff = suggest_alm_cutoff(self.structure)
     
+
 ## This part should be modified (rewrite).
 def _get_subdict(master_dict, subkeys):
     """Get a set of keys """
@@ -789,3 +788,24 @@ def get_kpoint_path(primitive, deltak=0.01):
         kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
     return kpoints
 
+
+#def write_alamode_input(mode: None, structure=None, prefix="prefix", 
+#        dfset=None, **args):
+#    """ Write an input script of Alamode
+#    
+#    Args
+#    -----
+#    mode : string, default=None
+#        "suggest", "optimize", "phonons"
+#
+#    """
+#    modes_alm = ['suggest', 'optimize']
+#    modes_anphon = ['phonons', 'rta', 'scph']
+#    
+#    if mode in modes_alm:
+#        inp = AlmInput.from_structure(
+#                structure,
+#                mode=mode,
+#                )
+#    
+#

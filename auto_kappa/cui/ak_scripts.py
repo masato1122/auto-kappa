@@ -1,9 +1,10 @@
 #!/home/ohnishi/.conda/envs/alm/bin/python -u
 import numpy as np
+import datetime
 
 from ..io.phonondb import Phonondb
 from ..apdb import ApdbVasp
-from ..alamode.almcalc import AlmCalc
+from ..alamode.almcalc import AlamodeCalc
 from .. import output_directories
 from .ak_parser import get_parser
 
@@ -11,18 +12,28 @@ def start_autokappa():
     """ Print the logo.
     Font: stick letters
     """
+    from ..version import __version__
     print("\n\
                   ___  __                __   __       \n\
          /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  \n\
         /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ \n\
-        \n")
+        \n\
+        ver. %s\n\
+        \n" % (__version__))
+    time = datetime.datetime.now()
+    print(" Start at", time.strftime("%m/%d/%Y %H:%M:%S"))
+    print("")
 
 def end_autokappa():
+    
+    print("")
+    time = datetime.datetime.now()
     print("\n\
          ___       __  \n\
         |__  |\ | |  \ \n\
         |___ | \| |__/ \n\
         \n")
+    print(" at", time.strftime("%m/%d/%Y %H:%M:%S"), "\n\n")
 
 def main():
     
@@ -89,9 +100,9 @@ def main():
             'anphon': options.command_anphon,
             'alm': options.command_alm,
             }
-    almcalc = AlmCalc(
+    almcalc = AlamodeCalc(
             apdb.primitive,
-            base_directory=options.mpid,
+            material_name=options.mpid,
             restart=options.restart,
             primitive_matrix=pmat,
             scell_matrix=smat,
@@ -112,9 +123,10 @@ def main():
     
     ### calculate forces for harmonic FCs
     almcalc.calc_forces(1, calc_force)
-    almcalc.calc_harmonic_force_constants()
+    almcalc.write_alamode_input(propt='fc2')
+    almcalc.run_alamode(propt='fc2', force=True)
     
-    ### calculate band 
+    ### calculate band
     almcalc.write_alamode_input(propt='band')
     almcalc.run_alamode(propt='band', force=True)
     
@@ -140,16 +152,16 @@ def main():
             temperature=options.random_disp_temperature,
             )
     
-    exit()
-
     ### calculate anharmonic force constants
     if almcalc.lasso:
-        from auto_alamode2.io.vasp import get_dfset
+        from ..io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt)
             almcalc.run_alamode(propt)
     else: 
-        almcalc.calc_anharm_force_constants()
+        #almcalc.calc_anharm_force_constants()
+        almcalc.write_alamode_input(propt='fc3')
+        almcalc.run_alamode(propt='fc3', force=True)
     
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
