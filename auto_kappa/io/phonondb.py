@@ -8,8 +8,9 @@ import ase.io
 from phonopy import Phonopy
 from ase.calculators.vasp import Vasp
 from .. import output_directories
-from ..structure.format import change_structure_format
+from ..structure.crystal import change_structure_format
 from .vasp import read_incar, read_poscar, read_kpoints, wasfinished
+
 
 class Phonondb():
     """ Read files in phonondb
@@ -18,20 +19,8 @@ class Phonondb():
     mode : string
         "relax", "force", "nac", ...
     """
-    def __init__(self, directory, mpid='mp', nac=None):
+    def __init__(self, directory, nac=None):
         
-        ###
-        #self.out_dirs = {}
-        #for k1 in output_directories.keys():
-        #    values1 = output_directories[k1]
-        #    if type(values1) == str:
-        #        self.out_dirs[k1] = './' + mpid + '/' + values1
-        #    else:
-        #        self.out_dirs[k1] = {}
-        #        for k2 in values1.keys():
-        #            values2 = values1[k2]
-        #            self.out_dirs[k1][k2] = './' + mpid + '/' + values2
-
         ###
         self.directory = directory
         self._filenames = None
@@ -53,13 +42,6 @@ class Phonondb():
         ##
         self._nac = None
 
-    #@property
-    #def calculator_params(self):
-    #    return self._calculator_params
-    #    
-    #def set_calculator_params(self, keys):
-    #    self._calculator_params.update(keys)
-    
     @property
     def nac(self):
         if self._nac is None:
@@ -142,13 +124,6 @@ class Phonondb():
             self._phonon = self.phonon
         return change_structure_format(self._phonon.supercell, format=format)
     
-    #@property
-    #def relaxed_primitive(self):
-    #    if self._relaxed_primitive is None:
-    #        fn = self.out_dirs['relax'] + '/vasprun.xml'
-    #        self._relaxed_primitive = self._read_vasprun_xml(fn)
-    #    return self._relaxed_primitive
-    
     def get_kpoints(self, mode=None):
         """
         Return
@@ -169,113 +144,6 @@ class Phonondb():
         """
         return ase.io.read(filename, format='vasp-xml', index=-1)
     
-    #def run_relaxation(self, nprocs=1,
-    #        mpirun=calculator_parameters['mpirun'],
-    #        vasp=calculator_parameters['vasp'],
-    #        params={'ediffg': -0.0001,}
-    #        ):
-    #    """ Run structure optimization and return contents of vasprun.xml
-    #    """
-    #    from ase.calculators.vasp.create_input import GenerateVaspInput
-    #    
-    #    ### Check if the job has been done or not.
-    #    print("")
-    #    print(" ### Structure relaxation")
-    #    
-    #    outdir = self.out_dirs['relax']
-    #    if wasfinished(outdir, filename='vasprun.xml') == False:
-    #        
-    #        print(" calculating...")
-    #        calc = self.get_calculator(mode='relax')
-    #        calc.command = "%s -n %d %s" % (mpirun, nprocs, vasp)
-    #        calc.directory = self.out_dirs['relax']
-    #        
-    #        ######################################
-    #        ### update parameters ################
-    #        ######################################
-    #        GenerateVaspInput.set(calc, **params)
-    #        calc.results.clear()
-    #        
-    #        ###
-    #        prim = change_structure_format(self.primitive, format='ase')
-    #        prim.calc = calc
-    #        ene = prim.get_potential_energy()
-    #    else:
-    #        print("")
-    #        print(" Relaxation calculation had been already done.")
-    #        xml = outdir + '/vasprun.xml'
-    #        atoms = ase.io.read(xml, format='vasp-xml')
-    #        ene = atoms.get_potential_energy()
-    #    
-    #    print(" Energy: %.3f eV" % (ene))
-    #  
-    #def calculate_born_effective_charge(self, nprocs=1,
-    #        mpirun=calculator_parameters['mpirun'],
-    #        vasp=calculator_parameters['vasp']
-    #        ):
-    #    """ Calculate Born effective charge
-    #    """
-    #    print("")
-    #    print(" ### Born effective charge")
-    #    ### Check if the job has been done or not.
-    #    outdir = self.out_dirs['nac']
-    #    if wasfinished(outdir, filename='vasprun.xml') == False:
-    #        
-    #        calc = self.get_calculator(mode='nac')
-    #        if calc is None:
-    #            print("")
-    #            print(" Born effective charge is not calculated.")
-    #            print("")
-    #            return None
-    #         
-    #        print(" calculating...")
-    #         
-    #        calc.command = "%s -n %d %s" % (mpirun, nprocs, vasp)
-    #        calc.directory = self.out_dirs['nac']
-    #        
-    #        prim = change_structure_format(self.relaxed_primitive, format='ase')
-    #        prim.calc = calc
-    #        prim.get_potential_energy()
-    #    
-    #    else:
-    #        print(" Born effective change had already been calculated.")
-    #    print("")
-    # 
-    #def get_calculator(self, mode=None):
-    #    """ Calculator with ASE
-    #    mode : string
-    #        'relax', 'force', or 'nac'
-    #    """
-    #    calc = Vasp(
-    #            setups=calculator_parameters['setups'],
-    #            xc=calculator_parameters['xc'])
-    #    
-    #    ## get kpoints
-    #    key = 'KPOINTS-' + mode
-    #    if key in list(self.filenames_as_dict.keys()):
-    #        fn_kpts = self.filenames_as_dict[key]
-    #        calc.read_kpoints(fn_kpts)
-    #    else:
-    #        print(" Cannot find %s" % key)
-    #        #print(" kpoints needs to be given automatically.")
-    #        #from ..calculator import get_recommended_kpoints
-    #        #if mode.lower() == 'relax' or mode.lower() == 'nac':
-    #        #    structure = self.primitive
-    #        #elif mode.lower() == 'force':
-    #        #    structure = self.supercell
-    #        return None
-    #     
-    #    ## get incar
-    #    key = 'INCAR-' + mode
-    #    if key in list(self.filenames_as_dict.keys()):
-    #        fn_incar = self.filenames_as_dict[key]
-    #        calc.read_incar(fn_incar)
-    #    else:
-    #        print(" Cannot find %s" % key)
-    #        return None
-    #    
-    #    return calc
-
     def _check_file(self, filename):
         if os.path.exists(filename) == False:
             print(" %s does not exist." % filename)

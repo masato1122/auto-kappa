@@ -162,7 +162,7 @@ class AlamodeDisplace(object):
         disp_list = []
 
         if self._displacement_mode == "fd":
-
+            
             if not file_pattern:
                 raise RuntimeError("pattern file must be given with --pattern option")
             self._parse_displacement_patterns(file_pattern)
@@ -375,7 +375,7 @@ class AlamodeDisplace(object):
 
     def _parse_displacement_patterns(self, files_in):
         self._pattern = []
-
+        
         for file in files_in:
             pattern_tmp = []
 

@@ -4,10 +4,12 @@ output_directories = {
         'relax': 'relax',
         'nac': 'nac',
         'harm':{
+            'suggest': 'harm/suggest',
             'force': 'harm/force',
             'bandos': 'harm/bandos',
             },
         'cube':{
+            'suggest': 'cube/suggest',
             'force': 'cube/force',
             'kappa': 'cube/kappa',
             },

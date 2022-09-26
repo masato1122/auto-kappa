@@ -17,6 +17,7 @@ from ase import Atoms
 
 from ..units import AToBohr
 from ..structure import (change_structure_format, get_primitive_structure)
+from ..structure.crystal import get_formula
 
 try:
     import f90nml
@@ -178,10 +179,11 @@ class AlmInput(MSONable, dict):
         kwargs['norder'] = norder
         
         ## set a structure
-        cls.structure = change_structure_format(structure, format='IStructure')
+        cls.structure = change_structure_format(
+                structure, format='pmg-IStructure')
         
         ## parameters determined by the structure
-        params_str = get_alm_variables_from_structure(
+        params_str = get_alamode_variables_from_structure(
                 cls.structure, norder=norder)
         alm_dict.update(params_str)
 
@@ -190,10 +192,10 @@ class AlmInput(MSONable, dict):
         
         ## set prefix
         if 'prefix' not in alm_dict.keys():
-            alm_dict['prefix'] = cls._get_formula(cls)
+            alm_dict['prefix'] = get_formula(cls.structure)
         else:
             if alm_dict['prefix'] is None:
-                alm_dict['prefix'] = cls._get_formula(cls)
+                alm_dict['prefix'] = get_formula(cls.structure)
         
         return AlmInput(**alm_dict)
     
@@ -283,15 +285,15 @@ class AlmInput(MSONable, dict):
     def as_dict(self):
         return dict(self)
     
-    def _get_formula(self):
-        words = self.structure.get_primitive_structure().formula.split()
-        if len(words) == 1:
-            return re.sub(r"[123456789]", "", words[0])
-        else:
-            prefix = ""
-            for i in range(len(words)):
-                prefix += words[i].replace("1", "")
-            return prefix
+    #def _get_formula(self):
+    #    words = self.structure.get_primitive_structure().formula.split()
+    #    if len(words) == 1:
+    #        return re.sub(r"[123456789]", "", words[0])
+    #    else:
+    #        prefix = ""
+    #        for i in range(len(words)):
+    #            prefix += words[i].replace("1", "")
+    #        return prefix
     
     #def suggest_cutoff(self):
     #    cutoff = suggest_alm_cutoff(self.structure)
@@ -366,7 +368,7 @@ def _write_positions(positions):
     lines.append("/")
     return lines
 
-def get_alm_variables_from_structure(structure, norder=None):
+def get_alamode_variables_from_structure(structure, norder=None):
     """ Get alm variables determined by the structure
     """
     params = {}

@@ -1,4 +1,3 @@
-#!/home/ohnishi/.conda/envs/alm/bin/python -u
 import numpy as np
 import datetime
 
@@ -44,12 +43,12 @@ def main():
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
     ### and k-points.
-    phdb = Phonondb(options.directory, mpid=options.mpid)
-
+    phdb = Phonondb(options.directory)
+    
     pmat = phdb.primitive_matrix
     smat = phdb.scell_matrix
     
-    ### Set output directoreis
+    ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
         values1 = output_directories[k1]
@@ -121,8 +120,20 @@ def main():
             phdb.get_kpoints(mode=mode).kpts[0]
             )
     
+    ### suggest and creat structures for harmonic FCs
+    
+    #############################################################
+    ## ver.1: with ALM library
+    #almcalc.calc_forces(order=1, calculator=calc_force)
+    #
+    ## ver.2: with command
+    almcalc.write_alamode_input(propt='suggest', order=1)
+    almcalc.run_alamode(propt='suggest', order=1)
+    almcalc.calc_forces(order=1, calculator=calc_force)
+    exit()
+    #############################################################
+
     ### calculate forces for harmonic FCs
-    almcalc.calc_forces(1, calc_force)
     almcalc.write_alamode_input(propt='fc2')
     almcalc.run_alamode(propt='fc2', force=True)
     
@@ -144,13 +155,17 @@ def main():
         exit()
     
     ### calculate forces for cubic FCs
-    mode = 'force'
-    almcalc.calc_forces(
-            2, calc_force, 
-            nmax_suggest=options.nmax_suggest,
-            frac_nrandom=options.frac_nrandom,
-            temperature=options.random_disp_temperature,
-            )
+    #mode = 'force'
+    #almcalc.calc_forces(
+    #        2, calc_force, 
+    #        nmax_suggest=options.nmax_suggest,
+    #        frac_nrandom=options.frac_nrandom,
+    #        temperature=options.random_disp_temperature,
+    #        )
+    ## ver.2    
+    almcalc.write_alamode_input(propt='suggest', order=2)
+    almcalc.run_alamode(propt='suggest', order=2)
+    almcalc.calc_forces(order=2)
     
     ### calculate anharmonic force constants
     if almcalc.lasso:
@@ -159,10 +174,10 @@ def main():
             almcalc.write_alamode_input(propt=propt)
             almcalc.run_alamode(propt)
     else: 
-        #almcalc.calc_anharm_force_constants()
+        ###almcalc.calc_anharm_force_constants()
         almcalc.write_alamode_input(propt='fc3')
         almcalc.run_alamode(propt='fc3', force=True)
-    
+        
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
     almcalc.run_alamode(propt='kappa')
