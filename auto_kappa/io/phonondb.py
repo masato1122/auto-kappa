@@ -1,0 +1,187 @@
+# -*- coding: utf-8 -*-
+import os.path
+import numpy as np
+import warnings
+import glob
+import yaml
+
+import ase.io
+from phonopy import Phonopy
+from ase.calculators.vasp import Vasp
+from .. import output_directories
+from ..structure.crystal import change_structure_format
+from .vasp import read_incar, read_poscar, read_kpoints, wasfinished
+
+
+class Phonondb():
+    """ Read files in phonondb
+    Args
+    =========
+    mode : string
+        "relax", "force", "nac", ...
+    """
+    def __init__(self, directory, nac=None):
+        
+        self.file_yaml = directory + '/phonon.yaml'
+        self.config = None
+        with open(self.file_yaml, 'r') as yml:
+            self.config = yaml.safe_load(yml)
+        
+        ###
+        self.directory = directory
+        self._filenames = None
+        
+        self._parameters = None
+        
+        self._scell_matrix = self.config['supercell_matrix']
+        self._primitive_matrix =None
+        
+        self._phonon = None
+        self._unitcell = None
+        
+        ## relaxed structure
+        self._primitive = None
+        self._supercell = None
+         
+        self._relaxed_primitive = None
+        
+        ##
+        self._nac = None
+    
+    @property
+    def nac(self):
+        if self._nac is None:
+            if 'INCAR-nac' in list(self.filenames_as_dict.keys()):
+                self._nac = 1
+            else:
+                self._nac = 0
+        return self._nac
+    
+    @property
+    def filenames(self):
+        if self._filenames is None:
+            line = self.directory + '/*'
+            self._filenames = glob.glob(line)
+        return self._filenames
+    
+    @property
+    def filenames_as_dict(self):
+        fn_dict = {}
+        for fn_each in self.filenames:
+            key = fn_each.split('/')[-1]
+            fn_dict[key] = fn_each
+        return fn_dict
+        
+    @property
+    def scell_matrix(self):
+        if self._scell_matrix is None:
+            sc, pm = read_phonopy_conf(self.directory + '/phonopy.conf')
+            self._scell_matrix = sc
+            self._primitive_matrix = pm
+        return self._scell_matrix
+    
+    @property
+    def primitive_matrix(self):
+        if self._primitive_matrix is None:
+            sc, pm = read_phonopy_conf(self.directory + '/phonopy.conf')
+            self._scell_matrix = sc
+            self._primitive_matrix = pm
+        return self._primitive_matrix
+    
+    @property
+    def unitcell(self):
+        if self._unitcell is None:
+            fn = self.directory + '/POSCAR-unitcell'
+            self._unitcell = read_poscar(fn)
+        return self._unitcell
+    
+    def get_unitcell(self, format='phonopy'):
+        if self._unitcell is None:
+            fn = self.directory + '/POSCAR-unitcell'
+            self._unitcell = read_poscar(fn)
+        return change_structure_format(self._unitcell, format=format)
+    
+    @property
+    def phonon(self):
+        if self._phonon is None:
+            self._phonon = Phonopy(
+                    self.unitcell, self.scell_matrix, 
+                    primitive_matrix=self.primitive_matrix
+                    )
+        return self._phonon
+    
+    @property
+    def primitive(self):
+        self._phonon = self.phonon
+        return self._phonon
+    
+    def get_primitive(self, format='phonopy'):
+        self._phonon = self.phonon
+        return change_structure_format(self._phonon.primitive, format=format)   
+
+    @property
+    def supercell(self):
+        if self._phonon is None:
+            self._phonon = self.phonon
+        return self._phonon.supercell
+    
+    def get_supercell(self, format='phonopy'):
+        if self._phonon is None:
+            self._phonon = self.phonon
+        return change_structure_format(self._phonon.supercell, format=format)
+    
+    def get_kpoints(self, mode=None):
+        """
+        Return
+        -----------
+        kpoints : Kpoints obj for the given mode
+        """
+        key = 'KPOINTS-' + mode
+        if key in list(self.filenames_as_dict.keys()):
+            fn = self.filenames_as_dict[key]
+            kpoints = read_kpoints(fn)
+            return kpoints
+        else:
+            return None
+    
+    def _read_vasprun_xml(self, filename):
+        """ 
+        filename : vasprun.xml filename
+        """
+        return ase.io.read(filename, format='vasp-xml', index=-1)
+    
+    def _check_file(self, filename):
+        if os.path.exists(filename) == False:
+            print(" %s does not exist." % filename)
+
+def read_phonopy_conf(filename):
+    """ Read phonopy.conf in phonondb 
+    Args
+    ========
+    filename : string, phonopy.conf
+
+    Return
+    =======
+    sc_mat : shape=(3,3), int
+    prim_mat : shape=(3,3), flaot
+        default: identity matrix
+    """
+    from phonopy.cui.settings import PhonopyConfParser
+    confparser = PhonopyConfParser(filename=filename)
+    params = confparser.get_configures()
+    
+    from fractions import Fraction
+    matrix = np.zeros((2,3,3,))
+    matrix[0] = np.identity(3)
+    matrix[1] = np.identity(3)
+    for ii, target in enumerate(['dim', 'primitive_axis']):
+        if target in params.keys():
+            for i, num in enumerate(params[target].split()):
+                i1 = int(i/3)
+                i2 = int(i%3)
+                matrix[ii][i1,i2] = float(Fraction(num))
+    ##
+    scell = matrix[0]
+    primat = matrix[1]
+    return scell, primat
+

@@ -1,11 +1,14 @@
-Auto-ALAMODE2
-=====================
+Auto-KAPPA
+============
 
 Version 0.0
 ---------------
 
-Auto_ALAMODE2 is a software for automated calculations of thermal conductivity with VASP and ALAMODE.
-In future version, other codes such as QuantumEspress, Phono3py, and ShenBTE, may be able to be called.
+Auto-KAPPA is a software for automated calculations of thermal conductivity.
+The first version works with VASP and ALAMODE while, in furture versions,
+other software such as QuantumEspress, Phono3py, and ShenBTE, are available,
+which enables an easy comparison of results obtained with different software and
+use of different methods such as SCPH method, 4-phonon scattering, iterative or direct solution of BTE, etc.
 
 Requirements
 -------------
@@ -30,10 +33,13 @@ ALAMODE:
 To Do and questions
 --------------------
 
+<<<<<<< HEAD
 * Count calculation time at different steps
 
 * Determine directory name automatically
 
+=======
+>>>>>>> develop
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
 

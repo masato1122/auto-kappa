@@ -19,7 +19,7 @@ Many directories which contain a vasprun.xml file are supposed to be located und
 
 .. code-block:: python
 
-    from auto_alamode2.io.vasp import get_dfset
+    from auto_kappa.io.vasp import get_dfset
     
     directory = '.'
     offset_xml = directory + '/prist/vasprun.xml'
@@ -41,7 +41,7 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
 
 .. code-block:: python
 
-    from auto_alamode2.plot.bandos import plot_bandos
+    from auto_kappa.plot.bandos import plot_bandos
 
     plot_bandos(directory='.', prefix='Si',
                 figname='fig_bandos.png',
@@ -67,7 +67,7 @@ Plot results of cross validation
 
 .. code-block:: python
 
-    from auto_alamode2.plot.lasso import plot_cvsets
+    from auto_kappa.plot.lasso import plot_cvsets
     plot_cvsets(directory='.', figname='fig_cvsets.png')
     
 .. figure:: ../files/fig_cvsets.png
