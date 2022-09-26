@@ -52,12 +52,8 @@ class AlamodeCalc():
             cutoff2=-1, cutoff3=4.3, 
             order_lasso=5,
             nac=None,
-            ncores=1,
+            commands=None,
             verbosity=0,
-            command={
-                'mpirun': 'mpirun', "nprocs": 1, 
-                "nthreads": 1, "anphon": "anphon", "alm": "alm",
-                },
             ):
         """ Calculations with ALM and Anphon are managed with this class.
          
@@ -106,7 +102,7 @@ class AlamodeCalc():
         verbosity : int
             If verbosity=1, details are output while, if 0, not.
 
-        command : dict
+        commands : dict
             Number of processes and threads are given.
             default={
                 'mpirun': 'mpirun', "nprocs": 1, 
@@ -123,7 +119,7 @@ class AlamodeCalc():
         >>>     cutoff2=-1, cutoff3=4.3,
         >>>     nbody=[2,3,3,2], mag=0.01,
         >>>     nac=1,
-        >>>     command={'mpirun':'mpirun', 'nprocs':1, 'nthreads':1,'anphon':'anphon'},
+        >>>     commands={'mpirun':'mpirun', 'nprocs':1, 'nthreads':1,'anphon':'anphon'},
         >>>     verbosity=0
         >>>     )
         >>> calc_force = apdb.get_calculator('force', 
@@ -136,7 +132,20 @@ class AlamodeCalc():
         """
         ### set name of base directory
         self.set_material_name(material_name, restart)
-
+        
+        ##
+        self._commands = {
+                'vasp':{
+                    'mpirun': 'mpirun', "nprocs": 1, "nthreads": 1, 
+                    'vasp': 'vasp'
+                    },
+                'alamode':{
+                    'mpirun': 'mpirun', 'nprocs': 1, 'nthreads': 2,
+                    'alm': 'alm', 'anphon': 'anphon',
+                    }
+                }
+        self._commands.update(commands)
+        
         ### output directories
         dir_init = os.getcwd()
         self.out_dirs = {}
@@ -188,9 +197,7 @@ class AlamodeCalc():
 
         self._nmax_suggest = None
 
-        self._command = command
-
-        self._ncores = ncores
+        self._commands = commands
 
         self._order_lasso = order_lasso
         
@@ -217,9 +224,14 @@ class AlamodeCalc():
                     if os.path.exists(dir1) == False:
                         self._material_name = dir1
                         break
+    
     @property
-    def ncores(self):
-        return self._ncores
+    def commands(self):
+        return self._commands
+    
+    def update_commands(self, val):
+        """ Command is update """
+        self._commands.update(val)
     
     @property
     def prefix(self):
@@ -283,14 +295,6 @@ class AlamodeCalc():
     def cutoffs(self, matrix):
         self._cutoffs = matrix
 
-    @property
-    def command(self):
-        return self._command
-    
-    def update_command(self, val):
-        """ Command is update """
-        self._command.update(val)
-    
     @property
     def nmax_suggest(self):
         return self._nmax_suggest
@@ -544,6 +548,7 @@ class AlamodeCalc():
     #    codeobj = VaspParser()
     #    codeobj.set_initial_structure(self.supercell)
     #    
+    #    ### run with ALM library
     #    almdisp = AlamodeDisplace(
     #            'fd', codeobj,
     #            #file_primitive=file_prim,
@@ -557,9 +562,6 @@ class AlamodeCalc():
     #    header_list, disp_list = almdisp.generate(file_pattern=filename,
     #            magnitude=0.1)
     #    
-    #    print("CCC")
-    #    exit()
-    #    
     #    all_disps = np.zeros_like(disp_list)
     #    for i, each in enumerate(disp_list):
     #        all_disps[i] = np.dot(each, self.supercell.cell)
@@ -568,8 +570,18 @@ class AlamodeCalc():
     def _get_displacements(
             self, displacement_mode: None,
             file_pattern=None, 
-            file_evec=None, number_of_displacements=1, temperature=500., classical=False,
+            #
+            file_evec=None, number_of_displacements=1, temperature=500., 
+            classical=False,
             ):
+        """ Return displacements
+        
+        Args
+        -----
+        file_pattern : string
+            **_pattern.HARMONIC, **_pattern.ANHARM3, ...
+        
+        """
         from .tools.VASP import VaspParser
         from .tools.GenDisplacement import AlamodeDisplace
         
@@ -638,10 +650,11 @@ class AlamodeCalc():
             all_disps[i] = np.dot(each, self.supercell.cell)
         return all_disps 
     
+    
     def calc_forces(self, order: None, calculator=None, 
             nmax_suggest=200, frac_nrandom=0.02, 
             temperature=500., classical=False,
-            calculate_forces=False, output_dfset=1
+            calculate_forces=True, output_dfset=1
             ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
@@ -705,7 +718,7 @@ class AlamodeCalc():
         nsuggest = self._get_number_of_suggested_structures(order)
         
         ###
-        msg = "\nNumber of the suggested structures with ALM : %d\n" % (nsuggest)
+        msg = "\n Number of the suggested structures with ALM : %d\n" % (nsuggest)
         print(msg)
         
         ### output directory
@@ -1224,7 +1237,7 @@ class AlamodeCalc():
         if flag == False:
             return None
      
-    def run_alamode(self, propt=None, force=False, **args):
+    def run_alamode(self, propt=None, neglect_log=False, **args):
         """ Run anphon
         
         Args
@@ -1232,7 +1245,7 @@ class AlamodeCalc():
         propt : string
             "band", "dos", "evec_commensurate", or "kappa"
 
-        force : bool
+        neglect_log : bool
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
         
@@ -1309,14 +1322,15 @@ class AlamodeCalc():
         logfile = propt + '.log'
         
         ## prepare command and environment
-        val = run_alamode(filename, logfile, workdir=workdir, force=force,
-                mpirun=self.command['mpirun'], nprocs=self.command['nprocs'],
-                nthreads=self.command['nthreads'],
-                command=self.command[alamode_type],
+        val = run_alamode(filename, logfile, workdir=workdir, 
+                neglect_log=neglect_log,
+                mpirun=self.commands['alamode']['mpirun'], 
+                nprocs=self.commands['alamode']['nprocs'],
+                nthreads=self.commands['alamode']['nthreads'],
+                command=self.commands['alamode'][alamode_type],
                 )
         if val == 2:
             print(" %s has been already calculated." % propt)
-        
         
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
@@ -1349,14 +1363,16 @@ class AlamodeCalc():
             exit()
         
         if os.path.exists(fn1) == False:
+            
             warnings.warn(' %s does not exist.' % fn1)
+        
         else:
             if os.path.exists(fn2):
                 msg = "\n"
-                msg += " %s was overwritten.\n\n" % (fn2)
+                msg += " %s was overwritten.\n" % (fn2)
             else:
                 msg = "\n"
-                msg += " %s was created.\n\n" % fn2
+                msg += " %s was created.\n" % fn2
             print(msg)
             shutil.copy(fn1, fn2)
     
@@ -1426,7 +1442,7 @@ class AlamodeCalc():
         plot_kappa(df, figname=figname)
 
 
-def run_alamode(filename, logfile, workdir='.', force=False,
+def run_alamode(filename, logfile, workdir='.', neglect_log=False,
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
     """ Run alamode with a command (alm or anphon)
     
@@ -1450,8 +1466,8 @@ def run_alamode(filename, logfile, workdir='.', force=False,
      
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
-    if _anphon_finished(logfile) == False or force:
-    
+    if _anphon_finished(logfile) == False or neglect_log:
+        
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
         ## run the job!!

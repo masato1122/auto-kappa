@@ -7,6 +7,8 @@ import ase, ase.data
 from ase.data import atomic_numbers
 
 import pymatgen.core.structure as str_pmg
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
 from phonopy.structure.atoms import PhonopyAtoms
 
 def get_commensurate_points(supercell_matrix):
@@ -50,33 +52,41 @@ def get_primitive_matrix(structure):
     """ Return the primitive matrix of the given structure suggested by
     SpacegroupAnalyzer in Pymatgen. Different formats of structure are
     available. """
-    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
     str_pmg = change_structure_format(structure, format="pymatgen")
     spg_analyzer = SpacegroupAnalyzer(str_pmg)
-    prim = spg_analyzer.find_primitive()
     pmat = spg_analyzer.get_conventional_to_primitive_transformation_matrix()
     return pmat
 
-def get_suggested_primitive(structure, symprec=1e-5, format='ase'):
-    """ Find and return the primitive cell
-    """
-    atoms_orig = change_structure_format(structure, format='ase')
-    
-    cell, scaled_positions, numbers = spglib.find_primitive(
-            atoms_orig, symprec=symprec)
-    
-    disp = atoms_orig.get_scaled_positions()[0] - scaled_positions[0]
-
-    scaled_positions += disp
-    
-    return _make_new_atoms(cell, scaled_positions, numbers)
+def get_primitive_standard_structure(structure):
+    """ Return the standard matrix of the given structure suggested by
+    SpacegroupAnalyzer in Pymatgen. Different formats of structure are
+    available. """
+    str_pmg = change_structure_format(structure, format="pymatgen")
+    spg_analyzer = SpacegroupAnalyzer(str_pmg)
+    unitcell = spg_analyzer.get_primitive_standard_structure()
+    return unitcell
 
 
-def get_standerdized_cell(prim):
-    """ Return the conventional cell created by Spglib
-    """
-    cell, scaled_positions, numbers = spglib.refine_cell(prim)
-    return _make_new_atoms(cell, scaled_positions, numbers)
+#def get_suggested_primitive(structure, symprec=1e-5, format='ase'):
+#    """ Find and return the primitive cell
+#    """
+#    atoms_orig = change_structure_format(structure, format='ase')
+#    
+#    cell, scaled_positions, numbers = spglib.find_primitive(
+#            atoms_orig, symprec=symprec)
+#    
+#    disp = atoms_orig.get_scaled_positions()[0] - scaled_positions[0]
+#
+#    scaled_positions += disp
+#    
+#    return _make_new_atoms(cell, scaled_positions, numbers)
+
+
+#def get_standerdized_cell(prim):
+#    """ Return the conventional cell created by Spglib
+#    """
+#    cell, scaled_positions, numbers = spglib.refine_cell(prim)
+#    return _make_new_atoms(cell, scaled_positions, numbers)
 
 
 def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):

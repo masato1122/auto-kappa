@@ -51,28 +51,24 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         parameter for "custodian"
     """
     if calc.directory is None:
-        warnings.warning(" WARNING: "\
+        warnings.warn(" WARNING: "\
                 "output directory is not set in the calculator.")
         exit(0)
     
-    #print("")
     if 'ase' in method.lower():
         
-        #print(" ### Run VASP with ASE")
         atoms.calc = calc
         atoms.get_potential_energy()
     
     elif 'custodian' in method.lower():
         
-        #print(" ### Run VASP with Custodian")
         run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
     
     else:
         print(" Error: method %s is not supported." % (method))
         exit(0)
-    #print("")
 
-def get_vasp_parameters(mode, directory=None, atoms=None, kpts=None,
+def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,
         auto_lreal_scell_size=65,
         setups='recommended', xc='pbesol',
@@ -82,13 +78,32 @@ def get_vasp_parameters(mode, directory=None, atoms=None, kpts=None,
     
     Args
     -------
-    #calc : ASE calculator
     mode : string
         "relax", "force", "nac", or "md"
+    
+    atoms : ASE Atoms object
+    
     directory : string
         output directory
-    atoms : ASE Atoms object
+    
     kpts : list of float, shape=(3)
+    
+    How to Use
+    -----------
+    >>> from auto_kappa.calculator import get_vasp_calculator
+    >>> 
+    >>> atoms = ase.io.read('POSCAR.primitive', format='vasp')
+    >>> mode = 'relax'
+    >>>
+    >>> #atoms = ase.io.read('POSCAR.supercell', format='vasp')
+    >>> #mode = 'force'
+    >>>
+    >>> calc = get_vasp_calculator(mode,
+    >>>     directory='./out',
+    >>>     kpts=[10,10,10])
+    >>> calc.command = "mpirun -n 2 vasp"
+    >>> calc.write_input(structure)
+    
     """
     from . import default_vasp_parameters
     
@@ -126,7 +141,7 @@ def get_vasp_parameters(mode, directory=None, atoms=None, kpts=None,
     calc.directory = outdir
     
     ### Generate
-    GenerateVaspInput.set(calc, **params)
+    vasp = GenerateVaspInput.set(calc, **params)
     calc.results.clear()
     return calc
 

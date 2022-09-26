@@ -4,24 +4,27 @@ from optparse import OptionParser
 
 import ase.io
 from ase.build import make_supercell
-from auto_alamode2.apdb import ApdbVasp
-from auto_alamode2.structure.crystal import get_standerdized_cell
-    
+from auto_kappa.apdb import ApdbVasp
+from auto_kappa.structure.crystal import (
+        get_primitive_structure,
+        get_primitive_standard_structure
+        )
+
 parser = OptionParser()
 parser.add_option("-f", "--filename", dest="filename", type="string",
-        default="POSCAR.orig", help="input file name")
+        default="POSCAR.unitcell", help="input file name")
 (options, args) = parser.parse_args()
 
 ### prepare structures
-prim = ase.io.read(options.filename, format='vasp')
-unit = get_standerdized_cell(prim)
+unit = ase.io.read(options.filename, format='vasp')
+
+prim = get_primitive_structure(unit)
 
 ### get the primitive matrix
 pmat = np.dot(np.linalg.inv(unit.cell), prim.cell)
 
 ### set ApdbVasp
 apdb = ApdbVasp(unit, primitive_matrix=pmat)
-
 
 ### calculator
 kpts = [4, 4, 4]

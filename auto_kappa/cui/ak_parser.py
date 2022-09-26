@@ -9,9 +9,10 @@ def get_parser():
     parser.add_option("-d", "--directory", dest="directory", type="string",
             default="../mp-149", help="directory of phonondb")
     
-    parser.add_option("--mpid", dest="mpid", type="string",
+    parser.add_option("--material_name", dest="material_name", type="string",
             default="mp-149", 
-            help="material ID, which is used for the name of directory [mp-149]")
+            help="material name such as mateiral ID which is used as "\
+                    "the name of directory [mp-149]")
     
     parser.add_option("--restart", dest="restart", type="int",
             default=1,

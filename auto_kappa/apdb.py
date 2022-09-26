@@ -150,9 +150,7 @@ class ApdbVasp():
         kpts : list of float, shpae=(3,)
         
         """
-        from .calculator import get_vasp_parameters
-        
-        calc = Vasp(setups='recommended', xc='pbesol')
+        from .calculator import get_vasp_calculator
         
         ### get structure (Atoms obj)
         if mode.lower() == 'relax' or mode.lower() == 'nac':
@@ -160,7 +158,7 @@ class ApdbVasp():
         elif mode.lower() == 'force' or mode.lower() == 'md':
             structure = self.supercell
         
-        calc = get_vasp_parameters(mode, 
+        calc = get_vasp_calculator(mode, 
                 directory=directory, 
                 atoms=structure,
                 kpts=kpts,

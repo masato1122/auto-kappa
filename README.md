@@ -33,13 +33,6 @@ ALAMODE:
 To Do and questions
 --------------------
 
-* Use alm command for 'suggest', too!! 
-Then, python ALM library does not need to be installed.
-
-* Use Phonopy to treat phonondb
-
-* Count calculation time at different steps
-
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
 

@@ -3,6 +3,7 @@ import os.path
 import numpy as np
 import warnings
 import glob
+import yaml
 
 import ase.io
 from phonopy import Phonopy
@@ -21,13 +22,18 @@ class Phonondb():
     """
     def __init__(self, directory, nac=None):
         
+        self.file_yaml = directory + '/phonon.yaml'
+        self.config = None
+        with open(self.file_yaml, 'r') as yml:
+            self.config = yaml.safe_load(yml)
+        
         ###
         self.directory = directory
         self._filenames = None
         
         self._parameters = None
         
-        self._scell_matrix = None
+        self._scell_matrix = self.config['supercell_matrix']
         self._primitive_matrix =None
         
         self._phonon = None
@@ -41,7 +47,7 @@ class Phonondb():
         
         ##
         self._nac = None
-
+    
     @property
     def nac(self):
         if self._nac is None:
