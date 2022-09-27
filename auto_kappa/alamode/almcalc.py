@@ -1466,7 +1466,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
      
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
-    if _anphon_finished(logfile) == False or neglect_log:
+    if _alamode_finished(logfile) == False or neglect_log:
         
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
@@ -1522,7 +1522,7 @@ def _read_frequency_range(filename, format='anphon'):
         exit()
 
 
-def _anphon_finished(logfile):
+def _alamode_finished(logfile):
     try:
         lines = open(logfile, 'r').readlines()
         n = len(lines)

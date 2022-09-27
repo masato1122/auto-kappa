@@ -38,6 +38,7 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     
     ### return to the initial directory
     os.chdir(cwd)
+    return 1
 
 def run_vasp(calc, atoms, method='custodian', max_errors=10):
     """ Run a VASP job 
@@ -59,10 +60,12 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         
         atoms.calc = calc
         atoms.get_potential_energy()
+        return 1
     
     elif 'custodian' in method.lower():
         
-        run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
+        value = run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
+        return value
     
     else:
         print(" Error: method %s is not supported." % (method))
