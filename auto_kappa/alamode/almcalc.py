@@ -1536,7 +1536,8 @@ def _alamode_finished(logfile):
                     return False
     except Exception:
         return False
-
+    
+    return False
 
 def run_alm(structure, order, cutoffs, nbody, mode=None,
         displacements=None, forces=None, outfile=None,
