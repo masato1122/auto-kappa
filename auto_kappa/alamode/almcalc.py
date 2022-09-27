@@ -1117,8 +1117,10 @@ class AlamodeCalc():
                 fmin = self.frequency_range[0] - df * 0.05
                 fmax = self.frequency_range[1] + df * 0.05
             
+            npoints = 301
             inp.update({'emin': fmin})
             inp.update({'emax': fmax})
+            inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
             inp.update({'kpts': kpts})
             inp.update({'pdos': 1})
         
