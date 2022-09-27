@@ -19,14 +19,14 @@ import subprocess
 import shutil
 import pandas as pd
 
-from .. import output_directories, output_files
-from ..units import AToBohr, BohrToA
-from ..structure.crystal import change_structure_format, get_formula
-from ..io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
-from ..calculator import run_vasp
+from auto_kappa import output_directories, output_files
+from auto_kappa.units import AToBohr, BohrToA
+from auto_kappa.structure.crystal import change_structure_format, get_formula
+from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
+from auto_kappa.calculator import run_vasp
 
-from ..io.vasp import write_born_info
-from ..io.alm import AlmInput, AnphonInput
+from auto_kappa.io.vasp import write_born_info
+from auto_kappa.io.alm import AlmInput, AnphonInput
 
 class AlamodeCalc():
     
@@ -582,8 +582,8 @@ class AlamodeCalc():
             **_pattern.HARMONIC, **_pattern.ANHARM3, ...
         
         """
-        from .tools.VASP import VaspParser
-        from .tools.GenDisplacement import AlamodeDisplace
+        from auto_kappa.alamode.tools.VASP import VaspParser
+        from auto_kappa.alamode.tools.GenDisplacement import AlamodeDisplace
         
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
@@ -695,15 +695,13 @@ class AlamodeCalc():
         
         """
         if calculate_forces:
-            line = " Force calculation (order: %s)" % order
+            line = "Force calculation (order: %s)" % order
         else:
-            line = " Generate displacement structures (order: %s)" % order
+            line = "Generate displacement structures (order: %s)" % order
         
-        print("")
-        msg = " " + line
-        border = "=" * (len(msg) + 2)
+        msg = "\n " + line + "\n"
+        msg += " " + "=" * (len(line)) + "\n"
         print(msg)
-        print(border)
 
         self._nmax_suggest = nmax_suggest
         
@@ -1130,7 +1128,7 @@ class AlamodeCalc():
             smat = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
             
             ### commensurate points
-            from ..structure.crystal import get_commensurate_points
+            from auto_kappa.structure.crystal import get_commensurate_points
             comm_pts = get_commensurate_points(smat)
             inp.update({'printevec': 1})
             inp.set_kpoint(kpoints=comm_pts)
@@ -1316,8 +1314,9 @@ class AlamodeCalc():
         
         ### print title
         msg = "\n"
-        msg += " Run %s for %s\n" % (alamode_type, propt)
-        msg += "-" * (len(msg) + 2) + "\n"
+        line = "Run %s for %s:" % (alamode_type, propt)
+        msg += " " + line + "\n"
+        msg += " " + "-" * (len(line)) + "\n"
         print(msg)
             
         filename = "%s.in" % propt
@@ -1379,7 +1378,7 @@ class AlamodeCalc():
             shutil.copy(fn1, fn2)
     
     def _plot_cvsets(self):
-        from ..plot.lasso import plot_cvsets
+        from auto_kappa.plot.lasso import plot_cvsets
         figname = self.out_dirs['result'] + '/fig_cvsets.png'
         print("")
         print(" ### Plot CV results ###")
@@ -1397,15 +1396,14 @@ class AlamodeCalc():
         else:
             figname = args['figname']
         
-        from ..plot.bandos import plot_bandos
+        from auto_kappa.plot.bandos import plot_bandos
         
         ### output title
-        print("")
-        msg = " Plot band and DOS"
-        border = "-" * (len(msg) + 2)
+        line = "Plot band and DOS:"
+        msg = "\n " + line + "\n"
+        msg += " " + "-" * len(line) + "\n"
         print(msg)
-        print(border)
-        
+         
         fig = plot_bandos(
                 directory=self.out_dirs['harm']['bandos'], 
                 prefix=self.prefix, 
@@ -1440,7 +1438,7 @@ class AlamodeCalc():
         
         print("")
         print(" ### Plot kappa")
-        from ..plot.kappa import plot_kappa
+        from auto_kappa.plot.kappa import plot_kappa
         plot_kappa(df, figname=figname)
 
 

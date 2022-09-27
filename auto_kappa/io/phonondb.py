@@ -8,9 +8,9 @@ import yaml
 import ase.io
 from phonopy import Phonopy
 from ase.calculators.vasp import Vasp
-from .. import output_directories
-from ..structure.crystal import change_structure_format
-from .vasp import read_incar, read_poscar, read_kpoints, wasfinished
+from auto_kappa import output_directories
+from auto_kappa.structure.crystal import change_structure_format
+from auto_kappa.io.vasp import read_incar, read_poscar, read_kpoints, wasfinished
 
 
 class Phonondb():

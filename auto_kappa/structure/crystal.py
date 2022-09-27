@@ -8,7 +8,6 @@ from ase.data import atomic_numbers
 
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
 from phonopy.structure.atoms import PhonopyAtoms
 
 def get_commensurate_points(supercell_matrix):

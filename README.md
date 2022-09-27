@@ -14,7 +14,7 @@ Requirements
 -------------
 
 * VASP
-* Alamode (alm>=1.4.1, anphon>=1.4.1, and ALM>=1.4.0)
+* Alamode   >= 1.4.1
 * Phonopy   >= 2.15.1
 * ASE       >= 3.22.1
 * Pymatgen  >= 2022.3.24

@@ -108,7 +108,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     >>> calc.write_input(structure)
     
     """
-    from . import default_vasp_parameters
+    from auto_kappa import default_vasp_parameters
     
     calc = Vasp(setups=setups, xc=xc)
     

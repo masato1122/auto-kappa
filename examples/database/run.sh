@@ -17,9 +17,9 @@ if [ ! -e $dir_db ]; then
     continue
 fi
 
-../../scripts/auto_kappa.py \
+akrun \
     --directory $dir_db \
-    --mpid $mpid \
+    --material_name $mpid \
     --ncores $ncores \
     --nmax_suggest 200 \
     --frac_nrandom 0.02 \

@@ -15,9 +15,9 @@ import pymatgen
 from pymatgen.core.structure import IStructure
 from ase import Atoms
 
-from ..units import AToBohr
-from ..structure import (change_structure_format, get_primitive_structure)
-from ..structure.crystal import get_formula
+from auto_kappa.units import AToBohr
+from auto_kappa.structure import (change_structure_format, get_primitive_structure)
+from auto_kappa.structure.crystal import get_formula
 
 try:
     import f90nml

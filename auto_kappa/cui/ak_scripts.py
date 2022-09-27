@@ -1,11 +1,11 @@
 import numpy as np
 import datetime
 
-from ..io.phonondb import Phonondb
-from ..apdb import ApdbVasp
-from ..alamode.almcalc import AlamodeCalc
-from .. import output_directories
-from .ak_parser import get_parser
+from auto_kappa.io.phonondb import Phonondb
+from auto_kappa.apdb import ApdbVasp
+from auto_kappa.alamode.almcalc import AlamodeCalc
+from auto_kappa import output_directories
+from auto_kappa.cui.ak_parser import get_parser
 
 def start_autokappa():
     """ Print the logo.
@@ -192,7 +192,7 @@ def main():
     almcalc.calc_forces(order=2, calculator=calc_force)
     
     t21 = datetime.datetime.now()
-    times['cubic_forces'] = t21 - t13
+    times['anharm_forces'] = t21 - t13
     
     ### calculate anharmonic force constants
     if almcalc.lasso:
@@ -208,7 +208,7 @@ def main():
         almcalc.run_alamode(propt='fc3', neglect_log=True)
     
     t22 = datetime.datetime.now()
-    times['cubic_fcs'] = t22 - t21
+    times['anharm_fcs'] = t22 - t21
     
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
