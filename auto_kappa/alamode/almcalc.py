@@ -1139,7 +1139,6 @@ class AlamodeCalc():
             inp.update({'nac':  self.nac})
             inp.update({'isotope': 2})
             inp.update({'kappa_coherent': 1})
-            inp.update({'restart': 0})
             inp.update({'tmin': 50})
             inp.update({'tmax': 1000})
             inp.update({'dt': 50})
