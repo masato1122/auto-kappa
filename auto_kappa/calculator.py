@@ -29,7 +29,8 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     os.chdir(outdir)
     
     ### set handlers and run VASP
-    handlers = [VaspErrorHandler(), UnconvergedErrorHandler()]
+    handlers = [VaspErrorHandler()]
+    ##, UnconvergedErrorHandler()]
     
     vjob = VaspJob(calc.command.split(), auto_npar=True)
     
