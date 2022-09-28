@@ -33,13 +33,14 @@ ALAMODE:
 To Do and questions
 --------------------
 
-* Relaxation caluclations for many materials were not finished in Chariot.
+* Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
 
-* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
-such as Born effective charge.
-
+* (solved?) Relaxation caluclations for many materials were not finished in Chariot.
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
+
+* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
+such as Born effective charge. (which one?)
 
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
@@ -54,12 +55,10 @@ Additional
 ------------
 
 * Claculate kappa with different k-points and extrapolate?
-* Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
-* Output analysis conditions and the kind of used server? (with json?)
+
+* Output analysis conditions, fitting error, etc.? (with json?)
 
 * Compression of results
-
-* Summary of output results including fitting error, etc.
 
 * Automated creation of the homepage with Sphinx
 
