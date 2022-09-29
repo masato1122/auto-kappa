@@ -14,7 +14,7 @@ Requirements
 -------------
 
 * VASP
-* Alamode (alm>=1.4.1, anphon>=1.4.1, and ALM>=1.4.0)
+* Alamode   >= 1.4.1
 * Phonopy   >= 2.15.1
 * ASE       >= 3.22.1
 * Pymatgen  >= 2022.3.24
@@ -29,7 +29,10 @@ ALAMODE:
 
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
+To Do
+------
 
+<<<<<<< HEAD
 To Do and questions
 --------------------
 
@@ -42,8 +45,13 @@ To Do and questions
 >>>>>>> develop
 * Recalculate materials which had negative frequencies in the current calculation, 
 but do not in phonondb. (EDIFFG was modified.)
+=======
+* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
+such as Born effective charge. (mp-160)
+>>>>>>> develop
 
-* Relaxation caluclations for many materials were not finished in Chariot.
+* How were the supercell size and k-mesh decided for Phonondb?
+Number of atoms? How can k-mesh be obtained from Materials Project?
 
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
@@ -51,24 +59,21 @@ Use dataset (displacements and forces) in Apdb and calculate phonon dispersion w
 
 Make phonopy_disp.yaml from DFSET of Alamode.
 
-* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
-such as Born effective charge.
-
-* How were the supercell size and k-mesh decided for Phonondb?
-Number of atoms? How can k-mesh be obtained from Materials Project?
-
-* Plot phonon dispersion with many lines, not with single line
-
 Additional
 ------------
 
 * Claculate kappa with different k-points and extrapolate?
-* Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
-* Output analysis conditions and the kind of used server? (with json?)
+
+* Output analysis conditions, fitting error, etc.? (with json?)
 
 * Compression of results
 
-* Summary of output results including fitting error, etc.
-
 * Automated creation of the homepage with Sphinx
+
+Done
+------
+
+* Relaxation caluclations for many materials were not finished in Chariot.
+
+* EDIFFG is modified.
 

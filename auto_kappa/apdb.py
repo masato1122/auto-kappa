@@ -9,10 +9,10 @@ from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from ase.build import make_supercell
-from .structure.crystal import (
+from auto_kappa.structure.crystal import (
         get_primitive_matrix, get_primitive_structure, change_structure_format)
-from .calculator import run_vasp
-from .io.vasp import print_vasp_params
+from auto_kappa.calculator import run_vasp
+from auto_kappa.io.vasp import print_vasp_params
 
 class ApdbVasp():
     
@@ -150,7 +150,7 @@ class ApdbVasp():
         kpts : list of float, shpae=(3,)
         
         """
-        from .calculator import get_vasp_calculator
+        from auto_kappa.calculator import get_vasp_calculator
         
         ### get structure (Atoms obj)
         if mode.lower() == 'relax' or mode.lower() == 'nac':
@@ -193,13 +193,11 @@ class ApdbVasp():
             been already finished.
             
         """
-        from .io.vasp import wasfinished
-        print("")
-        msg = "VASP calculation (%s)" % (mode)
-        border = "=" * (len(msg) + 2)
-        print("", msg)
-        print(border)
-
+        from auto_kappa.io.vasp import wasfinished
+        line = "VASP calculation (%s)" % (mode)
+        msg = "\n " + line + "\n"
+        msg += " " + "=" * (len(line)) + "\n"
+        print(msg)
 
         if wasfinished(directory, filename='vasprun.xml') and force == False:
             print("")

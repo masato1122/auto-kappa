@@ -6,7 +6,7 @@ from pymatgen.io.vasp.outputs import Vasprun
 from phonopy.interface.vasp import read_vasp
 from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
-from ..units import BohrToA, RyToEv
+from auto_kappa.units import BohrToA, RyToEv
 
 def get_dfset(directory, offset_xml=None, outfile=None):
     """ Get dataset of displacements and forces from many vasprun.xml files.

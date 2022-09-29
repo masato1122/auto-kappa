@@ -19,14 +19,14 @@ import subprocess
 import shutil
 import pandas as pd
 
-from .. import output_directories, output_files
-from ..units import AToBohr, BohrToA
-from ..structure.crystal import change_structure_format, get_formula
-from ..io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
-from ..calculator import run_vasp
+from auto_kappa import output_directories, output_files
+from auto_kappa.units import AToBohr, BohrToA
+from auto_kappa.structure.crystal import change_structure_format, get_formula
+from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
+from auto_kappa.calculator import run_vasp
 
-from ..io.vasp import write_born_info
-from ..io.alm import AlmInput, AnphonInput
+from auto_kappa.io.vasp import write_born_info
+from auto_kappa.io.alm import AlmInput, AnphonInput
 
 class AlamodeCalc():
     
@@ -200,6 +200,10 @@ class AlamodeCalc():
         self._commands = commands
 
         self._order_lasso = order_lasso
+        
+        self._file_result = None
+        self._file_isotope = None
+        self._scat = None
         
         ###
         self._prefix = get_formula(self.primitive)  ## prefix for input files
@@ -582,8 +586,8 @@ class AlamodeCalc():
             **_pattern.HARMONIC, **_pattern.ANHARM3, ...
         
         """
-        from .tools.VASP import VaspParser
-        from .tools.GenDisplacement import AlamodeDisplace
+        from auto_kappa.alamode.tools.VASP import VaspParser
+        from auto_kappa.alamode.tools.GenDisplacement import AlamodeDisplace
         
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
@@ -695,15 +699,13 @@ class AlamodeCalc():
         
         """
         if calculate_forces:
-            line = " Force calculation (order: %s)" % order
+            line = "Force calculation (order: %s)" % order
         else:
-            line = " Generate displacement structures (order: %s)" % order
+            line = "Generate displacement structures (order: %s)" % order
         
-        print("")
-        msg = " " + line
-        border = "=" * (len(msg) + 2)
+        msg = "\n " + line + "\n"
+        msg += " " + "=" * (len(line)) + "\n"
         print(msg)
-        print(border)
 
         self._nmax_suggest = nmax_suggest
         
@@ -1117,8 +1119,10 @@ class AlamodeCalc():
                 fmin = self.frequency_range[0] - df * 0.05
                 fmax = self.frequency_range[1] + df * 0.05
             
+            npoints = 301
             inp.update({'emin': fmin})
             inp.update({'emax': fmax})
+            inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
             inp.update({'kpts': kpts})
             inp.update({'pdos': 1})
         
@@ -1128,7 +1132,7 @@ class AlamodeCalc():
             smat = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
             
             ### commensurate points
-            from ..structure.crystal import get_commensurate_points
+            from auto_kappa.structure.crystal import get_commensurate_points
             comm_pts = get_commensurate_points(smat)
             inp.update({'printevec': 1})
             inp.set_kpoint(kpoints=comm_pts)
@@ -1139,7 +1143,6 @@ class AlamodeCalc():
             inp.update({'nac':  self.nac})
             inp.update({'isotope': 2})
             inp.update({'kappa_coherent': 1})
-            inp.update({'restart': 0})
             inp.update({'tmin': 50})
             inp.update({'tmax': 1000})
             inp.update({'dt': 50})
@@ -1314,8 +1317,9 @@ class AlamodeCalc():
         
         ### print title
         msg = "\n"
-        msg += " Run %s for %s\n" % (alamode_type, propt)
-        msg += "-" * (len(msg) + 2) + "\n"
+        line = "Run %s for %s:" % (alamode_type, propt)
+        msg += " " + line + "\n"
+        msg += " " + "-" * (len(line)) + "\n"
         print(msg)
             
         filename = "%s.in" % propt
@@ -1376,8 +1380,150 @@ class AlamodeCalc():
             print(msg)
             shutil.copy(fn1, fn2)
     
+    #def write_lifetime(self, temperature=300, outfile=None):
+    #    
+    #    from auto_kappa.alamode.tools.analyze_phonons import (
+    #            write_lifetime_at_given_temperature)
+    #    
+    #    msg = "\n"
+    #    msg += " ### Analyze lifetime at %.1f K" % (temperature)
+    #    print(msg)
+    #    
+    #    ### output file name
+    #    if self.lasso:
+    #        dir_kappa = self.out_dirs['lasso']['kappa']
+    #    else:
+    #        dir_kappa = self.out_dirs['cube']['kappa']
+    #    
+    #    file_result = dir_kappa + '/%s.result' % (self.prefix)
+    #    file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
+    #    
+    #    if outfile is None:
+    #        outfile = dir_kappa + '/tau_%dK.dat' % (int(temperature))
+    #    
+    #    ### analyze lifetime
+    #    write_lifetime_at_given_temperature(
+    #            file_result, file_isotope=file_isotope, 
+    #            temperature=temperature, outfile=outfile)
+    #    
+    #    print("")
+    #    print(" Output", outfile)
+    #    print("")
+    
+
+    @property
+    def file_result(self):
+        return self._file_result
+
+    @property
+    def file_isotope(self):
+        return self._file_isotope
+
+    @property
+    def scat(self):
+        return self._scat
+    
+    def set_scattering_info(self, grain_size=None, temperature=300):
+        
+        ### output file name
+        if self.lasso:
+            dir_kappa = self.out_dirs['lasso']['kappa']
+        else:
+            dir_kappa = self.out_dirs['cube']['kappa']
+        
+        ### file check
+        self._file_result = dir_kappa + '/%s.result' % (self.prefix)
+        self._file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
+        
+        if os.path.exists(self.file_result) == False:
+            warnings.warn(" Error: %s does not exist." % self.file_result)
+        
+        if os.path.exists(self.file_isotope) == False:
+            warnings.warn(" Error: %s does not exist." % self.file_isotope)
+            self._file_isotope = None
+        
+        ###
+        from .analyzer.scattering import Scattering
+        self._scat = Scattering(
+                self.file_result, 
+                file_isotope=self.file_isotope,
+                grain_size=grain_size, 
+                temperature=temperature
+                )
+        
+    def plot_lifetime(self, temperatures="300:500", grain_size=None):
+        
+        data = temperatures.split(":")
+        ts = [float(t) for t in data]
+        
+        dfs = {}
+        for t in ts:
+            self.set_scattering_info(temperature=t, grain_size=None)
+            omegas = self.scat.result['frequencies']
+            taus = self.scat.lifetime
+            
+            dfs[int(t)] = pd.DataFrame()
+
+            nk = len(omegas)
+            nbands = len(omegas[0])
+            dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
+            dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
+        
+        figname = self.out_dirs['result'] + '/fig_lifetime.png'
+
+        ### plot a figure
+        from auto_kappa.plot.pltalm import plot_lifetime
+        plot_lifetime(dfs, figname=figname)
+    
+    
+    def plot_scattering_rates(self, temperature=300., grain_size=1000.):
+        
+        if self.scat is None:
+            self.set_scattering_info(
+                    temperature=temperature,
+                    grain_size=grain_size)
+        
+        ## set temperature 
+        if abs(self.scat.temperature - temperature) > 0.1:
+            self.scat.change_temperature(temperature)
+        
+        ## set grain size
+        if self.scat.size is None:
+            self.scat.change_grain_size(grain_size)
+        else:
+            if abs(self.size - grain_size) > 1.:
+                self.scat.cahnge_grain_size(grain_size)
+        
+        ## get frequencies
+        frequencies = self.scat.result['frequencies']
+        n1 = len(frequencies)
+        n2 = len(frequencies[0])
+        frequencies = frequencies.reshape(n1*n2)
+        
+        ## get scattering rates and set labels
+        labels = {}
+        scat_rates = {}
+        for key in self.scat.scattering_rates:
+            
+            scat_rates[key] = self.scat.scattering_rates[key].reshape(n1*n2)
+            
+            if key == 'phph':
+                labels[key] = '3ph (%dK)' % int(temperature)
+            elif key == 'isotope':
+                labels[key] = 'isotope'
+            elif key == 'boundary':
+                labels[key] = 'L=%dnm' % grain_size
+            else:
+                labels[key] = key
+        
+        ## plot a figure
+        figname = self.out_dirs['result'] + '/fig_scat_rates.png'
+        from auto_kappa.plot.pltalm import plot_scattering_rates
+        plot_scattering_rates(frequencies, scat_rates, labels, figname=figname)
+        
+    
     def _plot_cvsets(self):
-        from ..plot.lasso import plot_cvsets
+        from auto_kappa.plot.pltalm import plot_cvsets
         figname = self.out_dirs['result'] + '/fig_cvsets.png'
         print("")
         print(" ### Plot CV results ###")
@@ -1395,15 +1541,14 @@ class AlamodeCalc():
         else:
             figname = args['figname']
         
-        from ..plot.bandos import plot_bandos
+        from auto_kappa.plot.bandos import plot_bandos
         
         ### output title
-        print("")
-        msg = " Plot band and DOS"
-        border = "-" * (len(msg) + 2)
+        line = "Plot band and DOS:"
+        msg = "\n " + line + "\n"
+        msg += " " + "-" * len(line) + "\n"
         print(msg)
-        print(border)
-        
+         
         fig = plot_bandos(
                 directory=self.out_dirs['harm']['bandos'], 
                 prefix=self.prefix, 
@@ -1438,8 +1583,43 @@ class AlamodeCalc():
         
         print("")
         print(" ### Plot kappa")
-        from ..plot.kappa import plot_kappa
+        from auto_kappa.plot.pltalm import plot_kappa
         plot_kappa(df, figname=figname)
+    
+    
+    def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
+            figname=None, xscale='linear', nbins=150):
+        
+        ## set grain size
+        if self.scat.size is not None:
+            self.scat.change_grain_size(None)
+
+        ## set temperatures
+        data = temperatures.split(":")
+        ts = [float(t) for t in data]
+        dfs = {}
+        for t in ts:
+            self.scat.change_temperature(t)
+            dfs[int(t)] = self.scat.get_cumulative_kappa(
+                    temperature=t, wrt=wrt, xscale=xscale, nbins=nbins)
+        
+        ##
+        lab_kappa = "${\\rm \\kappa_{lat}}$"
+        if 'freq' in wrt:
+            xlabel = "Frequency (${\\rm cm^{-1}}$)"
+            unit1 = "${\\rm Wm^{-1}K^{-1}/cm^{-1}}$"
+            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
+        else:
+            xlabel = "Mean free path (nm)"
+            unit1 = "${\\rm Wm^{-1}K^{-1}/nm}$"
+            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
+        
+        if figname is None:
+            figname = self.out_dirs['result'] + '/fig_cumu_%s.png' % wrt
+            
+        from auto_kappa.plot.pltalm import plot_cumulative_kappa
+        plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
+                xscale=xscale, ylabel=ylabel1)
 
 
 def run_alamode(filename, logfile, workdir='.', neglect_log=False,
@@ -1466,7 +1646,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
      
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
-    if _anphon_finished(logfile) == False or neglect_log:
+    if _alamode_finished(logfile) == False or neglect_log:
         
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
@@ -1522,7 +1702,7 @@ def _read_frequency_range(filename, format='anphon'):
         exit()
 
 
-def _anphon_finished(logfile):
+def _alamode_finished(logfile):
     try:
         lines = open(logfile, 'r').readlines()
         n = len(lines)
@@ -1536,7 +1716,8 @@ def _anphon_finished(logfile):
                     return False
     except Exception:
         return False
-
+    
+    return False
 
 def run_alm(structure, order, cutoffs, nbody, mode=None,
         displacements=None, forces=None, outfile=None,

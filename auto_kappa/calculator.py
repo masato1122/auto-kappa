@@ -29,7 +29,8 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     os.chdir(outdir)
     
     ### set handlers and run VASP
-    handlers = [VaspErrorHandler(), UnconvergedErrorHandler()]
+    handlers = [VaspErrorHandler()]
+    ##, UnconvergedErrorHandler()]
     
     vjob = VaspJob(calc.command.split(), auto_npar=True)
     
@@ -38,6 +39,7 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     
     ### return to the initial directory
     os.chdir(cwd)
+    return 1
 
 def run_vasp(calc, atoms, method='custodian', max_errors=10):
     """ Run a VASP job 
@@ -59,10 +61,12 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         
         atoms.calc = calc
         atoms.get_potential_energy()
+        return 1
     
     elif 'custodian' in method.lower():
         
-        run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
+        value = run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
+        return value
     
     else:
         print(" Error: method %s is not supported." % (method))
@@ -105,7 +109,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     >>> calc.write_input(structure)
     
     """
-    from . import default_vasp_parameters
+    from auto_kappa import default_vasp_parameters
     
     calc = Vasp(setups=setups, xc=xc)
     
