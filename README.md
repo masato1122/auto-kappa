@@ -35,14 +35,14 @@ To Do
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge. (mp-160)
 
+* How were the supercell size and k-mesh decided for Phonondb?
+Number of atoms? How can k-mesh be obtained from Materials Project?
+
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
 
 Make phonopy_disp.yaml from DFSET of Alamode.
-
-* How were the supercell size and k-mesh decided for Phonondb?
-Number of atoms? How can k-mesh be obtained from Materials Project?
 
 Additional
 ------------
