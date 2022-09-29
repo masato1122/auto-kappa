@@ -215,11 +215,19 @@ def main():
     almcalc.run_alamode(propt='kappa')
     almcalc.plot_kappa()
     
+    ### analyze phonons
+    almcalc.plot_lifetime(temperatures="300:500")
+    almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+    almcalc.plot_cumulative_kappa(
+            temperatures="300:500", wrt='frequency', xscale='linear')
+    almcalc.plot_cumulative_kappa(
+            temperatures="300:500", wrt='mfp', xscale='log')
+     
+    ### get time
     t23 = datetime.datetime.now()
     times['kappa'] = t23 - t22
     times['total'] = t23 - t11
     
-
     ### END of calculations
     print_times(times)
         

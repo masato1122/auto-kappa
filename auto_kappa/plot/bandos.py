@@ -371,6 +371,7 @@ def conv_unit(unit, band, dos):
         dos.frequencies *= unit_conv
     return ylabel
 
+
 #def main(bfile, dfile, options):
 #    band = Band(file=bfile)
 #    if file_check(dfile):

@@ -29,15 +29,8 @@ ALAMODE:
 
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-
-To Do and questions
---------------------
-
-* Additional analyses: relaxation time, cumulative kappa (at 100, 300, 500K?)
-
-* (solved?) Relaxation caluclations for many materials were not finished in Chariot.
-* Recalculate materials which had negative frequencies in the current calculation, 
-but do not in phonondb. (EDIFFG was modified.)
+To Do
+------
 
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge. (which one?)
@@ -61,4 +54,11 @@ Additional
 * Compression of results
 
 * Automated creation of the homepage with Sphinx
+
+Done
+------
+
+* Relaxation caluclations for many materials were not finished in Chariot.
+
+* EDIFFG is modified.
 

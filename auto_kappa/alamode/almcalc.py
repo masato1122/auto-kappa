@@ -201,6 +201,10 @@ class AlamodeCalc():
 
         self._order_lasso = order_lasso
         
+        self._file_result = None
+        self._file_isotope = None
+        self._scat = None
+        
         ###
         self._prefix = get_formula(self.primitive)  ## prefix for input files
         self._frequency_range = None
@@ -1376,8 +1380,150 @@ class AlamodeCalc():
             print(msg)
             shutil.copy(fn1, fn2)
     
+    #def write_lifetime(self, temperature=300, outfile=None):
+    #    
+    #    from auto_kappa.alamode.tools.analyze_phonons import (
+    #            write_lifetime_at_given_temperature)
+    #    
+    #    msg = "\n"
+    #    msg += " ### Analyze lifetime at %.1f K" % (temperature)
+    #    print(msg)
+    #    
+    #    ### output file name
+    #    if self.lasso:
+    #        dir_kappa = self.out_dirs['lasso']['kappa']
+    #    else:
+    #        dir_kappa = self.out_dirs['cube']['kappa']
+    #    
+    #    file_result = dir_kappa + '/%s.result' % (self.prefix)
+    #    file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
+    #    
+    #    if outfile is None:
+    #        outfile = dir_kappa + '/tau_%dK.dat' % (int(temperature))
+    #    
+    #    ### analyze lifetime
+    #    write_lifetime_at_given_temperature(
+    #            file_result, file_isotope=file_isotope, 
+    #            temperature=temperature, outfile=outfile)
+    #    
+    #    print("")
+    #    print(" Output", outfile)
+    #    print("")
+    
+
+    @property
+    def file_result(self):
+        return self._file_result
+
+    @property
+    def file_isotope(self):
+        return self._file_isotope
+
+    @property
+    def scat(self):
+        return self._scat
+    
+    def set_scattering_info(self, grain_size=None, temperature=300):
+        
+        ### output file name
+        if self.lasso:
+            dir_kappa = self.out_dirs['lasso']['kappa']
+        else:
+            dir_kappa = self.out_dirs['cube']['kappa']
+        
+        ### file check
+        self._file_result = dir_kappa + '/%s.result' % (self.prefix)
+        self._file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
+        
+        if os.path.exists(self.file_result) == False:
+            warnings.warn(" Error: %s does not exist." % self.file_result)
+        
+        if os.path.exists(self.file_isotope) == False:
+            warnings.warn(" Error: %s does not exist." % self.file_isotope)
+            self._file_isotope = None
+        
+        ###
+        from .analyzer.scattering import Scattering
+        self._scat = Scattering(
+                self.file_result, 
+                file_isotope=self.file_isotope,
+                grain_size=grain_size, 
+                temperature=temperature
+                )
+        
+    def plot_lifetime(self, temperatures="300:500", grain_size=None):
+        
+        data = temperatures.split(":")
+        ts = [float(t) for t in data]
+        
+        dfs = {}
+        for t in ts:
+            self.set_scattering_info(temperature=t, grain_size=None)
+            omegas = self.scat.result['frequencies']
+            taus = self.scat.lifetime
+            
+            dfs[int(t)] = pd.DataFrame()
+
+            nk = len(omegas)
+            nbands = len(omegas[0])
+            dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
+            dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
+        
+        figname = self.out_dirs['result'] + '/fig_lifetime.png'
+
+        ### plot a figure
+        from auto_kappa.plot.pltalm import plot_lifetime
+        plot_lifetime(dfs, figname=figname)
+    
+    
+    def plot_scattering_rates(self, temperature=300., grain_size=1000.):
+        
+        if self.scat is None:
+            self.set_scattering_info(
+                    temperature=temperature,
+                    grain_size=grain_size)
+        
+        ## set temperature 
+        if abs(self.scat.temperature - temperature) > 0.1:
+            self.scat.change_temperature(temperature)
+        
+        ## set grain size
+        if self.scat.size is None:
+            self.scat.change_grain_size(grain_size)
+        else:
+            if abs(self.size - grain_size) > 1.:
+                self.scat.cahnge_grain_size(grain_size)
+        
+        ## get frequencies
+        frequencies = self.scat.result['frequencies']
+        n1 = len(frequencies)
+        n2 = len(frequencies[0])
+        frequencies = frequencies.reshape(n1*n2)
+        
+        ## get scattering rates and set labels
+        labels = {}
+        scat_rates = {}
+        for key in self.scat.scattering_rates:
+            
+            scat_rates[key] = self.scat.scattering_rates[key].reshape(n1*n2)
+            
+            if key == 'phph':
+                labels[key] = '3ph (%dK)' % int(temperature)
+            elif key == 'isotope':
+                labels[key] = 'isotope'
+            elif key == 'boundary':
+                labels[key] = 'L=%dnm' % grain_size
+            else:
+                labels[key] = key
+        
+        ## plot a figure
+        figname = self.out_dirs['result'] + '/fig_scat_rates.png'
+        from auto_kappa.plot.pltalm import plot_scattering_rates
+        plot_scattering_rates(frequencies, scat_rates, labels, figname=figname)
+        
+    
     def _plot_cvsets(self):
-        from auto_kappa.plot.lasso import plot_cvsets
+        from auto_kappa.plot.pltalm import plot_cvsets
         figname = self.out_dirs['result'] + '/fig_cvsets.png'
         print("")
         print(" ### Plot CV results ###")
@@ -1437,8 +1583,43 @@ class AlamodeCalc():
         
         print("")
         print(" ### Plot kappa")
-        from auto_kappa.plot.kappa import plot_kappa
+        from auto_kappa.plot.pltalm import plot_kappa
         plot_kappa(df, figname=figname)
+    
+    
+    def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
+            figname=None, xscale='linear', nbins=150):
+        
+        ## set grain size
+        if self.scat.size is not None:
+            self.scat.change_grain_size(None)
+
+        ## set temperatures
+        data = temperatures.split(":")
+        ts = [float(t) for t in data]
+        dfs = {}
+        for t in ts:
+            self.scat.change_temperature(t)
+            dfs[int(t)] = self.scat.get_cumulative_kappa(
+                    temperature=t, wrt=wrt, xscale=xscale, nbins=nbins)
+        
+        ##
+        lab_kappa = "${\\rm \\kappa_{lat}}$"
+        if 'freq' in wrt:
+            xlabel = "Frequency (${\\rm cm^{-1}}$)"
+            unit1 = "${\\rm Wm^{-1}K^{-1}/cm^{-1}}$"
+            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
+        else:
+            xlabel = "Mean free path (nm)"
+            unit1 = "${\\rm Wm^{-1}K^{-1}/nm}$"
+            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
+        
+        if figname is None:
+            figname = self.out_dirs['result'] + '/fig_cumu_%s.png' % wrt
+            
+        from auto_kappa.plot.pltalm import plot_cumulative_kappa
+        plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
+                xscale=xscale, ylabel=ylabel1)
 
 
 def run_alamode(filename, logfile, workdir='.', neglect_log=False,
