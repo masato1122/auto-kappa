@@ -36,6 +36,7 @@ Installation of python libraries
     $ conda install -c conda-forge eigen
     $ conda install -c conda-forge gcc
     $ pip install xmltodict
+    $ pip install f90nml
     $
     $ conda install -c conda-forge mkl
     $

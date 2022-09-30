@@ -3,6 +3,7 @@ Auto-KAPPA
 
 Version 0.1
 ---------------
+aaa
 
 Auto-KAPPA is a software for automated calculations of thermal conductivity.
 The first version works with VASP and ALAMODE while, in furture versions,
