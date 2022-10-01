@@ -77,7 +77,7 @@ class AlamodeDisplace(object):
             self._inverse_primitive_lattice_vector = np.linalg.inv(pcell.T)
             self._xp_fractional = primitive.get_scaled_positions()
             self._nat_primitive = len(primitive)
-        
+            
             ### get kd
             all_symbols = primitive.get_chemical_symbols()
             elements = []
@@ -140,7 +140,7 @@ class AlamodeDisplace(object):
                 print(" PRINTEVEC = 1")
                 print("/")
                 exit(0)
-
+        
     def generate(self,
                  file_pattern=None,
                  file_mddata=None,
@@ -640,11 +640,12 @@ class AlamodeDisplace(object):
     def _find_commensurate_q(self):
 
         tol_zero = 1.0e-3
-
+        
         nqmax = self._supercell.nat // self._nat_primitive
         
         convertor = np.dot(self._supercell.inverse_lattice_vector,
                            self._primitive_lattice_vector)
+        
         nmax = 10
         qlist = []
         
@@ -660,6 +661,7 @@ class AlamodeDisplace(object):
                         if abs(frac * float(nnp) - 1.0) < tol_zero:
                             found_nnp = True
                             break
+                    
                     if found_nnp:
                         convertor[i, j] = np.sign(convertor[i, j]) / float(nnp)
                     else:
@@ -674,8 +676,20 @@ class AlamodeDisplace(object):
                         print("")
                         print(msg)
                         print("")
+                        
+                        msg = " auto_kappa.structure.crystal.get_commensurate_points "\
+                                "was used to obtain commensurate q-points, \n "\
+                                "which does not affect the result."
+                        print("")
+                        print(msg)
+                        print("")
+                        from auto_kappa.structure.crystal import get_commensurate_points
+                        Mps = np.linalg.inv(convertor).astype(int)
+                        self._commensurate_qpoints = get_commensurate_points(Mps)
+                        return 0
+                        
                         ### Added to avoid a bug
-                        exit()
+                        #exit()
 
         comb = []
         for Lx in range(nmax):
@@ -718,7 +732,7 @@ class AlamodeDisplace(object):
 
             if len(qlist) == nqmax:
                 break
-
+        
         self._commensurate_qpoints = qlist
 
     def _generate_mapping_s2p(self):

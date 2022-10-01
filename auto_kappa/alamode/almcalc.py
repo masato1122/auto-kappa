@@ -499,7 +499,10 @@ class AlamodeCalc():
             ### ver.2 with alm command and generated files
             file_pattern = self._get_file_pattern(order)
             
-            all_disps = self._get_displacements("fd", file_pattern=file_pattern)
+            all_disps = self._get_displacements(
+                    "fd", supercell=structure,
+                    file_pattern=file_pattern,
+                    )
          
         elif disp_mode == "random_normalcoordinate":
             
@@ -511,7 +514,7 @@ class AlamodeCalc():
             ###
             fevec = self.out_dirs['lasso']['evec'] + '/' + self.prefix + '.evec'
             all_disps = self._get_displacements(
-                    "random_normalcoordinate",
+                    "random_normalcoordinate", supercell=structure,
                     file_evec=fevec,
                     temperature=temperature, 
                     number_of_displacements=number_of_displacements,
@@ -573,6 +576,7 @@ class AlamodeCalc():
     
     def _get_displacements(
             self, displacement_mode: None,
+            supercell=None,
             file_pattern=None, 
             #
             file_evec=None, number_of_displacements=1, temperature=500., 
@@ -590,33 +594,47 @@ class AlamodeCalc():
         from auto_kappa.alamode.tools.GenDisplacement import AlamodeDisplace
         
         codeobj = VaspParser()
-        codeobj.set_initial_structure(self.supercell)
         
-        ###########################################################
-        ###########################################################
+        #file_sc = self.out_dirs['harm']['force']+'/prist/CONTCAR'
+        #print("AAAAAAAAAA")
+        #codeobj.load_initial_structure(file_sc)
+        
+        #print("BBBBBBBBBB")
+        codeobj.set_initial_structure(supercell)
+        #exit()
+        
         ###########################################################
         ##
         ## This part need to be fixed.
         ##
-        #print(self.scell_matrix)
-        #print(self.primitive.get_positions()[:5])
-        #print(self.supercell.get_positions()[:5])
-        #print(self.supercell.cell)
-        #aa = np.dot(self.supercell.cell, np.linalg.inv(self.primitive.cell))
-        #print(aa)
-        #exit()
-        #file_prim = "./mp-160/harm/force/prist/POSCAR"
-        almdisp = AlamodeDisplace(
-                displacement_mode, codeobj,
-                file_evec=file_evec,
-                #file_primitive=file_prim,
-                primitive=self.primitive,
-                verbosity=self.verbosity
-                )
-        if almdisp is None:
-            return None
-        ###########################################################
-        ###########################################################
+        ## ver.1
+        #almdisp = AlamodeDisplace(
+        #        displacement_mode, codeobj,
+        #        file_evec=file_evec,
+        #        primitive=self.primitive,
+        #        verbosity=self.verbosity
+        #        )
+        ### ver.1
+        #print("AAAAAAAAA")
+        #file_prim = "./mp-160/relax/CONTCAR"
+        #almdisp = AlamodeDisplace(
+        #        displacement_mode, codeobj,
+        #        file_evec=file_evec,
+        #        file_primitive=file_prim,
+        #        verbosity=self.verbosity
+        #        )
+        #
+        ### ver.2
+        #print("BBBBBBBBB")
+        #almdisp = AlamodeDisplace(
+        #        displacement_mode, codeobj,
+        #        file_evec=file_evec,
+        #        primitive=self.primitive,
+        #        verbosity=self.verbosity
+        #        )
+        
+        #if almdisp is None:
+        #    return None
         ###########################################################
 
         msg = "\n"
@@ -627,6 +645,11 @@ class AlamodeCalc():
         print(msg)
         
         if displacement_mode == 'fd':
+        
+            almdisp = AlamodeDisplace(
+                    displacement_mode, codeobj,
+                    verbosity=self.verbosity
+                    )
             
             if file_pattern is None:
                 warnings.warn(" Error: file_pattern must be given.")
@@ -637,13 +660,21 @@ class AlamodeCalc():
                     )
             
         elif displacement_mode == 'random_normalcoordinate':
-            
+           
+
+            almdisp = AlamodeDisplace(
+                    displacement_mode, codeobj,
+                    file_evec=file_evec,
+                    primitive=self.primitive,
+                    verbosity=self.verbosity
+                    )
+                    
             header_list, disp_list = almdisp.generate(
                     temperature=temperature,
                     number_of_displacements=number_of_displacements,
                     classical=classical
                     )
-
+            
         else:
             msg = " Error: %s is not supported." % (displacement_mode)
             warnings.warn(msg)
@@ -651,7 +682,7 @@ class AlamodeCalc():
         
         all_disps = np.zeros_like(disp_list)
         for i, each in enumerate(disp_list):
-            all_disps[i] = np.dot(each, self.supercell.cell)
+            all_disps[i] = np.dot(each, supercell.cell)
         return all_disps 
     
     

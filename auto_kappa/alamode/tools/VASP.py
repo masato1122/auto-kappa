@@ -152,7 +152,7 @@ class VaspParser(object):
         self._nat = np.sum(nat_elem)
         self._x_fractional = xf
         self._initial_structure_loaded = True
-
+        
     def generate_structures(self, prefix, header_list, disp_list):
 
         self._set_number_of_zerofill(len(disp_list))

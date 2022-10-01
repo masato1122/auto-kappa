@@ -335,9 +335,9 @@ def read_temperature(filename):
 def read_frequency(filename):
     """ Read and return frequencies in rfile, which is *.result file.
     
-    Parameters
+    Args
     ----------
-    rfile : string
+    filename : string
         *.result file name
 
     Return
@@ -354,6 +354,7 @@ def read_frequency(filename):
     kpoints = []
     branches = []
     frequencies = []
+    
     for il in range(iline0+1, nlines):
         
         line = lines[il]
