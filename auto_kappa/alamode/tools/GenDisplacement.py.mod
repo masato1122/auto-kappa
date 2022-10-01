@@ -47,10 +47,10 @@ class AlamodeDisplace(object):
         self._qlist_uniq = []
         self._mass = None
         self._nmode = None
-
+        
         self._displacement_mode = displacement_mode.lower()
         self._supercell = codeobj_base
-
+        
         self._BOHR_TO_ANGSTROM = 0.5291772108
         self._K_BOLTZMANN = 1.3806488e-23
         self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
@@ -61,7 +61,7 @@ class AlamodeDisplace(object):
         if file_primitive:
             primitive_cell = copy.deepcopy(codeobj_base)
             primitive_cell.load_initial_structure(file_primitive)
-
+            
             self._primitive_lattice_vector = primitive_cell._lattice_vector
             self._inverse_primitive_lattice_vector = primitive_cell._inverse_lattice_vector
             self._xp_fractional = primitive_cell.x_fractional
@@ -69,15 +69,15 @@ class AlamodeDisplace(object):
             self._primitive_kd = primitive_cell._kd
             self._find_commensurate_q()
             self._generate_mapping_s2p()
-        
+            
         elif primitive:
-
+            
             pcell = primitive.cell.array.copy()
             self._primitive_lattice_vector = pcell.T
             self._inverse_primitive_lattice_vector = np.linalg.inv(pcell.T)
             self._xp_fractional = primitive.get_scaled_positions()
             self._nat_primitive = len(primitive)
-            
+        
             ### get kd
             all_symbols = primitive.get_chemical_symbols()
             elements = []
@@ -99,16 +99,16 @@ class AlamodeDisplace(object):
             for i in range(len(nat_elem)):
                 kd.extend([i] * nat_elem[i])
             self._primitive_kd = kd
-
+            
             self._find_commensurate_q()
             self._generate_mapping_s2p()
-
+        
         else:
             if self._displacement_mode == "random_normalcoordinate" \
                     or self._displacement_mode == "pes":
                 raise RuntimeError("The --prim option is necessary when '--random_normalcoord' "
                                    "or '--pes' is invoked.")
-
+        
         if file_evec:
             self._load_phonon_results(file_evec)
 
@@ -162,7 +162,7 @@ class AlamodeDisplace(object):
         disp_list = []
 
         if self._displacement_mode == "fd":
-
+            
             if not file_pattern:
                 raise RuntimeError("pattern file must be given with --pattern option")
             self._parse_displacement_patterns(file_pattern)
@@ -375,7 +375,7 @@ class AlamodeDisplace(object):
 
     def _parse_displacement_patterns(self, files_in):
         self._pattern = []
-
+        
         for file in files_in:
             pattern_tmp = []
 
@@ -642,11 +642,12 @@ class AlamodeDisplace(object):
         tol_zero = 1.0e-3
 
         nqmax = self._supercell.nat // self._nat_primitive
+        
         convertor = np.dot(self._supercell.inverse_lattice_vector,
                            self._primitive_lattice_vector)
         nmax = 10
         qlist = []
-
+        
         for i in range(3):
             for j in range(3):
                 frac = abs(convertor[i, j])
@@ -659,25 +660,22 @@ class AlamodeDisplace(object):
                         if abs(frac * float(nnp) - 1.0) < tol_zero:
                             found_nnp = True
                             break
-
                     if found_nnp:
                         convertor[i, j] = np.sign(convertor[i, j]) / float(nnp)
                     else:
-
-                        msg = " get_commensurate_points was used to obtain "\
-                                "commensurate points, which may not affect the "\
-                                "result."
-                        print(msg)
-                        
-                        from auto_kappa.structure.crystal import get_commensurate_points
-                        Mps = np.linalg.inv(convertor)
-                        self._commensurate_qpoints = get_commensurate_points(Mps)
-                        return 0
-
                         #raise RuntimeError("Failed to express the inverse transformation matrix"
                         #                   "by using fractional numbers.\n\n"
                         #                   "Please make sure that the lattice parameters of \n"
                         #                   "the supercell and primitive cell are consistent.\n")
+                        msg = "Failed to express the inverse transformation " \
+                            "matrix by using fractional numbers.\n\n" \
+                            "Please make sure that the lattice parameters of \n"\
+                            "the supercell and primitive cell are consistent.\n"
+                        print("")
+                        print(msg)
+                        print("")
+                        ### Added to avoid a bug
+                        exit()
 
         comb = []
         for Lx in range(nmax):
