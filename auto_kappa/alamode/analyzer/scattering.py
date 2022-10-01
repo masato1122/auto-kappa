@@ -99,6 +99,14 @@ class Scattering():
             self.set_scattering_rate_boundary(size=self.size)
     
     @property
+    def kpoints(self):
+        return self.result['kpoints']
+
+    @property
+    def frequencies(self):
+        return self.result['frequencies']
+    
+    @property
     def averaged_velocities(self):
         
         if self._averaged_velocities is None:

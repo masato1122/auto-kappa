@@ -154,7 +154,7 @@ def main():
     times['harm_forces'] = t12 - t11
     
     #####################
-    neglect_log = True
+    neglect_log = False
     #####################
 
     ### calculate forces for harmonic FCs
