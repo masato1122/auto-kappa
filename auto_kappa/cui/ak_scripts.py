@@ -153,19 +153,23 @@ def main():
     t12 = datetime.datetime.now()
     times['harm_forces'] = t12 - t11
     
+    #####################
+    neglect_log = True
+    #####################
+
     ### calculate forces for harmonic FCs
     almcalc.write_alamode_input(propt='fc2')
-    almcalc.run_alamode(propt='fc2', neglect_log=True)
-
+    almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
+    
     ### calculate band
     almcalc.write_alamode_input(propt='band')
-    almcalc.run_alamode(propt='band', neglect_log=True)
+    almcalc.run_alamode(propt='band', neglect_log=neglect_log)
 
     ### calculate DOS
     almcalc.write_alamode_input(propt='dos')
-    almcalc.run_alamode(propt='dos', neglect_log=True)
+    almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     almcalc.plot_bandos()
-
+    
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
         print("")
@@ -205,7 +209,7 @@ def main():
         ##almcalc.calc_anharm_force_constants()
         ## ver.2: with alm command
         almcalc.write_alamode_input(propt='fc3')
-        almcalc.run_alamode(propt='fc3', neglect_log=True)
+        almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
     
     t22 = datetime.datetime.now()
     times['anharm_fcs'] = t22 - t21

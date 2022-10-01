@@ -342,7 +342,7 @@ def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10)
                 i0 = idx_zero[isec-1] + 1
                 i1 = idx_zero[isec] + 1
             else:
-                i0 = idx_zero[isec-1]
+                i0 = idx_zero[isec-1] + 1
                 i1 = len(kpoints)
             
             ax.plot(kpoints[i0:i1], frequencies[i0:i1,ib], 
