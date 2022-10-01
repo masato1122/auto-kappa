@@ -350,7 +350,7 @@ class AlamodeCalc():
                     structure,
                     np.linalg.inv(self.primitive_matrix)
                     )
-                
+            
             ### for pymatgen Structure
             #structure.make_supercell(
             #        np.linalg.inv(self.primitive_matrix)
