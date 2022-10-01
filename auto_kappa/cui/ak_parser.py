@@ -28,6 +28,9 @@ def get_parser():
     parser.add_option("--verbosity", dest="verbosity", type="int",
             default=1, help="verbosity [0]")
     
+    parser.add_option("--neglect_log", dest="neglect_log", type="int",
+            default=1, help="neglect log (1) or not (0) [1]")
+    
     ### parameters which may not need to be changed.
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, help="cutoff3, unit=Ang [4.3]")

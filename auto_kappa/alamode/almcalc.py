@@ -1581,8 +1581,6 @@ class AlamodeCalc():
         kave = (df['kxx'].values + df['kyy'].values + df['kzz'].values) / 3.
         df['kave'] = kave
         
-        print("")
-        print(" ### Plot kappa")
         from auto_kappa.plot.pltalm import plot_kappa
         plot_kappa(df, figname=figname)
     

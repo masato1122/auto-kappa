@@ -206,20 +206,23 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ### set ticks and labels
     def set_xticks_labels(ax, kmax, ksym, labels):
         
-        label_mod = []
-        for ll in labels:
-            label_mod.append(ll.replace("G", "${\\rm \\Gamma}$"))
-
         dk_all = kmax
-        fws = []
-        for i in range(len(ksym)-1):
-            dk_each = ksym[i+1] - ksym[i]
-            fw_each = dk_each / dk_all
-            fws.append(fw_each)
-            if fw_each < 0.1 and '|' in labels[i]:
-                names = labels[i].split('|')
-                label_mod[i] = "${\\rm ^{%s}/_{%s}}$" % (
-                        names[0], names[1])
+        
+        label_mod = []
+        for i, label in enumerate(labels):
+            
+            exception = False
+            if i < len(labels)-1:
+                dk_each = ksym[i+1] - ksym[i]
+                fw_each = dk_each / dk_all
+                if "|" in label and fw_each < 0.1:
+                    names = label.split('|')
+                    label_mod.append("${\\rm ^{%s}/_{%s}}$" % (
+                        names[0], names[1]))
+                    exception = True
+            
+            if exception == False:
+                label_mod.append("${\\rm %s}$" % label.replace("G", "\\Gamma"))
         
         ###
         ax.set_xticks(ksym)

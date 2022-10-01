@@ -153,9 +153,12 @@ def main():
     t12 = datetime.datetime.now()
     times['harm_forces'] = t12 - t11
     
-    #####################
-    neglect_log = False
-    #####################
+    ###############################
+    if options.neglect_log == 1:
+        neglect_log = True
+    elif options.neglect_log == 0:
+        neglect_log = False
+    ###############################
 
     ### calculate forces for harmonic FCs
     almcalc.write_alamode_input(propt='fc2')
@@ -217,9 +220,13 @@ def main():
     ### calculate kappa
     almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
     almcalc.run_alamode(propt='kappa')
-    almcalc.plot_kappa()
     
     ### analyze phonons
+    print()
+    print()
+    print(" Plot anharmonic properties:")
+    print(" ---------------------------")
+    almcalc.plot_kappa()
     almcalc.plot_lifetime(temperatures="300:500")
     almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
     almcalc.plot_cumulative_kappa(
@@ -234,6 +241,6 @@ def main():
     
     ### END of calculations
     print_times(times)
-        
+    
     end_autokappa()
     

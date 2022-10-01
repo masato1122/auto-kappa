@@ -106,7 +106,6 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     print("")
     print(" Output", figname)
-    print("")
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
         figname='fig_scat_rates.png', 
