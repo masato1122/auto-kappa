@@ -18,8 +18,7 @@ setup(name='auto_kappa',
       author_email='ohnishi@photon.t.u-tokyo.ac.jp',
       packages=packages_pyscat,
       install_requires=[
-          'numpy', 'phonopy', 'spglib', 
-          'ase', 'pymatgen', 'custodian',
+          'numpy', 'phonopy', 'spglib', 'ase', 'pymatgen', 'custodian',
           'xmltodict', 'mkl', 'f90nml'
           ],
       url='https://github.com/masato1122/auto_kappa.git',

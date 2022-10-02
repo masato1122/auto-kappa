@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../auto_kappa'))
+#sys.path.insert(0, os.path.abspath('../../auto_kappa'))
 #sys.path.insert(0, os.path.abspath('../../auto_kappa/io'))
 #sys.path.insert(0, os.path.abspath('../../auto_kappa/plot'))
 #sys.path.insert(0, os.path.abspath('../../auto_kappa/plot/alamode'))
@@ -17,7 +17,7 @@ copyright = '2022, M. Ohnishi'
 author = 'M. Ohnishi'
 
 # The full version, including alpha/beta/rc tags
-release = 'Sept. 13th, 2022'
+release = 'Oct. 3th, 2022'
 
 # -- General configuration 
 extensions = [
@@ -35,6 +35,10 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
+
+html_style = 'css/custom.css'
+
+pygments_style = "sphinx"
 
 ## numbering
 numfig = True

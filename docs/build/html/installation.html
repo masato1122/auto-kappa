@@ -4,9 +4,9 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1. Installation &mdash; auto-kappa Sept. 13th, 2022 documentation</title>
+  <title>1. Installation &mdash; auto-kappa Oct. 3th, 2022 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="2. Tutorial" href="tutorial/index.html" />
+    <link rel="next" title="2. Default parameters" href="parameters.html" />
     <link rel="prev" title="Auto-KAPPA" href="index.html" /> 
 </head>
 
@@ -44,18 +44,13 @@
 <li class="toctree-l2"><a class="reference internal" href="#preparation">1.2. Preparation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#vasp-and-alamode">VASP and Alamode</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phonondb">Phonondb</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#auto-kappa">Auto-KAPPA</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#installation-of-python-libraries">Installation of python libraries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#setting-for-potcar-with-ase">Setting for POTCAR with ASE</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#installation-of-alm">Installation of ALM</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#modification-of-bash-profile">Modification of .bash_profile</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-of-auto-kappa">1.3. Installation of Auto-kappa</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">2. Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">3. Default parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ak.html">4. auto-kappa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ak.html">3. auto-kappa</a></li>
 </ul>
 
         </div>
@@ -86,7 +81,9 @@
 <h1><span class="section-number">1. </span>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
 <section id="requirements">
 <h2><span class="section-number">1.1. </span>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
-<p>Aiida-phonopy has been developped under the following conditions.</p>
+<p>Auto-kappa requires the following packages.
+While the python packages can be automatically downloaded during the installation process,
+users need to separately install VASP and Alamode.</p>
 <ul class="simple">
 <li><p>VASP</p></li>
 <li><p>alamode (alm, anphon, ALM &gt;= 1.4.0)</p></li>
@@ -106,14 +103,25 @@
 Please install VASP and
 <a class="reference external" href="https://alamode.readthedocs.io/en/latest/index.html">ALAMODE</a>
 in advance.</p>
+<ul class="simple">
+<li><p>To allow ASE to call POTCAR files of VASP,
+set <code class="docutils literal notranslate"><span class="pre">VASP_PP_PATH</span></code> variable in your shell configuration file,
+which may be <code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code>.
+See the <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html">ASE page</a> for detail.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">VASP_PP_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/<span class="o">(</span>directory <span class="k">in</span> which potpaw_PBE is located<span class="o">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">potpaw_PBE.54.tar.gz</span></code> supposed to be expanded in <code class="docutils literal notranslate"><span class="pre">potpaw_PBE</span></code>.</p>
 </section>
 <section id="phonondb">
 <h3>Phonondb<a class="headerlink" href="#phonondb" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>Download all the data of phonondb with wget.</p></li>
-<li><p>You can also find all the data in Box:
-<a class="reference external" href="https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36">…/Box/ppdb1/Others/phonondb-20180417.tar.gz</a>.</p></li>
-<li><p>Expand all the tar.gz file in a directory. The name of expanded directories  in which <code class="docutils literal notranslate"><span class="pre">mp-***</span></code> directories are located.</p></li>
+<li><p>You can also find all the data (phonondb-20180417.tar.gz) in Box:
+<a class="reference external" href="https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36">…/Box/ppdb1/Others</a>.</p></li>
+<li><p>Expand all the tar.gz file in a directory. The name of expanded directories
+in which <code class="docutils literal notranslate"><span class="pre">mp-***</span></code> directories are located.</p></li>
 </ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> .../phonondb <span class="o">(</span>arbitrary directory name<span class="o">)</span>
 $ wget http://phonondb.mtl.kyoto-u.ac.jp/_downloads/mp-25-20180417.tar.lzma
@@ -123,20 +131,21 @@ $ mp-25-20180417
 </pre></div>
 </div>
 </section>
-<section id="auto-kappa">
-<h3>Auto-KAPPA<a class="headerlink" href="#auto-kappa" title="Permalink to this heading"></a></h3>
-<p>Because Auto-KAPPA is currently in a private github,
+</section>
+<section id="installation-of-auto-kappa">
+<h2><span class="section-number">1.3. </span>Installation of Auto-kappa<a class="headerlink" href="#installation-of-auto-kappa" title="Permalink to this heading"></a></h2>
+<p>Because auto-kappa is currently located in a private repogitory in Github,
 if you’d like to use it, please contact M. Ohnishi (<a class="reference external" href="mailto:ohnishi&#37;&#52;&#48;t&#46;u-tokyo&#46;ac&#46;jp">ohnishi<span>&#64;</span>t<span>&#46;</span>u-tokyo<span>&#46;</span>ac<span>&#46;</span>jp</a>).</p>
 <ol class="arabic simple">
 <li><p>Send your ssh public key to the developper (M. Ohnishi).</p></li>
 <li><p>Once your key was registered, you can download Auto-KAPP with git command.</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git -b develop git@github.com:masato1122/auto-kappa.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone -b develop git@github.com:masato1122/auto-kappa.git
 </pre></div>
 </div>
-<p>If you cannot download. Please make add the following contents in .ssh/config.
-You also may need to modify the permission of this file.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat .ssh/config
+<p>If you cannot download. Please add the following contents in ~/.ssh/config.
+If you newly create the config file, you also need to modify the permission.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat ~/.ssh/config
 
 Host github.com
     HostName ssh.github.com
@@ -159,74 +168,103 @@ $ chmod <span class="m">600</span> ~/.ssh/config
 $ conda init
 $ <span class="nb">exit</span> <span class="o">(</span>You once need to <span class="nb">logout</span> and login to the server.<span class="o">)</span>
 
+
 Login the server again and confirm the virtual environment was created.
 $ conda env list
 ...
 kappa       /home/***/***/envs/kappa
 ...
 
+
 Activate the virtual environment.
 $ conda activate kappa
 </pre></div>
 </div>
-</section>
-<section id="installation-of-python-libraries">
-<h3>Installation of python libraries<a class="headerlink" href="#installation-of-python-libraries" title="Permalink to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ conda create -n alm <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8
-$ conda activate alm
-$ pip install pymatgen
-$ conda install -c conda-forge phonopy
-$ pip install ase
-$ pip install seekpath
-$ pip install custodian
-$ conda install -c conda-forge eigen
-$ conda install -c conda-forge gcc
-$ pip install xmltodict
-$ pip install f90nml
-$
-$ conda install -c conda-forge mkl
-$
-$ <span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:<span class="si">${</span><span class="nv">CONDA_PREFIX</span><span class="si">}</span>/lib
+<p>To set <code class="docutils literal notranslate"><span class="pre">kappa</span></code> as the default, add the following line in <code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> activate kappa
 </pre></div>
 </div>
-</section>
-<section id="setting-for-potcar-with-ase">
-<h3>Setting for POTCAR with ASE<a class="headerlink" href="#setting-for-potcar-with-ase" title="Permalink to this heading"></a></h3>
-<p>Add the following line. In the directory, potpaw_PBE exists.
-See the following pages for details:
-<a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html">1 (ASE)</a> and
-<a class="reference external" href="https://pymatgen.org/installation.html#potcar-setup">2 (pymatgen</a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat ~/.bash_profile
-
-...
-<span class="nb">export</span> <span class="nv">VASP_PP_PATH</span><span class="o">=(</span>directory <span class="k">in</span> which potpaw_PBE is located.<span class="o">)</span>
-...
-</pre></div>
-</div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat .pmgrc.yaml
-
-...
-PMG_VASP_PSP_DIR: <span class="o">(</span>directory <span class="k">in</span> which potpaw_PBE is located.<span class="o">)</span>
-PMG_MAPI_KEY: **********
-...
-</pre></div>
-</div>
-</section>
-<section id="installation-of-alm">
-<h3>Installation of ALM<a class="headerlink" href="#installation-of-alm" title="Permalink to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">source</span> activate alm
-$ git clone https://github.com/ttadano/ALM.git
-$ <span class="nb">cd</span> ./ALM
-$ git pull
-$ <span class="nb">cd</span> ./python
+<ol class="arabic simple" start="4">
+<li><p>Continue to install auto-kappa.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="o">(</span>arbitrary directory<span class="o">)</span>/auto-kappa
+$ git config pull.rebase <span class="nb">false</span>
+$ git pull     <span class="c1">## update the package</span>
 $ python setup.py install
+$ pip install -e .
+
+
+Check <span class="k">if</span> auto_kappa is installed or not.
+$ python
+&gt;&gt;&gt; import auto_kappa
+&gt;&gt;&gt; exit<span class="o">()</span>
 </pre></div>
 </div>
-</section>
-<section id="modification-of-bash-profile">
-<h3>Modification of .bash_profile<a class="headerlink" href="#modification-of-bash-profile" title="Permalink to this heading"></a></h3>
-<p>You may also need to add (CODA_PREFIX)/alm/lib in LD_LIBRARY_PATH.</p>
-</section>
+<ol class="arabic simple" start="5">
+<li><p>Run test examples.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="o">(</span>move to an arbitrary directory outside auto-kappa directory<span class="o">)</span>
+$ cp -r <span class="o">(</span>auto-kappa directory<span class="o">)</span>/auto-kappa/examples ./
+$ <span class="nb">cd</span> examples
+$ ls
+alm anphon database vasp_ase vasp_custodian
+
+$ <span class="nb">cd</span> alm
+$ sh run.sh
+
+$ <span class="nb">cd</span> ../anphon
+$ sh run.sh
+
+$ sh ../vasp_ase
+$ sh run.sh
+
+$ sh ../vasp_custodian
+$ sh run.sh
+<span class="c1"># This job takes time. You can stop after checking output files such as OUTCAR</span>
+<span class="c1"># OSZICAR, etc. were created.</span>
+
+$ sh ../database
+$ sh run.sh
+<span class="c1"># This job also takes time. You can stop a few minutes after starting the job.</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p><code class="docutils literal notranslate"><span class="pre">database</span></code> example</p></li>
+</ol>
+<p>The calculation in <code class="docutils literal notranslate"><span class="pre">database</span></code> calculates thermal conductivity of Silicon automatically.
+Because every process is included in this job, it takes a few hours.
+It is recommended to use a job scheduler to submit this job.
+An example of job script is shown below. Please modify depending on your environment.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+<span class="c1">#PBS -q default         ## name of queue that you can check with a command like &quot;qstat -q&quot;.</span>
+<span class="c1">#PBS -l nodes=1:ppn=24  ## only nodes=1 is available</span>
+<span class="c1">#PBS -j oe</span>
+<span class="c1">#PBS -N test            ## job name</span>
+
+<span class="nb">export</span> <span class="nv">LANG</span><span class="o">=</span>C
+<span class="nb">export</span> <span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">cd</span> <span class="nv">$PBS_O_WORKDIR</span>
+
+<span class="nv">ncores</span><span class="o">=</span><span class="m">24</span>      <span class="c1">## ncores must be smaller than ppn, which is set above.</span>
+
+<span class="nv">mpid</span><span class="o">=</span>mp-149    <span class="c1">## Si</span>
+<span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span>  <span class="c1">## This line must be modified.</span>
+
+<span class="k">if</span> <span class="o">[</span> ! -e <span class="nv">$dir_db</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+    <span class="nb">echo</span> <span class="s2">&quot; Cannot find </span><span class="nv">$dir_db</span><span class="s2">&quot;</span>
+    <span class="nb">exit</span>
+<span class="k">fi</span>
+
+akrun <span class="se">\</span>
+    --directory <span class="nv">$dir_db</span> <span class="se">\</span>
+    --material_name <span class="nv">$mpid</span> <span class="se">\</span>
+    --ncores <span class="nv">$ncores</span>
+</pre></div>
+</div>
+<p>To see descriptions of <code class="docutils literal notranslate"><span class="pre">akrun</span></code> command, <code class="docutils literal notranslate"><span class="pre">-h</span></code> option is available.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ akrun -h
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -235,7 +273,7 @@ $ python setup.py install
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Auto-KAPPA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="tutorial/index.html" class="btn btn-neutral float-right" title="2. Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="parameters.html" class="btn btn-neutral float-right" title="2. Default parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

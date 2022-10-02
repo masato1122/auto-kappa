@@ -11,7 +11,8 @@ Auto-KAPPA
     :glob:
 
     installation
-    tutorial/index
     parameters
     ak
+
+..     tutorial/index
 
