@@ -47,10 +47,10 @@ Phonondb
     $ mp-25-20180417
 
     
-Installation of Auto-KAPPA
+Installation of Auto-kappa
 ============================
 
-Because Auto-KAPPA is currently located in a private repogitory in Github,
+Because auto-kappa is currently located in a private repogitory in Github,
 if you'd like to use it, please contact M. Ohnishi (ohnishi@t.u-tokyo.ac.jp).
 
 1. Send your ssh public key to the developper (M. Ohnishi).
@@ -100,7 +100,15 @@ If you newly create the config file, you also need to modify the permission.
     Activate the virtual environment.
     $ conda activate kappa
 
-4. 
+4. Continue to install auto-kappa.
+
+.. code-block:: bash
+
+    $ cd (arbitrary directory)/auto-kappa
+    $ git config pull.rebase false
+    $ git pull      ## update the package
+    $ python setup.py install
+
 
 
 Installation of python libraries

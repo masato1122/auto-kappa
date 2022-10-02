@@ -17,7 +17,7 @@ setup(name='auto_kappa',
       author='Masato Ohnishi',
       author_email='ohnishi@photon.t.u-tokyo.ac.jp',
       packages=packages_pyscat,
-      requires=[
+      setup_requires=[
           'numpy', 'ALM', 'phonopy', 'spglib', 
           'ase', 'pymatgen', 'custodian',
           'xmltodict', 'mkl', 'f90nml'
