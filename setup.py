@@ -12,7 +12,7 @@ packages_pyscat = [
 
 setup(name='auto_kappa',
       version='0.1',
-      description='Auto-KAPPA is a software to calculate thermal conductivity '\n
+      description='Auto-KAPPA is a software to calculate thermal conductivity '\
         'automatically with VASP and Alamode',
       author='Masato Ohnishi',
       author_email='ohnishi@photon.t.u-tokyo.ac.jp',

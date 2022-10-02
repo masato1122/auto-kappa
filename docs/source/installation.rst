@@ -16,10 +16,92 @@ Aiida-phonopy has been developped under the following conditions.
 * spglib v1.16.5
 * seekpath
 
+
 Preparation
 ============
 
-* Download all the data of phonondb in .../phonondb-20180417/mp-***.
+VASP and Alamode
+-------------------
+
+Auto-KAPPA needs ``vasp``, ``alm``, and ``anphon`` commands.
+Please install VASP and 
+`ALAMODE <https://alamode.readthedocs.io/en/latest/index.html>`_
+in advance.
+
+Phonondb
+---------
+
+* Download all the data of phonondb with wget.
+
+* You can also find all the data in Box: 
+  `.../Box/ppdb1/Others/phonondb-20180417.tar.gz <https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36>`_.
+
+* Expand all the tar.gz file in a directory. The name of expanded directories  in which ``mp-***`` directories are located.
+
+.. code-block:: bash    
+    
+    $ cd .../phonondb (arbitrary directory name)
+    $ wget http://phonondb.mtl.kyoto-u.ac.jp/_downloads/mp-25-20180417.tar.lzma 
+    $ tar xvf mp-25-20180417.tar.lzma
+    $ ls
+    $ mp-25-20180417
+
+    
+Installation of Auto-KAPPA
+============================
+
+Because Auto-KAPPA is currently located in a private repogitory in Github,
+if you'd like to use it, please contact M. Ohnishi (ohnishi@t.u-tokyo.ac.jp).
+
+1. Send your ssh public key to the developper (M. Ohnishi).
+
+2. Once your key was registered, you can download Auto-KAPP with git command.
+
+.. code-block:: bash
+    
+    $ git clone -b develop git@github.com:masato1122/auto-kappa.git
+
+
+If you cannot download. Please add the following contents in ~/.ssh/config.
+If you newly create the config file, you also need to modify the permission.
+
+.. code-block:: bash
+    
+    $ cat .ssh/config
+    
+    Host github.com
+        HostName ssh.github.com
+        Port 443
+        IdentityFile ~/.ssh/id_rsa  # If you changed the directory, modify this part.
+        User git
+
+    Host ssh.github.com
+        Port 443
+        IdentityFile ~/.ssh/id_rsa  # Same as the above
+        User git
+    
+    $ chmod 600 ~/.ssh/config
+
+
+3. Create a virtual environment, ``kappa``, with conda.
+
+.. code-block:: bash
+
+    $ conda create -n kappa python==3.9
+    $ conda init
+    $ exit (You once need to logout and login to the server.)
+    
+    Login the server again and confirm the virtual environment was created.
+    $ conda env list
+    ...
+    kappa       /home/***/***/envs/kappa
+    ...
+    
+    Activate the virtual environment.
+    $ conda activate kappa
+
+4. 
+
 
 Installation of python libraries
 ---------------------------------

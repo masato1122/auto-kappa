@@ -2,7 +2,7 @@
     Written by M. Ohnishi
     September 13, 2022.
 
-AUTO-KAPPA
+Auto-KAPPA
 ============
 
 .. toctree::

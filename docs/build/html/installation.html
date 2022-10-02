@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1. Installation &mdash; auto-alamode Sept. 13th, 2022 documentation</title>
+  <title>1. Installation &mdash; auto-kappa Sept. 13th, 2022 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="2. Tutorial" href="tutorial/index.html" />
-    <link rel="prev" title="AUTO-KAPPA" href="index.html" /> 
+    <link rel="prev" title="Auto-KAPPA" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -28,7 +28,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> auto-alamode
+            <a href="index.html" class="icon icon-home"> auto-kappa
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -42,6 +42,9 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">1. Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">1.1. Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#preparation">1.2. Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#vasp-and-alamode">VASP and Alamode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phonondb">Phonondb</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#auto-kappa">Auto-KAPPA</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#installation-of-python-libraries">Installation of python libraries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#setting-for-potcar-with-ase">Setting for POTCAR with ASE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#installation-of-alm">Installation of ALM</a></li>
@@ -52,7 +55,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">2. Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">3. Default parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ak.html">auto-kappa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ak.html">4. auto-kappa</a></li>
 </ul>
 
         </div>
@@ -61,7 +64,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">auto-alamode</a>
+          <a href="index.html">auto-kappa</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -97,9 +100,76 @@
 </section>
 <section id="preparation">
 <h2><span class="section-number">1.2. </span>Preparation<a class="headerlink" href="#preparation" title="Permalink to this heading"></a></h2>
+<section id="vasp-and-alamode">
+<h3>VASP and Alamode<a class="headerlink" href="#vasp-and-alamode" title="Permalink to this heading"></a></h3>
+<p>Auto-KAPPA needs <code class="docutils literal notranslate"><span class="pre">vasp</span></code>, <code class="docutils literal notranslate"><span class="pre">alm</span></code>, and <code class="docutils literal notranslate"><span class="pre">anphon</span></code> commands.
+Please install VASP and
+<a class="reference external" href="https://alamode.readthedocs.io/en/latest/index.html">ALAMODE</a>
+in advance.</p>
+</section>
+<section id="phonondb">
+<h3>Phonondb<a class="headerlink" href="#phonondb" title="Permalink to this heading"></a></h3>
 <ul class="simple">
-<li><p>Download all the data of phonondb in …/phonondb-20180417/mp-<a href="#id1"><span class="problematic" id="id2">**</span></a><a href="#id3"><span class="problematic" id="id4">*</span></a>.</p></li>
+<li><p>Download all the data of phonondb with wget.</p></li>
+<li><p>You can also find all the data in Box:
+<a class="reference external" href="https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36">…/Box/ppdb1/Others/phonondb-20180417.tar.gz</a>.</p></li>
+<li><p>Expand all the tar.gz file in a directory. The name of expanded directories  in which <code class="docutils literal notranslate"><span class="pre">mp-***</span></code> directories are located.</p></li>
 </ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> .../phonondb <span class="o">(</span>arbitrary directory name<span class="o">)</span>
+$ wget http://phonondb.mtl.kyoto-u.ac.jp/_downloads/mp-25-20180417.tar.lzma
+$ tar xvf mp-25-20180417.tar.lzma
+$ ls
+$ mp-25-20180417
+</pre></div>
+</div>
+</section>
+<section id="auto-kappa">
+<h3>Auto-KAPPA<a class="headerlink" href="#auto-kappa" title="Permalink to this heading"></a></h3>
+<p>Because Auto-KAPPA is currently in a private github,
+if you’d like to use it, please contact M. Ohnishi (<a class="reference external" href="mailto:ohnishi&#37;&#52;&#48;t&#46;u-tokyo&#46;ac&#46;jp">ohnishi<span>&#64;</span>t<span>&#46;</span>u-tokyo<span>&#46;</span>ac<span>&#46;</span>jp</a>).</p>
+<ol class="arabic simple">
+<li><p>Send your ssh public key to the developper (M. Ohnishi).</p></li>
+<li><p>Once your key was registered, you can download Auto-KAPP with git command.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git -b develop git@github.com:masato1122/auto-kappa.git
+</pre></div>
+</div>
+<p>If you cannot download. Please make add the following contents in .ssh/config.
+You also may need to modify the permission of this file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat .ssh/config
+
+Host github.com
+    HostName ssh.github.com
+    Port <span class="m">443</span>
+    IdentityFile ~/.ssh/id_rsa  <span class="c1"># If you changed the directory, modify this part.</span>
+    User git
+
+Host ssh.github.com
+    Port <span class="m">443</span>
+    IdentityFile ~/.ssh/id_rsa  <span class="c1"># Same as the above</span>
+    User git
+
+$ chmod <span class="m">600</span> ~/.ssh/config
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Create a virtual environment, <code class="docutils literal notranslate"><span class="pre">kappa</span></code>, with conda.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ conda create -n kappa <span class="nv">python</span><span class="o">==</span><span class="m">3</span>.9
+$ conda init
+$ <span class="nb">exit</span> <span class="o">(</span>You once need to <span class="nb">logout</span> and login to the server.<span class="o">)</span>
+
+Login the server again and confirm the virtual environment was created.
+$ conda env list
+...
+kappa       /home/***/***/envs/kappa
+...
+
+Activate the virtual environment.
+$ conda activate kappa
+</pre></div>
+</div>
+</section>
 <section id="installation-of-python-libraries">
 <h3>Installation of python libraries<a class="headerlink" href="#installation-of-python-libraries" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ conda create -n alm <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8
@@ -112,6 +182,7 @@ $ pip install custodian
 $ conda install -c conda-forge eigen
 $ conda install -c conda-forge gcc
 $ pip install xmltodict
+$ pip install f90nml
 $
 $ conda install -c conda-forge mkl
 $
@@ -163,7 +234,7 @@ $ python setup.py install
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="AUTO-KAPPA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Auto-KAPPA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="tutorial/index.html" class="btn btn-neutral float-right" title="2. Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
