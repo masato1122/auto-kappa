@@ -32,23 +32,8 @@ ALAMODE:
 To Do
 ------
 
-<<<<<<< HEAD
-To Do and questions
---------------------
-
-<<<<<<< HEAD
-* Count calculation time at different steps
-
-* Determine directory name automatically
-
-=======
->>>>>>> develop
-* Recalculate materials which had negative frequencies in the current calculation, 
-but do not in phonondb. (EDIFFG was modified.)
-=======
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge. (mp-160)
->>>>>>> develop
 
 * How were the supercell size and k-mesh decided for Phonondb?
 Number of atoms? How can k-mesh be obtained from Materials Project?
