@@ -92,7 +92,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         directory2=None, prefix2=None,
         fig_width=4.0, fig_aspect=0.5,
         ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
-        lw=0.3, wspace=0.05, 
+        lw=0.4, wspace=0.05, 
         dpi=300, col='blue', col2='grey',
         unit='cm', legend_loc='best',
         plot_dos=True, plot_pdos=True, plot_pr=True,
@@ -280,7 +280,10 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         ##
         if show_colorbar:
             set_colorbar(sc, ax=ax1)
-     
+    
+    ## zero-line
+    ax1.axhline(0, ls='-', lw=0.2, c='grey')
+    
     ### plot DOS
     if dos is not None:
         ax2.plot(dos.dos, dos.frequencies, 
