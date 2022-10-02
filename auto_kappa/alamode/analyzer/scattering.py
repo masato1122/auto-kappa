@@ -288,7 +288,8 @@ class Scattering():
             
         else:
             isort = np.argsort(xorig)
-            xmin = xorig[isort[5]]
+            #xmin = xorig[isort[5]]
+            xmin = 0.
             xmax = np.max(xorig)
             xbins = np.linspace(xmin, xmax, nbins+1)
          

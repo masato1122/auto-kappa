@@ -1585,7 +1585,7 @@ class AlamodeCalc():
         ## set grain size
         if self.scat.size is not None:
             self.scat.change_grain_size(None)
-
+        
         ## set temperatures
         data = temperatures.split(":")
         ts = [float(t) for t in data]
