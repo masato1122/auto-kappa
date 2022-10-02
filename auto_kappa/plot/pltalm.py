@@ -1,10 +1,20 @@
 # -*- coding: utf-8 -*-
+#
+# pltalm.py
+#
+# Helps to generate figures of phonon properties calculated with Alamode.
+#
+# Copyright (c) 2022 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
-
 
 def plot_kappa(df, figname='fig_kappa.png',
         dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.5, ms=2.0):

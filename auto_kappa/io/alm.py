@@ -1,11 +1,14 @@
 #
-# To Do:
-# 1. Make suggest_cutoff module in AnphonInput class
-#   - analyze cutoff and nubmer of FCs
-#   - suggest a cutoff which may ensure both of the accuracy and computational 
-#   const.
+# alm.py
 #
-
+# This file helps to generate input scripts for Alamode.
+#
+# Copyright (c) 2022 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 from typing import Any, Dict, List, Optional, Union
 from monty.json import MSONable
 import warnings

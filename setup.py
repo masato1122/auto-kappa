@@ -2,15 +2,17 @@ from distutils.core import setup
 
 packages_pyscat = [
         'auto_kappa',
+        'auto_kappa.alamode',
         'auto_kappa.cui',
         'auto_kappa.io',
+        'auto_kappa.math',
         'auto_kappa.plot',
         'auto_kappa.structure',
         ]
 
 setup(name='auto_kappa',
-      version='0.0',
-      description='Auto-Alamode is a software to calculate thermal conductivity '\n
+      version='0.1',
+      description='Auto-KAPPA is a software to calculate thermal conductivity '\n
         'automatically with VASP and Alamode',
       author='Masato Ohnishi',
       author_email='ohnishi@photon.t.u-tokyo.ac.jp',
