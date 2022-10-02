@@ -32,6 +32,8 @@ ALAMODE:
 To Do
 ------
 
+* Plot thermal conductivities: Peierls + coherence
+
 * Output analysis conditions: 
 relaxed structure, INCAR, KPOINTS, ..., size of supercell, fitting errors
 

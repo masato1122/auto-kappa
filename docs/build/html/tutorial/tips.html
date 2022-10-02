@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2.2. Useful Tips &mdash; auto-alamode Sept. 13th, 2022 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Default parameters" href="../parameters.html" />
+    <link rel="prev" title="2.1. How to Prepare Input Scripts" href="input.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> auto-alamode
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">2. Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="input.html">2.1. How to Prepare Input Scripts</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2.2. Useful Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#make-dfset-file-for-alamode">Make DFSET file for Alamode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-phonon-dispersion-and-dos">Plot phonon dispersion and DOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-results-of-cross-validation">Plot results of cross validation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../parameters.html">3. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ak.html">auto-kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">auto-alamode</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html"><span class="section-number">2. </span>Tutorial</a> &raquo;</li>
+      <li><span class="section-number">2.2. </span>Useful Tips</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/tips.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="useful-tips">
+<h1><span class="section-number">2.2. </span>Useful Tips<a class="headerlink" href="#useful-tips" title="Permalink to this heading"></a></h1>
+<section id="make-dfset-file-for-alamode">
+<h2>Make DFSET file for Alamode<a class="headerlink" href="#make-dfset-file-for-alamode" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">get_dfset</span></code> helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
+Many directories which contain a vasprun.xml file are supposed to be located under the given directory.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ ls .
+<span class="m">1</span> <span class="m">2</span> <span class="m">3</span> <span class="m">4</span> ... prist
+
+$ ls ./1
+... ... vasprun.xml ... ...
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">auto_kappa.io.vasp</span> <span class="kn">import</span> <span class="n">get_dfset</span>
+
+<span class="n">directory</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+<span class="n">offset_xml</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/prist/vasprun.xml&#39;</span>
+<span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;DFSET&#39;</span>
+<span class="n">disps</span><span class="p">,</span> <span class="n">force</span> <span class="o">=</span> <span class="n">get_dfset</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">offset_xml</span><span class="o">=</span><span class="n">offset_xml</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="plot-phonon-dispersion-and-dos">
+<h2>Plot phonon dispersion and DOS<a class="headerlink" href="#plot-phonon-dispersion-and-dos" title="Permalink to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">plot_bandos</span></code> helps to plot the phonon dispersion and DOS.
+Different files such as .bands, .dos, .band.pr are supposed to be in the same directory.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ ls
+... Si.bands Si.dos Si.band.pr ...
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">auto_kappa.plot.bandos</span> <span class="kn">import</span> <span class="n">plot_bandos</span>
+
+<span class="n">plot_bandos</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;Si&#39;</span><span class="p">,</span>
+            <span class="n">figname</span><span class="o">=</span><span class="s1">&#39;fig_bandos.png&#39;</span><span class="p">,</span>
+            <span class="n">plot_pr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+</pre></div>
+</div>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/fig_bandos.png"><img alt="../_images/fig_bandos.png" src="../_images/fig_bandos.png" style="height: 250px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 2.2.1 </span><span class="caption-text">Phonon dispersion with participation ratio and DOS of Silicon</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="plot-results-of-cross-validation">
+<h2>Plot results of cross validation<a class="headerlink" href="#plot-results-of-cross-validation" title="Permalink to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ ls
+... **.cvset1 **.cvset2 ... **.cvscore ...
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">auto_kappa.plot.lasso</span> <span class="kn">import</span> <span class="n">plot_cvsets</span>
+<span class="n">plot_cvsets</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figname</span><span class="o">=</span><span class="s1">&#39;fig_cvsets.png&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<figure class="align-center" id="id2">
+<a class="reference internal image-reference" href="../_images/fig_cvsets.png"><img alt="../_images/fig_cvsets.png" src="../_images/fig_cvsets.png" style="height: 250px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 2.2.2 </span><span class="caption-text">Results for cross-valication</span><a class="headerlink" href="#id2" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="input.html" class="btn btn-neutral float-left" title="2.1. How to Prepare Input Scripts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../parameters.html" class="btn btn-neutral float-right" title="3. Default parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

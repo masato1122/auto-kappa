@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Installation &mdash; auto-alamode Sept. 13th, 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Tutorial" href="tutorial/index.html" />
+    <link rel="prev" title="AUTO-KAPPA" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> auto-alamode
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">1.1. Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preparation">1.2. Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation-of-python-libraries">Installation of python libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-for-potcar-with-ase">Setting for POTCAR with ASE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-of-alm">Installation of ALM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modification-of-bash-profile">Modification of .bash_profile</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">2. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">3. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ak.html">auto-kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-alamode</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">1. </span>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1><span class="section-number">1. </span>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
+<section id="requirements">
+<h2><span class="section-number">1.1. </span>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<p>Aiida-phonopy has been developped under the following conditions.</p>
+<ul class="simple">
+<li><p>VASP</p></li>
+<li><p>alamode (alm, anphon, ALM &gt;= 1.4.0)</p></li>
+<li><p>phonopy &gt;= 2.15.1</p></li>
+<li><p>custodian &gt;= 2022.5.26</p></li>
+<li><p>pymatgen v2022.3.24</p></li>
+<li><p>ase v3.22.1</p></li>
+<li><p>spglib v1.16.5</p></li>
+<li><p>seekpath</p></li>
+</ul>
+</section>
+<section id="preparation">
+<h2><span class="section-number">1.2. </span>Preparation<a class="headerlink" href="#preparation" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Download all the data of phonondb in …/phonondb-20180417/mp-<a href="#id1"><span class="problematic" id="id2">**</span></a><a href="#id3"><span class="problematic" id="id4">*</span></a>.</p></li>
+</ul>
+<section id="installation-of-python-libraries">
+<h3>Installation of python libraries<a class="headerlink" href="#installation-of-python-libraries" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ conda create -n alm <span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8
+$ conda activate alm
+$ pip install pymatgen
+$ conda install -c conda-forge phonopy
+$ pip install ase
+$ pip install seekpath
+$ pip install custodian
+$ conda install -c conda-forge eigen
+$ conda install -c conda-forge gcc
+$ pip install xmltodict
+$
+$ conda install -c conda-forge mkl
+$
+$ <span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:<span class="si">${</span><span class="nv">CONDA_PREFIX</span><span class="si">}</span>/lib
+</pre></div>
+</div>
+</section>
+<section id="setting-for-potcar-with-ase">
+<h3>Setting for POTCAR with ASE<a class="headerlink" href="#setting-for-potcar-with-ase" title="Permalink to this heading"></a></h3>
+<p>Add the following line. In the directory, potpaw_PBE exists.
+See the following pages for details:
+<a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html">1 (ASE)</a> and
+<a class="reference external" href="https://pymatgen.org/installation.html#potcar-setup">2 (pymatgen</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat ~/.bash_profile
+
+...
+<span class="nb">export</span> <span class="nv">VASP_PP_PATH</span><span class="o">=(</span>directory <span class="k">in</span> which potpaw_PBE is located.<span class="o">)</span>
+...
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ cat .pmgrc.yaml
+
+...
+PMG_VASP_PSP_DIR: <span class="o">(</span>directory <span class="k">in</span> which potpaw_PBE is located.<span class="o">)</span>
+PMG_MAPI_KEY: **********
+...
+</pre></div>
+</div>
+</section>
+<section id="installation-of-alm">
+<h3>Installation of ALM<a class="headerlink" href="#installation-of-alm" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">source</span> activate alm
+$ git clone https://github.com/ttadano/ALM.git
+$ <span class="nb">cd</span> ./ALM
+$ git pull
+$ <span class="nb">cd</span> ./python
+$ python setup.py install
+</pre></div>
+</div>
+</section>
+<section id="modification-of-bash-profile">
+<h3>Modification of .bash_profile<a class="headerlink" href="#modification-of-bash-profile" title="Permalink to this heading"></a></h3>
+<p>You may also need to add (CODA_PREFIX)/alm/lib in LD_LIBRARY_PATH.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="AUTO-KAPPA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial/index.html" class="btn btn-neutral float-right" title="2. Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
