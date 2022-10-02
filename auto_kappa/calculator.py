@@ -1,4 +1,15 @@
-# -*- coding: utf-8 -*-
+#
+# calculator.py
+#
+# This script helps to run VASP calculation with Custodian. While ASE is also
+# available, it is recommended to use Custodian to run VASP jobs.
+#
+# Copyright (c) 2022 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import os.path
 import numpy as np
 from pymatgen.io.vasp.inputs import Kpoints

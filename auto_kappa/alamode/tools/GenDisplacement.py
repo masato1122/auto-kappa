@@ -646,7 +646,7 @@ class AlamodeDisplace(object):
                            self._primitive_lattice_vector)
         nmax = 10
         qlist = []
-
+        
         for i in range(3):
             for j in range(3):
                 frac = abs(convertor[i, j])
@@ -663,7 +663,18 @@ class AlamodeDisplace(object):
                     if found_nnp:
                         convertor[i, j] = np.sign(convertor[i, j]) / float(nnp)
                     else:
-
+                        ### original version:
+                        #raise RuntimeError("Failed to express the inverse transformation matrix"
+                        #                   "by using fractional numbers.\n\n"
+                        #                   "Please make sure that the lattice parameters of \n"
+                        #                   "the supercell and primitive cell are consistent.\n")
+                        
+                        ### Modified version:
+                        ##
+                        ## This part was added to the original file to skip the
+                        ## error while the modification may not affect the
+                        ## result.
+                        ##
                         msg = " get_commensurate_points was used to obtain "\
                                 "commensurate points, which may not affect the "\
                                 "result."
@@ -673,12 +684,8 @@ class AlamodeDisplace(object):
                         Mps = np.linalg.inv(convertor)
                         self._commensurate_qpoints = get_commensurate_points(Mps)
                         return 0
-
-                        #raise RuntimeError("Failed to express the inverse transformation matrix"
-                        #                   "by using fractional numbers.\n\n"
-                        #                   "Please make sure that the lattice parameters of \n"
-                        #                   "the supercell and primitive cell are consistent.\n")
-
+                        
+                    
         comb = []
         for Lx in range(nmax):
             for Ly in range(nmax):

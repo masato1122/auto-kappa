@@ -1,4 +1,16 @@
-# -*- coding: utf-8 -*-
+#
+# scattering.py
+#
+# Scattering class in this script is a usuful class to analyze results obtained
+# with Alamode. This class reads .result and .self_isotope files and calculate
+# scattering rates, lifetime, cumulative thermal conductivity, etc.
+#
+# Copyright (c) 2022 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import os, sys
 import os.path
 import numpy as np
