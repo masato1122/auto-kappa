@@ -335,7 +335,7 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
             a = int(np.log10(alpha))
             b = alpha / np.power(10, float(a))
             text = "${\\rm %.2fx10^{%d}}$" % (b, a)
-            ax.text(alpha, np.max(ydat1) * 0.9, text, 
+            ax.text(alpha, np.max(ydat1) * 0.7, text, 
                     fontsize=6, transform=ax.transData,
                     horizontalalignment="left", 
                     verticalalignment="center"
