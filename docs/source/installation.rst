@@ -141,6 +141,8 @@ To set ``kappa`` as the default, add the following line in ``.bash_profile``.
     >>> import auto_kappa
     >>> exit()
     
+    $ akrun -h
+
 
 5. Run test examples.
 
