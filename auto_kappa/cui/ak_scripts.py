@@ -185,6 +185,10 @@ def main():
     almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     almcalc.plot_bandos()
     
+    ### eigenvalues at commensurate points
+    almcalc.write_alamode_input(propt='evec_commensurate')
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
         print("")

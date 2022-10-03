@@ -517,7 +517,7 @@ class AlamodeCalc():
             self.run_alamode(propt=propt)
 
             ###
-            fevec = self.out_dirs['lasso']['evec'] + '/' + self.prefix + '.evec'
+            fevec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
             all_disps = self._get_displacements(
                     "random_normalcoordinate",
                     file_evec=fevec,
@@ -989,7 +989,7 @@ class AlamodeCalc():
             
         elif propt == 'evec_commensurate':
             
-            dir_work = self.out_dirs['lasso']['evec']
+            dir_work = self.out_dirs['harm']['evec']
             fcsxml = '../../result/' + output_files['harm_xml']
             
         elif propt == 'kappa':
@@ -1274,7 +1274,7 @@ class AlamodeCalc():
             
         elif propt == 'evec_commensurate':
             
-            workdir = self.out_dirs['lasso']['evec']
+            workdir = self.out_dirs['harm']['evec']
         
         elif propt == 'cv' or propt == 'lasso':
             
