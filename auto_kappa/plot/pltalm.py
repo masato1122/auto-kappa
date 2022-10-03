@@ -26,18 +26,36 @@ def plot_kappa(df, figname='fig_kappa.png',
 
     ax = plt.subplot()
     ax.set_xlabel('T (K)')
-    ax.set_ylabel('${\\rm \\kappa (Wm^{-1}K^{-1})}$')
-
+    ax.set_ylabel('${\\rm \\kappa_{lat}}$ ${\\rm (Wm^{-1}K^{-1})}$')
+    #ax.set_xlabel('Temperature (K)')
+    #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
+    
     markers = ['+', 'x', 'v', 'o']
-    for ik, key in enumerate(['kxx', 'kyy', 'kzz', 'kave']):
+    for ii, cont in enumerate(['kp', 'ksum']):
+        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+            
+            lab = "%s_%s" % (cont, direct)
+            xdat = df['temperature'].values
+            ydat = df[lab].values
 
-        xdat = df['temperature'].values
-        ydat = df[key].values
-        ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                marker=markers[ik], markersize=ms,
-                mfc='none', mew=lw, label=key
-                )
-
+            if cont == 'kp':
+                label = direct
+                ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                        marker=markers[jj], markersize=ms,
+                        mfc='none', mew=lw, mec=cmap(jj), label=label
+                        )
+            
+            elif cont == 'ksum':
+                if direct == 'ave':
+                    label = "${\\rm \\kappa_p + \\kappa_c}$"
+                else:
+                    label = None
+                
+                ax.plot(xdat, ydat, linestyle='-', lw=lw,
+                        marker=None, c=cmap(jj),
+                        label=label
+                        )
+    
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6)
 
