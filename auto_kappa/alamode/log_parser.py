@@ -144,9 +144,9 @@ def _get_alamode_runtime(filename):
         return line_mod
     try:
         line0 = _extract_lines(
-                filename, 'job started at')[0].split('at')[1].replace('\n', "")
+                filename, 'job started at')[0].split('started at')[1].replace('\n', "")
         line1 = _extract_lines(
-                filename, 'job finished at')[-1].split('at')[1].replace("\n", "")
+                filename, 'job finished at')[-1].split('started at')[1].replace("\n", "")
         
         time0 = datetime.datetime.strptime(
                 _adjust_time_line(line0), "%a %b %d %H:%M:%S %Y")
