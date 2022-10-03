@@ -132,8 +132,8 @@ To set ``kappa`` as the default, add the following line in ``.bash_profile``.
     $ cd (arbitrary directory)/auto-kappa
     $ git config pull.rebase false
     $ git pull     ## update the package
-    $ python setup.py install
-    $ pip install -e .
+    $ python setup.py sdist
+    $ pip install dist/auto_kappa-0.*.tar.gz
     
     
     Check if auto_kappa is installed or not.
@@ -206,11 +206,6 @@ An example of job script is shown below. Please modify depending on your environ
         --ncores $ncores
 
 
-To see descriptions of ``akrun`` command, ``-h`` option is available.
-
-.. code-block:: shell
-
-    $ akrun -h
 
 
 
