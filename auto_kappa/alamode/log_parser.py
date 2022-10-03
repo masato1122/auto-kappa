@@ -5,6 +5,7 @@ from optparse import OptionParser
 import ase.io
 import datetime
 import yaml
+import warnings
 
 from auto_kappa import output_directories as out_dirs
 
@@ -71,8 +72,11 @@ class AkLog():
         if figname is None:
             figname = self.directory+'/'+out_dirs['result']+'/fig_times.png'
         
+        skip_labels = ['suggest', 'fc(harm)', 'fc(cube)', 'relax', 'nac']
+
         times = []
         labels = []
+        time_others = 0.
         for key in self.get_times():
             
             if '_' in key:
@@ -81,9 +85,19 @@ class AkLog():
             else:
                 lab = key
             
-            times.append(self.get_times()[key])
-            labels.append(lab)
+            flag_skip = False
+            for ll in skip_labels:
+                if ll in lab:
+                    time_others += self.get_times()[key]
+                    flag_skip = True
+            
+            if flag_skip == False:
+                times.append(self.get_times()[key])
+                labels.append(lab)
         
+        times.append(time_others)
+        labels.append('others')
+            
         from auto_kappa.plot.pltalm import plot_times_with_pie
         plot_times_with_pie(times, labels, figname=figname)
         
@@ -309,12 +323,15 @@ def _get_forces(filename):
     --------
     forces : shape=(natoms,)
     """
-    atoms = ase.io.read(filename, format='vasp-xml')
-    all_forces = atoms.get_forces()
-    forces = np.zeros(len(atoms))
-    for ia in range(len(atoms)):
-        forces[ia] = np.linalg.norm(all_forces[ia])
-    return forces
+    try:
+        atoms = ase.io.read(filename, format='vasp-xml')
+        all_forces = atoms.get_forces()
+        forces = np.zeros(len(atoms))
+        for ia in range(len(atoms)):
+            forces[ia] = np.linalg.norm(all_forces[ia])
+        return forces
+    except Exception:
+        return None
 
 def _read_each_vaspjob(directory):
     
@@ -323,18 +340,22 @@ def _read_each_vaspjob(directory):
         return None
     
     out = {}
-    out['max_force'] = float(np.max(_get_forces(file_xml)))
+    try:
+        out['max_force'] = float(np.max(_get_forces(file_xml)))
     
-    ### read outcar
-    file_out = directory+'/OUTCAR'
-    if os.path.exists(file_out) == False:
+        ### read outcar
+        file_out = directory+'/OUTCAR'
+        if os.path.exists(file_out) == False:
+            return out
+        
+        ### time from OUTCAR
+        v = _extract_data(file_out, "Total CPU time used")[0]
+        if v is not None:
+            out['time'] = {'value': float(v), 'unit': 'sec'}
         return out
     
-    ### time from OUTCAR
-    v = _extract_data(file_out, "Total CPU time used")[0]
-    if v is not None:
-        out['time'] = {'value': float(v), 'unit': 'sec'}
-    return out
+    except Exception:
+        return None
 
 def read_log_relax(directory):
     dir_vasp = directory+'/'+out_dirs['relax']
@@ -371,6 +392,10 @@ def read_log_forces(directory, mode):
             break
         
         out_each = _read_each_vaspjob(dir_vasp)
+
+        if out_each is None:
+            warnings.warn(" Error in %s" % dir_vasp)
+            continue
         
         ## total time
         if 'time' in out_each:

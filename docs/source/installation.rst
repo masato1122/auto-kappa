@@ -25,7 +25,7 @@ Preparation
 VASP and Alamode
 -------------------
 
-Auto-KAPPA needs ``vasp``, ``alm``, and ``anphon`` commands.
+Auto-kappa needs ``vasp``, ``alm``, and ``anphon`` commands.
 Please install VASP and 
 `ALAMODE <https://alamode.readthedocs.io/en/latest/index.html>`_
 in advance.
@@ -62,7 +62,7 @@ Phonondb
     $ mp-25-20180417
 
     
-Installation of Auto-kappa
+Installation of auto-kappa
 ============================
 
 Because auto-kappa is currently located in a private repogitory in Github,
@@ -70,7 +70,7 @@ if you'd like to use it, please contact M. Ohnishi (ohnishi@t.u-tokyo.ac.jp).
 
 1. Send your ssh public key to the developper (M. Ohnishi).
 
-2. Once your key was registered, you can download Auto-KAPP with git command.
+2. Once your key was registered, you can download auto-kappa with git command.
 
 .. code-block:: bash
     
