@@ -32,8 +32,6 @@ ALAMODE:
 To Do
 ------
 
-* Plot thermal conductivities: Peierls + coherence
-
 * Output analysis conditions: 
 relaxed structure, INCAR, KPOINTS, ..., size of supercell, fitting errors
 
@@ -64,4 +62,5 @@ Done
 * Primitive cell with an atom may lead to an error of the treatment of crystal structure 
 such as Born effective charge. (mp-160)
 
+* Plot thermal conductivities: Peierls + coherence
 

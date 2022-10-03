@@ -493,14 +493,20 @@ def _get_minimum_frequency(filename):
     
     out = {}
     istart = None
+    nks = None
     for il, line in enumerate(lines):
         
         if "NONANALYTIC" in line:
             out['nac'] = int(line.split()[2])
         
         if "Number of k points" in line:
-            out['number_of_kpoints'] = int(line.split()[-1])
+            nks = int(line.split()[-1])
+            out['number_of_kpoints'] = nks
         
+        if "Number of irreducible k points" in line:
+            nks = int(line.split()[-1])
+            out['number_of_irreducible_kpoints'] = nks
+         
         if "Number of atoms in the primitive cell" in line:
             out['number_of_atoms_primitive'] = int(line.split()[-1])
         
@@ -513,7 +519,7 @@ def _get_minimum_frequency(filename):
     ### get frequencies
     frequencies = []
     out['number_of_bands'] = 3 * out['number_of_atoms_primitive']
-    for ik in range(out['number_of_kpoints']):
+    for ik in range(nks):
         for ib in range(out['number_of_bands']):
             num = 4 + istart_freq + ik*(3 + out['number_of_bands']) + ib
             data = lines[num].split()
@@ -522,12 +528,17 @@ def _get_minimum_frequency(filename):
     out['minimum_frequency'] = float(np.min(frequencies))
     return out 
 
-def read_log_eigen(directory, mode='bandos'):
+def read_log_eigen(directory, mode='band'):
     """ """
-    if mode == 'bandos':
+    if mode == 'band':
         filename = directory+'/'+out_dirs['harm']['bandos']+'/band.log'
     elif mode == 'evec':
         filename = directory+'/'+out_dirs['harm']['evec']+'/evec_commensurate.log'
+    elif mode == 'dos':
+        filename = directory+'/'+out_dirs['harm']['bandos']+'/dos.log'
+    else:
+        warnings.warn(" Error: %s is not supported." % mode)
+        return None
     ##
     if os.path.exists(filename) == False:
         return None
@@ -579,7 +590,7 @@ def get_ak_logs(directory):
         out_all['harm']["fc"] = v
     
     ## harmonic, band
-    v = read_log_eigen(directory, mode='bandos')
+    v = read_log_eigen(directory, mode='band')
     if v is not None:
         out_all['harm']["bandos"] = v
     
@@ -587,6 +598,11 @@ def get_ak_logs(directory):
     v = read_log_eigen(directory, mode='evec')
     if v is not None:
         out_all['harm']["evec"] = v
+    
+    ## harmonic, DOS
+    v = read_log_eigen(directory, mode='dos')
+    if v is not None:
+        out_all['harm']["dos"] = v
     
     ### cube
     v = read_log_forces(directory, 'cube')
