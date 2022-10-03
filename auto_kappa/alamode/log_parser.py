@@ -11,6 +11,7 @@ from auto_kappa import output_directories as out_dirs
 
 class AkLog():
     """
+    
     How to Use
     -------------
     >>> directory = './mp-149'
@@ -23,6 +24,7 @@ class AkLog():
     >>>
     >>> log.write_yaml(outfile='log.yaml')
     >>> log.plot_times(figname='fig_times.png')
+    
     """
     def __init__(self, directory):
         
@@ -72,32 +74,35 @@ class AkLog():
         if figname is None:
             figname = self.directory+'/'+out_dirs['result']+'/fig_times.png'
         
-        skip_labels = ['suggest', 'fc(harm)', 'fc(cube)', 'relax', 'nac']
+        nonskip_labels = ['force', 'cv(lasso', 'lasso(lasso)', 'kappa']
+        
+        all_times = self.get_times()
 
         times = []
         labels = []
         time_others = 0.
-        for key in self.get_times():
-            
+        for key in all_times:
+             
             if '_' in key:
                 data = key.split('_')
                 lab = "%s(%s)" % (data[1], data[0])
             else:
                 lab = key
             
-            flag_skip = False
-            for ll in skip_labels:
+            flag_skip = True
+            for ll in nonskip_labels:
                 if ll in lab:
-                    time_others += self.get_times()[key]
-                    flag_skip = True
+                    flag_skip = False
             
-            if flag_skip == False:
-                times.append(self.get_times()[key])
+            if flag_skip:
+                time_others += all_times[key]
+            else:
+                times.append(all_times[key])
                 labels.append(lab)
         
         times.append(time_others)
         labels.append('others')
-            
+        
         from auto_kappa.plot.pltalm import plot_times_with_pie
         plot_times_with_pie(times, labels, figname=figname)
         
@@ -455,6 +460,84 @@ def _analyze_time(out):
         if 'time' in out['kappa']:
             durations['kappa'] = out['kappa']['time']['value']
 
+def _get_cellsize_from_log(filename, type=None):
+    
+    if type.lower() == 'supercell':
+        sword = "Supercell"
+    elif type.lower() == 'primitive':
+        sword = "Primitive"
+    
+    istart = None
+    lines = open(filename, 'r').readlines()
+    for il, line in enumerate(lines):
+        if sword in line:
+            istart = il
+            break
+    
+    if istart is None:
+        return None
+    ##
+    cell = []
+    for i in range(3):
+        data = lines[istart+2+i].split()
+        if len(data) <= 3:
+            return None
+        else:
+            cell.append([float(data[j]) for j in range(3)])
+    
+    return cell
+    
+def _get_minimum_frequency(filename):
+    
+    lines = open(filename, 'r').readlines()
+    
+    out = {}
+    istart = None
+    for il, line in enumerate(lines):
+        
+        if "NONANALYTIC" in line:
+            out['nac'] = int(line.split()[2])
+        
+        if "Number of k points" in line:
+            out['number_of_kpoints'] = int(line.split()[-1])
+        
+        if "Number of atoms in the primitive cell" in line:
+            out['number_of_atoms_primitive'] = int(line.split()[-1])
+        
+        if "Number of atoms in the supercell" in line:
+            out['number_of_atoms_supercell'] = int(line.split()[-1])
+        
+        if "Phonon frequencies below:" in line:
+            istart_freq = il
+    
+    ### get frequencies
+    frequencies = []
+    out['number_of_bands'] = 3 * out['number_of_atoms_primitive']
+    for ik in range(out['number_of_kpoints']):
+        for ib in range(out['number_of_bands']):
+            num = 4 + istart_freq + ik*(3 + out['number_of_bands']) + ib
+            data = lines[num].split()
+            frequencies.append(float(data[1]))
+    frequencies = np.asarray(frequencies)
+    out['minimum_frequency'] = float(np.min(frequencies))
+    return out 
+
+def read_log_eigen(directory, mode='bandos'):
+    """ """
+    if mode == 'bandos':
+        filename = directory+'/'+out_dirs['harm']['bandos']+'/band.log'
+    elif mode == 'evec':
+        filename = directory+'/'+out_dirs['harm']['evec']+'/evec_commensurate.log'
+    ##
+    if os.path.exists(filename) == False:
+        return None
+    out = {}
+    out['supercell'] = _get_cellsize_from_log(filename, type='supercell')
+    out['primitive'] = _get_cellsize_from_log(filename, type='primitive')
+    out['time'] = _get_alamode_runtime(filename)
+    out.update(_get_minimum_frequency(filename))
+    return out
+
 def get_ak_logs(directory):
     """ Return diffent information in log files
 
@@ -494,6 +577,16 @@ def get_ak_logs(directory):
     v = read_log_fc2(directory)
     if v is not None:
         out_all['harm']["fc"] = v
+    
+    ## harmonic, band
+    v = read_log_eigen(directory, mode='bandos')
+    if v is not None:
+        out_all['harm']["bandos"] = v
+    
+    ## harmonic, evec
+    v = read_log_eigen(directory, mode='evec')
+    if v is not None:
+        out_all['harm']["evec"] = v
     
     ### cube
     v = read_log_forces(directory, 'cube')
