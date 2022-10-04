@@ -351,10 +351,14 @@ def read_log_suggest(directory):
 
 def read_log_kappa(directory):
     filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
+    
     if os.path.exists(filename) == False:
         filename = directory+'/'+out_dirs['lasso']['kappa']+'/kappa.log'
+    
     if os.path.exists(filename) == False:
+        
         return None
+    
     else:
         out = {}
         
