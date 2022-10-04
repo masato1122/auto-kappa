@@ -1,5 +1,6 @@
 #from distutils.core import setup
 
+import shutil
 import pathlib
 from setuptools import setup
 
@@ -58,7 +59,6 @@ def main(build_dir):
             provides=['auto_kappa'],
             )
  
-
 if __name__ == "__main__":
     
     build_dir = pathlib.Path.cwd() / "_build"
