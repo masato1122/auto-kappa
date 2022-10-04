@@ -39,7 +39,7 @@ def plot_kappa(df, figname='fig_kappa.png',
             ydat = df[lab].values
 
             if cont == 'kp':
-                label = "${\\kappa_p^{%d}}$" % direct
+                label = "${\\kappa_p^{%s}}$" % direct
                 ax.plot(xdat, ydat, linestyle='None', lw=lw,
                         marker=markers[jj], markersize=ms,
                         mfc='none', mew=lw, mec=cmap(jj), label=label
