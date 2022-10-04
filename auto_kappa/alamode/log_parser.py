@@ -679,10 +679,13 @@ def get_ak_logs(directory):
         out_all['lasso'] = v
     
     ### kappa
-    v = read_log_kappa(directory)
-    if v is not None:
-        out_all["kappa"] = v
-    
+    try:
+        v = read_log_kappa(directory)
+        if v is not None:
+            out_all["kappa"] = v
+    except Exception:
+        pass
+
     ###
     out_mod = {}
     for key in out_all:
