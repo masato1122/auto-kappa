@@ -11,11 +11,11 @@ users need to separately install VASP and Alamode.
 
 * VASP
 * alamode (alm, anphon, ALM >= 1.4.0)
-* phonopy >= 2.15.1
-* custodian >= 2022.5.26
-* pymatgen v2022.3.24
-* ase v3.22.1
-* spglib v1.16.5
+* phonopy 
+* custodian 
+* pymatgen
+* ase
+* spglib
 * seekpath
 
 
@@ -82,8 +82,6 @@ If you newly create the config file, you also need to modify the permission.
 
 .. code-block:: bash
     
-    $ cat ~/.ssh/config
-    
     Host github.com
         HostName ssh.github.com
         Port 443
@@ -94,6 +92,11 @@ If you newly create the config file, you also need to modify the permission.
         Port 443
         IdentityFile ~/.ssh/id_rsa  # Same as the above
         User git
+    
+
+You can change the permission with ``chmod``.
+
+.. code-block:: bash
     
     $ chmod 600 ~/.ssh/config
 
@@ -189,12 +192,12 @@ An example of job script is shown below. Please modify depending on your environ
     #PBS -N test            ## job name
     
     export LANG=C
-    export OMP_NUM_THREADS=1
+    export OMP_NUM_THREADS=1  ## Please set OMP_NUM_THREADS=1
     cd $PBS_O_WORKDIR
     
-    ncores=24      ## ncores must be smaller than ppn, which is set above.
+    ncores=24               ## ncores must be smaller than ppn, which is set above.
     
-    mpid=mp-149    ## Si
+    mpid=mp-149             ## Si
     dir_db=${directory_of_downloaded_phoonondb}/${mpid}  ## This line must be modified.
     
     if [ ! -e $dir_db ]; then
