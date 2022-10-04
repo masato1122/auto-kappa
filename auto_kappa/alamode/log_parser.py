@@ -184,8 +184,10 @@ def read_log_fc(filename):
         return None
     
     out = {}
-    out['time'] = _get_alamode_runtime(filename)
-    
+    v = _get_alamode_runtime(filename)
+    if v is not None:
+        out['time'] = v
+     
     lines = open(filename, 'r').readlines()
     
     ### read different parameters
@@ -326,7 +328,9 @@ def read_log_suggest(directory):
     if os.path.exists(filename) == False:
         return None
     out = {}
-    out['time'] = _get_alamode_runtime(filename)
+    v = _get_alamode_runtime(filename)
+    if v is not None:
+        out['time'] = v
     nfcs = int(_extract_data(
         filename, "number of  harmonic fcs", back_id=-1)[0])
     if nfcs is None:
@@ -375,7 +379,9 @@ def read_log_kappa(directory):
             filename, "number of k points")[0])
         out['number_of_irreducible_kpoints'] = int(_extract_data(
             filename, "number of irreducible k points")[0])
-        out['time'] = _get_alamode_runtime(filename)
+        v = _get_alamode_runtime(filename)
+        if v is not None:
+            out['time'] = v
         
         return out
 
@@ -492,10 +498,10 @@ def read_log_lasso(directory):
     filename = directory+'/'+out_dirs['lasso']['cv']+'/cv.log'
     if os.path.exists(filename):
         out['cv'] = {}
-        time = _get_alamode_runtime(filename)
-        if time is not None:
-            out['cv']['time'] = time
-    
+        v = _get_alamode_runtime(filename)
+        if v is not None:
+            out['cv']['time'] = v
+     
     ### lasso.log
     filename = directory+'/'+out_dirs['lasso']['lasso']+'/lasso.log' 
     v = read_log_fc(filename)
@@ -504,18 +510,18 @@ def read_log_lasso(directory):
     
     return out
 
-def _analyze_time(out):
-    
-    durations = {}
-    for mode in ['harm', 'cube', 'lasso']:
-        if mode in out:
-            if 'force' in out[mode]:
-                if 'time' in out[mode]['force']:
-                    durations['%s_forces' % mode] = \
-                            out[mode]['force']['time']['value']
-    if 'kappa' in out:
-        if 'time' in out['kappa']:
-            durations['kappa'] = out['kappa']['time']['value']
+#def _analyze_time(out):
+#    
+#    durations = {}
+#    for mode in ['harm', 'cube', 'lasso']:
+#        if mode in out:
+#            if 'force' in out[mode]:
+#                if 'time' in out[mode]['force']:
+#                    durations['%s_forces' % mode] = \
+#                            out[mode]['force']['time']['value']
+#    if 'kappa' in out:
+#        if 'time' in out['kappa']:
+#            durations['kappa'] = out['kappa']['time']['value']
 
 def _get_cellsize_from_log(filename, type=None):
     
@@ -602,7 +608,9 @@ def read_log_eigen(directory, mode='band'):
     out = {}
     out['supercell'] = _get_cellsize_from_log(filename, type='supercell')
     out['primitive'] = _get_cellsize_from_log(filename, type='primitive')
-    out['time'] = _get_alamode_runtime(filename)
+    v = _get_alamode_runtime(filename)
+    if v is not None:
+        out['time'] = v
     out.update(_get_minimum_frequency(filename))
     return out
 
@@ -679,7 +687,7 @@ def get_ak_logs(directory):
     out_all = out_mod.copy()
 
     ### total time
-    times = _analyze_time(out_all)
+    ##times = _analyze_time(out_all)
 
     return out_all
 
