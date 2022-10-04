@@ -191,6 +191,11 @@ def main():
     
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
+        
+        log = AkLog(options.material_name)
+        log.write_yaml()
+        log.plot_times()
+        
         print("")
         print(" Negative eigenvalues were found. Stop the calculation.")
         print(" Minimum frequency : %.2f" % (almcalc.frequency_range[0]))
