@@ -182,67 +182,124 @@ def read_log_fc(filename):
     
     if os.path.exists(filename) == False:
         return None
-    else:
-        out = {}
-        out['time'] = _get_alamode_runtime(filename)
+    
+    out = {}
+    out['time'] = _get_alamode_runtime(filename)
+    
+    lines = open(filename, 'r').readlines()
+    
+    ### read different parameters
+    i0_cut = None
+    for ii, line in enumerate(lines):
+
+        if "NKD =" in line:
+            data = line.split()
+            for j, dd in enumerate(data):
+                if dd == "NKD":
+                    out['nkd'] = int(data[j+2])
         
-        ## fitting error
-        v = _extract_data(filename, 'fitting error (%)')
-        if v is not None:
-            out['fitting_error'] = {'value': float(v[-1]), 'unit': "%"}
+        if "NORDER =" in line:
+            data = line.split()
+            out['norder'] = int(data[-1])
         
-        ## residual
-        v = _extract_data(filename, "residual (%)")
-        if v is not None:
-            out['residual'] = {'value': float(v[0]), 'unit': "%"}
+        if "NBODY =" in line:
+            data = line.split()
+            out['nbody'] = []
+            for i in range(out['norder']):
+                out['nbody'].append(int(data[i+2]))
         
-        ## number of structures
-        v = _extract_data(
-                filename, "entries will be used for training", back_id=-7)
-        if v is not None:
-            out['number_of_structures'] = int(v[0])
-         
-        ## number of parameters
-        v = _extract_data(filename, "Total Number of Parameters")
-        if v is not None:
-            out['number_of_parameters'] = int(v[0])
-         
-        ## number of free parameters
-        v = _extract_data(filename, "Total Number of Free Parameters")
-        if v is not None:
-            out['number_of_free_parameters'] = int(v[0])
-         
-        ### number of FCs
-        vs = _extract_data(filename, "Number of  HARMONIC FCs")
+        if "cutoff radii matrix" in line.lower():
+            i0_cut = ii
+    
+        if "Atomic species:" in line:
+            i0_species = ii
+    
+    ## get atomic species
+    try:
+        if i0_species is not None:
+            species = []
+            for ik in range(out['nkd']):
+                data = lines[i0_species+1+ik].split()
+                species.append(data[1])
+        out['atomic_species'] = species
+    except Exception:
+        out['atomic_species'] = None
+    
+    ## get cutoff radii
+    try:
+        cutoff_mat = {'unit': 'A', 'value': []}
+        for iorder in range(out['norder']):
+            cutoff_mat['value'].append([])
+            for i1 in range(out['nkd']):
+                num = i0_cut + iorder * (out['nkd'] + 2) + i1 + 2
+                data = lines[num].split()
+                cutoff_mat['value'][iorder].append([])
+                for dd in data:
+                    if dd.lower() == 'none':
+                        cutoff_mat['value'][iorder][i1].append(None)
+                    else:
+                        cutoff_mat['value'][iorder][i1].append(float(dd))
+        out['cutoff_radii_matrix'] = cutoff_mat
+    except Exception:
+        pass
+    
+    ## fitting error
+    v = _extract_data(filename, 'fitting error (%)')
+    if v is not None:
+        out['fitting_error'] = {'value': float(v[-1]), 'unit': "%"}
+    
+    ## residual
+    v = _extract_data(filename, "residual (%)")
+    if v is not None:
+        out['residual'] = {'value': float(v[0]), 'unit': "%"}
+    
+    ## number of structures
+    v = _extract_data(
+            filename, "entries will be used for training", back_id=-7)
+    if v is not None:
+        out['number_of_structures'] = int(v[0])
+     
+    ## number of parameters
+    v = _extract_data(filename, "Total Number of Parameters")
+    if v is not None:
+        out['number_of_parameters'] = int(v[0])
+     
+    ## number of free parameters
+    v = _extract_data(filename, "Total Number of Free Parameters")
+    if v is not None:
+        out['number_of_free_parameters'] = int(v[0])
+     
+    ### number of FCs
+    vs = _extract_data(filename, "Number of  HARMONIC FCs")
+    if vs is not None:
+        out['number_of_fc2'] = int(vs[0])
+    #
+    for order in range(3, 10):
+        vs = _extract_data(filename, "Number of   ANHARM%d FCs" % order)
         if vs is not None:
-            out['number_of_fc2'] = int(vs[0])
-        #
-        for order in range(3, 10):
-            vs = _extract_data(filename, "Number of   ANHARM%d FCs" % order)
-            if vs is not None:
-                out['number_of_fc%d' % order] = int(vs[0])
-        
-        ### Number of free FCs
-        vs = _extract_data(filename, "Number of free HARMONIC FCs")
+            out['number_of_fc%d' % order] = int(vs[0])
+    
+    ### Number of free FCs
+    vs = _extract_data(filename, "Number of free HARMONIC FCs")
+    if vs is not None:
+        out['number_of_free_fc2'] = int(vs[0])
+    #
+    for order in range(3, 10):
+        vs = _extract_data(filename, "Number of free  ANHARM%d FCs" % order)
         if vs is not None:
-            out['number_of_free_fc2'] = int(vs[0])
-        #
-        for order in range(3, 10):
-            vs = _extract_data(filename, "Number of free  ANHARM%d FCs" % order)
-            if vs is not None:
-                out['number_of_free_fc%d' % order] = int(vs[0])
-        
-        ### Number of non-zero FCs
-        vs = _extract_data(filename, "Number of non-zero  HARMONIC FCs")
+            out['number_of_free_fc%d' % order] = int(vs[0])
+    
+    ### Number of non-zero FCs
+    vs = _extract_data(filename, "Number of non-zero  HARMONIC FCs")
+    if vs is not None:
+        out['number_of_nonzero_fc2'] = int(vs[0])
+    #
+    for order in range(3, 10):
+        vs = _extract_data(filename, "Number of non-zero   ANHARM%d FCs" % order)
         if vs is not None:
-            out['number_of_nonzero_fc2'] = int(vs[0])
-        #
-        for order in range(3, 10):
-            vs = _extract_data(filename, "Number of non-zero   ANHARM%d FCs" % order)
-            if vs is not None:
-                out['number_of_nonzero_fc%d' % order] = int(vs[0])
-        
-        return out
+            out['number_of_nonzero_fc%d' % order] = int(vs[0])
+    
+    return out
 
 def read_log_fc2(directory):
     
