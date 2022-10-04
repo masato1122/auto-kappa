@@ -646,20 +646,11 @@ def get_ak_logs(directory):
     if v is not None:
         out_all['harm']["fc"] = v
     
-    ## harmonic, band
-    v = read_log_eigen(directory, mode='band')
-    if v is not None:
-        out_all['harm']["bandos"] = v
-    
-    ## harmonic, evec
-    v = read_log_eigen(directory, mode='evec')
-    if v is not None:
-        out_all['harm']["evec"] = v
-    
-    ## harmonic, DOS
-    v = read_log_eigen(directory, mode='dos')
-    if v is not None:
-        out_all['harm']["dos"] = v
+    ## harmonic: band, dos, and commensurate points
+    for mode in ['band', 'dos', 'evec']:
+        v = read_log_eigen(directory, mode=mode)
+        if v is not None:
+            out_all['harm'][mode] = v
     
     ### cube
     v = read_log_forces(directory, 'cube')
