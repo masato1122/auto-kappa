@@ -227,7 +227,7 @@ def read_log_fc(filename):
     
     ## get cutoff radii
     try:
-        cutoff_mat = {'unit': 'A', 'value': []}
+        cutoff_mat = {'unit': 'Bohr', 'value': []}
         for iorder in range(out['norder']):
             cutoff_mat['value'].append([])
             for i1 in range(out['nkd']):
