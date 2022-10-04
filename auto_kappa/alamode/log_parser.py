@@ -683,24 +683,37 @@ def get_ak_logs(directory):
 
     return out_all
 
-def main(options):
-    
-    out_all = get_ak_logs(options.directory)
-    
-    with open(options.outfile, "w") as f:
-        yaml.dump(out_all, f)
-        print(" Output", options.outfile)
+def get_parser():
 
-
-if __name__ == '__main__':
     parser = OptionParser()
     
     parser.add_option("-d", "--directory", dest="directory", type="string",
             help="input file name")
     
     parser.add_option("-o", "--outfile", dest="outfile", type="string",
-            default="log.yaml", help="output .yaml file name")
+            default=None, help="output .yaml file name")
+    
+    parser.add_option("-f", "--figname", dest="figname", type="string",
+            default=None, help="output figure name")
     
     (options, args) = parser.parse_args()
-    main(options)
+    
+    return options
+
+def main():
+    
+    options = get_parser()
+    
+    dirname = options.directory + '/' + out_dirs['result']
+    if os.path.exists(dirname) == False:
+        print("")
+        print(" Cannot find data in %s" % options.directory)
+        print("")
+        exit()
+
+    log = AkLog(options.directory)
+    
+    log.write_yaml(outfile=options.outfile) 
+    
+    log.plot_times(figname=options.figname)
 

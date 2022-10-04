@@ -34,7 +34,8 @@ def main(build_dir):
             ]
 
     scripts_autokappa = [
-            'scripts/akrun'
+            'scripts/akrun',
+            'scripts/ak-logger'
             ]
     
     version = _get_version()
