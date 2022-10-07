@@ -7,6 +7,7 @@ output_directories = {
             'suggest': 'harm/suggest',
             'force': 'harm/force',
             'bandos': 'harm/bandos',
+            'evec' : 'harm/evec',
             },
         'cube':{
             'suggest': 'cube/suggest',
@@ -14,7 +15,6 @@ output_directories = {
             'kappa': 'cube/kappa',
             },
         'lasso':{    
-            'evec' : 'lasso/evec',
             'force': 'lasso/force',
             'cv'   : 'lasso/lasso',
             'lasso': 'lasso/lasso',

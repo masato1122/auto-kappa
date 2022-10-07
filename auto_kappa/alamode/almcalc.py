@@ -517,7 +517,7 @@ class AlamodeCalc():
             self.run_alamode(propt=propt)
 
             ###
-            fevec = self.out_dirs['lasso']['evec'] + '/' + self.prefix + '.evec'
+            fevec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
             all_disps = self._get_displacements(
                     "random_normalcoordinate",
                     file_evec=fevec,
@@ -990,7 +990,7 @@ class AlamodeCalc():
             
         elif propt == 'evec_commensurate':
             
-            dir_work = self.out_dirs['lasso']['evec']
+            dir_work = self.out_dirs['harm']['evec']
             fcsxml = '../../result/' + output_files['harm_xml']
             
         elif propt == 'kappa':
@@ -1275,7 +1275,7 @@ class AlamodeCalc():
             
         elif propt == 'evec_commensurate':
             
-            workdir = self.out_dirs['lasso']['evec']
+            workdir = self.out_dirs['harm']['evec']
         
         elif propt == 'cv' or propt == 'lasso':
             
@@ -1554,29 +1554,58 @@ class AlamodeCalc():
     def plot_kappa(self):
         
         if self.lasso == False:
-            fn_kappa = self.out_dirs['cube']['kappa'] + '/' + self.prefix + '.kl'
+            fn_kp = self.out_dirs['cube']['kappa']+'/'+self.prefix+'.kl'
+            fn_kc = self.out_dirs['cube']['kappa']+'/'+self.prefix+'.kl_coherent'
         else:
-            fn_kappa = self.out_dirs['lasso']['kappa'] + '/' + self.prefix + '.kl'
+            fn_kp = self.out_dirs['lasso']['kappa']+'/'+self.prefix+'.kl'
+            fn_kc = self.out_dirs['lasso']['kappa']+'/'+self.prefix+'.kl_coherent'
         
-        figname = self.out_dirs['result'] + '/fig_kappa.png'
+        #
+        if os.path.exists(fn_kp) == False:
+            return None
         
         df = pd.DataFrame()
-        data = np.genfromtxt(fn_kappa)
+        data = np.genfromtxt(fn_kp)
+        
+        if os.path.exists(fn_kc) == False:
+            fn_kc = None
+            data2 = None
+        else:
+            data2 = np.genfromtxt(fn_kc)
+
+            if np.max(abs(data[:,0] - data2[:,0])) > 0.5:
+                warnings.warn(" Warning: temperatures are incompatible.")
         
         nt = len(data)
         df['temperature'] = data[:,0]
         dirs = ['x', 'y', 'z']
         for i1 in range(3):
             d1 = dirs[i1]
+            
+            if data2 is not None:
+                dd = dirs[i1]
+                lab2 = 'kc_%s%s' % (dd, dd)
+                df[lab2] = data2[:,i1+1]
+            
             for i2 in range(3):
                 d2 = dirs[i2]
-                lab = 'k%s%s' % (d1, d2)
                 num = i1*3 + i2 + 1
+                lab = 'kp_%s%s' % (d1, d2)
                 df[lab] = data[:,num]
-        kave = (df['kxx'].values + df['kyy'].values + df['kzz'].values) / 3.
-        df['kave'] = kave
+        
+        kave = (df['kp_xx'].values + df['kp_yy'].values + df['kp_zz'].values) / 3.
+        df['kp_ave'] = kave
+
+        if data2 is not None:
+            kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
+            df['kc_ave'] = kave
+            
+            for pre in ['xx', 'yy', 'zz', 'ave']:
+                key = 'ksum_%s' % pre
+                df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
         
         from auto_kappa.plot.pltalm import plot_kappa
+        figname = self.out_dirs['result'] + '/fig_kappa.png'
         plot_kappa(df, figname=figname)
     
     
@@ -1586,7 +1615,7 @@ class AlamodeCalc():
         ## set grain size
         if self.scat.size is not None:
             self.scat.change_grain_size(None)
-
+        
         ## set temperatures
         data = temperatures.split(":")
         ts = [float(t) for t in data]

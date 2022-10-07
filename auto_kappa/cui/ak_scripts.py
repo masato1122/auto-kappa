@@ -17,6 +17,7 @@ from auto_kappa.apdb import ApdbVasp
 from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
+from auto_kappa.alamode.log_parser import AkLog
 
 def start_autokappa():
     """ Print the logo.
@@ -184,8 +185,17 @@ def main():
     almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     almcalc.plot_bandos()
     
+    ### eigenvalues at commensurate points
+    almcalc.write_alamode_input(propt='evec_commensurate')
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
+        
+        log = AkLog(options.material_name)
+        log.write_yaml()
+        log.plot_times()
+        
         print("")
         print(" Negative eigenvalues were found. Stop the calculation.")
         print(" Minimum frequency : %.2f" % (almcalc.frequency_range[0]))
@@ -249,6 +259,11 @@ def main():
     t23 = datetime.datetime.now()
     times['kappa'] = t23 - t22
     times['total'] = t23 - t11
+    
+    ### output log.yaml and fig_times.png
+    log = AkLog(options.material_name)
+    log.write_yaml()
+    log.plot_times()
     
     ### END of calculations
     print_times(times)

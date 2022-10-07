@@ -12,6 +12,7 @@
 #
 import numpy as np
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
@@ -25,18 +26,36 @@ def plot_kappa(df, figname='fig_kappa.png',
 
     ax = plt.subplot()
     ax.set_xlabel('T (K)')
-    ax.set_ylabel('${\\rm \\kappa (Wm^{-1}K^{-1})}$')
-
+    ax.set_ylabel('${\\rm \\kappa_{lat}}$ ${\\rm (Wm^{-1}K^{-1})}$')
+    #ax.set_xlabel('Temperature (K)')
+    #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
+    
     markers = ['+', 'x', 'v', 'o']
-    for ik, key in enumerate(['kxx', 'kyy', 'kzz', 'kave']):
+    for ii, cont in enumerate(['kp', 'ksum']):
+        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+            
+            lab = "%s_%s" % (cont, direct)
+            xdat = df['temperature'].values
+            ydat = df[lab].values
 
-        xdat = df['temperature'].values
-        ydat = df[key].values
-        ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                marker=markers[ik], markersize=ms,
-                mfc='none', mew=lw, label=key
-                )
-
+            if cont == 'kp':
+                label = "${\\rm \\kappa_p^{%s}}$" % direct
+                ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                        marker=markers[jj], markersize=ms,
+                        mfc='none', mew=lw, mec=cmap(jj), label=label
+                        )
+            
+            elif cont == 'ksum':
+                if direct == 'ave':
+                    label = "${\\rm \\kappa_p + \\kappa_c}$"
+                else:
+                    label = None
+                
+                ax.plot(xdat, ydat, linestyle='-', lw=lw,
+                        marker=None, c=cmap(jj),
+                        label=label
+                        )
+    
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6)
 
@@ -316,7 +335,7 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
             a = int(np.log10(alpha))
             b = alpha / np.power(10, float(a))
             text = "${\\rm %.2fx10^{%d}}$" % (b, a)
-            ax.text(alpha, np.max(ydat1) * 0.9, text, 
+            ax.text(alpha, np.max(ydat1) * 0.7, text, 
                     fontsize=6, transform=ax.transData,
                     horizontalalignment="left", 
                     verticalalignment="center"
@@ -347,4 +366,36 @@ def _get_recommended_alpha(filename):
             return data
     return None
 
+def plot_times_with_pie(times, labels, figname="fig_times.png", 
+        dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=2.0):
+    
+    set_matplot(fontsize=fontsize)
+    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        
+    ax = plt.subplot()
+    
+    ax.pie(times)
+    
+    time_sec = np.sum(np.asarray(times))
+    time_hour = time_sec/3600.
+    time_day = time_hour/24.
+    if time_hour > 24.:
+        text = "%.1f days" % time_day
+    else:
+        text = "%.1f hours" % time_hour
+    
+    ax.text(0.5, 0.5, text, fontsize=8, transform=ax.transAxes, color='black',
+            horizontalalignment="center", verticalalignment="center",
+            bbox=dict(facecolor='white', edgecolor='none', alpha=0.5, pad=1.0)
+            )
+    
+    leg = ax.legend(labels, fontsize=6, fancybox=False, edgecolor='black', 
+            loc='center left',)
+    leg.set_bbox_to_anchor([0.9, 0.5])
+    leg.get_frame().set_alpha(0.5)
+    leg.get_frame().set_linewidth(0.2)
+
+    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    print(" Output", figname)
+    return fig
 

@@ -32,8 +32,10 @@ ALAMODE:
 To Do
 ------
 
-* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
-such as Born effective charge. (mp-160)
+* Output analysis conditions: 
+relaxed structure, INCAR, KPOINTS, ..., size of supercell, fitting errors
+
+* Calculate kappa with different size of supercells
 
 * How were the supercell size and k-mesh decided for Phonondb?
 Number of atoms? How can k-mesh be obtained from Materials Project?
@@ -41,7 +43,6 @@ Number of atoms? How can k-mesh be obtained from Materials Project?
 * Check non-analytical term (e.g. 5504, 5637): 
 Use dataset (displacements and forces) in Phonondb and calculate phonon dispersion with Alamode.
 Use dataset (displacements and forces) in Apdb and calculate phonon dispersion with Phonopy.
-
 Make phonopy_disp.yaml from DFSET of Alamode.
 
 Additional
@@ -49,11 +50,7 @@ Additional
 
 * Claculate kappa with different k-points and extrapolate?
 
-* Output analysis conditions, fitting error, etc.? (with json?)
-
 * Compression of results
-
-* Automated creation of the homepage with Sphinx
 
 Done
 ------
@@ -61,4 +58,9 @@ Done
 * Relaxation caluclations for many materials were not finished in Chariot.
 
 * EDIFFG is modified.
+
+* Primitive cell with an atom may lead to an error of the treatment of crystal structure 
+such as Born effective charge. (mp-160)
+
+* Plot thermal conductivities: Peierls + coherence
 

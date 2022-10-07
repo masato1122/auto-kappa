@@ -326,8 +326,10 @@ def _write_cell(cell):
     cell (ndarray), shape=(3,3), unit=[Bohr]
     """
     ## set length unit
-    idx = np.where(cell[0] > 0.1)[0]
-    lunit = np.min(cell[0][idx])
+    lengths = np.zeros(3)
+    for j in range(3):
+        lengths[j] = np.linalg.norm(cell[j])
+    lunit = np.min(lengths)
     
     lines = []
     lines.append("&cell")

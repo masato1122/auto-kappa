@@ -7,7 +7,7 @@ from custodian.vasp.jobs import VaspJob
 
 handlers = [
         VaspErrorHandler(), 
-        UnconvergedErrorHandler(),    
+        #UnconvergedErrorHandler(),    
         ]
 
 #cmd = "mpiexec.hydra -n 2 vasp"
