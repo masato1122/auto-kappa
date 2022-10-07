@@ -131,14 +131,12 @@ To set ``kappa`` as the default, add the following line in ``.bash_profile``.
 4. Continue to install auto-kappa.
 
 .. code-block:: bash
-
+    
     $ cd (arbitrary directory)/auto-kappa
     $ git config pull.rebase false
     $ git pull     ## update the package
-    $ python setup.py sdist
-    $ pip install dist/auto_kappa-0.*.tar.gz
-    
-    
+    $ sh install.sh
+     
     Check if auto_kappa is installed or not.
     $ python
     >>> import auto_kappa
