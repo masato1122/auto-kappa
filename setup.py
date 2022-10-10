@@ -50,8 +50,8 @@ def main(build_dir):
             author_email='ohnishi@photon.t.u-tokyo.ac.jp',
             packages=packages_autokappa,
             install_requires=[
-              'numpy', 'phonopy', 'spglib', 'ase', 'pymatgen', 'custodian',
-              'xmltodict', 'mkl', 'f90nml', 'PyYAML',
+              'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 
+              'custodian', 'xmltodict', 'mkl', 'f90nml', 'PyYAML',
               ],
             scripts=scripts_autokappa,
             url='https://github.com/masato1122/auto_kappa.git',

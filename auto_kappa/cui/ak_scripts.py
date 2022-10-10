@@ -75,6 +75,11 @@ def main():
     
     pmat = phdb.primitive_matrix
     smat = phdb.scell_matrix
+    unitcell = phdb.get_unitcell(format='ase')
+    kpts_for_relax = phdb.get_kpoints(mode='relax').kpts[0]
+    kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
+    kpts_for_force = phdb.get_kpoints(mode='force').kpts[0]
+    nac = phdb.nac
     
     ### Set output directories
     out_dirs = {}
@@ -98,7 +103,7 @@ def main():
     
     ### Set ApdbVasp object
     apdb = ApdbVasp(
-            phdb.get_unitcell(format='ase'), 
+            unitcell,
             primitive_matrix=pmat,
             scell_matrix=smat,
             command=command_vasp)
@@ -107,16 +112,16 @@ def main():
     mode = 'relax'
     apdb.run_vasp(mode, 
             out_dirs[mode],
-            phdb.get_kpoints(mode=mode).kpts[0],
+            kpts_for_relax,
             print_params=True
             )
     
     ### Born effective charge
-    if phdb.nac == 1:
+    if nac == 1:
         mode = 'nac'
         apdb.run_vasp(mode,
                 out_dirs[mode],
-                phdb.get_kpoints(mode=mode).kpts[0],
+                kpts_for_nac,
                 print_params=True
                 )
     
@@ -140,7 +145,7 @@ def main():
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
             mag=0.01,
-            nac=phdb.nac,
+            nac=nac,
             commands=commands,
             verbosity=options.verbosity
             )
@@ -148,7 +153,7 @@ def main():
     ### ASE calculator for forces
     mode = 'force'
     calc_force = apdb.get_calculator(mode,
-            kpts=phdb.get_kpoints(mode=mode).kpts[0]
+            kpts=kpts_for_force,
             )
     
     t11 = datetime.datetime.now()
