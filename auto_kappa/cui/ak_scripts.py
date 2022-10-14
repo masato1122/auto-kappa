@@ -97,19 +97,6 @@ def _modify_directory_name(mater_name, propt=None):
     print("")
     print(" Modify directory name: %s => %s" % (dir1, dir2))
 
-def _delete_dfset_xml(mater_name):
-    
-    fns = []
-    fns.append(mater_name + '/result/DFSET.cube')
-    fns.append(mater_name + '/result/FCs_cube.xml')
-    fns.append(mater_name + '/result/FCs_lasso.xml')
-    fns.append(mater_name + '/result/FCs_harm.xml')
-    fns.append(mater_name + '/result/FC3_cube_fd.xml')
-    fns.append(mater_name + '/result/FC3_cube_lasso.xml')
-    for fn in fns:
-        if os.path.exists(fn):
-            os.remove(fn)
-
 def main():
     
     times = {}
@@ -276,7 +263,6 @@ def main():
     ## version
     _modify_directory_name(almcalc.material_name, propt='force')
     _modify_directory_name(almcalc.material_name, propt='kappa')
-    _delete_dfset_xml(almcalc.material_name)
     
     ### calculate forces for cubic FCs
     ## ver.1: with ALM library
