@@ -1449,6 +1449,7 @@ class AlamodeCalc():
                     return alpha
             return None
         except Exception:
+            warnings.warn(" Warning: cannot find %s" % fn)
             return None
     
     def _get_alamodetype_mode(self, propt):
