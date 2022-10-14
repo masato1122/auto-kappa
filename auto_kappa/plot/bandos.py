@@ -14,10 +14,10 @@
 import os.path
 import numpy as np
 from optparse import OptionParser
-from .alamode.band import Band
-from .alamode.dos import Dos
-from .alamode.participation import Participation
-from .initialize import (
+from auto_kappa.plot.alamode.band import Band
+from auto_kappa.plot.alamode.dos import Dos
+from auto_kappa.plot.alamode.participation import Participation
+from auto_kappa.plot.initialize import (
         set_matplot, set_axis, set_spaces, 
         get_both_axis, set_legend
         )
@@ -156,7 +156,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     #        print(" Attention: %s is not defined." % key)
     
     ### get band
-    from .alamode.band import Band
+    from auto_kappa.plot.alamode.band import Band
     band = None
     if 'bands' not in filenames:
         print("")
@@ -170,7 +170,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             band = Band(filename=filenames['bands'])
      
     ### get DOS
-    from .alamode.dos import Dos
+    from auto_kappa.plot.alamode.dos import Dos
     dos = None
     if 'dos' in filenames and plot_dos:
         if os.path.exists(filenames['dos']) == False:
@@ -370,7 +370,7 @@ def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10)
 
 def conv_unit(unit, band, dos):
     
-    from ..units import CmToHz, CmToEv
+    from auto_kappa.units import CmToHz, CmToEv
 
     if unit.lower() == "thz":
         unit_conv = CmToTHz

@@ -5,22 +5,51 @@ output_directories = {
         'nac': 'nac',
         'harm':{
             'suggest': 'harm/suggest',
-            'force': 'harm/force',
+            'force': 'harm/force',               ## FC2 with finite displacement
             'bandos': 'harm/bandos',
             'evec' : 'harm/evec',
             },
         'cube':{
-            'suggest': 'cube/suggest',
-            'force': 'cube/force',
-            'kappa': 'cube/kappa',
+            'suggest':  'cube/suggest',
+            'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
+            'kappa_fd': 'cube/kappa_fd',
+            #
+            #'force':    'cube/force',            ## This is not used anymore
+            #'kappa':    'cube/kappa',            ## This is not used anymore
+            #
+            'force_lasso': 'cube/force_lasso',  ## FC3 with random displacement
+            'cv'   :        'cube/lasso',
+            'lasso':        'cube/lasso',
+            'kappa_lasso':  'cube/kappa_lasso',
             },
-        'lasso':{    
+        ## high-order FCs
+        'lasso':{
+            'suggest': 'lasso/suggest',
             'force': 'lasso/force',
             'cv'   : 'lasso/lasso',
             'lasso': 'lasso/lasso',
             'kappa': 'lasso/kappa',
             },
         'result': 'result'
+        }
+
+output_files = {
+        'harm_dfset' : 'DFSET.harm',
+        'harm_xml'   : "FC2.xml",
+        #'harm_xml'   : "FCs_harm.xml",
+        #
+        #'cube_dfset' : 'DFSET.cube',       ## not used anymore
+        #'cube_xml'   : "FCs_cube.xml",     ## not used anymore
+        #
+        #'cube_fd_xml'   : "FC3_cube_fd.xml",
+        #'cube_lasso_xml'  : "FC3_cube_lasso.xml",
+        'cube_fd_dfset' : 'DFSET.cube_fd',
+        'cube_fd_xml'   : "FC3_fd.xml",
+        'cube_lasso_dfset': 'DFSET.cube_lasso',
+        'cube_lasso_xml'  : "FC3_lasso.xml",
+        #
+        'lasso_dfset': 'DFSET.lasso',
+        'lasso_xml'  : "FCs_lasso.xml",
         }
 
 default_vasp_parameters = {
@@ -59,15 +88,6 @@ default_vasp_parameters = {
             'lwave': False,
             'lcharg': False,
             }
-        }
-
-output_files = {
-        'harm_dfset': 'DFSET.harm',
-        'harm_xml': "FCs_harm.xml",
-        'cube_dfset': 'DFSET.cube',
-        'cube_xml': "FCs_cube.xml",
-        'lasso_dfset': 'DFSET.lasso',
-        'lasso_xml': "FCs_lasso.xml",
         }
 
 #default_lasso_parameters = {

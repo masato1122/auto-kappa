@@ -9,7 +9,6 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import os
 import numpy as np
 import datetime
 
@@ -61,81 +60,27 @@ def end_autokappa():
         \n")
     print(" at", time.strftime("%m/%d/%Y %H:%M:%S"), "\n\n")
 
-def print_options(options):
-
-    msg = "\n"
-    msg += " Input parameters:\n"
-    msg += " =================\n"
-    print(msg)
-    opt_dict = eval(str(options))
-    for key in opt_dict:
-        if opt_dict[key] is not None:
-            print("", key.ljust(20), " : ", opt_dict[key])
-    print("")
-
-def _modify_directory_name(mater_name, propt=None):
-    
-    dir1 = mater_name + "/cube/%s" % propt
-    dir2 = mater_name + "/cube/%s_fd" % propt
-    if os.path.exists(dir1) == False:
-        return None
-    if os.path.exists(dir2) == False:
-        os.rename(dir1, dir2)    
-        print("")
-        print(" Modify directory name: %s => %s" % (dir1, dir2))
-        return None
-    ##
-    for i in range(1, 100):
-        dir2_new = mater_name + "/cube/%s_fd-backup%d" % (propt, i)
-        if os.path.exists(dir2_new) == False:
-            os.rename(dir2, dir2_new)
-            print("")
-            print(" Modify directory name: %s => %s" % (dir2, dir2_new))
-            break
-    ##
-    os.rename(dir1, dir2)
-    print("")
-    print(" Modify directory name: %s => %s" % (dir1, dir2))
-
-def _delete_dfset_xml(mater_name):
-    
-    fns = []
-    fns.append(mater_name + '/result/DFSET.cube')
-    fns.append(mater_name + '/result/FCs_cube.xml')
-    fns.append(mater_name + '/result/FCs_lasso.xml')
-    fns.append(mater_name + '/result/FCs_harm.xml')
-    fns.append(mater_name + '/result/FC3_cube_fd.xml')
-    fns.append(mater_name + '/result/FC3_cube_lasso.xml')
-    for fn in fns:
-        if os.path.exists(fn):
-            os.remove(fn)
-
 def main():
     
     times = {}
     
+    options = get_parser()
+    
     start_autokappa()
     
-    options = get_parser()
-    print_options(options)
-
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
     ### and k-points.
     phdb = Phonondb(options.directory)
     
-    ### get required data from Phonondb
     pmat = phdb.primitive_matrix
     smat = phdb.scell_matrix
     unitcell = phdb.get_unitcell(format='ase')
     kpts_for_relax = phdb.get_kpoints(mode='relax').kpts[0]
+    kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
     kpts_for_force = phdb.get_kpoints(mode='force').kpts[0]
     nac = phdb.nac
-    if nac == 1:
-        kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
-    else:
-        kpts_for_nac = None
-
+    
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
@@ -232,7 +177,7 @@ def main():
     elif options.neglect_log == 0:
         neglect_log = False
     ###############################
-    
+
     ### calculate forces for harmonic FCs
     almcalc.write_alamode_input(propt='fc2')
     almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
@@ -266,18 +211,6 @@ def main():
     t13 = datetime.datetime.now()
     times['harm_alamode'] = t13 - t12
     
-    ##############################
-    ##                          ##
-    ##  Start FC3 calculation   ##
-    ##                          ##
-    ##############################
-    
-    ## modify directory name automatically which has been created with a old
-    ## version
-    _modify_directory_name(almcalc.material_name, propt='force')
-    _modify_directory_name(almcalc.material_name, propt='kappa')
-    _delete_dfset_xml(almcalc.material_name)
-    
     ### calculate forces for cubic FCs
     ## ver.1: with ALM library
     #mode = 'force'
@@ -293,20 +226,19 @@ def main():
     almcalc.calc_forces(order=2, calculator=calc_force,
             nmax_suggest=options.nmax_suggest,
             frac_nrandom=options.frac_nrandom,
-            output_dfset=2,
+            newversion=True,
             )
+    exit()
     
     t21 = datetime.datetime.now()
     times['anharm_forces'] = t21 - t13
     
     ### calculate anharmonic force constants
-    #if almcalc.lasso:
-    if almcalc.fc3_type == 'lasso':
+    if almcalc.lasso:
         from auto_kappa.io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
-            order = 2
-            almcalc.write_alamode_input(propt=propt, order=order)
-            almcalc.run_alamode(propt, order=order, neglect_log=neglect_log)
+            almcalc.write_alamode_input(propt=propt)
+            almcalc.run_alamode(propt)
     else: 
         ## ver.1 : with ALM library
         ##almcalc.calc_anharm_force_constants()
@@ -318,8 +250,8 @@ def main():
     times['anharm_fcs'] = t22 - t21
     
     ### calculate kappa
-    almcalc.write_alamode_input(propt='kappa', order=2, kpts=[15,15,15])
-    almcalc.run_alamode(propt='kappa', neglect_log=neglect_log)
+    almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
+    almcalc.run_alamode(propt='kappa')
     
     ### analyze phonons
     print()

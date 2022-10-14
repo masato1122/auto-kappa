@@ -114,7 +114,7 @@ class AlmInput(MSONable, dict):
             ## for lmode == 'enet'
             'standardize'     # 1,   integer
             }
-
+    
     def __init__(self, **kwargs):
         """
         Args
@@ -444,6 +444,7 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
+            'fc3xml',       # None, string
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer

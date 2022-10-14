@@ -4,6 +4,7 @@
 # Class to generate displacements of atoms
 #
 # Copyright (c) 2020 Terumasa Tadano
+# Modyfied by Masato Ohnishi, 2022
 #
 # This file is distributed under the terms of the MIT license.
 # Please see the file 'LICENCE.txt' in the root directory

@@ -19,17 +19,22 @@ from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
 from auto_kappa.units import BohrToA, RyToEv
 
-def get_dfset(directory, offset_xml=None, outfile=None):
+def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     """ Get dataset of displacements and forces from many vasprun.xml files.
     Args
     ======
     directory : string
         vasprun.xml can be found under ${directory}/*/ 
         while ${directory}/prist/vasprun.xml is neglected.
+    
     offset_xml : string
         vasprun.xml name for offset
+    
     outfile : string
         if given, dfset is saved.
+    
+    nset : int
+        Number of data set. If not given, all data will be read.
     """
     from ase.geometry import get_distances
     
@@ -49,8 +54,9 @@ def get_dfset(directory, offset_xml=None, outfile=None):
     try:
         atoms0 = ase.io.read(offset_xml, format='vasp-xml')
     except Exception:
-        warnings.warn(" Cannot find %s" % (offset_xml))
-    
+        warnings.warn(" Cannot read %s" % (offset_xml))
+        return None
+
     forces0 = atoms0.get_forces()
     positions0 = atoms0.get_positions()
     
@@ -67,6 +73,7 @@ def get_dfset(directory, offset_xml=None, outfile=None):
     all_forces = []
     all_energies = []
     all_lines = []
+    count = 0
     for ii, key in enumerate(all_keys):
         fn = "%s/%s/vasprun.xml" % (directory, key)
         atoms1 = ase.io.read(fn, format='vasp-xml')
@@ -92,7 +99,11 @@ def get_dfset(directory, offset_xml=None, outfile=None):
             line += "  "
             line += "%20.13e " * 3 % tuple(f)
             all_lines.append(line)
-        
+        ##
+        count += 1
+        if nset is not None:
+            if count == nset:
+                break
     ##
     all_disps = np.asarray(all_disps)
     all_forces = np.asarray(all_forces)
@@ -106,7 +117,7 @@ def get_dfset(directory, offset_xml=None, outfile=None):
         print(" Output", outfile)
         print("")
     
-    return all_disps, all_forces
+    return [all_disps, all_forces]
 
 def read_dfset(filename, natoms=None, nstructures=None):
     """ Read DFSET with Alamode format and return displacements and forces.
@@ -199,7 +210,6 @@ def write_born_info(filename, outfile='BORNINFO'):
     lines = []
     
     vasprun = Vasprun(filename)
-    get_born_charges(filename)
     dielectric_tensor = vasprun.epsilon_static
     born_charges = get_born_charges(filename)
     
@@ -240,10 +250,10 @@ def get_born_charges(filename):
     for i in range(natoms):
         lines = array['set'][i]['v']
         born = np.zeros((3,3))
-        for line in lines:
+        for i1, line in enumerate(lines):
             data = line.split()
-            for j in range(3):
-                born[j] = float(data[j])
+            for i2 in range(3):
+                born[i1,i2] = float(data[i2])
         borns.append(born)
     return borns
 

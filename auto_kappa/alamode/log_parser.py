@@ -308,10 +308,6 @@ def read_log_fc2(directory):
     filename = directory+'/'+out_dirs['harm']['force']+'/fc2.log'
     return read_log_fc(filename)
 
-def read_log_fc3(directory):
-    
-    filename = directory+'/'+out_dirs['cube']['force']+'/fc3.log' 
-    return read_log_fc(filename)
 
 #def read_log_fc_anharm(directory):
 #
@@ -322,31 +318,49 @@ def read_log_fc3(directory):
 #    else:
 #        return out_lasso
 
-def read_log_suggest(directory):
+def read_log_suggest(directory, order=1):
     
-    filename = directory+'/'+out_dirs['harm']['suggest']+'/suggest.log'
+    if order == 1:
+        mode = 'harm'
+    elif order == 2:
+        mode = 'cube'    
+    
+    filename = directory+'/'+out_dirs[mode]['suggest']+'/suggest.log'
+    
+    ##
     if os.path.exists(filename) == False:
         return None
+    
     out = {}
     v = _get_alamode_runtime(filename)
     if v is not None:
         out['time'] = v
+    
     nfcs = int(_extract_data(
-        filename, "number of  harmonic fcs", back_id=-1)[0])
+                filename, "number of  harmonic fcs", back_id=-1
+                )[0])
+    
     if nfcs is None:
         nfcs = int(_extract_data(
-            filename, "number of harmonic fcs", back_id=-1)[0])
+            filename, "number of harmonic fcs", back_id=-1
+            )[0])
+    
     data = _extract_lines(filename, "space group:")[0].translate(
             str.maketrans({"(": " ", ")": " "})).split()
+    
     out['space_group'] = {
             'international': data[-2], 
             'number': int(data[-1]),
             }
+    
     out['number_of_symmetry'] = int(_extract_data(
         filename, "number of symmetry operations")[0])
+    
     out['number_of_fcs'] = nfcs
+    
     out['number_of_structures'] = int(_extract_data(
         filename, "number of disp. patterns")[0])
+    
     return out
 
 def read_log_kappa(directory):
@@ -441,12 +455,29 @@ def read_log_nac(directory):
     out = _read_each_vaspjob(dir_vasp)
     return out
 
-def read_log_forces(directory, mode):
+def read_log_forces(directory, mode, fc3_type=None):
     
-    dir1 = directory+'/'+out_dirs[mode]['force']
+    ### get the directory name for force calculation
+    if mode == 'harm':
+        
+        dir1 = directory+'/'+out_dirs[mode]['force']
+    
+    elif mode == 'cube':
+        
+        dir1 = directory+'/'+out_dirs[mode]['force_%s' % fc3_type]
+    
+    elif mode == 'lasso':
+        
+        dir1 = directory + '/' + out_dirs[mode]['force']
+    
+    else:
+        warnings.warn(" Warning: %s is not supported." % mode)
+        return None
+
     if os.path.exists(dir1) == False:
         return None
-    
+        
+    ##
     out = {}
     fmaxes = []
     total_time = 0.
@@ -635,7 +666,7 @@ def get_ak_logs(directory):
     >>> 
     """
     out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "lasso":{}}
-     
+    
     ### relax and nac
     v = read_log_relax(directory)
     if v is not None:
@@ -646,7 +677,7 @@ def get_ak_logs(directory):
         out_all['nac'] = v
     
     ### harmonic
-    v = read_log_suggest(directory)
+    v = read_log_suggest(directory, order=1)
     if v is not None:
         out_all['harm']["suggest"] = v
     
@@ -665,13 +696,17 @@ def get_ak_logs(directory):
             out_all['harm'][mode] = v
     
     ### cube
-    v = read_log_forces(directory, 'cube')
-    if v is not None:
-        out_all['cube']['force'] = v
-    
-    v = read_log_fc3(directory)
-    if v is not None:
-        out_all['cube']["fc"] = v
+    for fc3_type in ['fd', 'lasso']:
+        
+        v = read_log_forces(directory, 'cube', fc3_type=fc3_type)
+        if v is not None:
+            out_all['cube']['force_%s' % fc3_type] = v
+        
+        filename = directory+'/'+out_dirs['cube']['force_%s' % fc3_type]+'/fc3.log' 
+        if os.path.exists(filename):
+            v = read_log_fc(filename)
+            if v is not None:
+                out_all['cube']["fc_%s" % fc3_type] = v
     
     ### lasso
     v = read_log_lasso(directory)
@@ -703,7 +738,7 @@ def get_parser():
     parser = OptionParser()
     
     parser.add_option("-d", "--directory", dest="directory", type="string",
-            help="input file name")
+            help="directory name")
     
     parser.add_option("-o", "--outfile", dest="outfile", type="string",
             default=None, help="output .yaml file name")
