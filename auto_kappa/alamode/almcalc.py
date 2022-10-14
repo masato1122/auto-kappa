@@ -780,11 +780,14 @@ class AlamodeCalc():
         #
         ### ver. 2 from alamode output file
         if order <= 2:
+            
             nsuggest = self._get_number_of_suggested_structures(order)
+            
             nfcs = self._get_number_of_free_fcs(order)
         
             msg = "\n Number of the suggested structures with ALM : %d\n" % (nsuggest)
             print(msg)
+
         else:
             nsuggest = nmax_suggest + 1
         
@@ -820,8 +823,7 @@ class AlamodeCalc():
         ### based on the normal coordinates.
         if order != 1 and nsuggest > nmax_suggest:
         
-            ### AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-            ### AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+            ###
             #self.lasso = True
 
             nrandom = int(frac_nrandom * nsuggest + 0.5)
@@ -1421,8 +1423,7 @@ class AlamodeCalc():
                     inp.update({'cv_nalpha': 50})
                 elif propt == 'lasso':
                     
-                    alpha = self.get_suggested_l1alpha()
-                    
+                    alpha = self.get_suggested_l1alpha(order=order)
                     inp.update({'cv': 0})
                     inp.update({'l1_alpha': alpha})      ### read l1_alpha
         
@@ -1433,9 +1434,13 @@ class AlamodeCalc():
         inp.update(kwargs)
         inp.to_file(filename=filename)
     
-    def get_suggested_l1alpha(self):
-
-        fn = self.out_dirs['lasso']['cv']+'/'+self.prefix+'.cvscore'
+    def get_suggested_l1alpha(self, order=None):
+        
+        if order == 2:
+            fn = self.out_dirs['cube']['cv']+'/'+self.prefix+'.cvscore'
+        else:
+            fn = self.out_dirs['lasso']['cv']+'/'+self.prefix+'.cvscore'
+        
         try:
             lines = open(fn, 'r').readlines()
             for ll in lines:
