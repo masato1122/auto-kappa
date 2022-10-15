@@ -167,6 +167,9 @@ class AlamodeCalc():
                     values2 = values1[k2]
                     self.out_dirs[k1][k2] = dir_init+'/'+material_name+'/' + values2
         
+        ###
+        self.outfiles = output_files
+
         ### structures
         self._primitive = change_structure_format(prim_given, 'ase')
         self._scell_matrix = scell_matrix
@@ -925,7 +928,7 @@ class AlamodeCalc():
              
             if order == 1:
                 
-                fn0 = output_files['harm_dfset']
+                fn0 = self.outfiles['harm_dfset']
             
             elif order == 2:
                 
@@ -935,21 +938,21 @@ class AlamodeCalc():
                 #    if newversion == False:
                 #        ### ver.1
                 #        #df_prefix = 'lasso'
-                #        fn0 = output_files['lasso_dfset']
+                #        fn0 = self.outfiles['lasso_dfset']
                 #    else:
                 #        ### ver.2
                 #        #df_prefix = 'cube_random'
-                #        fn0 = output_files['cube_lasso_dfset']
+                #        fn0 = self.outfiles['cube_lasso_dfset']
                 #    
                 #else:
                 #    
-                #    fn0 = output_files['cube_fd_dfset']
+                #    fn0 = self.outfiles['cube_fd_dfset']
                 
-                fn0 = output_files['cube_%s_dfset' % self.fc3_type]
+                fn0 = self.outfiles['cube_%s_dfset' % self.fc3_type]
             
             elif order > 2:
 
-                fn0 = output_files['lasso_dfset']
+                fn0 = self.outfiles['lasso_dfset']
 
             else:
                 warnings.warn(" Error: order=", order, " is not supported yet.")
@@ -989,9 +992,9 @@ class AlamodeCalc():
     #    
     #    directory = self.out_dirs['harm']['force']
     #    
-    #    out_dfset = self.out_dirs['result'] + '/' + output_files['harm_dfset']
+    #    out_dfset = self.out_dirs['result'] + '/' + self.outfiles['harm_dfset']
     #    if output:
-    #        out_xml = self.out_dirs['result'] + '/' + output_files['harm_xml']
+    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
     #    else:
     #        out_xml = None
     #    
@@ -1042,8 +1045,8 @@ class AlamodeCalc():
     #        order = 2
     #        
     #        directory = self.out_dirs['cube']['force']
-    #        out_dfset = self.out_dirs['result'] + '/' + output_files['cube_dfset']
-    #        out_xml = self.out_dirs['result'] + '/' + output_files['cube_xml']
+    #        out_dfset = self.out_dirs['result'] + '/' + self.outfiles['cube_dfset']
+    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['cube_xml']
     #        offset_xml = self.out_dirs['cube']['force'] + '/prist/vasprun.xml'
     #        
     #    else:
@@ -1051,8 +1054,8 @@ class AlamodeCalc():
     #        order = self.order_lasso
     #        
     #        directory = self.out_dirs['lasso']['force']
-    #        out_dfset = self.out_dirs['result'] + '/' + output_files['lasso_dfset']
-    #        out_xml = self.out_dirs['result'] + '/' + output_files['lasso_xml']
+    #        out_dfset = self.out_dirs['result'] + '/' + self.outfiles['lasso_dfset']
+    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['lasso_xml']
     #        offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
     #        
     #    ### print    
@@ -1142,12 +1145,12 @@ class AlamodeCalc():
         if propt == 'band' or propt == 'dos':
             
             dir_work = self.out_dirs['harm']['bandos']
-            fcsxml = '../../result/' + output_files['harm_xml']
+            fcsxml = '../../result/' + self.outfiles['harm_xml']
             
         elif propt == 'evec_commensurate':
             
             dir_work = self.out_dirs['harm']['evec']
-            fcsxml = '../../result/' + output_files['harm_xml']
+            fcsxml = '../../result/' + self.outfiles['harm_xml']
             
         elif propt == 'kappa':
             
@@ -1155,10 +1158,10 @@ class AlamodeCalc():
             #if newversion == False:
             #    if self.lasso == False:
             #        dir_work = self.out_dirs['cube']['kappa_fd']
-            #        fcsxml = '../../result/' + output_files['cube_xml']
+            #        fcsxml = '../../result/' + self.outfiles['cube_xml']
             #    else:
             #        dir_work = self.out_dirs['lasso']['kappa']
-            #        fcsxml = '../../result/' + output_files['lasso_xml']
+            #        fcsxml = '../../result/' + self.outfiles['lasso_xml']
             #
             #else:
             #    
@@ -1168,9 +1171,9 @@ class AlamodeCalc():
             #        
             #        dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
             #        fn_check = (self.out_dirs['result'] + '/' + 
-            #                output_files['cube_%s_xml' % self.fc3_type])
+            #                self.outfiles['cube_%s_xml' % self.fc3_type])
             #        fcsxml = ('../../result/' + 
-            #                output_files['cube_%s_xml' % self.fc3_type])
+            #                self.outfiles['cube_%s_xml' % self.fc3_type])
             #        
             #        if os.path.exists(fn_check) == False:
             #            warnings.warn(" Error: %s cannot be found." % fn_check)
@@ -1181,46 +1184,46 @@ class AlamodeCalc():
             #    
             #    else:
             #        dir_work = self.out_dirs['lasso']['kappa']
-            #        fcsxml = '../../result/' + output_files['lasso_xml']
+            #        fcsxml = '../../result/' + self.outfiles['lasso_xml']
             
             ### modified
             dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-            fcsxml = '../../result/' + output_files['cube_%s_xml' % self.fc3_type]
+            fcsxml = '../../result/' + self.outfiles['cube_%s_xml' % self.fc3_type]
             
         elif propt == 'lasso' or propt == 'cv':
             
             #if newversion == False:
             #    
             #    dir_work = self.out_dirs['lasso'][propt]
-            #    dfset = '../../result/' + output_files['lasso_dfset']
-            #    fc2xml = '../../result/' + output_files['harm_xml']
+            #    dfset = '../../result/' + self.outfiles['lasso_dfset']
+            #    fc2xml = '../../result/' + self.outfiles['harm_xml']
             #
             #else:
                 
             if order == 2:
                 dir_work = self.out_dirs['cube'][propt]
                 dfset = ('../../result/' + 
-                        output_files['cube_%s_dfset' % self.fc3_type])
+                        self.outfiles['cube_%s_dfset' % self.fc3_type])
             
             else:
                 dir_work = self.out_dirs['lasso'][propt]
-                dfset = '../../result/' + output_files['lasso_dfset']
+                dfset = '../../result/' + self.outfiles['lasso_dfset']
                 
                 ## get file name of FC3 (fc3xml)
                 fc3xml = ('../../result/' + 
-                        output_files['cube_%s_xml' % self.fc3_type])
+                        self.outfiles['cube_%s_xml' % self.fc3_type])
                 fn_check = (
                         self.out_dirs['result'] + '/' + 
-                        output_files['cube_%s_xml' % self.fc3_type]
+                        self.outfiles['cube_%s_xml' % self.fc3_type]
                         )
                 if os.path.exists(fn_check) == False:
                     warnings.warn(" Error: FC3 has not been calculated.")
                     exit()
             
             ## get fc2xml
-            fc2xml = '../../result/' + output_files['harm_xml']
+            fc2xml = '../../result/' + self.outfiles['harm_xml']
             fn_check = (
-                    self.out_dirs['result'] + '/' + output_files['harm_xml']
+                    self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
                     )
             if os.path.exists(fn_check) == False:
                 warnings.warn(" Error: FC2 has not been calculated.")
@@ -1229,15 +1232,15 @@ class AlamodeCalc():
         elif propt == 'fc2':
             
             dir_work = self.out_dirs['harm']['force']
-            dfset = '../../result/' + output_files['harm_dfset']
+            dfset = '../../result/' + self.outfiles['harm_dfset']
             fc2xml = None
         
         elif propt == 'fc3':
             
             dir_work = self.out_dirs['cube']['force_%s' % self.fc3_type]
             dfset = ('../../result/' + 
-                    output_files['cube_%s_dfset' % self.fc3_type])
-            fc2xml = '../../result/' + output_files['harm_xml']
+                    self.outfiles['cube_%s_dfset' % self.fc3_type])
+            fc2xml = '../../result/' + self.outfiles['harm_xml']
             
         elif propt == 'suggest':
             
@@ -1589,31 +1592,31 @@ class AlamodeCalc():
             
             #if newversion == False:
             #    fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
-            #    fn2 = self.out_dirs['result']+'/'+output_files['lasso_xml']
+            #    fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
             #else:
             ##
             if order == 2:
                 fn1 = self.out_dirs['cube']['lasso']+'/'+self.prefix+'.xml'
-                fn2 = self.out_dirs['result']+'/'+output_files['cube_lasso_xml']
+                fn2 = self.out_dirs['result']+'/'+self.outfiles['cube_lasso_xml']
             else:
                 fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
-                fn2 = self.out_dirs['result']+'/'+output_files['lasso_xml']
+                fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
         
         elif propt == 'fc2':
             fn1 = self.out_dirs['harm']['force']+'/'+self.prefix+'.xml'
-            fn2 = self.out_dirs['result']+'/'+output_files['harm_xml']
+            fn2 = self.out_dirs['result']+'/'+self.outfiles['harm_xml']
          
         elif propt == 'fc3':
             fn1 = (self.out_dirs['cube']['force_%s' % self.fc3_type] + 
                     '/' + self.prefix+'.xml')
             
             #if newversion == False:
-            #    fn2 = self.out_dirs['result']+'/'+output_files['cube_xml']
+            #    fn2 = self.out_dirs['result']+'/'+self.outfiles['cube_xml']
             #else:
             ##
             fn2 = (
                     self.out_dirs['result'] + '/' + 
-                    output_files['cube_%s_xml' % self.fc3_type]
+                    self.outfiles['cube_%s_xml' % self.fc3_type]
                     )
         
         else:
@@ -2003,7 +2006,7 @@ def _read_frequency_range(filename, format='anphon'):
         fmin = np.min(data[:,1])
         return fmin, fmax
     else:
-        print(" Error: %s is not supported yet." % format)
+        warnings.warn(" Error: %s is not supported yet." % format)
         exit()
 
 

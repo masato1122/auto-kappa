@@ -199,15 +199,17 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         return structure
 
 def get_formula(str_orig):    
-    import re
+    #import re
     structure = change_structure_format(str_orig, format='pmg-istructure')
-    words = structure.get_primitive_structure().formula.split()
-    if len(words) == 1:
-        return re.sub(r"[123456789]", "", words[0])
-    else:
-        prefix = ""
-        for i in range(len(words)):
-            prefix += words[i].replace("1", "")
-        return prefix
-    return None
+    return structure.composition.reduced_formula
+
+    #words = structure.get_primitive_structure().formula.split()
+    #if len(words) == 1:
+    #    return re.sub(r"[123456789]", "", words[0])
+    #else:
+    #    prefix = ""
+    #    for i in range(len(words)):
+    #        prefix += words[i].replace("1", "")
+    #    return prefix
+    #return None
 
