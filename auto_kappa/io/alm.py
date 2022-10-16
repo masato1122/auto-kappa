@@ -15,7 +15,8 @@ import warnings
 import re
 import numpy as np
 import pymatgen
-from pymatgen.core.structure import IStructure
+#from pymatgen.core.structure import IStructure
+from pymatgen.io.vasp import Poscar
 from ase import Atoms
 
 from auto_kappa.units import AToBohr
@@ -139,9 +140,6 @@ class AlmInput(MSONable, dict):
         """
         return cls(**alm_dict)
     
-    #@classmethod
-    #def from_file(cls, filepath: str):
-    
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
         """ Make ALM input parameters from a structure file
@@ -155,7 +153,8 @@ class AlmInput(MSONable, dict):
         kwargs['norder'] = norder
         
         ## set a structure
-        cls.structure = IStructure.from_file(filename)
+        #cls.structure = IStructure.from_file(filename)
+        cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure
         alm_dict = dict(
                 cls.from_structure(cls.structure, norder=norder)
                 )
@@ -548,8 +547,9 @@ class AnphonInput(MSONable, dict):
             .cif. etc.
         """
         ## get a structure
-        cls.structure = IStructure.from_file(filename)
-        
+        #cls.structure = IStructure.from_file(filename)
+        cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure
+
         ## get the primitive structure
         primitive = cls.get_primitive(cls)
         

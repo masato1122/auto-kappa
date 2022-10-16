@@ -404,10 +404,12 @@ class AlamodeCalc():
         
         ##
         xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        if os.path.exists(xml):
+        
+        try:
             self._supercell['structure'] = ase.io.read(xml, format='vasp-xml')
             self._supercell['type'] = 'xml'
-        else:
+        
+        except Exception:
             if self._supercell['structure'] is None:
                 structure = self.unitcell.copy()
                 
