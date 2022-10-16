@@ -27,10 +27,13 @@ def main(build_dir):
     packages_autokappa = [
             'auto_kappa',
             'auto_kappa.alamode',
+            'auto_kappa.alamode.tools',
+            'auto_kappa.alamode.analyzer',
             'auto_kappa.cui',
             'auto_kappa.io',
             'auto_kappa.math',
             'auto_kappa.plot',
+            'auto_kappa.plot.alamode',
             'auto_kappa.structure',
             ]
 
