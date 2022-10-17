@@ -100,6 +100,14 @@ You can change the permission with ``chmod``.
     
     $ chmod 600 ~/.ssh/config
 
+To update auto-kappa, use the following commands:
+
+.. code-block:: bash
+
+    $ cd (directory of auto-kappa)
+    $ git pull
+    $ sh ./install.sh
+
 
 3. Create a virtual environment, ``kappa``, with conda.
 
