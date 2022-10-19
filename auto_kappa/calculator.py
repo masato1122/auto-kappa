@@ -122,7 +122,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     """
     from auto_kappa import default_vasp_parameters
     
-    calc = Vasp(setups=setups, xc=xc)
+    calc = Vasp(setups={'base': setups, 'W': '_sv'}, xc=xc)
     
     ### initialization
     calc.initialize(atoms)

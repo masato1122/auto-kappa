@@ -42,12 +42,12 @@ in advance.
 ``potpaw_PBE.54.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
 
 
-.. warning::
-
-    There is an error when ASE calls the PAW potential of W. 
-    Although ASE calls W_pv (see ase.calculators.vasp.setups) ase the recommended potential,
-    it is replaced by W_sv in ver.5.4. 
-    We will solve this issue, otherwise you need to modify the setups.py.
+.. .. warning::
+.. 
+..     There is an error when ASE calls the PAW potential of W. 
+..     Although ASE calls W_pv (see ase.calculators.vasp.setups) ase the recommended potential,
+..     it is replaced by W_sv in ver.5.4. 
+..     We will solve this issue, otherwise you need to modify the setups.py.
 
 
 Phonondb
