@@ -20,10 +20,29 @@ from ase.data import atomic_numbers
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from phonopy.structure.atoms import PhonopyAtoms
+from pymatgen.io.vasp import Kpoints
 
 def make_supercell(atoms0, P):
     return ase.build.make_supercell(atoms0, P)
 
+def get_automatic_kmesh(struct_init, reciprocal_density=1500, 
+        grid_density=0.01, method='reciprocal_density'):
+    
+    structure = change_structure_format(struct_init, format='pmg')
+    
+    if method == 'reciprocal_density':
+        vol = structure.lattice.reciprocal_lattice.volume
+        kppa = reciprocal_density * vol * structure.num_sites
+        kpts = Kpoints.automatic_density(structure, kppa).kpts[0]
+     
+    #elif method == 'grid_density':
+    #    Kpoints.automatic_density(structure, grid_density)
+    
+    else:
+        warnings.warn(" Error: %s is not supported." % method)
+        exit()
+    
+    return kpts
 
 def get_commensurate_points(supercell_matrix):
     """ Get commensurate q-points.

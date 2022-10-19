@@ -19,6 +19,7 @@ from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
 from auto_kappa.alamode.log_parser import AkLog
+from auto_kappa.structure.crystal import get_automatic_kmesh
 
 def start_autokappa():
     """ Print the logo.
@@ -305,7 +306,8 @@ def main():
     times['anharm_fcs'] = t22 - t21
     
     ### calculate kappa
-    almcalc.write_alamode_input(propt='kappa', order=2, kpts=[15,15,15])
+    kpts = get_automatic_kmesh(almcalc.primitive)
+    almcalc.write_alamode_input(propt='kappa', order=2, kpts=kpts)
     almcalc.run_alamode(propt='kappa', neglect_log=neglect_log)
     
     ### analyze phonons
