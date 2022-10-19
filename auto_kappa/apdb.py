@@ -33,7 +33,7 @@ class ApdbVasp():
             primitive_matrix=None,
             scell_matrix=None,
             encut_scale_factor=1.3,
-            auto_lreal_scell_size=False,
+            #auto_lreal_scell_size=False,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             ):
         """
@@ -70,7 +70,7 @@ class ApdbVasp():
         
         ### parameters
         self.encut_factor = encut_scale_factor
-        self.lreal_size = auto_lreal_scell_size
+        #self.lreal_size = auto_lreal_scell_size
     
     @property
     def primitive_matrix(self):
@@ -176,7 +176,7 @@ class ApdbVasp():
                 atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
-                auto_lreal_scell_size=self.lreal_size,
+                #auto_lreal_scell_size=self.lreal_size,
                 )
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 

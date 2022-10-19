@@ -85,8 +85,8 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
 
 def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,
-        auto_lreal_scell_size=False,
         setups='recommended', xc='pbesol',
+        #auto_lreal_scell_size=False,
         ):
     """ Get VASP parameters for the given mode. Parameters are similar to those
     used for phonondb.
@@ -137,12 +137,11 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     enmax = get_enmax(calc.ppp_list)
     params['encut'] = enmax * encut_scale_factor
     
-    ### set LREAL
-    if auto_lreal_scell_size is not None:
-        if len(atoms) >= auto_lreal_scell_size:
-            params['lreal'] = 'Auto'
-        else:
-            params['lreal'] = False
+    #### set LREAL
+    #if len(atoms) >= auto_lreal_scell_size:
+    #    params['lreal'] = 'Auto'
+    #else:
+    #    params['lreal'] = False
     
     ### kpoints
     if kpts is not None:

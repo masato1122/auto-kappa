@@ -59,7 +59,6 @@ default_vasp_parameters = {
             'nsw': 500,
             'isif': 3,
             'ediffg': -1e-8,
-            'lreal': False,
             'addgrid': True,
             },
         'force':{
@@ -84,6 +83,7 @@ default_vasp_parameters = {
             'ediff': 1e-8,
             'ismear': 0,
             'ialgo': 38,
+            'lreal': False,
             'addgrid': True,
             'lwave': False,
             'lcharg': False,
