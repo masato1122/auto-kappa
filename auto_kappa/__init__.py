@@ -13,17 +13,13 @@ output_directories = {
             'suggest':  'cube/suggest',
             'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
             'kappa_fd': 'cube/kappa_fd',
-            #
-            #'force':    'cube/force',            ## This is not used anymore
-            #'kappa':    'cube/kappa',            ## This is not used anymore
-            #
             'force_lasso': 'cube/force_lasso',  ## FC3 with random displacement
             'cv'   :        'cube/lasso',
             'lasso':        'cube/lasso',
             'kappa_lasso':  'cube/kappa_lasso',
             },
         ## high-order FCs
-        'lasso':{
+        'higher':{
             'suggest': 'lasso/suggest',
             'force': 'lasso/force',
             'cv'   : 'lasso/lasso',

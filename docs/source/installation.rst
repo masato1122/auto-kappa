@@ -42,6 +42,14 @@ in advance.
 ``potpaw_PBE.54.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
 
 
+.. warning::
+
+    There is an error when Pymatgen calls the PAW potential of W. 
+    Although Pymatgen calls W_pv (see pymatgen.io.vasp.MPRelaxSet.yaml),
+    it is no longer available. The current recommended PAW potential for W is W_sv.
+    We will solve this issue, otherwise you need to modify MPRelaxSet.yaml 
+
+
 Phonondb
 ---------
 

@@ -21,6 +21,10 @@ import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from phonopy.structure.atoms import PhonopyAtoms
 
+def make_supercell(atoms0, P):
+    return ase.build.make_supercell(atoms0, P)
+
+
 def get_commensurate_points(supercell_matrix):
     """ Get commensurate q-points.
 

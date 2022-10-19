@@ -26,7 +26,9 @@ akrun \
     --directory $dir_db \
     --material_name $mpid \
     --ncores $ncores \
-    --nmax_suggest 200 \
-    --frac_nrandom 0.02 \
+    --mpirun mpirun \
+    --command_vasp vasp \
+    --command_alm alm \
+    --command_anphon anphon \
     --verbosity 1
 

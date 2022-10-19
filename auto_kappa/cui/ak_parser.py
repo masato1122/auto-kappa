@@ -46,14 +46,21 @@ def get_parser():
             default=4.3, help="cutoff3, unit=Ang [4.3]")
     
     parser.add_option("--nmax_suggest", 
-            dest="nmax_suggest", type="int", default=200, 
-            help="Maximum number of suggested patterns for cubic FCs [200]")
-
+            dest="nmax_suggest", type="int", default=100, 
+            help="Maximum number of suggested patterns for cubic FCs [100]")
+    
+    #parser.add_option("--frac_nrandom", 
+    #        dest="frac_nrandom", type="float", default=0.02,
+    #        help="Ratio of the number of generated patterns with random "\
+    #                "displacement to the number for the suggested patterns "
+    #                "with ALM [0.02]")
+    #
     parser.add_option("--frac_nrandom", 
-            dest="frac_nrandom", type="float", default=0.02,
-            help="Ratio of the number of generated patterns with random "\
-                    "displacement to the number for the suggested patterns "
-                    "with ALM [0.02]")
+            dest="frac_nrandom", type="float", default=10.,
+            help="Npattern * Natom / Nfc3, where Npattern is the number of "\
+            "generated random displacement patterns, Natom is the number of "\
+            "atoms in a supercell, and Nfc3 is the number of FC3",
+            )
     
     parser.add_option("--command_vasp", 
             dest="command_vasp", type="string", default="vasp", 

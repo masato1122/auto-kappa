@@ -22,11 +22,11 @@ import warnings
 import logging
 
 import ase, pymatgen
-from ase.build import make_supercell
 import subprocess
 import shutil
 import pandas as pd
 
+from auto_kappa.structure import make_supercell
 from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
@@ -169,7 +169,7 @@ class AlamodeCalc():
         
         ###
         self.outfiles = output_files
-
+        
         ### structures
         self._primitive = change_structure_format(prim_given, 'ase')
         self._scell_matrix = scell_matrix
@@ -235,9 +235,8 @@ class AlamodeCalc():
     
     @property
     def fc3_type(self):
-        if self._fc3_type is None:
-            warnings.warn(" Error: fc3_type is used before it is given.")
-            exit()
+        #if self._fc3_type is None:
+        #    warnings.warn(" Caution: fc3_type is used before it is given.")
         return self._fc3_type
     
     @property
@@ -354,7 +353,7 @@ class AlamodeCalc():
     @property
     def scell_matrix(self):
         return self._scell_matrix
-
+    
     def set_scell_matrix(self, matrix):
         self._scell_matrix = matrix
     
@@ -386,7 +385,7 @@ class AlamodeCalc():
             #        )
             #self._unitcell = structure
         return self._unitcell
-
+    
     @property
     def supercell(self):
         """
@@ -434,8 +433,8 @@ class AlamodeCalc():
                 return self._supercell3['structure']
         
         ##
-        xml = self.out_dirs['cube']['force_%s' % self.fc3_type] + '/prist/vasprun.xml'
         try:
+            xml = self.out_dirs['cube']['force_%s' % self.fc3_type] + '/prist/vasprun.xml'
             self._supercell3['structure'] = ase.io.read(xml, format='vasp-xml')
             self._supercell3['type'] = 'xml'
         
@@ -473,7 +472,7 @@ class AlamodeCalc():
             warnings.warn(" Error: order %d is not supported." % order)
             exit()
         return filename
-
+    
     def _get_logfile_suggest(self, order):
         
         if order == 1:
@@ -723,10 +722,11 @@ class AlamodeCalc():
     
     
     def calc_forces(self, order: None, calculator=None, 
-            nmax_suggest=200, frac_nrandom=0.02, 
+            nmax_suggest=100, frac_nrandom=10., 
             temperature=500., classical=False,
             calculate_forces=True, output_dfset=1,
             ):
+        ##nmax_suggest=100, frac_nrandom=0.02, 
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
         VASP output will be stored in self.out_dirs['harm/cube']['force'].
@@ -773,7 +773,7 @@ class AlamodeCalc():
         msg = "\n " + line + "\n"
         msg += " " + "=" * (len(line)) + "\n"
         print(msg)
-
+        
         self._nmax_suggest = nmax_suggest
         
         ### get suggsted structures with ALM
@@ -788,13 +788,28 @@ class AlamodeCalc():
             
             nsuggest = self._get_number_of_suggested_structures(order)
             
-            nfcs = self._get_number_of_free_fcs(order)
-        
+            nfcs = self._get_number_of_free_fcs(order)[order]
+            
+            if order == 1:
+                natoms = len(self.supercell)
+            else:
+                natoms = len(self.supercell3)
+            
             msg = "\n Number of the suggested structures with ALM : %d\n" % (nsuggest)
             print(msg)
-
+            
         else:
+            
             nsuggest = nmax_suggest + 1
+            
+            nfcs = self._get_number_of_free_fcs(order)
+                
+            natoms = len(self.supercell3)
+            
+            print("")
+            print(" This part is still under development.")
+            print("")
+            exit()
         
         ### output directory
         if order == 1:
@@ -815,7 +830,7 @@ class AlamodeCalc():
         
         elif order > 2:
             
-            outdir0 = self.out_dirs['lasso']['force']
+            outdir0 = self.out_dirs['higher']['force']
         
         else:
             warnings.warning(" WARNING: given order (%d) is not supported yet." % order)
@@ -830,10 +845,15 @@ class AlamodeCalc():
         
             ###
             #self.lasso = True
-
-            nrandom = int(frac_nrandom * nsuggest + 0.5)
-            ngenerated = max(nmax_suggest, nrandom)
+            
+            ### ver.1
+            #nrandom = int(frac_nrandom * nsuggest + 0.5)
+            #
+            ### ver.2
+            nrandom = int(frac_nrandom * nfcs / natoms)
              
+            ngenerated = max(5, nrandom)
+            
             msg = "\n"
             msg += " Maximum limit of the number of suggested patterns : %d\n" % (nmax_suggest)
             msg += "\n"
@@ -1208,7 +1228,7 @@ class AlamodeCalc():
                         self.outfiles['cube_%s_dfset' % self.fc3_type])
             
             else:
-                dir_work = self.out_dirs['lasso'][propt]
+                dir_work = self.out_dirs['higher'][propt]
                 dfset = '../../result/' + self.outfiles['lasso_dfset']
                 
                 ## get file name of FC3 (fc3xml)
@@ -1259,7 +1279,7 @@ class AlamodeCalc():
             elif order == 2:
                 dir_work = self.out_dirs['cube']['suggest']
             elif order > 2:
-                dir_work = self.out_dirs['lasso']['suggest']
+                dir_work = self.out_dirs['higher']['suggest']
             else:
                 warnings.warn(" Error: order=", order, " is not supported.")
                 exit()
@@ -1444,7 +1464,7 @@ class AlamodeCalc():
         if order == 2:
             fn = self.out_dirs['cube']['cv']+'/'+self.prefix+'.cvscore'
         else:
-            fn = self.out_dirs['lasso']['cv']+'/'+self.prefix+'.cvscore'
+            fn = self.out_dirs['higher']['cv']+'/'+self.prefix+'.cvscore'
         
         try:
             lines = open(fn, 'r').readlines()
@@ -1506,7 +1526,7 @@ class AlamodeCalc():
             #    if self.lasso == False:
             #        workdir = self.out_dirs['cube']['kappa_fd']
             #    else:
-            #        workdir = self.out_dirs['lasso']['kappa']
+            #        workdir = self.out_dirs['higher']['kappa']
             #else:
             ##    
             workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
@@ -1518,13 +1538,13 @@ class AlamodeCalc():
         elif propt == 'cv' or propt == 'lasso':
             
             #if newversion == False:
-            #    workdir = self.out_dirs['lasso'][propt]
+            #    workdir = self.out_dirs['higher'][propt]
             #else:
             ##
             if order == 2:
                 workdir = self.out_dirs['cube'][propt]
             else:
-                workdir = self.out_dirs['lasso'][propt]
+                workdir = self.out_dirs['higher'][propt]
             
         elif propt == 'fc2':
 
@@ -1544,7 +1564,7 @@ class AlamodeCalc():
             elif order == 2:
                 workdir = self.out_dirs['cube']['suggest']
             elif order > 2:
-                workdir = self.out_dirs['lasso']['suggest']
+                workdir = self.out_dirs['higher']['suggest']
             else:
                 print("")
                 warnings.warn(" Error: order must be gien properly.")
@@ -1593,7 +1613,7 @@ class AlamodeCalc():
         if propt == 'lasso':
             
             #if newversion == False:
-            #    fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
+            #    fn1 = self.out_dirs['higher']['lasso']+'/'+self.prefix+'.xml'
             #    fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
             #else:
             ##
@@ -1601,7 +1621,7 @@ class AlamodeCalc():
                 fn1 = self.out_dirs['cube']['lasso']+'/'+self.prefix+'.xml'
                 fn2 = self.out_dirs['result']+'/'+self.outfiles['cube_lasso_xml']
             else:
-                fn1 = self.out_dirs['lasso']['lasso']+'/'+self.prefix+'.xml'
+                fn1 = self.out_dirs['higher']['lasso']+'/'+self.prefix+'.xml'
                 fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
         
         elif propt == 'fc2':
@@ -1807,7 +1827,7 @@ class AlamodeCalc():
         else:
             figname = self.out_dirs['result'] + '/fig_cvsets.png'
             plot_cvsets(
-                    directory=self.out_dirs['lasso']['cv'], 
+                    directory=self.out_dirs['higher']['cv'], 
                     figname=figname
                     )
         

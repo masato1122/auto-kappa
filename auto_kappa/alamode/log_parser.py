@@ -367,7 +367,7 @@ def read_log_kappa(directory):
     filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
     
     if os.path.exists(filename) == False:
-        filename = directory+'/'+out_dirs['lasso']['kappa']+'/kappa.log'
+        filename = directory+'/'+out_dirs['higher']['kappa']+'/kappa.log'
     
     if os.path.exists(filename) == False:
         
@@ -466,7 +466,7 @@ def read_log_forces(directory, mode, fc3_type=None):
         
         dir1 = directory+'/'+out_dirs[mode]['force_%s' % fc3_type]
     
-    elif mode == 'lasso':
+    elif mode == 'higher':
         
         dir1 = directory + '/' + out_dirs[mode]['force']
     
@@ -521,7 +521,7 @@ def read_log_forces(directory, mode, fc3_type=None):
 
 def read_log_lasso(directory):
     
-    dir_lasso = directory+'/'+out_dirs['lasso']['lasso']
+    dir_lasso = directory+'/'+out_dirs['higher']['lasso']
     if os.path.exists(dir_lasso) == False:
         return None
     
@@ -530,7 +530,7 @@ def read_log_lasso(directory):
     out['force'] = read_log_forces(directory, 'lasso')
     
     ### cv.log
-    filename = directory+'/'+out_dirs['lasso']['cv']+'/cv.log'
+    filename = directory+'/'+out_dirs['higher']['cv']+'/cv.log'
     if os.path.exists(filename):
         out['cv'] = {}
         v = _get_alamode_runtime(filename)
@@ -538,7 +538,7 @@ def read_log_lasso(directory):
             out['cv']['time'] = v
      
     ### lasso.log
-    filename = directory+'/'+out_dirs['lasso']['lasso']+'/lasso.log' 
+    filename = directory+'/'+out_dirs['higher']['lasso']+'/lasso.log' 
     v = read_log_fc(filename)
     if v is not None:
         out['lasso'] = v
@@ -548,7 +548,7 @@ def read_log_lasso(directory):
 #def _analyze_time(out):
 #    
 #    durations = {}
-#    for mode in ['harm', 'cube', 'lasso']:
+#    for mode in ['harm', 'cube', 'higher']:
 #        if mode in out:
 #            if 'force' in out[mode]:
 #                if 'time' in out[mode]['force']:
@@ -665,7 +665,7 @@ def get_ak_logs(directory):
     >>>     print(" Output", outfile)
     >>> 
     """
-    out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "lasso":{}}
+    out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "higher":{}}
     
     ### relax and nac
     v = read_log_relax(directory)
@@ -711,7 +711,7 @@ def get_ak_logs(directory):
     ### lasso
     v = read_log_lasso(directory)
     if v is not None:
-        out_all['lasso'] = v
+        out_all['higher'] = v
     
     ### kappa
     try:
