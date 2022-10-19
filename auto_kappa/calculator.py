@@ -85,7 +85,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
 
 def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,
-        auto_lreal_scell_size=65,
+        auto_lreal_scell_size=None,
         setups='recommended', xc='pbesol',
         ):
     """ Get VASP parameters for the given mode. Parameters are similar to those
@@ -138,10 +138,11 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     params['encut'] = enmax * encut_scale_factor
     
     ### set LREAL
-    if len(atoms) >= auto_lreal_scell_size:
-        params['lreal'] = 'Auto'
-    else:
-        params['lreal'] = False
+    if auto_lreal_scell_size is not None:
+        if len(atoms) >= auto_lreal_scell_size:
+            params['lreal'] = 'Auto'
+        else:
+            params['lreal'] = False
     
     ### kpoints
     if kpts is not None:

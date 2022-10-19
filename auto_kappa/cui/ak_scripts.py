@@ -148,7 +148,8 @@ def main():
             unitcell,
             primitive_matrix=pmat,
             scell_matrix=smat,
-            command=command_vasp)
+            command=command_vasp,
+            )
     
     ### Relaxation calculation
     mode = 'relax'

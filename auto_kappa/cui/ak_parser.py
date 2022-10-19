@@ -76,6 +76,11 @@ def get_parser():
             default=500., 
             help="temperature for random displacement [500]")
     
+    #parser.add_option("--auto_lreal_scell_size",
+    #        dest="auto_lreal_scell_size", type="int",
+    #        default=65, 
+    #        help="number of atoms to set LREAL=True [65]")
+    
     (options, args) = parser.parse_args()
     
     return options

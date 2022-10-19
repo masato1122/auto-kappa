@@ -33,7 +33,7 @@ class ApdbVasp():
             primitive_matrix=None,
             scell_matrix=None,
             encut_scale_factor=1.3,
-            auto_lreal_scell_size=65,
+            auto_lreal_scell_size=None,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             ):
         """
