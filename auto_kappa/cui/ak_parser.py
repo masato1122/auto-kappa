@@ -56,7 +56,7 @@ def get_parser():
     #                "with ALM [0.02]")
     #
     parser.add_option("--frac_nrandom", 
-            dest="frac_nrandom", type="float", default=10.,
+            dest="frac_nrandom", type="float", default=1.,
             help="Npattern * Natom / Nfc3, where Npattern is the number of "\
             "generated random displacement patterns, Natom is the number of "\
             "atoms in a supercell, and Nfc3 is the number of FC3",

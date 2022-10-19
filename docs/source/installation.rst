@@ -44,10 +44,10 @@ in advance.
 
 .. warning::
 
-    There is an error when Pymatgen calls the PAW potential of W. 
-    Although Pymatgen calls W_pv (see pymatgen.io.vasp.MPRelaxSet.yaml),
-    it is no longer available. The current recommended PAW potential for W is W_sv.
-    We will solve this issue, otherwise you need to modify MPRelaxSet.yaml 
+    There is an error when ASE calls the PAW potential of W. 
+    Although ASE calls W_pv (see ase.calculators.vasp.setups) ase the recommended potential,
+    it is replaced by W_sv in ver.5.4. 
+    We will solve this issue, otherwise you need to modify the setups.py.
 
 
 Phonondb
