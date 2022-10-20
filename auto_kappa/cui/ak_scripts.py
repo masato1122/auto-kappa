@@ -74,29 +74,29 @@ def print_options(options):
             print("", key.ljust(20), " : ", opt_dict[key])
     print("")
 
-def _modify_directory_name(mater_name, propt=None):
-    
-    dir1 = mater_name + "/cube/%s" % propt
-    dir2 = mater_name + "/cube/%s_fd" % propt
-    if os.path.exists(dir1) == False:
-        return None
-    if os.path.exists(dir2) == False:
-        os.rename(dir1, dir2)    
-        print("")
-        print(" Modify directory name: %s => %s" % (dir1, dir2))
-        return None
-    ##
-    for i in range(1, 100):
-        dir2_new = mater_name + "/cube/%s_fd-backup%d" % (propt, i)
-        if os.path.exists(dir2_new) == False:
-            os.rename(dir2, dir2_new)
-            print("")
-            print(" Modify directory name: %s => %s" % (dir2, dir2_new))
-            break
-    ##
-    os.rename(dir1, dir2)
-    print("")
-    print(" Modify directory name: %s => %s" % (dir1, dir2))
+#def _modify_directory_name(mater_name, propt=None):
+#    
+#    dir1 = mater_name + "/cube/%s" % propt
+#    dir2 = mater_name + "/cube/%s_fd" % propt
+#    if os.path.exists(dir1) == False:
+#        return None
+#    if os.path.exists(dir2) == False:
+#        os.rename(dir1, dir2)    
+#        print("")
+#        print(" Modify directory name: %s => %s" % (dir1, dir2))
+#        return None
+#    ##
+#    for i in range(1, 100):
+#        dir2_new = mater_name + "/cube/%s_fd-backup%d" % (propt, i)
+#        if os.path.exists(dir2_new) == False:
+#            os.rename(dir2, dir2_new)
+#            print("")
+#            print(" Modify directory name: %s => %s" % (dir2, dir2_new))
+#            break
+#    ##
+#    os.rename(dir1, dir2)
+#    print("")
+#    print(" Modify directory name: %s => %s" % (dir1, dir2))
 
 def main():
     
@@ -263,8 +263,8 @@ def main():
     
     ## modify directory name automatically which has been created with a old
     ## version
-    _modify_directory_name(almcalc.material_name, propt='force')
-    _modify_directory_name(almcalc.material_name, propt='kappa')
+    #_modify_directory_name(almcalc.material_name, propt='force')
+    #_modify_directory_name(almcalc.material_name, propt='kappa')
     
     ### calculate forces for cubic FCs
     ## ver.1: with ALM library
