@@ -497,7 +497,8 @@ def read_log_forces(directory, mode, fc3_type=None):
         out_each = _read_each_vaspjob(dir_vasp)
 
         if out_each is None:
-            warnings.warn(" Error in %s" % dir_vasp)
+            print(" Cannot find %s or the calculation has not been done." % dir_vasp)
+            #warnings.warn(" Error in %s" % dir_vasp)
             continue
         
         ## total time

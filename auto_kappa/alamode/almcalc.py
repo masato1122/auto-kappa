@@ -1973,7 +1973,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
     ### change directory
     dir_init = os.getcwd()
     os.chdir(workdir)
-     
+    
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
