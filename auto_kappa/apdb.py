@@ -34,6 +34,7 @@ class ApdbVasp():
             scell_matrix=None,
             encut_scale_factor=1.3,
             #auto_lreal_scell_size=False,
+            xc='pbesol',
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             ):
         """
@@ -45,6 +46,9 @@ class ApdbVasp():
         ### matrices
         self._primitive_matrix = primitive_matrix
         self.scell_matrix = scell_matrix
+        
+        ### xc functional
+        self.xc=xc
         
         ### prepare dictionaries for structures
         self.original_structure = {'prim': None, 'unit': None, 'scell': None}
@@ -177,6 +181,7 @@ class ApdbVasp():
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
                 #auto_lreal_scell_size=self.lreal_size,
+                xc=self.xc,
                 )
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 

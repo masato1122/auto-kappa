@@ -92,6 +92,9 @@ def get_parser():
             dest="anphon_para", type="string", default="mpi", 
             help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [mpi]")
     
+    parser.add_option("--xc", dest="xc", type="string",
+            default="pbesol", help="XC functional [pbesol]")
+    
     (options, args) = parser.parse_args()
     
     return options

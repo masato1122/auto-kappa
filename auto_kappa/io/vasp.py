@@ -210,7 +210,8 @@ def write_born_info(filename, outfile='BORNINFO'):
     lines = []
     
     vasprun = Vasprun(filename)
-    dielectric_tensor = vasprun.epsilon_static
+    # dielectric_tensor = vasprun.epsilon_static
+    dielectric_tensor = get_dielectric(filename)
     born_charges = get_born_charges(filename)
     
     ## dielectric tensor
@@ -225,6 +226,32 @@ def write_born_info(filename, outfile='BORNINFO'):
     lines.append("")
     f = open(outfile, 'w')
     f.write('\n'.join(lines))
+
+def get_dielectric(filename):
+    """
+    a more robust method,  dielectric constant from either DFPT or finite difference
+    This can be used with metaGGA or Hybrid functionals
+
+    Args
+    ---------
+    filename (str) : vasprun.xml
+    """
+    out = None
+    with open(filename, 'r') as f:
+        out = xmltodict.parse(f.read())
+    varrays = out['modeling']['calculation']['varray']
+    
+    ## Read dielectric tensor
+    ## dielectric_scf in the case of LCALCEPS = T (Finite Field)
+    ## dielectric_dft in the case of LEPSILON = T (DFPT)
+    for varray in varrays:
+        if varray['@name'] == 'dielectric_scf' or varray['@name'] == 'dielectric_dft':
+            dielectric = []
+            for line in varray['v']:
+                dielectric.append([float(epsil) for epsil in line.split()])
+            return dielectric
+    warnings.warn(' Cannot find dielectric tensor in %s' % filename)
+    return None
 
 def get_born_charges(filename):
     """

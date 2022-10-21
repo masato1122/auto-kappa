@@ -63,7 +63,8 @@ default_vasp_parameters = {
             },
         'nac':{
             'ibrion': -1,
-            'lepsilon': True,
+           #'lepsilon': True,
+            'lcalceps': True,
             'prec': 'Accurate',
             },
         'md':{

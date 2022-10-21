@@ -149,6 +149,7 @@ def main():
             unitcell,
             primitive_matrix=pmat,
             scell_matrix=smat,
+            xc=options.xc,
             command=command_vasp,
             )
     
