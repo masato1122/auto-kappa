@@ -186,7 +186,7 @@ class ApdbVasp():
     
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
             method='custodian', force=False, print_params=False):
-        """ Run relaxation calculation
+        """ Run relaxation and born effective charge calculation
         
         Args
         -------
@@ -211,29 +211,32 @@ class ApdbVasp():
         msg = "\n " + line + "\n"
         msg += " " + "=" * (len(line)) + "\n"
         print(msg)
-
+        
+        os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
+        
         if wasfinished(directory, filename='vasprun.xml') and force == False:
             print("")
             print(" The calculation had been already finished.")
             print("")
          
         else:
+        
+            #### ver.1 relax with one shot
             calc = self.get_calculator(
                     mode.lower(), directory=directory, kpts=kpts
                     )
-            
             ##
             if print_params:
                 print_vasp_params(calc.asdict()['inputs'])
             
-            os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
             run_vasp(calc, self.primitive, method=method)
-            os.environ.pop("OMP_NUM_THREADS", None)
+   
+        os.environ.pop("OMP_NUM_THREADS", None)
         
         ### Read the relaxed structure
         if mode.lower() == 'relax':
-            
             self.set_relaxed_structures(directory)
+    
 
     def set_relaxed_structures(self, directory):
         """ Set self.relaxed_structure

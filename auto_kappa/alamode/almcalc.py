@@ -679,8 +679,8 @@ class AlamodeCalc():
             return None
         
         msg = "\n"
-        msg += " Generate random displacements with an Alamode tool\n"
-        msg += "\n"
+        msg += " Generate displacements with an Alamode tool\n"
+        msg += " Displacement mode : %s\n" % displacement_mode
         msg += " %d patterns will be generated.\n" % (number_of_displacements)
         msg += "\n"
         print(msg)
@@ -718,6 +718,7 @@ class AlamodeCalc():
         all_disps = np.zeros_like(disp_list)
         for i, each in enumerate(disp_list):
             all_disps[i] = np.dot(each, self.supercell.cell)
+        
         return all_disps 
     
     
@@ -940,6 +941,7 @@ class AlamodeCalc():
                 calculator.write_input(structure)
             
             if calculate_forces:
+                
                 run_vasp(calculator, structure, method='custodian')
                 num_done += 1
             
