@@ -129,8 +129,8 @@ def main():
     commands = {
             'alamode': {
                 'mpirun': options.mpirun, 
-                'nprocs': 1, 
-                'nthreads': options.ncores, 
+                'anphon_para': options.anphon_para, 
+                'ncores': options.ncores, 
                 'anphon': options.command_anphon,
                 'alm': options.command_alm,
                 },

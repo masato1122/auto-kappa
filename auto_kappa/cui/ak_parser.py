@@ -88,6 +88,10 @@ def get_parser():
     #        default=65, 
     #        help="number of atoms to set LREAL=True [65]")
     
+    parser.add_option("--anphon_para", 
+            dest="anphon_para", type="string", default="mpi", 
+            help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [mpi]")
+    
     (options, args) = parser.parse_args()
     
     return options

@@ -113,8 +113,8 @@ class AlamodeCalc():
         commands : dict
             Number of processes and threads are given.
             default={
-                'mpirun': 'mpirun', "nprocs": 1, 
-                "nthreads": 1, "anphon": "anphon", "alm": "alm",
+                'mpirun': 'mpirun', "anphon_para": "omp", 
+                "ncores": 1, "anphon": "anphon", "alm": "alm",
                 }
         
         Example
@@ -127,7 +127,7 @@ class AlamodeCalc():
         >>>     cutoff2=-1, cutoff3=4.3,
         >>>     nbody=[2,3,3,2], magnitude=0.01,
         >>>     nac=1,
-        >>>     commands={'mpirun':'mpirun', 'nprocs':1, 'nthreads':1,'anphon':'anphon'},
+        >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'ncores':1,'anphon':'anphon'},
         >>>     verbosity=0
         >>>     )
         >>> calc_force = apdb.get_calculator('force', 
@@ -148,7 +148,7 @@ class AlamodeCalc():
                     'vasp': 'vasp'
                     },
                 'alamode':{
-                    'mpirun': 'mpirun', 'nprocs': 1, 'nthreads': 2,
+                    'mpirun': 'mpirun', 'anphon_para': 1, 'ncores': 2,
                     'alm': 'alm', 'anphon': 'anphon',
                     }
                 }
@@ -1588,11 +1588,18 @@ class AlamodeCalc():
         logfile = propt + '.log'
         
         ## prepare command and environment
+        if alamode_type == 'anphon' and self.commands['alamode']['anphon_para'] == 'mpi':
+            _nprocs = self.commands['alamode']['ncores']
+            _nthreads = 1
+        else:
+            _nprocs = 1
+            _nthreads = self.commands['alamode']['ncores']
+            
         val = run_alamode(filename, logfile, workdir=workdir, 
                 neglect_log=neglect_log,
                 mpirun=self.commands['alamode']['mpirun'], 
-                nprocs=self.commands['alamode']['nprocs'],
-                nthreads=self.commands['alamode']['nthreads'],
+                nprocs=_nprocs,
+                nthreads=_nthreads,
                 command=self.commands['alamode'][alamode_type],
                 )
         
