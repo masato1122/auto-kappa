@@ -54,7 +54,7 @@ default_vasp_parameters = {
             'ibrion': 2,
             'nsw': 500,
             'isif': 3,
-            'ediffg': -1e-8,
+            'ediffg': -1e-6,
             'addgrid': True,
             },
         'force':{
@@ -78,7 +78,7 @@ default_vasp_parameters = {
             'sigma': 0.02,
             'ediff': 1e-8,
             'ismear': 0,
-            'ialgo': 38,
+            'algo': 'Fast',
             'lreal': False,
             'addgrid': True,
             'lwave': False,
