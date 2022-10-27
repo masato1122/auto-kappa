@@ -78,7 +78,7 @@ default_vasp_parameters = {
             'sigma': 0.02,
             'ediff': 1e-8,
             'ismear': 0,
-            'algo': 'Fast',
+            'ialgo': 38,
             'lreal': False,
             'addgrid': True,
             'lwave': False,
