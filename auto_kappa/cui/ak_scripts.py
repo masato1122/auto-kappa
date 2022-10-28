@@ -154,10 +154,9 @@ def main():
     
     ### Relaxation calculation
     mode = 'relax'
-    apdb.run_vasp(mode, 
+    apdb.run_relaxation(
             out_dirs[mode],
             kpts_for_relax,
-            print_params=True
             )
     
     ### Born effective charge

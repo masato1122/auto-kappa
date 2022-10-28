@@ -13,7 +13,7 @@ output_directories = {
             'suggest':  'cube/suggest',
             'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
             'kappa_fd': 'cube/kappa_fd',
-            'force_lasso': 'cube/force_lasso',  ## FC3 with random displacement
+            'force_lasso': 'cube/force_lasso',   ## FC3 with random displacement
             'cv'   :        'cube/lasso',
             'lasso':        'cube/lasso',
             'kappa_lasso':  'cube/kappa_lasso',
@@ -49,14 +49,21 @@ output_files = {
         }
 
 default_vasp_parameters = {
+        ### for relaxation
         'relax':{
             'prec': 'Accurate',
             'ibrion': 2,
             'nsw': 500,
-            'isif': 3,
             'ediffg': -1e-6,
             'addgrid': True,
             },
+        'relax-full':{    
+            'isif': 3,
+            },
+        'relax-freeze':{
+            'isif': 2,
+            },
+        ### force calculation
         'force':{
             'ibrion': -1,
             'prec': 'Accurate',

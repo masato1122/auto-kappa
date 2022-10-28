@@ -86,7 +86,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
 def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,
         setups='recommended', xc='pbesol',
-        #auto_lreal_scell_size=False,
+        #auto_lreal_scell_size=65,
         ):
     """ Get VASP parameters for the given mode. Parameters are similar to those
     used for phonondb.
@@ -94,7 +94,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     Args
     -------
     mode : string
-        "relax", "force", "nac", or "md"
+        "relax", "relax-full", "relax-freeze", "force", "nac", or "md"
     
     atoms : ASE Atoms object
     
@@ -129,6 +129,11 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     
     ### set defualt parameters
     params = default_vasp_parameters[mode.lower()].copy()
+    
+    ### update for 'relax' mode
+    if 'relax' in mode.lower():
+        params_relax = default_vasp_parameters['relax'].copy()
+        params.update(params_relax)
     
     ### shared parameters
     params.update(default_vasp_parameters['shared'])

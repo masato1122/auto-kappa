@@ -23,9 +23,12 @@ from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from ase.build import make_supercell
 from auto_kappa.structure.crystal import (
-        get_primitive_matrix, get_primitive_structure, change_structure_format)
+        get_primitive_matrix, get_primitive_structure, 
+        get_standardized_structure,
+        change_structure_format,
+        )
 from auto_kappa.calculator import run_vasp
-from auto_kappa.io.vasp import print_vasp_params
+from auto_kappa.io.vasp import print_vasp_params, wasfinished
 
 class ApdbVasp():
     
@@ -96,6 +99,7 @@ class ApdbVasp():
             return self.relaxed_structure['prim']
         
         elif self.original_structure['prim'] is not None:
+            print("")
             print(" Return UNrelaxed structure.")
             return self.original_structure['prim']
         
@@ -166,9 +170,9 @@ class ApdbVasp():
         from auto_kappa.calculator import get_vasp_calculator
         
         ### get structure (Atoms obj)
-        if mode.lower() == 'relax' or mode.lower() == 'nac':
+        if 'relax' in mode.lower() or mode.lower() == 'nac':
             structure = self.primitive
-        elif mode.lower() == 'force' or mode.lower() == 'md':
+        elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
         
         calc = get_vasp_calculator(mode, 
@@ -184,14 +188,86 @@ class ApdbVasp():
                 self.command['vasp'])
         return calc
     
+    
+    def run_relaxation(self, directory: './out', kpts: None,
+            force=False, num_full=2, verbosity=1): 
+        """ Perform relaxation calculation, including full relaxation 
+        calculations (ISIF=3) with "num_full" times and a relaxation of atomic
+        positions (ISIF=2). See descriptions for self.run_vasp for details.
+        
+        """
+        if verbosity != 0:
+            line = "Structure optimization"
+            msg = "\n\n " + line + "\n"
+            msg += " " + "=" * (len(line))
+            print(msg)
+        
+        ### get the relaxed structure obtained with the old version
+        if wasfinished(directory, filename='vasprun.xml'):
+            filename = directory + "/vasprun.xml"
+            prim = ase.io.read(filename, format='vasp-xml')
+            prim_stand = get_standardized_structure(prim, to_primitive=True)
+            self.update_structures(prim_stand)
+            msg = "\n Already finised with the old version (single full relaxation)"
+            print(msg)
+            return 0
+        
+        ### perform relaxation calculations
+        for ical in range(num_full+1):
+            
+            ### set working directory and mode
+            if ical < num_full:
+                num = ical + 1
+                dir_cur = directory + "/full-%d" % num
+                mode = 'relax-full'
+            else:
+                num = ical - num_full + 1
+                dir_cur = directory + "/freeze-%d" % num
+                mode = 'relax-freeze'
+            
+            if verbosity != 0:
+                line = "%s (%d)" % (mode, num)
+                msg = "\n " + line + "\n"
+                msg += " " + "-" * len(line)
+                print(msg)
+             
+            if ical == 0:
+                structure = self.primitive
+                print_params = True
+            else:
+                fn = dir_pre + "/CONTCAR"
+                if os.path.exists(fn) == False:
+                    warnings.warn(" Error: %s does not exist." % fn)
+                    exit()
+                
+                print("")
+                print(" Update the primitive structure:", fn)
+                structure = ase.io.read(fn, format='vasp')
+                print_params = False
+            
+            ### run a relaxation calculation
+            self.run_vasp(mode, dir_cur, kpts, 
+                    structure=structure, force=force, print_params=print_params,
+                    verbosity=0)
+            
+            dir_pre = dir_cur
+        
+        ### get and set the standardized primitive structure
+        prim_stand = get_standardized_structure(
+                self.primitive, to_primitive=True
+                )
+        self.update_structures(prim_stand)
+    
+
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
-            method='custodian', force=False, print_params=False):
+            structure=None,
+            method='custodian', force=False, print_params=False, verbosity=1):
         """ Run relaxation and born effective charge calculation
         
         Args
         -------
         mode : string
-            "relax", "force", "nac", or "md"
+            "relax-full", "relax-freeze", "force", "nac", or "md"
         
         directory : string
             output directory
@@ -206,18 +282,17 @@ class ApdbVasp():
             been already finished.
             
         """
-        from auto_kappa.io.vasp import wasfinished
-        line = "VASP calculation (%s)" % (mode)
-        msg = "\n " + line + "\n"
-        msg += " " + "=" * (len(line)) + "\n"
-        print(msg)
+        if verbosity != 0:
+            line = "VASP calculation (%s)" % (mode)
+            msg = "\n\n " + line + "\n"
+            msg += " " + "=" * (len(line)) + "\n"
+            print(msg)
         
         os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
         
         if wasfinished(directory, filename='vasprun.xml') and force == False:
             print("")
             print(" The calculation had been already finished.")
-            print("")
          
         else:
         
@@ -229,15 +304,18 @@ class ApdbVasp():
             if print_params:
                 print_vasp_params(calc.asdict()['inputs'])
             
-            run_vasp(calc, self.primitive, method=method)
+            if structure is None:
+                structure = self.primitive
+            
+            run_vasp(calc, structure, method=method)
    
         os.environ.pop("OMP_NUM_THREADS", None)
         
         ### Read the relaxed structure
-        if mode.lower() == 'relax':
+        if 'relax' in mode.lower():
             self.set_relaxed_structures(directory)
+     
     
-
     def set_relaxed_structures(self, directory):
         """ Set self.relaxed_structure
         directory : string
@@ -247,15 +325,30 @@ class ApdbVasp():
         
         if os.path.exists(filename) == False:
             print("")
-            msg = " WARNING: %s calculation might not work properly." % mode
+            msg = " WARNING: %s does not exist."
             warnings.warning(msg)
             print("")
             return None
         
         else:
-            print(" Set relaxed structures.")
+            print("")
+            print(" Update the primitive structure:", filename)
             prim = ase.io.read(filename, format='vasp-xml', index=-1)
-            self.relaxed_structure['prim'] = prim
-            self.relaxed_structure['unit'] = self.unitcell
-            self.relaxed_structure['scell'] = self.supercell
+            self.update_structures(prim)
+            
+    
+    def update_structures(self, primitive):
+
+        self.relaxed_structure['prim'] = primitive
         
+        self.relaxed_structure['unit'] = make_supercell(
+                primitive, 
+                np.linalg.inv(self.primitive_matrix)
+                )
+        
+        self.relaxed_structure['scell'] = make_supercell(
+                self.unitcell, 
+                self.scell_matrix
+                )
+        
+

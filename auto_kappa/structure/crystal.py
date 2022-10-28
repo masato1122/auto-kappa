@@ -13,9 +13,9 @@ import numpy as np
 import warnings
 
 from phonopy.structure.cells import get_primitive as get_primitive_phonopy
-import spglib
+import spglib as spg
 import ase, ase.data
-from ase.data import atomic_numbers
+from ase.data import atomic_numbers, chemical_symbols
 
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -90,15 +90,41 @@ def get_primitive_matrix(structure):
     pmat = spg_analyzer.get_conventional_to_primitive_transformation_matrix()
     return pmat
 
-def get_primitive_standard_structure(structure):
-    """ Return the standard matrix of the given structure suggested by
-    SpacegroupAnalyzer in Pymatgen. Different formats of structure are
-    available. """
-    str_pmg = change_structure_format(structure, format="pymatgen")
-    spg_analyzer = SpacegroupAnalyzer(str_pmg)
-    unitcell = spg_analyzer.get_primitive_standard_structure()
-    return unitcell
+def get_standardized_structure(structure, 
+        to_primitive=False, no_idealize=False,
+        format='ase'):
+    """ Get a standardized structure with spglib and return its structure
+    """ 
+    ### Get the standardized structure
+    out = spg.standardize_cell(structure, 
+            to_primitive=to_primitive, 
+            no_idealize=no_idealize,
+            )
+    cell_stand = out[0]
+    scaled_positions = out[1]
+    numbers = out[2]
+    
+    ### adjust the scaled positions
+    disp = structure.get_scaled_positions()[0] - scaled_positions[0]
+    scaled_positions += disp
+    
+    ### make a Atoms object
+    atoms_stand = ase.Atoms(
+            cell=cell_stand, pbc=True,
+            scaled_positions=scaled_positions,
+            numbers=numbers
+            )
+    return change_structure_format(atoms_stand, format=format)
 
+
+#def get_primitive_standard_structure(structure, format='ase'):
+#    """ Return the standard matrix of the given structure suggested by
+#    SpacegroupAnalyzer in Pymatgen. Different formats of structure are
+#    available. """
+#    str_pmg = change_structure_format(structure, format="pymatgen")
+#    spg_analyzer = SpacegroupAnalyzer(str_pmg)
+#    unitcell = spg_analyzer.get_primitive_standard_structure()
+#    return change_structure_format(unitcell, format=format)
 
 #def get_suggested_primitive(structure, symprec=1e-5, format='ase'):
 #    """ Find and return the primitive cell
@@ -222,17 +248,6 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         return structure
 
 def get_formula(str_orig):    
-    #import re
     structure = change_structure_format(str_orig, format='pmg-istructure')
     return structure.composition.reduced_formula
-
-    #words = structure.get_primitive_structure().formula.split()
-    #if len(words) == 1:
-    #    return re.sub(r"[123456789]", "", words[0])
-    #else:
-    #    prefix = ""
-    #    for i in range(len(words)):
-    #        prefix += words[i].replace("1", "")
-    #    return prefix
-    #return None
 

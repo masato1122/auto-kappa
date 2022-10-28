@@ -771,7 +771,7 @@ class AlamodeCalc():
         else:
             line = "Generate displacement structures (order: %s)" % order
         
-        msg = "\n " + line + "\n"
+        msg = "\n\n " + line + "\n"
         msg += " " + "=" * (len(line)) + "\n"
         print(msg)
         
