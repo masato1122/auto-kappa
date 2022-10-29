@@ -447,7 +447,26 @@ def read_log_relax(directory):
     dir_vasp = directory+'/'+out_dirs['relax']
     if os.path.exists(dir_vasp) == False:
         return None
-    out = _read_each_vaspjob(dir_vasp)
+    
+    out = {}
+    count = 0
+    for type in ['full', 'freeze']:
+        for i in range(10):
+            label = "%s-%d" % (type, i+1)
+            
+            if type == 'full' and i == 0:
+                diri = dir_vasp
+            else:
+                diri = dir_vasp + "/" + label
+            
+            fn = diri + '/vasprun.xml'
+            if os.path.exists(fn) == False:
+                continue
+            if count == 0:
+                out[type] = _read_each_vaspjob(diri)
+            count += 1
+        ##
+        out['full']['repeat'] = count
     return out
 
 def read_log_nac(directory):

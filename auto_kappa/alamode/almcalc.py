@@ -1164,7 +1164,7 @@ class AlamodeCalc():
         
         fc2xml = None
         fc3xml = None
-
+        
         ### prepare filenames
         if propt == 'band' or propt == 'dos':
             
