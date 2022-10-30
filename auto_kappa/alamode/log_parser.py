@@ -371,7 +371,7 @@ def read_log_kappa(directory):
     
     outs = {}
     for fc3_type in ['fd', 'lasso']:
-        line = directory+'/'+out_dirs['cube']['kappa_%s' % fc3_type] + '_*/kappa.log'
+        line = directory+'/'+out_dirs['cube']['kappa_%s' % fc3_type] + '*/kappa.log'
         fns = glob.glob(line)
         for i, fn in enumerate(fns):
             out = read_log_kappa_each(fn)
