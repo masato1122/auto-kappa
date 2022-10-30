@@ -105,14 +105,14 @@ def get_standardized_structure(structure,
     numbers = out[2]
     
     ### adjust the scaled positions
-    disp = structure.get_scaled_positions()[0] - scaled_positions[0]
-    scaled_positions += disp
+    #disp = structure.get_scaled_positions()[0] - scaled_positions[0]
+    #scaled_positions += disp
     
     ### make a Atoms object
     atoms_stand = ase.Atoms(
             cell=cell_stand, pbc=True,
-            scaled_positions=scaled_positions,
-            numbers=numbers
+            scaled_positions=structure.get_scaled_positions(),
+            numbers=structure.get_atomic_numbers()
             )
     return change_structure_format(atoms_stand, format=format)
 

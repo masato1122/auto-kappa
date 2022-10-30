@@ -155,7 +155,6 @@ def read_dfset(filename, natoms=None, nstructures=None):
     
     return disps, forces
 
-
 def wasfinished(directory, filename='vasprun.xml'):
     try:
         fn = directory + '/' + filename

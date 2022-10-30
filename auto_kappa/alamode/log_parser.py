@@ -6,6 +6,7 @@ import ase.io
 import datetime
 import yaml
 import warnings
+import glob
 
 from auto_kappa import output_directories as out_dirs
 
@@ -51,22 +52,22 @@ class AkLog():
         
         times = {}
         for k1 in self.out:
-            
+
             if isinstance(self.out[k1], dict) == False:
                 continue
             
             if 'time' in self.out[k1]:
                 times[k1] = self.out[k1]['time']['value']
-
+            
             for k2 in self.out[k1]:
-                
+
                 if isinstance(self.out[k1][k2], dict) == False:
                     continue
             
                 if 'time' in self.out[k1][k2]:
                     lab = k1+'_'+k2
                     times[lab] = self.out[k1][k2]['time']['value']
-         
+        
         return times
 
     def plot_times(self, figname=None):
@@ -74,7 +75,7 @@ class AkLog():
         if figname is None:
             figname = self.directory+'/'+out_dirs['result']+'/fig_times.png'
         
-        nonskip_labels = ['force', 'cv(lasso', 'lasso(lasso)', 'kappa']
+        nonskip_labels = ['force', 'cv(lasso)', 'lasso(lasso)', 'kappa']
         
         all_times = self.get_times()
 
@@ -85,7 +86,10 @@ class AkLog():
              
             if '_' in key:
                 data = key.split('_')
-                lab = "%s(%s)" % (data[1], data[0])
+                if data[0] == 'kappa':
+                    lab = "%s(%s)" % (data[0], data[1])
+                else:
+                    lab = "%s(%s)" % (data[1], data[0])
             else:
                 lab = key
             
@@ -102,7 +106,7 @@ class AkLog():
         
         times.append(time_others)
         labels.append('others')
-        
+
         from auto_kappa.plot.pltalm import plot_times_with_pie
         plot_times_with_pie(times, labels, figname=figname)
         
@@ -364,10 +368,28 @@ def read_log_suggest(directory, order=1):
     return out
 
 def read_log_kappa(directory):
-    filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
     
-    if os.path.exists(filename) == False:
-        filename = directory+'/'+out_dirs['higher']['kappa']+'/kappa.log'
+    outs = {}
+    for fc3_type in ['fd', 'lasso']:
+        line = directory+'/'+out_dirs['cube']['kappa_%s' % fc3_type] + '_*/kappa.log'
+        fns = glob.glob(line)
+        for i, fn in enumerate(fns):
+            out = read_log_kappa_each(fn)
+            label = "%dx%dx%d" % (
+                    out['kgrid'][0],
+                    out['kgrid'][1],
+                    out['kgrid'][2],
+                    )
+            outs[label] = out
+    return outs
+   
+
+def read_log_kappa_each(filename):
+    
+    #filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
+    #
+    #if os.path.exists(filename) == False:
+    #    filename = directory+'/'+out_dirs['higher']['kappa']+'/kappa.log'
     
     if os.path.exists(filename) == False:
         
@@ -392,7 +414,7 @@ def read_log_kappa(directory):
         nk1 = int(_extract_data(filename, 'nk1:')[0])
         nk2 = int(_extract_data(filename, 'nk2:')[0])
         nk3 = int(_extract_data(filename, 'nk3:')[0])
-        out['nks'] = [nk1, nk2, nk3]
+        out['kgrid'] = [nk1, nk2, nk3]
         out['number_of_kpoints'] = int(_extract_data(
             filename, "number of k points")[0])
         out['number_of_irreducible_kpoints'] = int(_extract_data(

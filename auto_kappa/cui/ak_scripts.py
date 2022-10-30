@@ -275,10 +275,18 @@ def main():
     t22 = datetime.datetime.now()
     times['anharm_fcs'] = t22 - t21
     
-    ### calculate kappa
-    kpts = get_automatic_kmesh(almcalc.primitive, reciprocal_density=1500)
-    almcalc.write_alamode_input(propt='kappa', order=2, kpts=kpts)
-    almcalc.run_alamode(propt='kappa', neglect_log=neglect_log)
+    ### calculate kappa with different k grid densities
+    for kdensity in [1000, 1500]:
+        kpts = get_automatic_kmesh(
+                almcalc.primitive, reciprocal_density=kdensity)
+        outdir = (
+                out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
+                "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
+                )
+        almcalc.write_alamode_input(
+                propt='kappa', order=2, kpts=kpts, outdir=outdir)
+        almcalc.run_alamode(
+                propt='kappa', neglect_log=neglect_log, outdir=outdir)
     
     ### analyze phonons
     print()

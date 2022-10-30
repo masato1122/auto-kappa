@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
 
-def plot_kappa(df, figname='fig_kappa.png',
+def plot_kappa(dfs, figname='fig_kappa.png',
         dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.5, ms=2.0):
 
     cmap = plt.get_cmap("tab10")
@@ -30,35 +30,42 @@ def plot_kappa(df, figname='fig_kappa.png',
     #ax.set_xlabel('Temperature (K)')
     #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
     
-    markers = ['+', 'x', 'v', 'o']
-    for ii, cont in enumerate(['kp', 'ksum']):
-        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
-            
-            lab = "%s_%s" % (cont, direct)
-            xdat = df['temperature'].values
-            ydat = df[lab].values
+    markers = ['+', 'x', '_', 'o']
+    for ik, klab in enumerate(dfs):
+        
+        col = cmap(ik)
+         
+        for ii, cont in enumerate(['kp', 'ksum']):
+            for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
 
-            if cont == 'kp':
-                label = "${\\rm \\kappa_p^{%s}}$" % direct
-                ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                        marker=markers[jj], markersize=ms,
-                        mfc='none', mew=lw, mec=cmap(jj), label=label
-                        )
-            
-            elif cont == 'ksum':
-                if direct == 'ave':
-                    label = "${\\rm \\kappa_p + \\kappa_c}$"
-                else:
-                    label = None
+                lab = "%s_%s" % (cont, direct)
+                xdat = dfs[klab]['temperature'].values
+                ydat = dfs[klab][lab].values
+
+                if cont == 'kp':
+                    if ik == 0:
+                        label = "${\\rm \\kappa_p^{%s}}$" % direct
+                    else:
+                        label = None
+                    ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                            marker=markers[jj], markersize=ms,
+                            mfc='none', mew=lw, mec=col, label=label
+                            )
                 
-                ax.plot(xdat, ydat, linestyle='-', lw=lw,
-                        marker=None, c=cmap(jj),
-                        label=label
-                        )
+                elif cont == 'ksum':
+                    if direct == 'ave':
+                        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
+                    else:
+                        label = None
+                    
+                    ax.plot(xdat, ydat, linestyle='-', lw=lw,
+                            marker=None, c=col,
+                            label=label
+                            )
     
     set_axis(ax, xscale='log', yscale='log')
-    set_legend(ax, fs=6)
-
+    set_legend(ax, fs=5, alpha=0.5)
+    
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     print()
     print(" Output", figname)
@@ -175,7 +182,8 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
         
         idx_sort = np.argsort(ydat)
         n = len(idx_sort)
-        ymin = np.min(ydat[idx_sort[5:]])
+        #ymin = np.min(ydat[idx_sort[5:]])
+        ymin = np.min(ydat)
         ymax = np.max(ydat[idx_sort[:-5]])
 
         xlim[0] = min(xmin, xlim[0])

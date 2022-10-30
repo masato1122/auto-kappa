@@ -14,7 +14,7 @@ Requirements
 -------------
 
 * VASP
-* Alamode
+* Alamode >= 1.4.x
 * Phonopy
 * ASE
 * Pymatgen
@@ -28,4 +28,11 @@ References
 ALAMODE:
 
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+
+
+To Do
+--------
+
+- Plot kappa (kappa-fd-1, kappa-lasso-1, ...)
+- Get log for kappa
 

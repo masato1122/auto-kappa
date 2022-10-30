@@ -25,6 +25,8 @@ import ase, pymatgen
 import subprocess
 import shutil
 import pandas as pd
+import f90nml
+import glob
 
 from auto_kappa.structure import make_supercell
 from auto_kappa import output_directories, output_files
@@ -1139,8 +1141,38 @@ class AlamodeCalc():
     #    os.environ.pop('OMP_NUM_THREADS', None)
     #    return out
     
+    #def suggested_outdir_for_kappa(self, kpts):
+    #    """
+    #    """
+    #    dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+    #    
+    #    imax = 0
+    #    for i in range(50):
+    #        if i == 0:
+    #            dir_i = dir_work
+    #        else:
+    #            dir_i = dir_work + "-%d" % i
+    #        
+    #        infile = dir_i + "/kappa.in"
+    #        if os.path.exists(infile) == False:
+    #            continue
+    #        
+    #        ## get kpts written in kappa.in
+    #        params = AnphonInput.from_file(infile)
+    #        kpts_i = params['kpoint']['kgrid']
+    #        
+    #        diff_max = np.max(abs(np.asarray(kpts) - np.asarray(kpts_i)))
+    #        imax = i
+    #        if diff_max < 1e-3:
+    #            return dir_i
+    #    
+    #    ## return the next directory name
+    #    dir_suggest = dir_work + "-%d" % (imax+1)
+    #    return dir_suggest
+
     def write_alamode_input(
             self, propt=None, order=None, kpts=[15,15,15],
+            outdir=None,
             **kwargs
             ):
         """ Write Anphon Input
@@ -1178,52 +1210,11 @@ class AlamodeCalc():
             
         elif propt == 'kappa':
             
-            ### old version
-            #if newversion == False:
-            #    if self.lasso == False:
-            #        dir_work = self.out_dirs['cube']['kappa_fd']
-            #        fcsxml = '../../result/' + self.outfiles['cube_xml']
-            #    else:
-            #        dir_work = self.out_dirs['lasso']['kappa']
-            #        fcsxml = '../../result/' + self.outfiles['lasso_xml']
-            #
-            #else:
-            #    
-            #    if order == 2:
-            #        
-            #        fcsxml = None
-            #        
-            #        dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-            #        fn_check = (self.out_dirs['result'] + '/' + 
-            #                self.outfiles['cube_%s_xml' % self.fc3_type])
-            #        fcsxml = ('../../result/' + 
-            #                self.outfiles['cube_%s_xml' % self.fc3_type])
-            #        
-            #        if os.path.exists(fn_check) == False:
-            #            warnings.warn(" Error: %s cannot be found." % fn_check)
-            #        
-            #        if fcsxml is None:
-            #            warnings.warn(" Error: fcsxml cannot be found.")
-            #            exit()
-            #    
-            #    else:
-            #        dir_work = self.out_dirs['lasso']['kappa']
-            #        fcsxml = '../../result/' + self.outfiles['lasso_xml']
-            
-            ### modified
             dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
             fcsxml = '../../result/' + self.outfiles['cube_%s_xml' % self.fc3_type]
             
         elif propt == 'lasso' or propt == 'cv':
             
-            #if newversion == False:
-            #    
-            #    dir_work = self.out_dirs['lasso'][propt]
-            #    dfset = '../../result/' + self.outfiles['lasso_dfset']
-            #    fc2xml = '../../result/' + self.outfiles['harm_xml']
-            #
-            #else:
-                
             if order == 2:
                 dir_work = self.out_dirs['cube'][propt]
                 dfset = ('../../result/' + 
@@ -1292,6 +1283,10 @@ class AlamodeCalc():
 
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
+        
+        ## output directory
+        if outdir is not None:
+            dir_work = outdir
         
         ## prepare directory
         os.makedirs(dir_work, exist_ok=True)
@@ -1490,7 +1485,8 @@ class AlamodeCalc():
         if flag == False:
             return None
      
-    def run_alamode(self, propt=None, order=None, neglect_log=False, **args):
+    def run_alamode(self, propt=None, order=None, neglect_log=False, 
+            outdir=None, **args):
         """ Run anphon
         
         Args
@@ -1577,11 +1573,16 @@ class AlamodeCalc():
             warnings.warn(" WARNNING: %s property is not supported." % (propt))
             exit()
         
+        ### modify work directory
+        if outdir is not None:
+            workdir = outdir
+        
         ### print title
         msg = "\n"
         line = "Run %s for %s:" % (alamode_type, propt)
         msg += " " + line + "\n"
-        msg += " " + "-" * (len(line)) + "\n"
+        msg += " " + "-" * (len(line)) + "\n\n"
+        msg += " Working directory : " + workdir + "\n"
         print(msg)
             
         filename = "%s.in" % propt
@@ -1721,7 +1722,21 @@ class AlamodeCalc():
         #else:
         #    dir_kappa = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
         
-        dir_kappa = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+        dirs_kappa = self.get_kappa_directories()
+        
+        ## get directory name for kappa with the finest k grid
+        dir_kappa = None
+        lab_kpts = None
+        ksum = 0
+        for lab in dirs_kappa:
+            data = lab.lower().split("x")
+            if len(data) != 3:
+                continue
+            kpts = np.asarray([int(d) for d in data])
+            if np.sum(kpts) > ksum:
+                dir_kappa = dirs_kappa[lab]
+                lab_kpts = lab
+                ksum = np.sum(kpts)
         
         ### file check
         self._file_result = dir_kappa + '/%s.result' % (self.prefix)
@@ -1865,6 +1880,21 @@ class AlamodeCalc():
                 **args
                 )
     
+    def get_kappa_directories(self):
+        
+        ll_tmp = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_"
+        line = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_*"
+        dirs = glob.glob(line)
+        dirs_done = {}
+        for dd in dirs:
+            fn_log = dd + "/kappa.log"
+            if os.path.exists(fn_log) == False:
+                continue
+            if _alamode_finished(fn_log):
+                label = dd.split(ll_tmp)[1]
+                dirs_done[label] = dd
+        return dirs_done
+
     def plot_kappa(self):
         
         #if self.lasso == False:
@@ -1872,58 +1902,15 @@ class AlamodeCalc():
         #else:
         #    dir_kappa = self.out_dirs['lasso']["kappa"]
         
-        dir_kappa = self.out_dirs['cube']["kappa_%s" % self.fc3_type]
         
-        fn_kp = dir_kappa + '/' + self.prefix + '.kl'
-        fn_kc = dir_kappa + '/' + self.prefix + '.kl_coherent'
-        
-        #
-        if os.path.exists(fn_kp) == False:
-            return None
-        
-        df = pd.DataFrame()
-        data = np.genfromtxt(fn_kp)
-        
-        if os.path.exists(fn_kc) == False:
-            fn_kc = None
-            data2 = None
-        else:
-            data2 = np.genfromtxt(fn_kc)
-
-            if np.max(abs(data[:,0] - data2[:,0])) > 0.5:
-                warnings.warn(" Warning: temperatures are incompatible.")
-        
-        nt = len(data)
-        df['temperature'] = data[:,0]
-        dirs = ['x', 'y', 'z']
-        for i1 in range(3):
-            d1 = dirs[i1]
-            
-            if data2 is not None:
-                dd = dirs[i1]
-                lab2 = 'kc_%s%s' % (dd, dd)
-                df[lab2] = data2[:,i1+1]
-            
-            for i2 in range(3):
-                d2 = dirs[i2]
-                num = i1*3 + i2 + 1
-                lab = 'kp_%s%s' % (d1, d2)
-                df[lab] = data[:,num]
-        
-        kave = (df['kp_xx'].values + df['kp_yy'].values + df['kp_zz'].values) / 3.
-        df['kp_ave'] = kave
-
-        if data2 is not None:
-            kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
-            df['kc_ave'] = kave
-            
-            for pre in ['xx', 'yy', 'zz', 'ave']:
-                key = 'ksum_%s' % pre
-                df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
+        dirs_kappa = self.get_kappa_directories()
+        dfs = {}
+        for lab in dirs_kappa:
+            dfs[lab] = _read_kappa(dirs_kappa[lab], self.prefix)
         
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
-        plot_kappa(df, figname=figname)
+        plot_kappa(dfs, figname=figname)
     
     
     def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
@@ -2185,6 +2172,67 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
         
         else:
             warnings.warn(" WARNING: mode %s is nto supported" % (mode))
+    
+
+def _read_kappa(dir_kappa, prefix):
+    """ Read .kl and .kl_coherent files and return pandas.DataFrame object
+    
+    Args
+    ------
+    dir_kappa : string
+        directory in which .kl and .kl_coherent should exist.
+    
+    prefix : string
+    
+    """
+    fn_kp = dir_kappa + '/' + prefix + '.kl'
+    fn_kc = dir_kappa + '/' + prefix + '.kl_coherent'
+    
+    ##
+    if os.path.exists(fn_kp) == False:
+        return None
+    
+    df = pd.DataFrame()
+    data = np.genfromtxt(fn_kp)
+    
+    if os.path.exists(fn_kc) == False:
+        fn_kc = None
+        data2 = None
+    else:
+        data2 = np.genfromtxt(fn_kc)
+
+        if np.max(abs(data[:,0] - data2[:,0])) > 0.5:
+            warnings.warn(" Warning: temperatures are incompatible.")
+    
+    nt = len(data)
+    df['temperature'] = data[:,0]
+    dirs = ['x', 'y', 'z']
+    for i1 in range(3):
+        d1 = dirs[i1]
+        
+        if data2 is not None:
+            dd = dirs[i1]
+            lab2 = 'kc_%s%s' % (dd, dd)
+            df[lab2] = data2[:,i1+1]
+        
+        for i2 in range(3):
+            d2 = dirs[i2]
+            num = i1*3 + i2 + 1
+            lab = 'kp_%s%s' % (d1, d2)
+            df[lab] = data[:,num]
+    
+    kave = (df['kp_xx'].values + df['kp_yy'].values + df['kp_zz'].values) / 3.
+    df['kp_ave'] = kave
+    
+    if data2 is not None:
+        kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
+        df['kc_ave'] = kave
+        
+        for pre in ['xx', 'yy', 'zz', 'ave']:
+            key = 'ksum_%s' % pre
+            df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
+    
+    return df
 
 #def get_finite_displacements(structure, order, cutoffs=None, nbody=None, magnitude=None):
 #    """ Generate displacement patterns with ALM for FCs calculation
