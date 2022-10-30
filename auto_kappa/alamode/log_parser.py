@@ -375,7 +375,8 @@ def read_log_kappa(directory):
         fns = glob.glob(line)
         for i, fn in enumerate(fns):
             out = read_log_kappa_each(fn)
-            label = "%dx%dx%d" % (
+            label = "%s:%dx%dx%d" % (
+                    fc3_type,
                     out['kgrid'][0],
                     out['kgrid'][1],
                     out['kgrid'][2],
