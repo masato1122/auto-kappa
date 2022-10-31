@@ -109,6 +109,7 @@ def get_standardized_structure(structure,
     #scaled_positions += disp
     
     ### make a Atoms object
+    ### Note that only cell size is modified.
     atoms_stand = ase.Atoms(
             cell=cell_stand, pbc=True,
             scaled_positions=structure.get_scaled_positions(),

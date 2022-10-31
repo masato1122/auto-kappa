@@ -33,6 +33,5 @@ ALAMODE:
 To Do
 --------
 
-- Plot kappa (kappa-fd-1, kappa-lasso-1, ...)
-- Get log for kappa
+- Use FireWorks and MongoDB
 

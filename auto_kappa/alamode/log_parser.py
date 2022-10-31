@@ -7,6 +7,7 @@ import datetime
 import yaml
 import warnings
 import glob
+from pymatgen.io.vasp import Poscar
 
 from auto_kappa import output_directories as out_dirs
 
@@ -473,6 +474,7 @@ def read_log_relax(directory):
     
     out = {}
     count = 0
+    pos = None
     for type in ['full', 'freeze']:
         for i in range(10):
             label = "%s-%d" % (type, i+1)
@@ -487,9 +489,14 @@ def read_log_relax(directory):
                 continue
             if count == 0:
                 out[type] = _read_each_vaspjob(diri)
+                pos = diri + '/POSCAR'
             count += 1
         ##
         out['full']['repeat'] = count
+    
+    ## get prefix
+    structure = Poscar.from_file(pos, check_for_POTCAR=False).structure
+    out['prefix'] = structure.composition.reduced_formula
     return out
 
 def read_log_nac(directory):
@@ -710,6 +717,15 @@ def get_ak_logs(directory):
     """
     out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "higher":{}}
     
+    #### get prefix (composition)
+    #pos = directory + "/harm/force/prist/POSCAR"
+    #try:
+    #    structure = Poscar.from_file(pos).structure
+    #    prefix = structure.composition.reduced_formula
+    #    out_all['prefix'] = prefix
+    #except Exception:
+    #    out_all['prefix'] = "-"
+
     ### relax and nac
     v = read_log_relax(directory)
     if v is not None:
@@ -768,7 +784,7 @@ def get_ak_logs(directory):
     out_mod = {}
     for key in out_all:
         if any(out_all[key]):
-            out_mod[key] = out_all[key].copy()
+            out_mod[key] = out_all[key]
     out_all = out_mod.copy()
 
     ### total time
