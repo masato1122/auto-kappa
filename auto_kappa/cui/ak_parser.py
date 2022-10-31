@@ -59,7 +59,7 @@ def get_parser():
             dest="frac_nrandom", type="float", default=1.,
             help="Npattern * Natom / Nfc3, where Npattern is the number of "\
             "generated random displacement patterns, Natom is the number of "\
-            "atoms in a supercell, and Nfc3 is the number of FC3",
+            "atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
             )
     
     parser.add_option("--command_vasp", 
