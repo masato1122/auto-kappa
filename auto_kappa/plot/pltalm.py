@@ -34,34 +34,33 @@ def plot_kappa(dfs, figname='fig_kappa.png',
     for ik, klab in enumerate(dfs):
         
         col = cmap(ik)
-         
-        for ii, cont in enumerate(['kp', 'ksum']):
-            for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+        
+        ### kp for different directions
+        cont = 'kp'
+        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
 
-                lab = "%s_%s" % (cont, direct)
-                xdat = dfs[klab]['temperature'].values
-                ydat = dfs[klab][lab].values
+            lab = "%s_%s" % (cont, direct)
+            xdat = dfs[klab]['temperature'].values
+            ydat = dfs[klab][lab].values
 
-                if cont == 'kp':
-                    if ik == 0:
-                        label = "${\\rm \\kappa_p^{%s}}$" % direct
-                    else:
-                        label = None
-                    ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                            marker=markers[jj], markersize=ms,
-                            mfc='none', mew=lw, mec=col, label=label
-                            )
-                
-                elif cont == 'ksum':
-                    if direct == 'ave':
-                        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
-                    else:
-                        label = None
-                    
-                    ax.plot(xdat, ydat, linestyle='-', lw=lw,
-                            marker=None, c=col,
-                            label=label
-                            )
+            if ik == 0:
+                label = "${\\rm \\kappa_p^{%s}}$" % direct
+            else:
+                label = None
+            ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                    marker=markers[jj], markersize=ms,
+                    mfc='none', mew=lw, mec=col, label=label
+                    )
+        
+        ### kp+kc(ave)
+        xdat = dfs[klab]['temperature'].values
+        ydat = dfs[klab]['ksum_ave'].values
+        
+        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
+        ax.plot(xdat, ydat, linestyle='-', lw=lw,
+                marker=None, c=col,
+                label=label
+                )
     
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=5, alpha=0.5)

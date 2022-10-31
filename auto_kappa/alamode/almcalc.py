@@ -1367,8 +1367,14 @@ class AlamodeCalc():
         elif propt == 'evec_commensurate':
    
             ### supercell matrix wrt primitive cell
-            smat = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
-            
+            smat_tmp = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
+            smat = smat_tmp.astype(int)
+            diff_max = np.amax(abs(smat - smat_tmp))
+            if diff_max > 1e-3:
+                print("")
+                print(" Caution: please check the cell size of primitive and "\
+                        "supercell")
+                
             ### commensurate points
             from auto_kappa.structure.crystal import get_commensurate_points
             comm_pts = get_commensurate_points(smat)

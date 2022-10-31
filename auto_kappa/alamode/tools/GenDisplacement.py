@@ -682,7 +682,13 @@ class AlamodeDisplace(object):
                         print(msg)
                         
                         from auto_kappa.structure.crystal import get_commensurate_points
-                        Mps = np.linalg.inv(convertor)
+                        Mps_tmp = np.linalg.inv(convertor)
+                        Mps = Mps_tmp.astype(int)
+                        dmax = np.amax(abs(Mps - Mps_tmp))
+                        if dmax > 1e-3:
+                            print("")
+                            print(" Caution: please check the cell size of "\
+                                    "primitive and supercell")
                         self._commensurate_qpoints = get_commensurate_points(Mps)
                         return 0
                         
