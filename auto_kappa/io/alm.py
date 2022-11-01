@@ -195,7 +195,7 @@ class AlmInput(MSONable, dict):
         params_str = get_alamode_variables_from_structure(
                 cls.structure, norder=norder)
         alm_dict.update(params_str)
-
+        
         ## set given parameters
         alm_dict.update(kwargs)
         
@@ -405,8 +405,10 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     ## cutoff (unit: Bohr)
     params['cutoff'] = {}
-    for s1 in sym_list:
-        for s2 in sym_list:
+    for i1 in range(len(sym_list)):
+        s1 = sym_list[i1]
+        for i2 in range(i1, len(sym_list)):
+            s2 = sym_list[i2]
             comb = s1+'-'+s2
             params['cutoff'][comb] = []
             if norder is not None:
@@ -530,8 +532,15 @@ class AnphonInput(MSONable, dict):
         self._primitive = structure
 
     def get_primitive(self):
-        return get_primitive_structure(self.structure)
-
+        
+        ### old version
+        #prim = get_primitive_structure(self.structure, format='ase')
+        #
+        ### modified
+        struct_pmg = change_structure_format(self.structure, format='pmg')
+        prim = struct_pmg.get_primitive_structure()
+        return prim
+     
     @classmethod
     def from_dict(cls, alm_dict: Dict):
         """ Write a ALM input file
@@ -643,7 +652,9 @@ class AnphonInput(MSONable, dict):
             if 'kpath' not in self.keys():
                 print(" kpath is set automatically.")
                 self['kpath'] = get_kpoint_path(
-                        self.primitive, deltak=self['deltak'])
+                        self.primitive, 
+                        deltak=self['deltak']
+                        )
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []

@@ -94,6 +94,11 @@ def get_standardized_structure(structure,
         to_primitive=False, no_idealize=False,
         format='ase'):
     """ Get a standardized cell shape with spglib and return its structure
+    
+    Args
+    ------
+    structure : pymatgen
+
     """ 
     ### Get the standardized structure
     out = spg.standardize_cell(structure, 

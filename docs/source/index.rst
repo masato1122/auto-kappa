@@ -12,7 +12,8 @@ Auto-KAPPA
 
     installation
     parameters
-    ak
+    tutorial/index
+    
+..    ak
 
-..     tutorial/index
 
