@@ -92,7 +92,7 @@ def get_primitive_matrix(structure):
 
 def get_standardized_structure(struct_orig, 
         to_primitive=False,
-        format='ase', version='new'):
+        format='ase', version='old'):
     """ Get a standardized cell shape with spglib and return its structure
     
     Args
