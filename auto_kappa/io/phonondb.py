@@ -123,8 +123,9 @@ class Phonondb():
     
     @property
     def primitive(self):
-        self._phonon = self.phonon
-        return self._phonon
+        if self._phonon is None:
+            self._phonon = self.phonon
+        return self._phonon.primitive
     
     def get_primitive(self, format='phonopy'):
         self._phonon = self.phonon

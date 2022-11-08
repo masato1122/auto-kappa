@@ -13,7 +13,7 @@ use of different methods such as SCPH method, 4-phonon scattering, iterative or 
 Requirements
 -------------
 
-* VASP
+* VASP >= 6.3.x
 * Alamode >= 1.4.x
 * Phonopy
 * ASE
@@ -34,4 +34,6 @@ To Do
 --------
 
 - Use FireWorks and MongoDB
+
+- Failed materials: 2507 2651 3216 3626 4699
 

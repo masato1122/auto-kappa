@@ -1,6 +1,6 @@
-=================================
-Auto-kappa as an API for Alamode
-=================================
+===========================
+Input Scripts for ALAMODE
+===========================
 
 .. You can find example scripts in example directory of aiida-alamode package.
 

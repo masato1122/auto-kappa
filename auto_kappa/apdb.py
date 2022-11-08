@@ -254,7 +254,7 @@ class ApdbVasp():
         
         ### get and set the standardized primitive structure
         prim_stand = get_standardized_structure(
-                self.primitive, to_primitive=True
+                self.primitive, to_primitive=True,
                 )
         self.update_structures(prim_stand)
     

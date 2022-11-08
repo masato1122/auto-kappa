@@ -90,38 +90,62 @@ def get_primitive_matrix(structure):
     pmat = spg_analyzer.get_conventional_to_primitive_transformation_matrix()
     return pmat
 
-def get_standardized_structure(structure, 
-        to_primitive=False, no_idealize=False,
-        format='ase'):
+def get_standardized_structure(struct_orig, 
+        to_primitive=False,
+        format='ase', version='new'):
     """ Get a standardized cell shape with spglib and return its structure
     
     Args
     ------
-    structure : pymatgen
+    structure : ase, phonopy, pymatgen, ...
+    
+    version : string, 'new' or 'old'
+        If 'old', spglib is used.
+        If 'new', pymatgen is used.
 
-    """ 
-    ### Get the standardized structure
-    out = spg.standardize_cell(structure, 
-            to_primitive=to_primitive, 
-            no_idealize=no_idealize,
-            )
-    cell_stand = out[0]
-    scaled_positions = out[1]
-    numbers = out[2]
-    
-    ### adjust the scaled positions
-    #disp = structure.get_scaled_positions()[0] - scaled_positions[0]
-    #scaled_positions += disp
-    
-    ### make a Atoms object
-    ### Note that only cell size is modified.
-    atoms_stand = ase.Atoms(
+    """
+    if version == 'old':
+        if (isinstance(struct_orig, ase.Atoms) == False and
+                isinstance(struct_orig, PhonopyAtoms) == False):
+            structure = change_structure_format(struct_orig, format='ase')
+        else:
+            structure = struct_orig
+        
+        ### Get the standardized structure
+        out = spg.standardize_cell(structure, 
+                to_primitive=to_primitive, 
+                )
+        cell_stand = out[0]
+        #scaled_positions = out[1]
+        #numbers = out[2]
+        scaled_positions = structure.get_scaled_positions()
+        numbers = structure.get_atomic_numbers()
+
+    elif version == 'new':
+        if (isinstance(struct_orig, str_pmg.Structure) == False and
+                isinstance(struct_orig, str_pmg.IStructure) == False):
+            structure = change_structure_format(struct_orig, format='pmg')
+        else:
+            structure = struct_orig
+        
+        spg_analyzer = SpacegroupAnalyzer(structure)
+        
+        if to_primitive:
+            struct_stand = spg_analyzer.get_primitive_standard_structure()
+        else:
+            struct_stand = spg_analyzer.get_conventional_standard_structure()
+        
+        cell_stand = struct_stand.lattice.matrix    
+        scaled_positions = struct_stand.frac_coords
+        numbers = struct_stand.atomic_numbers
+        
+    ## 
+    atoms = ase.Atoms(
             cell=cell_stand, pbc=True,
-            scaled_positions=structure.get_scaled_positions(),
-            numbers=structure.get_atomic_numbers()
+            scaled_positions=scaled_positions,
+            numbers=numbers,
             )
-    return change_structure_format(atoms_stand, format=format)
-
+    return atoms
 
 #def get_primitive_standard_structure(structure, format='ase'):
 #    """ Return the standard matrix of the given structure suggested by
