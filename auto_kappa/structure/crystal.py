@@ -91,8 +91,7 @@ def get_primitive_matrix(structure):
     return pmat
 
 def get_standardized_structure(struct_orig, 
-        to_primitive=False,
-        format='ase', version='old'):
+        to_primitive=False, format='ase', version='spglib'):
     """ Get a standardized cell shape with spglib and return its structure
     
     Args
@@ -104,7 +103,7 @@ def get_standardized_structure(struct_orig,
         If 'new', pymatgen is used.
 
     """
-    if version == 'old':
+    if version == 'spglib':
         if (isinstance(struct_orig, ase.Atoms) == False and
                 isinstance(struct_orig, PhonopyAtoms) == False):
             structure = change_structure_format(struct_orig, format='ase')
@@ -120,8 +119,9 @@ def get_standardized_structure(struct_orig,
         #numbers = out[2]
         scaled_positions = structure.get_scaled_positions()
         numbers = structure.get_atomic_numbers()
-
-    elif version == 'new':
+        
+    elif version == 'pymatgen':
+        
         if (isinstance(struct_orig, str_pmg.Structure) == False and
                 isinstance(struct_orig, str_pmg.IStructure) == False):
             structure = change_structure_format(struct_orig, format='pmg')
@@ -145,7 +145,7 @@ def get_standardized_structure(struct_orig,
             scaled_positions=scaled_positions,
             numbers=numbers,
             )
-    return atoms
+    return change_structure_format(atoms, format=format)
 
 #def get_primitive_standard_structure(structure, format='ase'):
 #    """ Return the standard matrix of the given structure suggested by

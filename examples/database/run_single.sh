@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
 ##
 ## Parameters you may need to modify
 ##
-export PYTHONPATH=$PYTHONPATH:../..
+#export PYTHONPATH=$PYTHONPATH:../..
 
 mpid=mp-149    ## Si
 
