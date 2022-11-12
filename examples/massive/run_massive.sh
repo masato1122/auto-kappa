@@ -9,13 +9,13 @@ fi
 #########################################
 ## parameters depending on the computer
 dir_phonondb=/home/apdb/phonondb-20180417
-imax=1000
+imax=50000
 nmax=10
 ##########################################
 
 ###########
-imin=0
-neach=10
+imin=40000
+neach=7
 ###########
 
 for i in `seq 0 $nmax`; do
@@ -46,7 +46,7 @@ for i in `seq 0 $nmax`; do
     label=${i}_${i0}-${i1}
     
 ofile=a.sh
-cat >>$ofile <<EOF
+cat >$ofile <<EOF
 #!/bin/sh
 #PBS -q default
 #PBS -l nodes=1:ppn=32
@@ -59,11 +59,9 @@ cd \$PBS_O_WORKDIR
 
 rm ${label}.o*
 
-### set LD_LIBRARY_PATH if necessary
-#LD_LIBRARY_PATH=\$LD_LIBRARY_PATH
-#export LD_LIBRARY_PATH
+LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ohnishi/.anaconda3/lib
+export LD_LIBRARY_PATH
 
-### set the number of cores
 ncores=32
 
 for id in \`seq $i0 $i1\`; do
@@ -74,7 +72,7 @@ for id in \`seq $i0 $i1\`; do
     if [ ! -e \$dir_db ]; then
         continue
     fi
-    
+
     ### start a calculation
     akrun \\
         --directory \$dir_db \\
