@@ -92,6 +92,10 @@ def get_parser():
             dest="anphon_para", type="string", default="omp", 
             help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [omp]")
     
+    parser.add_option("--magnitude2", 
+            dest="magnitude2", type="float", default=0.03, 
+            help="magnitude of random displacement for FC3 [0.03]")
+    
     (options, args) = parser.parse_args()
     
     return options

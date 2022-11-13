@@ -164,7 +164,7 @@ def main():
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
             magnitude=0.01,
-            magnitude2=0.03,
+            magnitude2=options.magnitude2,
             nac=nac,
             commands=commands,
             verbosity=options.verbosity

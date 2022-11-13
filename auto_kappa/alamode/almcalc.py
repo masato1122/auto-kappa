@@ -1441,7 +1441,7 @@ class AlamodeCalc():
             if propt in ['cv', 'lasso']:
                 inp.update({'lmodel': 'enet'})
                 inp.update({'l1_ratio': 1.0})
-                inp.update({'maxiter': 2000})    ## smaller than the default, 10000
+                inp.update({'maxiter': 10000})   ## use the original default, 10000
                 inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
                 if propt == 'cv':
                     inp.update({'cv': 5})
