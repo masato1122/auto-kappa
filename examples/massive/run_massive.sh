@@ -6,16 +6,18 @@ if [ ! -e $logdir ]; then
     mkdir $logdir
 fi
 
-#########################################
-## parameters depending on the computer
+##########################################
+## parameters depending on the environment
 dir_phonondb=/home/apdb/phonondb-20180417
 imax=50000
 nmax=10
-##########################################
+ncores=32
+mpirun="mpirun"
+###########################################
 
 ###########
-imin=40000
-neach=7
+imin=40000   ## need to be modified each series of job submissions
+neach=5      ## number of materials in a loop (average : 2-3 node*days/mater)
 ###########
 
 for i in `seq 0 $nmax`; do
@@ -46,10 +48,15 @@ for i in `seq 0 $nmax`; do
     label=${i}_${i0}-${i1}
     
 ofile=a.sh
+##################################################
+##                                              ##
+## Please modify contents in the created file.  ##
+##                                              ##
+##################################################
 cat >$ofile <<EOF
 #!/bin/sh
 #PBS -q default
-#PBS -l nodes=1:ppn=32
+#PBS -l nodes=1:ppn=${ncores}
 #PBS -j oe
 #PBS -N $label
 
@@ -59,10 +66,9 @@ cd \$PBS_O_WORKDIR
 
 rm ${label}.o*
 
-LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ohnishi/.anaconda3/lib
-export LD_LIBRARY_PATH
-
-ncores=32
+### environment setting
+#LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ohnishi/.anaconda3/lib
+#export LD_LIBRARY_PATH
 
 for id in \`seq $i0 $i1\`; do
 
@@ -77,8 +83,8 @@ for id in \`seq $i0 $i1\`; do
     akrun \\
         --directory \$dir_db \\
         --material_name \$mpid \\
-        --ncores \$ncores \\
-        --mpirun mpirun \\
+        --ncores $ncores \\
+        --mpirun ${mpirun} \\
         --verbosity 1 \\
         > $logdir/log_\${mpid}.txt
     
@@ -86,7 +92,12 @@ for id in \`seq $i0 $i1\`; do
 
 done
 EOF
+
+################################################################
+#### Remove the comment-out before "qsub" to submit the job 
+#### and, if neccesarry, modify "qsub" command.
 #qsub $ofile
+################################################################
 
     if [ $i1 == $imax ]; then
         break
