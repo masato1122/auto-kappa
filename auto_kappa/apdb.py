@@ -48,7 +48,7 @@ class ApdbVasp():
         ### matrices
         self._primitive_matrix = primitive_matrix
         self.scell_matrix = scell_matrix
-        
+
         ### prepare dictionaries for structures
         self.original_structure = {'prim': None, 'unit': None, 'scell': None}
         
@@ -127,7 +127,7 @@ class ApdbVasp():
         elif self.original_structure['unit'] is not None:
             print(" Return UNrelaxed structure.")
             return self.original_structure['unit']
-        
+         
         else:
             return None
     
@@ -174,7 +174,7 @@ class ApdbVasp():
             structure = self.primitive
         elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
-        
+
         calc = get_vasp_calculator(mode, 
                 directory=directory, 
                 atoms=structure,

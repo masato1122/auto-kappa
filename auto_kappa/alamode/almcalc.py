@@ -1365,7 +1365,7 @@ class AlamodeCalc():
             inp.update({'pdos': 1})
         
         elif propt == 'evec_commensurate':
-   
+
             ### supercell matrix wrt primitive cell
             smat_tmp = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
             smat = smat_tmp.astype(int)

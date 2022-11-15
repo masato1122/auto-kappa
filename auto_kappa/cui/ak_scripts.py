@@ -156,6 +156,7 @@ def main():
             'vasp': command_vasp,
             }
     
+    
     almcalc = AlamodeCalc(
             apdb.primitive,
             material_name=options.material_name,
@@ -212,7 +213,8 @@ def main():
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
-    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    #almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
     
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
