@@ -190,6 +190,7 @@ class ApdbVasp():
     
     
     def run_relaxation(self, directory: './out', kpts: None,
+            standardize_each_time=True,
             force=False, num_full=2, verbosity=1): 
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
@@ -240,15 +241,24 @@ class ApdbVasp():
                     warnings.warn(" Error: %s does not exist." % fn)
                     exit()
                 
-                print("")
-                print(" Update the primitive structure:", fn)
+                #print("")
+                #print(" Update the primitive structure:", fn)
                 structure = ase.io.read(fn, format='vasp')
                 print_params = False
             
+            ### standardization
+            if standardize_each_time:
+                structure = get_standardized_structure(
+                        structure, to_primitive=True,
+                        )
+            
             ### run a relaxation calculation
-            self.run_vasp(mode, dir_cur, kpts, 
-                    structure=structure, force=force, print_params=print_params,
-                    verbosity=0)
+            self.run_vasp(
+                    mode, dir_cur, kpts, 
+                    structure=structure, force=force, 
+                    print_params=print_params,
+                    verbosity=0
+                    )
             
             dir_pre = dir_cur
         

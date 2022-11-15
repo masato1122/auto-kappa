@@ -32,11 +32,6 @@ for i in `seq 0 $nmax`; do
             continue
         fi
         
-        flag=`python check_finished.py --mpid $mpid`
-        if [ $flag == "1" ]; then
-            continue
-        fi
-        
         count=`expr $count + 1`
         if [ $count == "$neach" -o $ii == "$imax" ]; then
             break
