@@ -82,7 +82,7 @@ def main():
     
     options = get_parser()
     print_options(options)
-
+    
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
     ### and k-points.

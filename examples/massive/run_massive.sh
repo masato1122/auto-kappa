@@ -11,7 +11,7 @@ fi
 dir_phonondb=/home/apdb/phonondb-20180417
 imax=50000
 nmax=10
-ncores=32
+ncores=32        ## number of cores to be used for VASP and Alamode
 mpirun="mpirun"
 ###########################################
 

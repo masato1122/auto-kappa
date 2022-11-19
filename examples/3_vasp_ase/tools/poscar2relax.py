@@ -7,7 +7,7 @@ from ase.build import make_supercell
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa.structure.crystal import (
         get_primitive_structure,
-        get_primitive_standard_structure
+        get_standardized_structure,
         )
 
 parser = OptionParser()
