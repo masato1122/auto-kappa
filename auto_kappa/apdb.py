@@ -319,7 +319,7 @@ class ApdbVasp():
             
             run_vasp(calc, structure, method=method)
    
-        os.environ.pop("OMP_NUM_THREADS", None)
+        os.environ.pop("OMP_NUM_THREADS", 1)
         
         ### Read the relaxed structure
         if 'relax' in mode.lower():
