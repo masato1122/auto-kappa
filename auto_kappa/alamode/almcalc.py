@@ -1993,8 +1993,10 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
     else:
         val = 2
     
-    ## Return to the original directory
-    os.environ.pop('OMP_NUM_THREADS', None)
+    #### Return to the original directory
+    ## sometimes this way leads to a problem.
+    #os.environ.pop('OMP_NUM_THREADS', None)
+    os.environ["OMP_NUM_THREADS"] = "1"
     os.chdir(dir_init)
     return val
 
