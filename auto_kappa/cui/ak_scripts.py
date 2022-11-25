@@ -278,7 +278,7 @@ def main():
     times['anharm_fcs'] = t22 - t21
     
     ### calculate kappa with different k grid densities
-    for kdensity in [1000, 1500]:
+    for kdensity in [500, 1000, 1500]:
         kpts = get_automatic_kmesh(
                 almcalc.primitive, reciprocal_density=kdensity)
         outdir = (
