@@ -27,14 +27,21 @@ def main(options):
     ##
     df = pd.DataFrame(index=[name.upper() for name in names])
     for key in keys:
-        if key == 'shared':
+        if key in ['shared', 'relax']:
             continue
         each = []
         for name in names:
+            
             if name in params['shared']:
                 each.append(params['shared'][name])
             else:
                 each.append('_')
+            
+            if 'relax' in name:
+                if name in params['relax']:
+                    each.append(params['relax'][name])
+                else:
+                    each.append('_')
 
             if name in params[key]:
                 each[-1] = params[key][name]

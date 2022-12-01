@@ -87,16 +87,15 @@ class Phonondb():
     @property
     def scell_matrix(self):
         if self._scell_matrix is None:
-            sc, pm = read_phonopy_conf(self.directory + '/phonopy.conf')
+            sc, _ = read_phonopy_conf(self.directory + '/phonopy.conf')
             self._scell_matrix = sc
-            self._primitive_matrix = pm
+            #self._primitive_matrix = pm
         return self._scell_matrix
     
     @property
     def primitive_matrix(self):
         if self._primitive_matrix is None:
-            sc, pm = read_phonopy_conf(self.directory + '/phonopy.conf')
-            self._scell_matrix = sc
+            _, pm = read_phonopy_conf(self.directory + '/phonopy.conf')
             self._primitive_matrix = pm
         return self._primitive_matrix
     
@@ -124,8 +123,9 @@ class Phonondb():
     
     @property
     def primitive(self):
-        self._phonon = self.phonon
-        return self._phonon
+        if self._phonon is None:
+            self._phonon = self.phonon
+        return self._phonon.primitive
     
     def get_primitive(self, format='phonopy'):
         self._phonon = self.phonon

@@ -3,8 +3,8 @@ Useful Tips
 ==============
 
 
-Make DFSET file for Alamode
-=============================
+To make DFSET file for Alamode
+===============================
 
 ``get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
 Many directories which contain a vasprun.xml file are supposed to be located under the given directory.
@@ -28,7 +28,7 @@ Many directories which contain a vasprun.xml file are supposed to be located und
 ..
 
 
-Plot phonon dispersion and DOS
+To plot phonon dispersion and DOS
 =================================
 
 ``plot_bandos`` helps to plot the phonon dispersion and DOS.
@@ -57,8 +57,8 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
 ..
 
 
-Plot results of cross validation
-=================================
+To plot results of cross validation
+=====================================
 
 .. code-block:: shell
     

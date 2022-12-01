@@ -4,6 +4,7 @@
 # Class to generate displacements of atoms
 #
 # Copyright (c) 2020 Terumasa Tadano
+# Modyfied by Masato Ohnishi, 2022
 #
 # This file is distributed under the terms of the MIT license.
 # Please see the file 'LICENCE.txt' in the root directory
@@ -681,7 +682,26 @@ class AlamodeDisplace(object):
                         print(msg)
                         
                         from auto_kappa.structure.crystal import get_commensurate_points
-                        Mps = np.linalg.inv(convertor)
+                        Mps_tmp = np.linalg.inv(convertor)
+                        
+                        ##
+                        ## Note: 
+                        ## The old version causese an error depending on the material
+                        ##
+                        ### old version: WRONG representation
+                        #Mps = Mps_tmp.astype(int)
+                        ### modified version
+                        Mps = np.where(
+                                Mps_tmp < 0., 
+                                (Mps_tmp - 0.5).astype(int), 
+                                (Mps_tmp + 0.5).astype(int)
+                                )
+                        dmax = np.amax(abs(Mps - Mps_tmp))
+                        if dmax > tol_zero:
+                            print("")
+                            print(" WARRNING: please check the cell size of "\
+                                    "primitive and supercell")
+                        
                         self._commensurate_qpoints = get_commensurate_points(Mps)
                         return 0
                         

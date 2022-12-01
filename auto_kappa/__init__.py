@@ -1,20 +1,27 @@
 # -*- coding: utf-8 -*-
+from phonopy.version import __version__
 
 output_directories = {
         'relax': 'relax',
         'nac': 'nac',
         'harm':{
             'suggest': 'harm/suggest',
-            'force': 'harm/force',
+            'force': 'harm/force',               ## FC2 with finite displacement
             'bandos': 'harm/bandos',
             'evec' : 'harm/evec',
             },
         'cube':{
-            'suggest': 'cube/suggest',
-            'force': 'cube/force',
-            'kappa': 'cube/kappa',
+            'suggest':  'cube/suggest',
+            'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
+            'kappa_fd': 'cube/kappa_fd',
+            'force_lasso': 'cube/force_lasso',   ## FC3 with random displacement
+            'cv'   :        'cube/lasso',
+            'lasso':        'cube/lasso',
+            'kappa_lasso':  'cube/kappa_lasso',
             },
-        'lasso':{    
+        ## high-order FCs
+        'higher':{
+            'suggest': 'lasso/suggest',
             'force': 'lasso/force',
             'cv'   : 'lasso/lasso',
             'lasso': 'lasso/lasso',
@@ -23,16 +30,41 @@ output_directories = {
         'result': 'result'
         }
 
+output_files = {
+        'harm_dfset' : 'DFSET.harm',
+        'harm_xml'   : "FC2.xml",
+        #'harm_xml'   : "FCs_harm.xml",
+        #
+        #'cube_dfset' : 'DFSET.cube',       ## not used anymore
+        #'cube_xml'   : "FCs_cube.xml",     ## not used anymore
+        #
+        #'cube_fd_xml'   : "FC3_cube_fd.xml",
+        #'cube_lasso_xml'  : "FC3_cube_lasso.xml",
+        'cube_fd_dfset' : 'DFSET.cube_fd',
+        'cube_fd_xml'   : "FC3_fd.xml",
+        'cube_lasso_dfset': 'DFSET.cube_lasso',
+        'cube_lasso_xml'  : "FC3_lasso.xml",
+        #
+        'lasso_dfset': 'DFSET.lasso',
+        'lasso_xml'  : "FCs_lasso.xml",
+        }
+
 default_vasp_parameters = {
+        ### for relaxation
         'relax':{
             'prec': 'Accurate',
             'ibrion': 2,
             'nsw': 500,
-            'isif': 3,
-            'ediffg': -1e-8,
-            'lreal': False,
+            'ediffg': -1e-6,
             'addgrid': True,
             },
+        'relax-full':{    
+            'isif': 3,
+            },
+        'relax-freeze':{
+            'isif': 2,
+            },
+        ### force calculation
         'force':{
             'ibrion': -1,
             'prec': 'Accurate',
@@ -55,19 +87,11 @@ default_vasp_parameters = {
             'ediff': 1e-8,
             'ismear': 0,
             'ialgo': 38,
+            'lreal': False,
             'addgrid': True,
             'lwave': False,
             'lcharg': False,
             }
-        }
-
-output_files = {
-        'harm_dfset': 'DFSET.harm',
-        'harm_xml': "FCs_harm.xml",
-        'cube_dfset': 'DFSET.cube',
-        'cube_xml': "FCs_cube.xml",
-        'lasso_dfset': 'DFSET.lasso',
-        'lasso_xml': "FCs_lasso.xml",
         }
 
 #default_lasso_parameters = {

@@ -27,16 +27,20 @@ def main(build_dir):
     packages_autokappa = [
             'auto_kappa',
             'auto_kappa.alamode',
+            'auto_kappa.alamode.tools',
+            'auto_kappa.alamode.analyzer',
             'auto_kappa.cui',
             'auto_kappa.io',
             'auto_kappa.math',
             'auto_kappa.plot',
+            'auto_kappa.plot.alamode',
             'auto_kappa.structure',
             ]
 
     scripts_autokappa = [
             'scripts/akrun',
-            'scripts/ak-logger'
+            'scripts/ak-logger',
+            'scripts/ak-plotter',
             ]
     
     version = _get_version()
@@ -50,8 +54,8 @@ def main(build_dir):
             author_email='ohnishi@photon.t.u-tokyo.ac.jp',
             packages=packages_autokappa,
             install_requires=[
-              'numpy', 'phonopy', 'spglib', 'ase', 'pymatgen', 'custodian',
-              'xmltodict', 'mkl', 'f90nml', 'PyYAML',
+              'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 
+              'custodian', 'xmltodict', 'mkl', 'f90nml', 'PyYAML',
               ],
             scripts=scripts_autokappa,
             url='https://github.com/masato1122/auto_kappa.git',

@@ -39,21 +39,28 @@ def get_parser():
             default=1, help="verbosity [0]")
     
     parser.add_option("--neglect_log", dest="neglect_log", type="int",
-            default=1, help="neglect log (1) or not (0) [1]")
+            default=0, help="neglect log (1) or not (0) [0]")
     
     ### parameters which may not need to be changed.
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, help="cutoff3, unit=Ang [4.3]")
     
     parser.add_option("--nmax_suggest", 
-            dest="nmax_suggest", type="int", default=200, 
-            help="Maximum number of suggested patterns for cubic FCs [200]")
-
+            dest="nmax_suggest", type="int", default=100, 
+            help="Maximum number of suggested patterns for cubic FCs [100]")
+    
+    #parser.add_option("--frac_nrandom", 
+    #        dest="frac_nrandom", type="float", default=0.02,
+    #        help="Ratio of the number of generated patterns with random "\
+    #                "displacement to the number for the suggested patterns "
+    #                "with ALM [0.02]")
+    #
     parser.add_option("--frac_nrandom", 
-            dest="frac_nrandom", type="float", default=0.02,
-            help="Ratio of the number of generated patterns with random "\
-                    "displacement to the number for the suggested patterns "
-                    "with ALM [0.02]")
+            dest="frac_nrandom", type="float", default=1.,
+            help="Npattern * Natom / Nfc3, where Npattern is the number of "\
+            "generated random displacement patterns, Natom is the number of "\
+            "atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
+            )
     
     parser.add_option("--command_vasp", 
             dest="command_vasp", type="string", default="vasp", 
@@ -76,8 +83,20 @@ def get_parser():
             default=500., 
             help="temperature for random displacement [500]")
     
+    #parser.add_option("--auto_lreal_scell_size",
+    #        dest="auto_lreal_scell_size", type="int",
+    #        default=65, 
+    #        help="number of atoms to set LREAL=True [65]")
+    
+    parser.add_option("--anphon_para", 
+            dest="anphon_para", type="string", default="omp", 
+            help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [omp]")
+    
+    parser.add_option("--magnitude2", 
+            dest="magnitude2", type="float", default=0.03, 
+            help="magnitude of random displacement for FC3 [0.03]")
+    
     (options, args) = parser.parse_args()
     
     return options
-
 

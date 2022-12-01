@@ -15,7 +15,8 @@ import warnings
 import re
 import numpy as np
 import pymatgen
-from pymatgen.core.structure import IStructure
+#from pymatgen.core.structure import IStructure
+from pymatgen.io.vasp import Poscar
 from ase import Atoms
 
 from auto_kappa.units import AToBohr
@@ -76,6 +77,9 @@ class AlmInput(MSONable, dict):
             'periodic',     # 1 1 1, array of integers
             'nmaxsave',     # min(5, norder), integer
             'hessian',      # 0, integer
+            ## >= v.1.4.x?
+            'fc3_shengbte', # 0, integer
+            'fc_zero_thr',  # 1.0e-12, double
             ]
     interaction_keys = {
             'norder',       # None, integer
@@ -112,9 +116,14 @@ class AlmInput(MSONable, dict):
             'solution_path',  # 0,   integer
             'debias_ols',     # 0,   integer
             ## for lmode == 'enet'
-            'standardize'     # 1,   integer
+            'standardize',    # 1,   integer
+            ## >= v.1.4.x?
+            'enet_dnorm',     # 1.0, double
+            'solution_path',  # 0, integer
+            'debias_ols',     # 0, integer
+            'stop_criterion', # 5, integer
             }
-
+    
     def __init__(self, **kwargs):
         """
         Args
@@ -139,9 +148,6 @@ class AlmInput(MSONable, dict):
         """
         return cls(**alm_dict)
     
-    #@classmethod
-    #def from_file(cls, filepath: str):
-    
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
         """ Make ALM input parameters from a structure file
@@ -155,7 +161,7 @@ class AlmInput(MSONable, dict):
         kwargs['norder'] = norder
         
         ## set a structure
-        cls.structure = IStructure.from_file(filename)
+        cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure
         alm_dict = dict(
                 cls.from_structure(cls.structure, norder=norder)
                 )
@@ -189,7 +195,7 @@ class AlmInput(MSONable, dict):
         params_str = get_alamode_variables_from_structure(
                 cls.structure, norder=norder)
         alm_dict.update(params_str)
-
+        
         ## set given parameters
         alm_dict.update(kwargs)
         
@@ -284,22 +290,14 @@ class AlmInput(MSONable, dict):
         ## output an ALM input file
         with open(filename, "w") as file:
             file.write(alm_str)
-
+    
+    @classmethod
+    def from_file(cls, filename: str=None):
+        inp_dict = _read_alamode_input(filename)
+        return cls(**inp_dict)
+    
     def as_dict(self):
         return dict(self)
-    
-    #def _get_formula(self):
-    #    words = self.structure.get_primitive_structure().formula.split()
-    #    if len(words) == 1:
-    #        return re.sub(r"[123456789]", "", words[0])
-    #    else:
-    #        prefix = ""
-    #        for i in range(len(words)):
-    #            prefix += words[i].replace("1", "")
-    #        return prefix
-    
-    #def suggest_cutoff(self):
-    #    cutoff = suggest_alm_cutoff(self.structure)
     
 
 ## This part should be modified (rewrite).
@@ -407,8 +405,10 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     ## cutoff (unit: Bohr)
     params['cutoff'] = {}
-    for s1 in sym_list:
-        for s2 in sym_list:
+    for i1 in range(len(sym_list)):
+        s1 = sym_list[i1]
+        for i2 in range(i1, len(sym_list)):
+            s2 = sym_list[i2]
             comb = s1+'-'+s2
             params['cutoff'][comb] = []
             if norder is not None:
@@ -444,6 +444,7 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
+            'fc3xml',       # None, string
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -476,19 +477,22 @@ class AnphonInput(MSONable, dict):
             'restart_scph',      # 1 or 0, integer
             ]
     analysis_keys = [
-            'gruneisen', 
-            'printevec', 
-            'printxsf',
-            'printvel',
-            'printmsd',
-            'pdos',
-            'tdos',
-            'sps', 
-            'printpr', 
-            'kappa_coherent', 
-            'kappa_spec',  
-            'isotope',  
+            'gruneisen',      # 0, integer 
+            'printevec',      # 0, integer
+            'printxsf',       # 0, integer
+            'printvel',       # 0, integer
+            'printmsd',       # 0, integer
+            'pdos',           # 0, integer
+            'tdos',           # 0, integer
+            'sps',            # 0, integer
+            'printpr',        # 0, integer
+            'kappa_coherent', # 0, integer
+            'kappa_spec',     # 0, integer
+            'isotope',        # 0, integer
             'isofact',        # Automatically calculated from the KD-tag
+            'ucorr',          # 0, integer
+            'shift_ucorr',    # [0,0,0], array of integers
+            'zmode',          # 0, integer
             'anime',          # None, array of doubles 
             'anime_frames',   # 20, integer
             'anime_cellsize', # None, Array of integers
@@ -513,7 +517,6 @@ class AnphonInput(MSONable, dict):
         """
         super().__init__()
         self.update(kwargs)
-
         self._primitive = None
     
     def as_dict(self):
@@ -529,8 +532,15 @@ class AnphonInput(MSONable, dict):
         self._primitive = structure
 
     def get_primitive(self):
-        return get_primitive_structure(self.structure)
-
+        
+        ### old version
+        #prim = get_primitive_structure(self.structure, format='ase')
+        #
+        ### modified
+        struct_pmg = change_structure_format(self.structure, format='pmg')
+        prim = struct_pmg.get_primitive_structure()
+        return prim
+     
     @classmethod
     def from_dict(cls, alm_dict: Dict):
         """ Write a ALM input file
@@ -547,8 +557,8 @@ class AnphonInput(MSONable, dict):
             .cif. etc.
         """
         ## get a structure
-        cls.structure = IStructure.from_file(filename)
-        
+        cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure
+
         ## get the primitive structure
         primitive = cls.get_primitive(cls)
         
@@ -587,8 +597,6 @@ class AnphonInput(MSONable, dict):
         
         return AnphonInput(**anp_dict)
      
-    #@classmethod
-    #def from_file(cls, filepath: str):
     
     def set_kpoint(self, **kwargs):
         """ Set suggeted k-point parameters. This module may not well written.
@@ -644,7 +652,9 @@ class AnphonInput(MSONable, dict):
             if 'kpath' not in self.keys():
                 print(" kpath is set automatically.")
                 self['kpath'] = get_kpoint_path(
-                        self.primitive, deltak=self['deltak'])
+                        self.primitive, 
+                        deltak=self['deltak']
+                        )
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []
@@ -727,6 +737,12 @@ class AnphonInput(MSONable, dict):
         with open(filename, "w") as file:
             file.write(anp_str)
     
+    @classmethod
+    def from_file(cls, filename: str=None):
+        inp_dict = _read_alamode_input(filename)
+        return cls(**inp_dict)
+
+
 def _write_kpoint(params, kpoint=None):
     lines = []
     lines.append('&kpoint')
@@ -794,6 +810,283 @@ def get_kpoint_path(primitive, deltak=0.01):
         nk = int(np.ceil(kleng / deltak))
         kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
     return kpoints
+
+def _read_alamode_input(filename):
+    """ Read alamode input file and output a dictionary
+    """
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+    
+    ## get lines for each section
+    section = None
+    lines_alamode = {}
+    for line in lines:
+        data = line.split()
+        if len(data) == 0:
+            continue
+        if data[0][0] == "#" or data[0][0] == "/":
+            continue
+        if data[0][0] == '&':
+            section = data[0].replace("&", "")
+            lines_alamode[section] = []
+            continue
+        
+        lines_alamode[section].append(line)
+    
+    ##
+    params = {}
+    for sec in lines_alamode:
+
+        if sec == 'cell':
+            params.update(_parse_cell_lines(lines_alamode[sec]))
+        elif sec == 'kpoint':
+            params.update(_parse_kpoint_lines(lines_alamode[sec]))
+        elif sec == 'cutoff':
+            params.update(_parse_cutoff_lines(lines_alamode[sec]))
+        elif sec == 'position':
+            params.update(_parse_position_lines(lines_alamode[sec]))
+        else:
+            params.update(_parse_normal_lines(lines_alamode[sec]))
+    
+    return params
+
+def _parse_cell_lines(lines):
+    params = {}
+    lunit = float(lines[0].split()[0])
+    vec = np.zeros((3,3))
+    for i1 in range(3):
+        data = lines[1+i1].split()
+        for j in range(3):
+            vec[i1,j] = float(data[j]) * lunit
+    
+    return {'cell': vec}
+
+def _parse_cutoff_lines(lines):
+    """ NEED to be modified
+    """
+    params = {}
+    for line in lines:
+        data = line.split()
+        comb = data[0]
+        params[comb] = []
+        for ii in range(1,len(data)):
+            if data[ii].lower() == 'none':
+                params[comb].append(None)
+            else:
+                params[comb].append(float(data[ii]))
+    return {'cutoff': params}
+
+def _parse_position_lines(lines):
+    positions = []
+    for line in lines:
+        data = line.split()
+        positions.append([])
+        positions[-1].append(int(data[0]))
+        for j in range(3):
+            positions[-1].append(float(data[1+j]))
+    return {'position': positions}
+
+def _parse_kpoint_lines(lines):
+    
+    params = {}
+    params['kpmode'] = int(lines[0].split()[0])
+    if params['kpmode'] == 0:    ## calculate phonon frequencies at given k points
+        nk = len(lines) - 1
+        kpoints = np.zeros((nk, 3))
+        for ik in range(nk):
+            data = lines[1+ik].split()
+            kpoints[ik] = np.asarray(data)
+        params['kpoints'] = kpoints
+
+    elif params['kpmode'] == 1:  ## band dispersion calc
+        params['kpath'] = []
+        for ii in range(1, len(lines)):
+            data = lines[ii].split()
+            params['kpath'].append([
+                    {data[0]: [float(data[1+i]) for i in range(3)]},
+                    {data[4]: [float(data[5+i]) for i in range(3)]},
+                    int(data[8]),
+                    ])
+
+    elif params['kpmode'] == 2:  ## uniform k grid for phonon DOS and kappa
+        data = lines[1].split()
+        params['kpts'] = [int(d) for d in data]
+    
+    return params
+
+###
+def _parse_normal_lines(lines):
+    """ Read lines with normal formal such as "key = val", 
+    "key = val1, val2, ...".
+    """
+    params = {}
+    for line in lines:
+        data = line.split()
+        ll = ""
+        for i in range(len(data)-2):
+            if i != 0:
+                ll += " "
+            ll += data[2+i]
+        val = proc_val(data[0], ll)
+        params[data[0]] = val
+    return params
+
+def proc_val(key, val):
+    
+    str_keys = (
+            ## shared
+            'prefix',        # None, string
+            'mode',          # None, string (suggest or optimize)
+            'fc2xml',         # None,  string
+            'fc3xml',         # None,  string
+            ## alm
+            'kd',            # None, array of strings
+            'fcsym_basis',   # Lattice, string
+            'lmodel',         # least-squares, string
+            'dfset',          # None,  string
+            'rotaxis',        # None,  string
+            'dfset_cv',       # dfset,    string
+            'sparsesolver',   # SimplicialLDLT, string
+            'skip',           # None,  int-int
+            ## anphon
+            'fcsxml',        # None, string
+            'borninfo',      # None, string
+            'anime_format',  # xyz,  string
+            )
+    
+    int_keys = (
+            ## shared
+            'nkd',          # None, integer
+            'norder',
+            'printsym',       # 0,    integer
+            ## alm
+            'nonanalytic',    # 0,    integer
+            'bornsym',        # 0,    integer
+            'ismear',         # -1,   integer
+            'bconnect',       # 0,    integer
+            'classical',      # 0,    integer
+            'trisym',         # 1,    integer
+            'restart',        # 1 or 0, integer
+            'self_offdiag',   # 0,    Integer
+            'maxiter',        # 1000,  integer
+            'lower_temp',     # 1,     integer
+            'warmstart',      # 1,     integer
+            'ialgo',          # 0,     integer
+            'restart_scph',   # 1 or 0, integer
+            'gruneisen',      # 0, integer 
+            'printevec',      # 0, integer
+            'printxsf',       # 0, integer
+            'printvel',       # 0, integer
+            'printmsd',       # 0, integer
+            'pdos',           # 0, integer
+            'tdos',           # 0, integer
+            'sps',            # 0, integer
+            'printpr',        # 0, integer
+            'kappa_coherent', # 0, integer
+            'kappa_spec',     # 0, integer
+            'isotope',        # 0, integer
+            'ucorr',          # 0, integer
+            'zmode',          # 0, integer
+            'anime_frames',   # 20, integer
+            ## anphon
+            'nat',          # None, integer
+            'noncollinear', # 0,     integer
+            'nmaxsave',     # min(5, norder), integer
+            'hessian',      # 0, integer
+            'fc3_shengbte', # 0, integer
+            'norder',       # None, integer
+            'ndata',          # None,  integer
+            'nstart',         # 1,     integer
+            'nend',           # ndata, integer
+            'iconst',         # 11,    integer
+            'sparse',         # 0,     integer
+            'maxiter',        # 10000,       integer
+            'cv',             # 0,        integer
+            'ndata_cv',       # None,     integer
+            'nstart_cv',      # 1,        integer
+            'nend_cv',        # ndata_cv, integer
+            'cv_nalpha',      # 50,  integer
+            'solution_path',  # 0,   integer
+            'debias_ols',     # 0,   integer
+            'standardize',    # 1,   integer
+            'solution_path',  # 0, integer
+            'debias_ols',     # 0, integer
+            'stop_criterion', # 5, integer
+            )
+    
+    double_keys = (
+            ## shared
+            'tolerance',    # 1e-6, double
+            ## alm
+            'na_sigma',     # 0.0,  double
+            'tmin',         # 0,    double
+            'tmax',         # 1000, double
+            'dt',           # 10,   double
+            'emin',         # 0,    double
+            'emax',         # 1000, double
+            'delta_e',      # 10,   double
+            'epsilon',      # 10.0, double
+            'tol_scph',          # 1e-10, double
+            'mixalpha',          # 0.1,   double
+            ## anphon
+            'fc_zero_thr',  # 1.0e-12, double
+            'conv_tol',       # 1e-8,        double 
+            'l1_ratio',       # 1.0 (LASSO), double
+            'l1_alpha',       # 0.0,      double
+            'cv_minalpha',    # cv_maxalpha*1e-6,  double
+            'cv_maxalpha',    # set automatically, double
+            'enet_dnorm',     # 1.0, double
+            'enet_dnorm',     # 1.0, double
+            )
+            
+    strarray_keys = (
+            'kd',           # None, Array of strings
+            )
+    
+    intarray_keys = (
+            ## sahre
+            'nbody',             # array of integers
+            ## alm
+            'kmesh_interpolate', # None, Array of integers 
+            'kmesh_scph',        # None, Array of integers
+            'shift_ucorr',       # [0,0,0], array of integers
+            'anime_cellsize',    # None, Array of integers
+            ## anphon
+            'periodic',          # 1 1 1, array of integers
+            )
+
+    doublearray_keys = (
+            ## alm
+            'mass',         # weight of elements, Array of double
+            'isofact',        # Automatically calculated from the KD-tag
+            'anime',          # None, array of doubles 
+            ## anphon
+            'magmom',       # 0...0, array of double
+            )
+    
+    ##
+    if key in str_keys:
+        return str(val)
+
+    elif key in int_keys:
+        return int(val)
+
+    elif key in double_keys:
+        return float(val)
+
+    elif key in strarray_keys:
+        return [str(d) for d in val.split()]
+    
+    elif key in intarray_keys:
+        v = [int(d) for d in val.split()]
+        return [int(d) for d in val.split()]
+
+    elif key in doublearray_keys:
+        return [float(d) for d in val.split()]
+    
+    else:
+        warnings.warn(" Error: %s is not defined." % key)
+        exit()
 
 
 #def write_alamode_input(mode: None, structure=None, prefix="prefix", 

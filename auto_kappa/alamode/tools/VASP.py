@@ -4,6 +4,7 @@
 # Interface to VASP (https://www.vasp.at)
 #
 # Copyright (c) 2014-2020 Terumasa Tadano
+# Modified by Masato Ohnishi, 2022
 #
 # This file is distributed under the terms of the MIT license.
 # Please see the file 'LICENCE.txt' in the root directory

@@ -6,6 +6,8 @@ import ase.io
 import datetime
 import yaml
 import warnings
+import glob
+from pymatgen.io.vasp import Poscar
 
 from auto_kappa import output_directories as out_dirs
 
@@ -51,22 +53,22 @@ class AkLog():
         
         times = {}
         for k1 in self.out:
-            
+
             if isinstance(self.out[k1], dict) == False:
                 continue
             
             if 'time' in self.out[k1]:
                 times[k1] = self.out[k1]['time']['value']
-
+            
             for k2 in self.out[k1]:
-                
+
                 if isinstance(self.out[k1][k2], dict) == False:
                     continue
             
                 if 'time' in self.out[k1][k2]:
                     lab = k1+'_'+k2
                     times[lab] = self.out[k1][k2]['time']['value']
-         
+        
         return times
 
     def plot_times(self, figname=None):
@@ -74,7 +76,7 @@ class AkLog():
         if figname is None:
             figname = self.directory+'/'+out_dirs['result']+'/fig_times.png'
         
-        nonskip_labels = ['force', 'cv(lasso', 'lasso(lasso)', 'kappa']
+        nonskip_labels = ['force', 'cv(lasso)', 'lasso(lasso)', 'kappa']
         
         all_times = self.get_times()
 
@@ -85,7 +87,10 @@ class AkLog():
              
             if '_' in key:
                 data = key.split('_')
-                lab = "%s(%s)" % (data[1], data[0])
+                if data[0] == 'kappa':
+                    lab = "%s(%s)" % (data[0], data[1])
+                else:
+                    lab = "%s(%s)" % (data[1], data[0])
             else:
                 lab = key
             
@@ -102,7 +107,7 @@ class AkLog():
         
         times.append(time_others)
         labels.append('others')
-        
+
         from auto_kappa.plot.pltalm import plot_times_with_pie
         plot_times_with_pie(times, labels, figname=figname)
         
@@ -308,10 +313,6 @@ def read_log_fc2(directory):
     filename = directory+'/'+out_dirs['harm']['force']+'/fc2.log'
     return read_log_fc(filename)
 
-def read_log_fc3(directory):
-    
-    filename = directory+'/'+out_dirs['cube']['force']+'/fc3.log' 
-    return read_log_fc(filename)
 
 #def read_log_fc_anharm(directory):
 #
@@ -322,38 +323,75 @@ def read_log_fc3(directory):
 #    else:
 #        return out_lasso
 
-def read_log_suggest(directory):
+def read_log_suggest(directory, order=1):
     
-    filename = directory+'/'+out_dirs['harm']['suggest']+'/suggest.log'
+    if order == 1:
+        mode = 'harm'
+    elif order == 2:
+        mode = 'cube'    
+    
+    filename = directory+'/'+out_dirs[mode]['suggest']+'/suggest.log'
+    
+    ##
     if os.path.exists(filename) == False:
         return None
+    
     out = {}
     v = _get_alamode_runtime(filename)
     if v is not None:
         out['time'] = v
+    
     nfcs = int(_extract_data(
-        filename, "number of  harmonic fcs", back_id=-1)[0])
+                filename, "number of  harmonic fcs", back_id=-1
+                )[0])
+    
     if nfcs is None:
         nfcs = int(_extract_data(
-            filename, "number of harmonic fcs", back_id=-1)[0])
+            filename, "number of harmonic fcs", back_id=-1
+            )[0])
+    
     data = _extract_lines(filename, "space group:")[0].translate(
             str.maketrans({"(": " ", ")": " "})).split()
+    
     out['space_group'] = {
             'international': data[-2], 
             'number': int(data[-1]),
             }
+    
     out['number_of_symmetry'] = int(_extract_data(
         filename, "number of symmetry operations")[0])
+    
     out['number_of_fcs'] = nfcs
+    
     out['number_of_structures'] = int(_extract_data(
         filename, "number of disp. patterns")[0])
+    
     return out
 
 def read_log_kappa(directory):
-    filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
     
-    if os.path.exists(filename) == False:
-        filename = directory+'/'+out_dirs['lasso']['kappa']+'/kappa.log'
+    outs = {}
+    for fc3_type in ['fd', 'lasso']:
+        line = directory+'/'+out_dirs['cube']['kappa_%s' % fc3_type] + '*/kappa.log'
+        fns = glob.glob(line)
+        for i, fn in enumerate(fns):
+            out = read_log_kappa_each(fn)
+            label = "%s:%dx%dx%d" % (
+                    fc3_type,
+                    out['kgrid'][0],
+                    out['kgrid'][1],
+                    out['kgrid'][2],
+                    )
+            outs[label] = out
+    return outs
+   
+
+def read_log_kappa_each(filename):
+    
+    #filename = directory+'/'+out_dirs['cube']['kappa']+'/kappa.log'
+    #
+    #if os.path.exists(filename) == False:
+    #    filename = directory+'/'+out_dirs['higher']['kappa']+'/kappa.log'
     
     if os.path.exists(filename) == False:
         
@@ -378,7 +416,7 @@ def read_log_kappa(directory):
         nk1 = int(_extract_data(filename, 'nk1:')[0])
         nk2 = int(_extract_data(filename, 'nk2:')[0])
         nk3 = int(_extract_data(filename, 'nk3:')[0])
-        out['nks'] = [nk1, nk2, nk3]
+        out['kgrid'] = [nk1, nk2, nk3]
         out['number_of_kpoints'] = int(_extract_data(
             filename, "number of k points")[0])
         out['number_of_irreducible_kpoints'] = int(_extract_data(
@@ -433,7 +471,32 @@ def read_log_relax(directory):
     dir_vasp = directory+'/'+out_dirs['relax']
     if os.path.exists(dir_vasp) == False:
         return None
-    out = _read_each_vaspjob(dir_vasp)
+    
+    out = {}
+    count = 0
+    pos = None
+    for type in ['full', 'freeze']:
+        for i in range(10):
+            label = "%s-%d" % (type, i+1)
+            
+            if type == 'full' and i == 0:
+                diri = dir_vasp
+            else:
+                diri = dir_vasp + "/" + label
+            
+            fn = diri + '/vasprun.xml'
+            if os.path.exists(fn) == False:
+                continue
+            if count == 0:
+                out[type] = _read_each_vaspjob(diri)
+                pos = diri + '/POSCAR'
+            count += 1
+        ##
+        out['full']['repeat'] = count
+    
+    ## get prefix
+    structure = Poscar.from_file(pos, check_for_POTCAR=False).structure
+    out['prefix'] = structure.composition.reduced_formula
     return out
 
 def read_log_nac(directory):
@@ -441,12 +504,29 @@ def read_log_nac(directory):
     out = _read_each_vaspjob(dir_vasp)
     return out
 
-def read_log_forces(directory, mode):
+def read_log_forces(directory, mode, fc3_type=None):
     
-    dir1 = directory+'/'+out_dirs[mode]['force']
+    ### get the directory name for force calculation
+    if mode == 'harm':
+        
+        dir1 = directory+'/'+out_dirs[mode]['force']
+    
+    elif mode == 'cube':
+        
+        dir1 = directory+'/'+out_dirs[mode]['force_%s' % fc3_type]
+    
+    elif mode == 'higher':
+        
+        dir1 = directory + '/' + out_dirs[mode]['force']
+    
+    else:
+        warnings.warn(" Warning: %s is not supported." % mode)
+        return None
+
     if os.path.exists(dir1) == False:
         return None
-    
+        
+    ##
     out = {}
     fmaxes = []
     total_time = 0.
@@ -466,7 +546,8 @@ def read_log_forces(directory, mode):
         out_each = _read_each_vaspjob(dir_vasp)
 
         if out_each is None:
-            warnings.warn(" Error in %s" % dir_vasp)
+            print(" Cannot find %s or the calculation has not been done." % dir_vasp)
+            #warnings.warn(" Error in %s" % dir_vasp)
             continue
         
         ## total time
@@ -490,7 +571,7 @@ def read_log_forces(directory, mode):
 
 def read_log_lasso(directory):
     
-    dir_lasso = directory+'/'+out_dirs['lasso']['lasso']
+    dir_lasso = directory+'/'+out_dirs['higher']['lasso']
     if os.path.exists(dir_lasso) == False:
         return None
     
@@ -499,7 +580,7 @@ def read_log_lasso(directory):
     out['force'] = read_log_forces(directory, 'lasso')
     
     ### cv.log
-    filename = directory+'/'+out_dirs['lasso']['cv']+'/cv.log'
+    filename = directory+'/'+out_dirs['higher']['cv']+'/cv.log'
     if os.path.exists(filename):
         out['cv'] = {}
         v = _get_alamode_runtime(filename)
@@ -507,7 +588,7 @@ def read_log_lasso(directory):
             out['cv']['time'] = v
      
     ### lasso.log
-    filename = directory+'/'+out_dirs['lasso']['lasso']+'/lasso.log' 
+    filename = directory+'/'+out_dirs['higher']['lasso']+'/lasso.log' 
     v = read_log_fc(filename)
     if v is not None:
         out['lasso'] = v
@@ -517,7 +598,7 @@ def read_log_lasso(directory):
 #def _analyze_time(out):
 #    
 #    durations = {}
-#    for mode in ['harm', 'cube', 'lasso']:
+#    for mode in ['harm', 'cube', 'higher']:
 #        if mode in out:
 #            if 'force' in out[mode]:
 #                if 'time' in out[mode]['force']:
@@ -634,8 +715,17 @@ def get_ak_logs(directory):
     >>>     print(" Output", outfile)
     >>> 
     """
-    out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "lasso":{}}
-     
+    out_all = {"relax":{}, "nac":{}, "harm":{}, "cube":{}, "higher":{}}
+    
+    #### get prefix (composition)
+    #pos = directory + "/harm/force/prist/POSCAR"
+    #try:
+    #    structure = Poscar.from_file(pos).structure
+    #    prefix = structure.composition.reduced_formula
+    #    out_all['prefix'] = prefix
+    #except Exception:
+    #    out_all['prefix'] = "-"
+
     ### relax and nac
     v = read_log_relax(directory)
     if v is not None:
@@ -646,7 +736,7 @@ def get_ak_logs(directory):
         out_all['nac'] = v
     
     ### harmonic
-    v = read_log_suggest(directory)
+    v = read_log_suggest(directory, order=1)
     if v is not None:
         out_all['harm']["suggest"] = v
     
@@ -665,18 +755,22 @@ def get_ak_logs(directory):
             out_all['harm'][mode] = v
     
     ### cube
-    v = read_log_forces(directory, 'cube')
-    if v is not None:
-        out_all['cube']['force'] = v
-    
-    v = read_log_fc3(directory)
-    if v is not None:
-        out_all['cube']["fc"] = v
+    for fc3_type in ['fd', 'lasso']:
+        
+        v = read_log_forces(directory, 'cube', fc3_type=fc3_type)
+        if v is not None:
+            out_all['cube']['force_%s' % fc3_type] = v
+        
+        filename = directory+'/'+out_dirs['cube']['force_%s' % fc3_type]+'/fc3.log' 
+        if os.path.exists(filename):
+            v = read_log_fc(filename)
+            if v is not None:
+                out_all['cube']["fc_%s" % fc3_type] = v
     
     ### lasso
     v = read_log_lasso(directory)
     if v is not None:
-        out_all['lasso'] = v
+        out_all['higher'] = v
     
     ### kappa
     try:
@@ -690,7 +784,7 @@ def get_ak_logs(directory):
     out_mod = {}
     for key in out_all:
         if any(out_all[key]):
-            out_mod[key] = out_all[key].copy()
+            out_mod[key] = out_all[key]
     out_all = out_mod.copy()
 
     ### total time
@@ -703,7 +797,7 @@ def get_parser():
     parser = OptionParser()
     
     parser.add_option("-d", "--directory", dest="directory", type="string",
-            help="input file name")
+            help="directory name")
     
     parser.add_option("-o", "--outfile", dest="outfile", type="string",
             default=None, help="output .yaml file name")

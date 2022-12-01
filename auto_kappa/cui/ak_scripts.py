@@ -9,6 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import os
 import numpy as np
 import datetime
 
@@ -18,12 +19,13 @@ from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
 from auto_kappa.alamode.log_parser import AkLog
+from auto_kappa.structure.crystal import get_automatic_kmesh
 
 def start_autokappa():
     """ Print the logo.
     Font: stick letters
     """
-    from ..version import __version__
+    from auto_kappa.version import __version__
     print("\n\
                   ___  __                __   __       \n\
          /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  \n\
@@ -60,22 +62,44 @@ def end_autokappa():
         \n")
     print(" at", time.strftime("%m/%d/%Y %H:%M:%S"), "\n\n")
 
+def print_options(options):
+
+    msg = "\n"
+    msg += " Input parameters:\n"
+    msg += " =================\n"
+    print(msg)
+    opt_dict = eval(str(options))
+    for key in opt_dict:
+        if opt_dict[key] is not None:
+            print("", key.ljust(20), " : ", opt_dict[key])
+    print("")
+
 def main():
     
     times = {}
     
-    options = get_parser()
-    
     start_autokappa()
+    
+    options = get_parser()
+    print_options(options)
     
     ### Read data of phonondb
     ### phonondb is used to obtain structures (primitive, unit, and super cells)
     ### and k-points.
     phdb = Phonondb(options.directory)
     
+    ### get required data from Phonondb
     pmat = phdb.primitive_matrix
     smat = phdb.scell_matrix
-    
+    unitcell = phdb.get_unitcell(format='ase')
+    kpts_for_relax = phdb.get_kpoints(mode='relax').kpts[0]
+    kpts_for_force = phdb.get_kpoints(mode='force').kpts[0]
+    nac = phdb.nac
+    if nac == 1:
+        kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
+    else:
+        kpts_for_nac = None
+
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
@@ -98,25 +122,25 @@ def main():
     
     ### Set ApdbVasp object
     apdb = ApdbVasp(
-            phdb.get_unitcell(format='ase'), 
+            unitcell,
             primitive_matrix=pmat,
             scell_matrix=smat,
-            command=command_vasp)
+            command=command_vasp,
+            )
     
     ### Relaxation calculation
     mode = 'relax'
-    apdb.run_vasp(mode, 
+    apdb.run_relaxation(
             out_dirs[mode],
-            phdb.get_kpoints(mode=mode).kpts[0],
-            print_params=True
+            kpts_for_relax,
             )
     
     ### Born effective charge
-    if phdb.nac == 1:
+    if nac == 1:
         mode = 'nac'
         apdb.run_vasp(mode,
                 out_dirs[mode],
-                phdb.get_kpoints(mode=mode).kpts[0],
+                kpts_for_nac,
                 print_params=True
                 )
     
@@ -124,13 +148,14 @@ def main():
     commands = {
             'alamode': {
                 'mpirun': options.mpirun, 
-                'nprocs': 1, 
-                'nthreads': options.ncores, 
+                'anphon_para': options.anphon_para, 
+                'ncores': options.ncores, 
                 'anphon': options.command_anphon,
                 'alm': options.command_alm,
                 },
             'vasp': command_vasp,
             }
+    
     
     almcalc = AlamodeCalc(
             apdb.primitive,
@@ -139,8 +164,9 @@ def main():
             primitive_matrix=pmat,
             scell_matrix=smat,
             cutoff2=-1, cutoff3=options.cutoff3, 
-            mag=0.01,
-            nac=phdb.nac,
+            magnitude=0.01,
+            magnitude2=options.magnitude2,
+            nac=nac,
             commands=commands,
             verbosity=options.verbosity
             )
@@ -148,7 +174,7 @@ def main():
     ### ASE calculator for forces
     mode = 'force'
     calc_force = apdb.get_calculator(mode,
-            kpts=phdb.get_kpoints(mode=mode).kpts[0]
+            kpts=kpts_for_force,
             )
     
     t11 = datetime.datetime.now()
@@ -171,7 +197,7 @@ def main():
     elif options.neglect_log == 0:
         neglect_log = False
     ###############################
-
+    
     ### calculate forces for harmonic FCs
     almcalc.write_alamode_input(propt='fc2')
     almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
@@ -187,7 +213,8 @@ def main():
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
-    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    #almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
     
     ### Check negative frequency
     if almcalc.frequency_range[0] < options.negative_freq:
@@ -205,6 +232,12 @@ def main():
     t13 = datetime.datetime.now()
     times['harm_alamode'] = t13 - t12
     
+    ##############################
+    ##                          ##
+    ##  Start FC3 calculation   ##
+    ##                          ##
+    ##############################
+    
     ### calculate forces for cubic FCs
     ## ver.1: with ALM library
     #mode = 'force'
@@ -217,17 +250,23 @@ def main():
     ## ver.2: with alm command
     almcalc.write_alamode_input(propt='suggest', order=2)
     almcalc.run_alamode(propt='suggest', order=2)
-    almcalc.calc_forces(order=2, calculator=calc_force)
+    almcalc.calc_forces(order=2, calculator=calc_force,
+            nmax_suggest=options.nmax_suggest,
+            frac_nrandom=options.frac_nrandom,
+            output_dfset=2,
+            )
     
     t21 = datetime.datetime.now()
     times['anharm_forces'] = t21 - t13
     
     ### calculate anharmonic force constants
-    if almcalc.lasso:
-        from ..io.vasp import get_dfset
+    #if almcalc.lasso:
+    if almcalc.fc3_type == 'lasso':
+        from auto_kappa.io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
-            almcalc.write_alamode_input(propt=propt)
-            almcalc.run_alamode(propt)
+            order = 2
+            almcalc.write_alamode_input(propt=propt, order=order)
+            almcalc.run_alamode(propt, order=order, neglect_log=neglect_log)
     else: 
         ## ver.1 : with ALM library
         ##almcalc.calc_anharm_force_constants()
@@ -238,9 +277,18 @@ def main():
     t22 = datetime.datetime.now()
     times['anharm_fcs'] = t22 - t21
     
-    ### calculate kappa
-    almcalc.write_alamode_input(propt='kappa', kpts=[15,15,15])
-    almcalc.run_alamode(propt='kappa')
+    ### calculate kappa with different k grid densities
+    for kdensity in [500, 1000, 1500]:
+        kpts = get_automatic_kmesh(
+                almcalc.primitive, reciprocal_density=kdensity)
+        outdir = (
+                out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
+                "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
+                )
+        almcalc.write_alamode_input(
+                propt='kappa', order=2, kpts=kpts, outdir=outdir)
+        almcalc.run_alamode(
+                propt='kappa', neglect_log=neglect_log, outdir=outdir)
     
     ### analyze phonons
     print()
