@@ -2040,14 +2040,14 @@ def _alamode_finished(logfile):
     try:
         lines = open(logfile, 'r').readlines()
         n = len(lines)
-        for i in range(n):
+        for i in range(10):
             line = lines[n-1-i]
             data = line.split()
             if len(data) != 0:
                 if 'Job finished' in line:
                     return True
-                else:
-                    return False
+                #else:
+                #    return False
     except Exception:
         return False
     
