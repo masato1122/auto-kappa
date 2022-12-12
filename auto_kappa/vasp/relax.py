@@ -421,6 +421,7 @@ def relaxation_with_different_volumes(
             print(" Output directory:", outdir)
         
         #### prepare a strained structure
+        #structure = get_strained_structure(struct_init, strain, format='pmg')
         atoms = get_strained_structure(struct_init, strain, format='ase')
         
         ### set calculator object

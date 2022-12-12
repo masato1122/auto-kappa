@@ -191,6 +191,7 @@ class ApdbVasp():
     
     def run_relaxation(self, directory: './out', kpts: None,
             standardize_each_time=True,
+            volume_relaxation=False,
             force=False, num_full=2, verbosity=1): 
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
@@ -267,8 +268,27 @@ class ApdbVasp():
                 self.primitive, to_primitive=True,
                 )
         self.update_structures(prim_stand)
-    
 
+        ### strict relaxation with Birch-Murnaghan EOS
+        if volume_relaxation:
+            from auto_kappa.vasp.relax import StrictRelaxation
+            outdir = directory + "/volume" 
+            init_struct = change_structure_format(prim_stand, format='pmg')
+            relax = StrictRelaxation(init_struct, outdir=outdir)
+            Vs, Es = relax.with_different_volumes(
+                    kpts=kpts, 
+                    command=self.command,
+                    )
+            figname = outdir + '/fig_bm.png'
+            relax.plot_bm(figname=figname)
+            relax.print_results()
+            struct_opt = relax.get_optimal_structure()
+            outfile = outdir + "/POSCAR.opt"
+            struct_opt.to(filename=outfile)
+            struct_ase = change_structure_format(struct_opt, format='ase') 
+            self.update_structures(struct_ase)
+            
+    
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
             structure=None,
             method='custodian', force=False, print_params=False, verbosity=1):
@@ -318,13 +338,9 @@ class ApdbVasp():
                 structure = self.primitive
             
             run_vasp(calc, structure, method=method)
-   
-        os.environ["OMP_NUM_THREADS"] = "1"
-<<<<<<< HEAD
-
-=======
         
->>>>>>> feature/relax
+        os.environ["OMP_NUM_THREADS"] = "1"
+        
         ### Read the relaxed structure
         if 'relax' in mode.lower():
             self.set_relaxed_structures(directory)

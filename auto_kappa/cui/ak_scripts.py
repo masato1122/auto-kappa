@@ -130,9 +130,14 @@ def main():
     
     ### Relaxation calculation
     mode = 'relax'
+    if options.volume_relaxation == 0:
+        flag = False
+    else:
+        flag = True
     apdb.run_relaxation(
             out_dirs[mode],
             kpts_for_relax,
+            volume_relaxation=flag
             )
     
     ### Born effective charge
@@ -317,4 +322,4 @@ def main():
     print_times(times)
     
     end_autokappa()
-    
+
