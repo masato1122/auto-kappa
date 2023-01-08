@@ -100,6 +100,10 @@ def get_parser():
             dest="volume_relaxation", type="int", default=0,
             help="relaxation with different volume (0.off or 1.on) [0]")
     
+    parser.add_option("--relaxed_cell", 
+            dest="relaxed_cell", type="string", default="primitive",
+            help="cell type to be relaxed (primitive or conventional) [p]")
+    
     (options, args) = parser.parse_args()
     
     return options

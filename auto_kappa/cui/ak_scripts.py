@@ -137,7 +137,8 @@ def main():
     apdb.run_relaxation(
             out_dirs[mode],
             kpts_for_relax,
-            volume_relaxation=flag
+            volume_relaxation=flag,
+            cell_type=options.relaxed_cell
             )
     
     ### Born effective charge
