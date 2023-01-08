@@ -29,6 +29,7 @@ from auto_kappa.structure.crystal import (
         )
 from auto_kappa.calculator import run_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
+from auto_kappa.structure.crystal import get_spg_number
 
 class ApdbVasp():
     
@@ -188,27 +189,43 @@ class ApdbVasp():
                 self.command['vasp'])
         return calc
     
-    
     def run_relaxation(self, directory: './out', kpts: None,
             standardize_each_time=True,
+            volume_relaxation=False,
+            cell_type='p',
             force=False, num_full=2, verbosity=1): 
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
         
         """
+        spg_before = get_spg_number(self.primitive)
+        
+        ### relaxation cell type
+        if cell_type[0].lower() == 'p':
+            cell_type = 'primitive'
+            to_primitive = True
+        elif cell_type[0].lower() == 'c' or cell_type[0].lower() == 'u':
+            cell_type = 'conventional'
+            to_primitive = False
+        else:
+            print(" Error")
+            exit()
+        
+        ### message
         if verbosity != 0:
-            line = "Structure optimization"
+            line = "Structure optimization with %s cell" % cell_type
             msg = "\n\n " + line + "\n"
             msg += " " + "=" * (len(line))
             print(msg)
         
-        ### get the relaxed structure obtained with the old version
+        ### Get the relaxed structure obtained with the old version
+        ### For the old version, the xml file is located under ``directory``.
         if wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
             prim = ase.io.read(filename, format='vasp-xml')
             prim_stand = get_standardized_structure(prim, to_primitive=True)
-            self.update_structures(prim_stand)
+            self.update_structures(prim_stand, cell_type='prim')
             msg = "\n Already finised with the old version (single full relaxation)"
             print(msg)
             return 0
@@ -249,7 +266,7 @@ class ApdbVasp():
             ### standardization
             if standardize_each_time:
                 structure = get_standardized_structure(
-                        structure, to_primitive=True,
+                        structure, to_primitive=to_primitive,
                         )
             
             ### run a relaxation calculation
@@ -257,20 +274,99 @@ class ApdbVasp():
                     mode, dir_cur, kpts, 
                     structure=structure, force=force, 
                     print_params=print_params,
+                    cell_type=cell_type,
                     verbosity=0
                     )
             
             dir_pre = dir_cur
         
         ### get and set the standardized primitive structure
-        prim_stand = get_standardized_structure(
-                self.primitive, to_primitive=True,
+        ## old
+        #prim_stand = get_standardized_structure(
+        #        self.primitive, to_primitive=to_primitive,
+        #        )
+        #self.update_structures(prim_stand, cell_type=cell_type)
+        ## modified
+        structure_stand = get_standardized_structure(
+                self.primitive, to_primitive=to_primitive,
                 )
-        self.update_structures(prim_stand)
+        self.update_structures(structure_stand, cell_type=cell_type)
+        
+        ### strict relaxation with Birch-Murnaghan EOS
+        if volume_relaxation:
+            from auto_kappa.vasp.relax import StrictRelaxation
+            outdir = directory + "/volume" 
+            #init_struct = change_structure_format(prim_stand, format='pmg')
+            init_struct = change_structure_format(structure_stand, format='pmg')
+            relax = StrictRelaxation(init_struct, outdir=outdir)
+            Vs, Es = relax.with_different_volumes(
+                    kpts=kpts, 
+                    command=self.command,
+                    )
+            figname = outdir + '/fig_bm.png'
+            relax.plot_bm(figname=figname)
+            relax.print_results()
+            struct_opt = relax.get_optimal_structure()
+            outfile = outdir + "/POSCAR.opt"
+            struct_opt.to(filename=outfile)
+            struct_ase = change_structure_format(struct_opt, format='ase') 
+            self.update_structures(struct_ase, cell_type=cell_type)
+        
+        ### Check the crystal symmetry before and after the relaxation
+        spg_after = get_spg_number(self.primitive)
+        
+        self._write_relax_yaml({
+            'directory': directory,
+            'cell_type': cell_type,
+            'structure': self.unitcell,
+            'spg': [spg_before, spg_after],
+            'volume_relaxation': volume_relaxation,
+            })
+        
+        if spg_before != spg_after:
+            print("")
+            warnings.warn(" WARRNING: The crystal symmetry was changed due to the structure relaxation")
+            exit()
     
+    def _write_relax_yaml(self, params):
+        import yaml
+        outfile = params['directory'] + '/relax.yaml'
+        structure = change_structure_format(params['structure'], format='pymatgen') 
+        
+        ### lattice vectors
+        lattice = []
+        for v1 in structure.lattice.matrix:
+            lattice.append([])
+            for val in v1:
+                lattice[-1].append(float(val))
+        
+        ### fractional coords
+        frac_coord = []
+        for pos in structure.frac_coords:
+            frac_coord.append([])
+            for j in range(3):
+                frac_coord[-1].append(float(pos[j]))
+        
+        ### species
+        species = [el.name for el in structure.species]
+        
+        dict_data = {
+                'directory': params['directory'],
+                'cell_type_for_relaxation': params['cell_type'],
+                'spg_before': params['spg'][0],
+                'spg_after': params['spg'][1],
+                'lattice': lattice,
+                'positions': frac_coord,
+                'species': species,
+                'volume_relaxation': params['volume_relaxation'],
+                }
 
+        with open(outfile, 'w') as f:
+            yaml.dump(dict_data, f)
+            
+    
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
-            structure=None,
+            structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, verbosity=1):
         """ Run relaxation and born effective charge calculation
         
@@ -283,6 +379,12 @@ class ApdbVasp():
             output directory
         
         kpts : array of float, shape=(3,)
+
+        structure : structure obj
+
+        cell_tyep : string
+            cell type of ``structure``: primitive or conventional
+            This is used only for ``mode = relax-***``
         
         method : string
             "custodian" or "ase"
@@ -318,15 +420,15 @@ class ApdbVasp():
                 structure = self.primitive
             
             run_vasp(calc, structure, method=method)
-   
+        
         os.environ["OMP_NUM_THREADS"] = "1"
         
         ### Read the relaxed structure
         if 'relax' in mode.lower():
-            self.set_relaxed_structures(directory)
+            self.set_relaxed_structures(directory, cell_type=cell_type)
      
     
-    def set_relaxed_structures(self, directory):
+    def set_relaxed_structures(self, directory, cell_type=None):
         """ Set self.relaxed_structure
         directory : string
             Directory for "relax" calculation
@@ -336,7 +438,7 @@ class ApdbVasp():
         if os.path.exists(filename) == False:
             print("")
             msg = " WARNING: %s does not exist."
-            warnings.warning(msg)
+            warnings.warn(msg)
             print("")
             return None
         
@@ -344,10 +446,24 @@ class ApdbVasp():
             print("")
             print(" Update the primitive structure:", filename)
             prim = ase.io.read(filename, format='vasp-xml', index=-1)
-            self.update_structures(prim)
+            self.update_structures(prim, cell_type=cell_type)
             
     
-    def update_structures(self, primitive):
+    def update_structures(self, structure, cell_type='prim'):
+        """ Update stored structures
+        Args
+        -----
+        structure : structure obj
+        cell_type : string
+            type of "structure": primitive or convenctional
+        """
+        if cell_type[0].lower() == 'p':
+            primitive = structure.copy()
+        elif cell_type[0].lower() == 'c' or cell_type[0].lower() == 'u':
+            primitive = get_primitive_structure(structure, self.primitive_matrix)
+        else:
+            print(" Error")
+            exit()
 
         self.relaxed_structure['prim'] = primitive
         

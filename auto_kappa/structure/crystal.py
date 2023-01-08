@@ -115,11 +115,13 @@ def get_standardized_structure(struct_orig,
                 to_primitive=to_primitive, 
                 )
         cell_stand = out[0]
-        #scaled_positions = out[1]
-        #numbers = out[2]
-        scaled_positions = structure.get_scaled_positions()
-        numbers = structure.get_atomic_numbers()
-        
+        ### old
+        #scaled_positions = structure.get_scaled_positions()
+        #numbers = structure.get_atomic_numbers()
+        ### revised
+        scaled_positions = out[1]
+        numbers = out[2]
+         
     elif version == 'pymatgen':
         
         if (isinstance(struct_orig, str_pmg.Structure) == False and
@@ -280,4 +282,12 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
 def get_formula(str_orig):    
     structure = change_structure_format(str_orig, format='pmg-istructure')
     return structure.composition.reduced_formula
+    
+def get_spg_number(str_orig):
+    """ Regurn the international space group number
+    """
+    structure = change_structure_format(str_orig, format='pmg-istructure')
+    spg_analyzer = SpacegroupAnalyzer(structure)
+    symmetry = spg_analyzer.get_symmetry_dataset() 
+    return symmetry['number']
 
