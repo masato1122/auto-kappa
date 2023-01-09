@@ -101,8 +101,12 @@ def get_parser():
             help="relaxation with different volume (0.off or 1.on) [0]")
     
     parser.add_option("--relaxed_cell", 
-            dest="relaxed_cell", type="string", default="primitive",
-            help="cell type to be relaxed (primitive or conventional) [p]")
+            dest="relaxed_cell", type="string", default=None,
+            help="Cell type used for the relaxation calculation [None]. "\
+                    "For a restart calculation, the same type as the previous "\
+                    "calculation is used while, for the new calculation, the "
+                    "conventional cell is used."
+            )
     
     (options, args) = parser.parse_args()
     

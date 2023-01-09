@@ -74,6 +74,29 @@ def print_options(options):
             print("", key.ljust(20), " : ", opt_dict[key])
     print("")
 
+def get_suggested_relaxed_cell(options):
+    
+    import os.path
+    from pymatgen.io.vasp.outputs import Vasprun
+    
+    out = None
+    if os.path.exists(options.material_name) == False:
+        out = "conventional"
+    else:
+        file_xml = ("./" + options.material_name + "/" +
+                output_directories['relax'] + '/full-1/vasprun.xml')
+        if os.path.exists(file_xml) == False:
+            out = "conventional"
+        else:
+            xml = Vasprun(file_xml)
+            structure = xml.structures[-1]
+            prim = structure.get_primitive_structure()
+            if len(structure) > len(prim):
+                out = "conventional"
+            else:
+                out = "primitive"
+    return out    
+
 def main():
     
     times = {}
@@ -81,6 +104,10 @@ def main():
     start_autokappa()
     
     options = get_parser()
+    
+    if options.relaxed_cell is None:
+        options.relaxed_cell = get_suggested_relaxed_cell(options)
+    
     print_options(options)
     
     ### Read data of phonondb
