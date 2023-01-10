@@ -35,6 +35,7 @@ def main(build_dir):
             'auto_kappa.plot',
             'auto_kappa.plot.alamode',
             'auto_kappa.structure',
+            'auto_kappa.vasp',
             ]
 
     scripts_autokappa = [
