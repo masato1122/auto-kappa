@@ -375,17 +375,16 @@ class AlamodeCalc():
         if self._unitcell is None:
             structure = self.primitive.copy()
             
-            ### for ase Atoms
-            self._unitcell = make_supercell(
-                    structure,
-                    np.linalg.inv(self.primitive_matrix)
-                    )
-            
-            ### for pymatgen Structure
-            #structure.make_supercell(
-            #        np.linalg.inv(self.primitive_matrix)
-            #        )
-            #self._unitcell = structure
+            ### for ASE
+            ###
+            ### Conversion matrix from the primitive to unit cell: M_pu
+            ### A critical error was found in the previous verison,
+            ### M_pu = np.linalg.inv(self.primitive_matrix) was used in the
+            ### previous version. The current version is correct!!
+            ###
+            M_pu = np.linalg.inv(self.primitive_matrix).T
+            self._unitcell = make_supercell(structure, M_pu)
+
         return self._unitcell
     
     @property
@@ -411,6 +410,7 @@ class AlamodeCalc():
             self._supercell['type'] = 'xml'
         
         except Exception:
+            
             if self._supercell['structure'] is None:
                 structure = self.unitcell.copy()
                 

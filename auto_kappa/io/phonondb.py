@@ -197,3 +197,40 @@ def read_phonopy_conf(filename):
     primat = matrix[1]
     return scell, primat
 
+def read_forcesets(filename):
+    """ Read and return data in ``FORCE_SETS`` in phonondb
+    """
+    lines = open(filename, 'r').readlines()
+    natoms = int(lines[0].split()[0])
+    npatterns = int(lines[1].split()[0])
+    
+    all_data = []
+    for ip in range(npatterns):
+        
+        i0 = 2 + ip * (3 + natoms)
+        
+        all_data.append({})
+
+        ### atom index
+        data = lines[i0+1].split()
+        iat = int(data[0])
+        all_data[-1]['index'] = iat
+        
+        ### displacement
+        data = lines[i0+2].split()
+        disp = np.asarray([float(d) for d in data])
+        #displacements.append(disp)
+        all_data[-1]['displacement'] = disp
+        
+        ### forces
+        forces = np.zeros((natoms, 3))
+        for ii in range(natoms):
+            data = lines[i0+3].split()
+            each = np.asarray([float(f) for f in data])
+            forces[ii] = each
+        
+        all_data[-1]['force'] = forces
+    
+    return all_data
+
+
