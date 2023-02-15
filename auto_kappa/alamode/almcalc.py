@@ -1365,11 +1365,29 @@ class AlamodeCalc():
             inp.update({'pdos': 1})
         
         elif propt == 'evec_commensurate':
-
-            ### supercell matrix wrt primitive cell
-            smat_tmp = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
-            smat = smat_tmp.astype(int)
-            diff_max = np.amax(abs(smat - smat_tmp))
+            
+            ##### supercell matrix wrt primitive cell
+            ### ver. old
+            ### critical error!!!
+            #mat_p2s_tmp_old = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
+            #
+            ### ver. corrected
+            Uinv = np.linalg.inv(self.unitcell.cell)
+            mat_p2s_tmp = np.dot(
+                    np.dot(
+                        Uinv,
+                        np.linalg.inv(
+                            self.primitive_matrix.T
+                            )
+                        ),
+                    np.dot(
+                        self.unitcell.cell.T,
+                        self.scell_matrix
+                        )
+                    )
+            
+            mat_p2s = mat_p2s_tmp.astype(int)
+            diff_max = np.amax(abs(mat_p2s - mat_p2s_tmp))
             if diff_max > 1e-3:
                 print("")
                 print(" CAUTION: please check the cell size of primitive and "\
@@ -1377,7 +1395,7 @@ class AlamodeCalc():
             
             ### commensurate points
             from auto_kappa.structure.crystal import get_commensurate_points
-            comm_pts = get_commensurate_points(smat)
+            comm_pts = get_commensurate_points(mat_p2s)
             inp.update({'printevec': 1})
             inp.set_kpoint(kpoints=comm_pts)
         

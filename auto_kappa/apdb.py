@@ -117,11 +117,15 @@ class ApdbVasp():
         
         elif self.relaxed_structure['prim'] is not None:
             
+            ### ver. old: may contain a critical error
+            #mat_p2u = np.linalg.inv(self.primitive_matrix)
+            #
+            ### ver. corrected
+            mat_p2u = np.linalg.inv(self.primitive_matrix).T
+            
             ### relaxed prim => relaxed unit
             self.relaxed_structure['unit'] = make_supercell(
-                    self.relaxed_structure['prim'],
-                    np.linalg.inv(self.primitive_matrix)
-                    )
+                    self.relaxed_structure['prim'], mat_p2u)
             
             return self.relaxed_structure['unit']
         
@@ -467,10 +471,15 @@ class ApdbVasp():
 
         self.relaxed_structure['prim'] = primitive
         
-        self.relaxed_structure['unit'] = make_supercell(
-                primitive, 
-                np.linalg.inv(self.primitive_matrix)
-                )
+        ##### conversion matrix from primitive to unitcell
+        ### ver. old: may contain a critical error
+        #mat_p2u = np.linalg.inv(self.primitive_matrix)
+        #
+        ### ver. corrected
+        mat_p2u = np.linalg.inv(self.primitive_matrix).T
+        
+        ###
+        self.relaxed_structure['unit'] = make_supercell(primitive, mat_p2u)
         
         self.relaxed_structure['scell'] = make_supercell(
                 self.unitcell, 
