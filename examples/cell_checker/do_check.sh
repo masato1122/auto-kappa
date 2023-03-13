@@ -7,7 +7,7 @@ dir_autokappa=/home/ohnishi/work/PhDB/auto-kappa
 dir0=~/phonondb-20180417
 ####################################################
 
-tdir=$dir_autokappa/tools
+tdir=$dir_autokappa/examples/cell_checker
 
 ##
 ## modify the range of ID
