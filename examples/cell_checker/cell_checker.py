@@ -112,8 +112,17 @@ def get_structures_apdb(dir_apdb, prim_mat):
                     format="ase"
                     )
         except Exception:
-            unitcell = None
-            
+            try:
+                filename = dir_apdb + "/relax/full-2/CONTCAR"
+                prim = ase.io.read(filename, format='vasp')
+                prim_pp = change_structure_format(prim, format='phonopy')
+                unitcell = change_structure_format(
+                        get_supercell(prim_pp, np.linalg.inv(prim_mat)),
+                        format="ase"
+                        )
+            except Exception:
+                unitcell = None
+    
     ### supercell
     filename = dir_apdb + "/harm/force/prist/POSCAR"
     try:
