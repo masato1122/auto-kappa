@@ -179,7 +179,7 @@ def _sort_cell(cell):
         cell_new[inew] = cell[ii]
     return cell_new
 
-def _compare_cells(cell1, cell2, tol_len=2e-2, tol_ang=1.0):
+def _compare_cells(cell1, cell2, tol_len=5e-2, tol_ang=1.0):
     
     cell1 = _sort_cell(cell1)
     cell2 = _sort_cell(cell2)
