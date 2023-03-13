@@ -12,7 +12,6 @@
 #
 import os.path
 import numpy as np
-from pymatgen.io.vasp.inputs import Kpoints
 
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
@@ -189,11 +188,4 @@ def get_enmax(ppp_list):
     ##
     enmaxes = np.asarray(enmaxes)
     return np.max(enmaxes)
-
-
-#def get_recommended_kpoints(struct_given):
-#    from .structure.format import change_structure_format
-#    structure = change_structure_format(
-#            struct_given, format='pymatgen-structure')
-#    return Kpoints.automatic_density(structure).num_kpts
 

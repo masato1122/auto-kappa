@@ -17,18 +17,22 @@ To Do
 """
 # -*- coding: utf-8 -*-
 import os
+import os.path
 import numpy as np
 import warnings
 import logging
 
-import ase, pymatgen
+import ase
 import subprocess
 import shutil
 import pandas as pd
 import f90nml
 import glob
 
-from auto_kappa.structure import make_supercell
+from phonopy import Phonopy
+from phonopy.structure.cells import get_primitive
+from phonopy.structure.cells import get_supercell
+
 from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
@@ -53,9 +57,11 @@ class AlamodeCalc():
                 }
             }
     
-    def __init__(self, prim_given, 
+    def __init__(self, 
+            prim_given, 
             material_name='mp',
-            scell_matrix=None, primitive_matrix=None,
+            primitive_matrix=None,
+            scell_matrix=None, 
             scell_matrix3=None,
             restart=1,
             cutoffs=None, nbody=[2,3,3,2,2], magnitude=0.01, magnitude2=0.03,
@@ -66,7 +72,7 @@ class AlamodeCalc():
             verbosity=0,
             ):
         """ Calculations with ALM and Anphon are managed with this class.
-         
+        
         Args
         =======
         prim_given : primitive structure
@@ -74,7 +80,7 @@ class AlamodeCalc():
             format is changed to ase-Atoms in this module.
 
         material_name : string
-            Material ID, which is used just to determine the directory name.
+            Material ID, which is used to determine the directory name.
             It can be anything such as the composition.
         
         restart : int, default 1
@@ -82,14 +88,14 @@ class AlamodeCalc():
             directory exists.
 
         scell_matrix : array of float, shape=(3,3)
-            supercell matrix wrt unitcell
-
+            transformation matrix from the unitcell to a supercell
+        
         primitive_matrix : array of float, shape=(3,3)
-            primitive matrix wrt unitcell
-
+            transformation matrix from the unitcell to the primitive cell
+        
         scell_matrix3 : array of float, shape=(3,3)
-            supercell matrix wrt unitcell.
-            This supercell is used for cubic FCs.
+            transformation matrix from the unitcell to a supercell used to
+            calculate cubic FCs
 
         cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
             cutoff radii for force constants. If it's not given, it will be set
@@ -140,10 +146,10 @@ class AlamodeCalc():
         >>> almcalc.write_alamode_input(propt='dos')
         >>> almcalc.run_alamode(propt='dos')
         """
-        ### set name of base directory
+        ### set name of the output directory
         self.set_material_name(material_name, restart)
         
-        ##
+        ###
         self._commands = {
                 'vasp':{
                     'mpirun': 'mpirun', "nprocs": 1, "nthreads": 1, 
@@ -172,19 +178,42 @@ class AlamodeCalc():
         ###
         self.outfiles = output_files
         
-        ### structures
-        self._primitive = change_structure_format(prim_given, 'ase')
-        self._scell_matrix = scell_matrix
-        if scell_matrix3 is None:
-            self._scell_matrix3 = scell_matrix
-        else:
-            self._scell_matrix3 = scell_matrix3
-        self._primitive_matrix = primitive_matrix
+        ### matrices
+        if primitive_matrix is None:
+            warnings.warn(" Error: primitive_matrix must be given.")
         
+        if scell_matrix is None:
+            warnings.warn(" Error: scell_matrix must be given.")
+        
+        if scell_matrix3 is None:
+            scell_matrix3 = scell_matrix.copy()
+        
+        self._primitive_matrix = primitive_matrix
+        self._scell_matrix = scell_matrix
+        self._scell_matrix3 = scell_matrix3
+        
+        ### make the unitcell with ``get_supercell`` in Phonopy
+        unit_pp = get_supercell(
+                change_structure_format(prim_given, format='phonopy'),
+                np.linalg.inv(primitive_matrix)
+                )
+        
+        ### set unitcell, primitive cell, and two kinds of supercells
+        
+        ### ver. old
+        #self._unitcell = None
+        #self._supercell = {'structure': None, 'type': None}
+        #self._supercell3 = {'structure': None, 'type': None}
+        #
+        ### ver. new
+        self._primitive = None
         self._unitcell = None
-        self._supercell = {'structure': None, 'type': None}
-        self._supercell3 = {'structure': None, 'type': None}
-         
+        self._supercell = None
+        self._supercell3 = None
+        
+        self._set_structures(unit_pp)
+        
+        ##
         self._num_elems = None
         
         ### nbody and cutoffs
@@ -227,6 +256,41 @@ class AlamodeCalc():
         
         self.verbosity = verbosity
     
+    def _set_structures(self, unit_given, format='ase'):
+        """ Set every structures with the given format: primitive, unit, and two
+        kinds of supercells. If supercell can be read from vasprun.xml, xml file
+        will be used.
+        """
+        ### unit cell
+        unit_pp = change_structure_format(unit_given, format="phonopy")
+        self._unitcell = change_structure_format(unit_pp, format=format)
+        
+        ### primitive cell
+        prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        self._primitive = change_structure_format(prim_pp, format=format)
+        
+        ### supercell for harmonic FCs
+        xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+        try:
+            sc = ase.io.read(xml, format='vasp-xml')
+        except Exception:
+            sc = get_supercell(unit_pp, self.scell_matrix)
+        
+        self._supercell = change_structure_format(sc, format=format)
+        
+        ### supercell for cubic FCs
+        xml_fd = self.out_dirs['cube']['force_fd'] + '/psist/vasprun.xml'
+        xml_lasso = self.out_dirs['cube']['force_lasso'] + '/psist/vasprun.xml'
+        try:
+            sc3 = ase.io.read(xml_fd, format='vasp-xml')
+        except Exception:
+            try:
+                sc3 = ase.io.read(xml_lasso, format='vasp-xml')
+            except Exception:
+                sc3 = get_supercell(unit_pp, self.scell_matrix3)
+        
+        self._supercell3 = change_structure_format(sc3, format=format)
+        
     @property
     def magnitude(self):
         return self._magnitude
@@ -237,8 +301,6 @@ class AlamodeCalc():
     
     @property
     def fc3_type(self):
-        #if self._fc3_type is None:
-        #    warnings.warn(" Caution: fc3_type is used before it is given.")
         return self._fc3_type
     
     @property
@@ -247,7 +309,9 @@ class AlamodeCalc():
 
     def set_material_name(self, dir0, restart):
         """
-        If restart is off, the directory name needs to be determined charefully.
+        Note 
+        -----
+        If restart is off, the directory name needs to be determined carefully.
         """
         if restart == 1:
             self._material_name = dir0
@@ -272,10 +336,6 @@ class AlamodeCalc():
         if self._prefix is None:
             self._prefix = get_formula(self.primitive)
         return self._prefix
-
-    #@property
-    #def order_lasso(self):
-    #    return self._order_lasso
 
     @property
     def nbody(self):
@@ -349,22 +409,22 @@ class AlamodeCalc():
     def primitive_matrix(self):
         return self._primitive_matrix
     
-    def set_primitive_matrix(self, matrix):
-        self._primitive_matrix = matrix
+    #def set_primitive_matrix(self, matrix):
+    #    self._primitive_matrix = matrix
     
     @property
     def scell_matrix(self):
         return self._scell_matrix
     
-    def set_scell_matrix(self, matrix):
-        self._scell_matrix = matrix
+    #def set_scell_matrix(self, matrix):
+    #    self._scell_matrix = matrix
     
     @property
     def scell_matrix3(self):
         return self._scell_matrix3
-
-    def set_scell_matrix3(self, matrix):
-        self._scell_matrix3 = matrix
+    
+    #def set_scell_matrix3(self, matrix):
+    #    self._scell_matrix3 = matrix
     
     @property
     def primitive(self):
@@ -373,83 +433,103 @@ class AlamodeCalc():
     @property
     def unitcell(self):
         if self._unitcell is None:
-            structure = self.primitive.copy()
-            
-            ### for ASE
-            ###
-            ### Conversion matrix from the primitive to unit cell: M_pu
-            ### A critical error was found in the previous verison,
-            ### M_pu = np.linalg.inv(self.primitive_matrix) was used in the
-            ### previous version. The current version is correct!!
-            ###
-            M_pu = np.linalg.inv(self.primitive_matrix).T
-            self._unitcell = make_supercell(structure, M_pu)
-
-        return self._unitcell
+            warnings.warn(" Error: unitcell is not yet defined.")
+        else:
+            return self._unitcell
     
     @property
     def supercell(self):
         """
-        self._supercell['structure'] : ASE Atoms
-        self._supercell['type'] : string
-            None, "ase", or "xml"
-            "ase" indicates the structure is obtained with "make_supercell"
-            module of ASE.
-            "xml" indicates the structure is obtained with "vasprun.xml" for
-            force calculation in ./mp-***/harm/force/prist.
         """
-        if self._supercell['type'] is not None:
-            if self._supercell['type'].lower() == 'xml':
-                return self._supercell['structure']
-        
-        ##
-        xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        
-        try:
-            self._supercell['structure'] = ase.io.read(xml, format='vasp-xml')
-            self._supercell['type'] = 'xml'
-        
-        except Exception:
-            
-            if self._supercell['structure'] is None:
-                structure = self.unitcell.copy()
-                
-                ### for ase Atoms
-                self._supercell['structure'] = make_supercell(
-                        structure, self.scell_matrix)
-                self._supercell['type'] = 'ase'
-        
-        return self._supercell['structure']
+        if self._supercell is None:
+            warnings.warn(" Error: supercell is not yet defined.")
+        else:
+            return self._supercell
+
+        #"""
+        #self._supercell['structure'] : ASE Atoms
+        #self._supercell['type'] : string
+        #    None, "ase", or "xml"
+        #    ``pp`` indicates the structure is obtained with ``get_supercell``
+        #    module of Phonopy.
+        #    ``xml`` indicates the structure is obtained with ``vasprun.xml`` for
+        #    force calculation in ./mp-***/harm/force/prist.
+        #"""
+        #if self._supercell['type'] is not None:
+        #    if self._supercell['type'].lower() == 'xml':
+        #        return self._supercell['structure']
+        #
+        ###
+        #xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+        #
+        #try:
+        #    self._supercell['structure'] = ase.io.read(xml, format='vasp-xml')
+        #    self._supercell['type'] = 'xml'
+        #
+        #except Exception:
+        #    
+        #    if self._supercell['structure'] is None:
+        #        structure = self.unitcell.copy()
+        #        
+        #        ### make a supercell with a Phonopy module
+        #        sc_pp = get_supercell(
+        #                change_structure_format(structure, format="phonopy"),
+        #                self.scell_matrix)
+        #        
+        #        self._supercell['structure'] = change_structure_format(
+        #                sc_pp, format="ase")
+        #        
+        #        self._supercell['type'] = 'ase'
+
+        #        print(" Please check!!!!!!!")
+        #        exit()
+        #
+        #return self._supercell['structure']
     
     @property
     def supercell3(self):
         """
-        self._supercell3['structure'] : ASE Atoms
-        self._supercell3['type'] : string
-            None, "ase", or "xml"
-        
-        Read descriptions of supercell for the detail.
         """
-        if self._supercell3['type'] is not None:
-            if self._supercell3['type'].lower() == 'xml':
-                return self._supercell3['structure']
+        if self._supercell3 is None:
+            warnings.warn(" Error: supercell for cubic FCs is not yet defined.")
+        else:
+            return self._supercell3
         
-        ##
-        try:
-            xml = self.out_dirs['cube']['force_%s' % self.fc3_type] + '/prist/vasprun.xml'
-            self._supercell3['structure'] = ase.io.read(xml, format='vasp-xml')
-            self._supercell3['type'] = 'xml'
-        
-        except Exception:
-            if self._supercell3['structure'] is None:
-                structure = self.unitcell.copy()
-                
-                ### for ase Atoms
-                self._supercell3['structure'] = make_supercell(
-                        structure, self.scell_matrix3)
-                self._supercell3['type'] = 'ase'
-        
-        return self._supercell3['structure']
+        #"""
+        #self._supercell3['structure'] : ASE Atoms
+        #self._supercell3['type'] : string
+        #    None, "ase", or "xml"
+        #
+        #Read descriptions of supercell for the detail.
+        #"""
+        #if self._supercell3['type'] is not None:
+        #    if self._supercell3['type'].lower() == 'xml':
+        #        return self._supercell3['structure']
+        #
+        ###
+        #try:
+        #    xml = self.out_dirs['cube']['force_%s' % self.fc3_type] + '/prist/vasprun.xml'
+        #    self._supercell3['structure'] = ase.io.read(xml, format='vasp-xml')
+        #    self._supercell3['type'] = 'xml'
+        #
+        #except Exception:
+        #    if self._supercell3['structure'] is None:
+        #        
+        #        ### ver.1 with make_supercell in ASE
+        #        #structure = self.unitcell.copy()
+        #        #self._supercell3['structure'] = make_supercell(
+        #        #        structure, self.scell_matrix3)
+        #        #self._supercell3['type'] = 'ase'
+        #
+        #        ### ver. 2: with get_supercell in phonopy
+        #        unit_pp = change_structure_format(
+        #                self.unitcell, format='phonopy')
+        #        sc = get_supercell(unit_pp, self.scell_matrix3)
+        #        self._supercell3['structure'] = change_structure_format(
+        #                sc, format='ase')
+        #        self._supercell3['type'] = 'ase'
+        #
+        #return self._supercell3['structure']
     
     @property
     def frequency_range(self):
@@ -1366,32 +1446,38 @@ class AlamodeCalc():
         
         elif propt == 'evec_commensurate':
             
-            ##### supercell matrix wrt primitive cell
-            ### ver. old
-            ### critical error!!!
-            #mat_p2s_tmp_old = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
-            #
-            ### ver. corrected
-            Uinv = np.linalg.inv(self.unitcell.cell)
+            ###### supercell matrix wrt primitive cell
+            #### ver. old
+            #### critical error!!!
+            ##mat_p2s_tmp_old = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
+            ##
+            #### ver. corrected
+            ##Uinv = np.linalg.inv(self.unitcell.cell)
+            ##mat_p2s_tmp = np.dot(
+            ##        np.dot(
+            ##            Uinv,
+            ##            np.linalg.inv(
+            ##                self.primitive_matrix.T
+            ##                )
+            ##            ),
+            ##        np.dot(
+            ##            self.unitcell.cell.T,
+            ##            self.scell_matrix
+            ##            )
+            ##        )
+            ### ver. corrected 2
             mat_p2s_tmp = np.dot(
-                    np.dot(
-                        Uinv,
-                        np.linalg.inv(
-                            self.primitive_matrix.T
-                            )
-                        ),
-                    np.dot(
-                        self.unitcell.cell.T,
-                        self.scell_matrix
-                        )
+                    np.linalg.inv(self.primitive_matrix),
+                    self.scell_matrix
                     )
             
-            mat_p2s = mat_p2s_tmp.astype(int)
+            mat_p2s = np.rint(mat_p2s_tmp).astype(int)
             diff_max = np.amax(abs(mat_p2s - mat_p2s_tmp))
             if diff_max > 1e-3:
                 print("")
                 print(" CAUTION: please check the cell size of primitive and "\
                         "supercell")
+                print(diff_max)
             
             ### commensurate points
             from auto_kappa.structure.crystal import get_commensurate_points

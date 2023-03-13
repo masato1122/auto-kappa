@@ -21,10 +21,12 @@ import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
-from ase.build import make_supercell
+from phonopy import Phonopy
+#from phonopy.structure.cells import get_primitive as get_primitive_pp
+from phonopy.structure.cells import get_supercell
+
 from auto_kappa.structure.crystal import (
-        get_primitive_matrix, get_primitive_structure, 
-        get_standardized_structure,
+        get_standardized_structure_spglib,
         change_structure_format,
         )
 from auto_kappa.calculator import run_vasp
@@ -33,55 +35,88 @@ from auto_kappa.structure.crystal import get_spg_number
 
 class ApdbVasp():
     
-    def __init__(self, unitcell, 
+    def __init__(
+            self, unitcell, 
             primitive_matrix=None,
             scell_matrix=None,
             encut_scale_factor=1.3,
-            #auto_lreal_scell_size=False,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             ):
         """
         Args
         -------
-        primitive, unitcell, supercell : ASE Atoms objects
+        unitcell : structure object
+            original unitcell (conventional) structure
+        
+        primitive_matrix : float, shape=(3,3)
+            transformation matrix from the unitcell to the primitive cell with 
+            the definition in Phonopy, which is not same as Pymatgen and ASE
+            
+        scell_matrix : float, shape=(3,3)
+            transformation matrix from the unitcell to the supercell with 
+            the definition in Phonopy, which is not same as Pymatgen and ASE
+
+        Matrix
+        --------
+        Translational vectors of the primitive cell can be calculated as
+        $$
+        pcell = primitive_matrix.T @ unitcell.cell
+        $$
         
         """
-        ### matrices
-        self._primitive_matrix = primitive_matrix
-        self.scell_matrix = scell_matrix
-
+        ### Transformation matrices
+        ### The definition is the same as that for Phonopy.
+        ### Please see the tutorial of Phonopy in detail.
+        ### https://phonopy.github.io/phonopy/setting-tags.html#basic-tags
+        self._mat_u2p = primitive_matrix
+        self._mat_u2s = scell_matrix
+        
+        if primitive_matrix is None:
+            print(" Error: primitive_matrix must be given.")
+        
+        if scell_matrix is None:
+            print(" Error: scell_matrix must be given.")
+        
+        ### set structure variables
+        ### Every structures will be stored in ``self._trajectory``.
+        ### For example, self.trajectory[0] is the initial structures and 
+        ### self.trajectory[1] is the latest structures.
+        self._structures = None
+        self._trajectory = []
+        self.update_structures(unitcell)
+        
         ### prepare dictionaries for structures
-        self.original_structure = {'prim': None, 'unit': None, 'scell': None}
-        
-        self.original_structure['prim'] = \
-                get_primitive_structure(unitcell, self.primitive_matrix)
-        
-        self.original_structure['unit'] = unitcell.copy()
-        
-        if scell_matrix is not None:
-            self.original_structure['scell'] = \
-                    make_supercell(unitcell, scell_matrix)
-        
+        #self.original_structure = {'prim': None, 'unit': None, 'scell': None}
+        # 
+        #self.original_structure['prim'] = \
+        #        change_structure_format(prim_pp, format='pmg-structure')
+        #
+        #self.original_structure['unit'] = unitcell.copy()
+        #
+        #if scell_matrix is not None:
+        #    self.original_structure['scell'] = \
+        #            make_supercell(unitcell, scell_matrix)
+        #
         ###
-        self.relaxed_structure = {
-                'prim': None,
-                'unit': None,
-                'scell': None,
-                }
+        #self.relaxed_structure = {
+        #        'prim': None,
+        #        'unit': None,
+        #        'scell': None,
+        #        }
         
         ### VASP command
         self._command = command
         
         ### parameters
         self.encut_factor = encut_scale_factor
-        #self.lreal_size = auto_lreal_scell_size
     
     @property
     def primitive_matrix(self):
-        if self._primitive_matrix is None:
-            prim_mat = get_primitive_matrix(self.unitcell)
-            self._primitive_matrix = prim_mat
-        return self._primitive_matrix
+        return self._mat_u2p
+    
+    @property
+    def scell_matrix(self):
+        return self._mat_u2s
     
     @property
     def command(self):
@@ -89,78 +124,125 @@ class ApdbVasp():
 
     def update_command(self, val):
         self._command.update(val)
-
-    @property
-    def primitive(self):
-        """ Relaxed structures are returned in prior to original structures.
-        
+    
+    def update_structures(self, unitcell, format='ase', standardization=True):
+        """ Update unit, primitive, supercells with the given new unit cell.
+        Args
+        -----
+        unitcell : structures obj
+            unit cell structure
         """
-        if self.relaxed_structure['prim'] is not None:
-            #print(" Return relaxed structure.")
-            return self.relaxed_structure['prim']
+        if standardization:
+            
+            unitcell = get_standardized_structure_spglib(
+                    unitcell, to_primitive=False, format=format
+                    )
+        ##
+        structures = self.get_structures(unitcell, format=format)
+        self._structures = structures
+        self._trajectory.append(structures)
+    
+    def get_structures(self, unitcell, format='ase'):
+        """ Get primitive and supercells with the stored unitcell and 
+        transformation matrices.
+        """
+        phonon = Phonopy(
+                change_structure_format(unitcell, format='phonopy'),
+                self._mat_u2s,
+                primitive_matrix=self._mat_u2p
+                )
         
-        elif self.original_structure['prim'] is not None:
-            print("")
-            print(" Return UNrelaxed structure.")
-            return self.original_structure['prim']
+        unit = change_structure_format(phonon.unitcell , format=format) 
+        prim = change_structure_format(phonon.primitive , format=format) 
+        sc   = change_structure_format(phonon.supercell , format=format) 
         
+        structures = {"unit": unit, "prim": prim, "super": sc}
+        
+        return structures
+    
+    @property
+    def structures(self):
+        if self._structures is not None:
+            return self._structures
         else:
             return None
+    
+    @property
+    def trajectory(self):
+        return self._trajectory
+    
+    @property
+    def primitive(self):
+        return self._structures['prim']
+        ##
+        #if self.relaxed_structure['prim'] is not None:
+        #    #print(" Return relaxed structure.")
+        #    return self.relaxed_structure['prim']
+        #
+        #elif self.original_structure['prim'] is not None:
+        #    print("")
+        #    print(" Return UNrelaxed structure.")
+        #    return self.original_structure['prim']
+        #
+        #else:
+        #    return None
     
     @property
     def unitcell(self):
-        
-        if self.relaxed_structure['unit'] is not None:
-            
-            ### relaxed unitcell    
-            return self.relaxed_structure['unit']
-        
-        elif self.relaxed_structure['prim'] is not None:
-            
-            ### ver. old: may contain a critical error
-            #mat_p2u = np.linalg.inv(self.primitive_matrix)
-            #
-            ### ver. corrected
-            mat_p2u = np.linalg.inv(self.primitive_matrix).T
-            
-            ### relaxed prim => relaxed unit
-            self.relaxed_structure['unit'] = make_supercell(
-                    self.relaxed_structure['prim'], mat_p2u)
-            
-            return self.relaxed_structure['unit']
-        
-        elif self.original_structure['unit'] is not None:
-            print(" Return UNrelaxed structure.")
-            return self.original_structure['unit']
-         
-        else:
-            return None
+        return self._structures['unit']
+        ##
+        #if self.relaxed_structure['unit'] is not None:
+        #    
+        #    ### relaxed unitcell    
+        #    return self.relaxed_structure['unit']
+        #
+        #elif self.relaxed_structure['prim'] is not None:
+        #    
+        #    ### ver. old: may contain a critical error
+        #    mat_p2u = np.rint(np.linalg.inv(self._mat_u2p)).astype(int)
+        #    #
+        #    ### ver. corrected
+        #    #mat_p2u = np.linalg.inv(self.primitive_matrix).T
+        #
+        #    ### relaxed prim => relaxed unit
+        #    self.relaxed_structure['unit'] = make_supercell(
+        #            self.relaxed_structure['prim'], mat_p2u)
+        #    
+        #    return self.relaxed_structure['unit']
+        #
+        #elif self.original_structure['unit'] is not None:
+        #    print(" Return UNrelaxed structure.")
+        #    return self.original_structure['unit']
+        # 
+        #else:
+        #    return None
     
     @property
     def supercell(self):
-        
-        if self.relaxed_structure['scell'] is not None:
-            
-            ### relaxed supercell
-            return self.relaxed_structure['scell']
-        
-        elif self.relaxed_structure['prim'] is not None:
-            
-            ### relaxed unit => relaxed scell
-            self.relaxed_structure['scell'] = make_supercell(
-                    self.unitcell, self.scell_matrix)
-            
-            return self.relaxed_structure['scell']
-        
-        elif self.original_structure['scell'] is not None:
-            print(" Return UNrelaxed structure.")
-            return self.original_structure['scell']
-        
-        else:
-            return None
+        return self._structures['super']
+        ##
+        #if self.relaxed_structure['scell'] is not None:
+        #    
+        #    ### relaxed supercell
+        #    return self.relaxed_structure['scell']
+        #
+        #elif self.relaxed_structure['prim'] is not None:
+        #    
+        #    ### relaxed unit => relaxed scell
+        #    self.relaxed_structure['scell'] = make_supercell(
+        #            self.unitcell, self._mat_u2s)
+        #    
+        #    return self.relaxed_structure['scell']
+        #
+        #elif self.original_structure['scell'] is not None:
+        #    print(" Return UNrelaxed structure.")
+        #    return self.original_structure['scell']
+        #
+        #else:
+        #    return None
     
     def get_calculator(self, mode, directory=None, kpts=None):
-        """
+        """ Return VASP calculator created by ASE
         Args
         ------
         mode : string
@@ -179,13 +261,12 @@ class ApdbVasp():
             structure = self.primitive
         elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
-
+        
         calc = get_vasp_calculator(mode, 
                 directory=directory, 
                 atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
-                #auto_lreal_scell_size=self.lreal_size,
                 )
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 
@@ -201,7 +282,6 @@ class ApdbVasp():
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
-        
         """
         spg_before = get_spg_number(self.primitive)
         
@@ -223,16 +303,16 @@ class ApdbVasp():
             msg += " " + "=" * (len(line))
             print(msg)
         
-        ### Get the relaxed structure obtained with the old version
-        ### For the old version, the xml file is located under ``directory``.
-        if wasfinished(directory, filename='vasprun.xml'):
-            filename = directory + "/vasprun.xml"
-            prim = ase.io.read(filename, format='vasp-xml')
-            prim_stand = get_standardized_structure(prim, to_primitive=True)
-            self.update_structures(prim_stand, cell_type='prim')
-            msg = "\n Already finised with the old version (single full relaxation)"
-            print(msg)
-            return 0
+        #### Get the relaxed structure obtained with the old version
+        #### For the old version, the xml file is located under ``directory``.
+        #if wasfinished(directory, filename='vasprun.xml'):
+        #    filename = directory + "/vasprun.xml"
+        #    prim = ase.io.read(filename, format='vasp-xml')
+        #    prim_stand = get_standardized_structure(prim, to_primitive=True)
+        #    self.update_structures(prim_stand, cell_type='prim')
+        #    msg = "\n Already finised with the old version (single full relaxation)"
+        #    print(msg)
+        #    return 0
         
         ### perform relaxation calculations
         for ical in range(num_full+1):
@@ -242,6 +322,7 @@ class ApdbVasp():
                 num = ical + 1
                 dir_cur = directory + "/full-%d" % num
                 mode = 'relax-full'
+            
             else:
                 num = ical - num_full + 1
                 dir_cur = directory + "/freeze-%d" % num
@@ -252,10 +333,12 @@ class ApdbVasp():
                 msg = "\n " + line + "\n"
                 msg += " " + "-" * len(line)
                 print(msg)
-             
+            
+            ###
             if ical == 0:
-                structure = self.primitive
+                #structure = self.primitive
                 print_params = True
+            
             else:
                 fn = dir_pre + "/CONTCAR"
                 if os.path.exists(fn) == False:
@@ -264,14 +347,23 @@ class ApdbVasp():
                 
                 #print("")
                 #print(" Update the primitive structure:", fn)
-                structure = ase.io.read(fn, format='vasp')
+                #structure = ase.io.read(fn, format='vasp')
                 print_params = False
             
-            ### standardization
-            if standardize_each_time:
-                structure = get_standardized_structure(
-                        structure, to_primitive=to_primitive,
-                        )
+            ### get the structure used for the analysis
+            if to_primitive:
+                structure = self.primitive
+
+            else:
+                structure = self.unitcell
+            
+            #### standardization
+            #if standardize_each_time:
+            #    
+            #    structure = get_standardized_structure_spglib(
+            #            structure, to_primitive=to_primitive, format='ase'
+            #            )
+            #
             
             ### run a relaxation calculation
             self.run_vasp(
@@ -279,29 +371,27 @@ class ApdbVasp():
                     structure=structure, force=force, 
                     print_params=print_params,
                     cell_type=cell_type,
-                    verbosity=0
+                    verbosity=0,
+                    standardization=standardize_each_time
                     )
             
             dir_pre = dir_cur
+
+        ### update structures
+        self.update_structures(self.unitcell, standardization=True)
         
-        ### get and set the standardized primitive structure
-        ## old
-        #prim_stand = get_standardized_structure(
-        #        self.primitive, to_primitive=to_primitive,
-        #        )
-        #self.update_structures(prim_stand, cell_type=cell_type)
-        ## modified
-        structure_stand = get_standardized_structure(
-                self.primitive, to_primitive=to_primitive,
-                )
-        self.update_structures(structure_stand, cell_type=cell_type)
         
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:
             from auto_kappa.vasp.relax import StrictRelaxation
             outdir = directory + "/volume" 
-            #init_struct = change_structure_format(prim_stand, format='pmg')
-            init_struct = change_structure_format(structure_stand, format='pmg')
+            
+            if to_primitive:
+                structure = self.primitive
+            else:
+                structure = self.unitcell
+            
+            init_struct = change_structure_format(structure, format='pmg')
             relax = StrictRelaxation(init_struct, outdir=outdir)
             Vs, Es = relax.with_different_volumes(
                     kpts=kpts, 
@@ -314,7 +404,14 @@ class ApdbVasp():
             outfile = outdir + "/POSCAR.opt"
             struct_opt.to(filename=outfile)
             struct_ase = change_structure_format(struct_opt, format='ase') 
-            self.update_structures(struct_ase, cell_type=cell_type)
+            
+            ###
+            if to_primitive:
+                unitcell = get_supercell(struct_ase, self.primitive_matrix)
+            else:
+                unitcell = struct_ase.copy()
+            
+            self.update_structures(unitcell)
         
         ### Check the crystal symmetry before and after the relaxation
         spg_after = get_spg_number(self.primitive)
@@ -371,7 +468,9 @@ class ApdbVasp():
     
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
             structure=None, cell_type=None,
-            method='custodian', force=False, print_params=False, verbosity=1):
+            method='custodian', force=False, print_params=False, 
+            standardization=True, verbosity=1
+            ):
         """ Run relaxation and born effective charge calculation
         
         Args
@@ -396,7 +495,6 @@ class ApdbVasp():
         force : bool, default=False
             If it's True, the calculation will be done forcelly even if it had
             been already finished.
-            
         """
         if verbosity != 0:
             line = "VASP calculation (%s)" % (mode)
@@ -429,61 +527,24 @@ class ApdbVasp():
         
         ### Read the relaxed structure
         if 'relax' in mode.lower():
-            self.set_relaxed_structures(directory, cell_type=cell_type)
-     
-    
-    def set_relaxed_structures(self, directory, cell_type=None):
-        """ Set self.relaxed_structure
-        directory : string
-            Directory for "relax" calculation
-        """
-        filename = directory + '/vasprun.xml'
-        
-        if os.path.exists(filename) == False:
-            print("")
-            msg = " WARNING: %s does not exist."
-            warnings.warn(msg)
-            print("")
-            return None
-        
-        else:
-            print("")
-            print(" Update the primitive structure:", filename)
-            prim = ase.io.read(filename, format='vasp-xml', index=-1)
-            self.update_structures(prim, cell_type=cell_type)
             
-    
-    def update_structures(self, structure, cell_type='prim'):
-        """ Update stored structures
-        Args
-        -----
-        structure : structure obj
-        cell_type : string
-            type of "structure": primitive or convenctional
-        """
-        if cell_type[0].lower() == 'p':
-            primitive = structure.copy()
-        elif cell_type[0].lower() == 'c' or cell_type[0].lower() == 'u':
-            primitive = get_primitive_structure(structure, self.primitive_matrix)
-        else:
-            print(" Error")
-            exit()
+            c0 = cell_type.lower()[0]
+            
+            vasprun = directory + "/vasprun.xml"
+            
+            if c0 == 'c' or c0 == 'u':
+                
+                new_unitcell = ase.io.read(vasprun, format='vasp-xml')
 
-        self.relaxed_structure['prim'] = primitive
-        
-        ##### conversion matrix from primitive to unitcell
-        ### ver. old: may contain a critical error
-        #mat_p2u = np.linalg.inv(self.primitive_matrix)
-        #
-        ### ver. corrected
-        mat_p2u = np.linalg.inv(self.primitive_matrix).T
-        
-        ###
-        self.relaxed_structure['unit'] = make_supercell(primitive, mat_p2u)
-        
-        self.relaxed_structure['scell'] = make_supercell(
-                self.unitcell, 
-                self.scell_matrix
-                )
-        
+            else:
+                
+                ### read primitive and transform it to the unit cell
+                new_prim = ase.io.read(vasprun, format='vasp-xml')
+                mat_p2u = np.linalg.inv(self.primitive_matrix)
+                new_unitcell = get_supercell(
+                        change_structure_format(new_prim, format='phonopy'),
+                        mat_p2u)
+            
+            self.update_structures(new_unitcell, standardization=standardization)
+     
 

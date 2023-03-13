@@ -24,7 +24,6 @@ from auto_kappa import output_directories
 from auto_kappa.structure.crystal import change_structure_format
 from auto_kappa.io.vasp import read_incar, read_poscar, read_kpoints, wasfinished
 
-
 class Phonondb():
     """ Read files in phonondb
     Args
@@ -89,7 +88,6 @@ class Phonondb():
         if self._scell_matrix is None:
             sc, _ = read_phonopy_conf(self.directory + '/phonopy.conf')
             self._scell_matrix = sc
-            #self._primitive_matrix = pm
         return self._scell_matrix
     
     @property
@@ -130,7 +128,7 @@ class Phonondb():
     def get_primitive(self, format='phonopy'):
         self._phonon = self.phonon
         return change_structure_format(self._phonon.primitive, format=format)   
-
+    
     @property
     def supercell(self):
         if self._phonon is None:
@@ -193,7 +191,7 @@ def read_phonopy_conf(filename):
                 i2 = int(i%3)
                 matrix[ii][i1,i2] = float(Fraction(num))
     ##
-    scell = matrix[0]
+    scell = np.rint(matrix[0]).astype(int)
     primat = matrix[1]
     return scell, primat
 

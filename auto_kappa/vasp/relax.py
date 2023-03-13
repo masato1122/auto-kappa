@@ -11,11 +11,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-## To do
-##
-## don't use ASE: for structure and to run VASP
-##
-##
+#
 import os.path
 import numpy as np
 import ase
@@ -126,7 +122,7 @@ class StrictRelaxation():
         
         strain_range = initial_strain_range
         while flag == False:
-
+            
             n = 2
             if direction == 'smaller':
                 s0 = strain_range[0] - strain_interval * n
@@ -156,7 +152,7 @@ class StrictRelaxation():
                 if Es[1] - emin > tol_frac_ediff * de_tot:
                     flag = True
         
-        ##
+        ###
         Vs, Es = self.get_calculated_volumes_and_energies()
         self._fit()
         self._volumes = Vs

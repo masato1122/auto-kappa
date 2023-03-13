@@ -97,6 +97,45 @@ def get_suggested_relaxed_cell(options):
                 out = "primitive"
     return out    
 
+def read_phonondb(directory):
+    """ Read data in Phonondb. Phonondb is used to obtain structures 
+    (primitive, unit, and super cells) and k-points.
+    
+    Note that the definition of transformation matrix in Phononpy (Phonondb)
+    is different from that in ASE and Pymatgen.
+    With Phonopy definition    : P = mat_u2p_pp   @ U
+    With ASE or pmg definition : P = mat_u2p_pp.T @ U
+    _pp in ``mat_u2p_pp`` and ``mat_u2s_pp`` denotes Phonopy.
+    
+    To do
+    --------
+    If the material is not contained in Phonondb, the trasnformation
+    matrices need to be obtained with the same manner as spglib. Pymatgen
+    may not be able to be used because of different definitions of the
+    transformation matrix in Phonopy and Pymatgen.
+    
+    >>> from auto_kappa.structure.cells import get_mat_u2p_spglib
+    >>> unitcell, mat_u2p = get_mat_u2p_spglib(structure)
+    """
+    phdb = Phonondb(directory)
+    
+    unitcell = phdb.get_unitcell(format='ase')
+    
+    if phdb.nac == 1:
+        kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
+    else:
+        kpts_for_nac = None
+    
+    return (
+            unitcell,
+            phdb.primitive_matrix,
+            phdb.scell_matrix,
+            phdb.get_kpoints(mode='relax').kpts[0],
+            phdb.get_kpoints(mode='force').kpts[0],
+            phdb.nac,
+            kpts_for_nac
+            )
+
 def main():
     
     times = {}
@@ -110,23 +149,19 @@ def main():
     
     print_options(options)
     
-    ### Read data of phonondb
-    ### phonondb is used to obtain structures (primitive, unit, and super cells)
-    ### and k-points.
-    phdb = Phonondb(options.directory)
+    ### Read data in Phonondb
+    out = read_phonondb(options.directory)
     
-    ### get required data from Phonondb
-    pmat = phdb.primitive_matrix
-    smat = phdb.scell_matrix
-    unitcell = phdb.get_unitcell(format='ase')
-    kpts_for_relax = phdb.get_kpoints(mode='relax').kpts[0]
-    kpts_for_force = phdb.get_kpoints(mode='force').kpts[0]
-    nac = phdb.nac
-    if nac == 1:
-        kpts_for_nac = phdb.get_kpoints(mode='nac').kpts[0]
-    else:
-        kpts_for_nac = None
-
+    unitcell   = out[0]
+    mat_u2p_pp = out[1]
+    mat_u2s_pp = out[2]
+    kpts_for_relax = out[3]
+    kpts_for_force = out[4]
+    nac = out[5]
+    kpts_for_nac = out[6]
+    
+    #print_kpoints_info(unitcell, mat_u2p_pp, mat_u2s_pp, kpts_for_) 
+    
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
@@ -150,8 +185,8 @@ def main():
     ### Set ApdbVasp object
     apdb = ApdbVasp(
             unitcell,
-            primitive_matrix=pmat,
-            scell_matrix=smat,
+            primitive_matrix=mat_u2p_pp,
+            scell_matrix=mat_u2s_pp,
             command=command_vasp,
             )
     
@@ -161,6 +196,7 @@ def main():
         flag = False
     else:
         flag = True
+    
     apdb.run_relaxation(
             out_dirs[mode],
             kpts_for_relax,
@@ -194,8 +230,8 @@ def main():
             apdb.primitive,
             material_name=options.material_name,
             restart=options.restart,
-            primitive_matrix=pmat,
-            scell_matrix=smat,
+            primitive_matrix=mat_u2p_pp,
+            scell_matrix=mat_u2s_pp,
             cutoff2=-1, cutoff3=options.cutoff3, 
             magnitude=0.01,
             magnitude2=options.magnitude2,
@@ -246,7 +282,6 @@ def main():
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
-    #almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
     
     ### Check negative frequency
@@ -293,7 +328,6 @@ def main():
     times['anharm_forces'] = t21 - t13
     
     ### calculate anharmonic force constants
-    #if almcalc.lasso:
     if almcalc.fc3_type == 'lasso':
         from auto_kappa.io.vasp import get_dfset
         for propt in ['cv', 'lasso']:
@@ -310,7 +344,7 @@ def main():
     t22 = datetime.datetime.now()
     times['anharm_fcs'] = t22 - t21
     
-    ### calculate kappa with different k grid densities
+    ### calculate kappa with different k-mesh densities
     for kdensity in [500, 1000, 1500]:
         kpts = get_automatic_kmesh(
                 almcalc.primitive, reciprocal_density=kdensity)
