@@ -29,7 +29,7 @@ for id in `seq 0 10000`; do
     fi
     
     echo " === mp-${id} ==="
-    python $tdir/check_cellsize.py \
+    python $tdir/cell_checker.py \
         --dir_phdb $dir_each \
         --dir_apdb $dir_apdb
 done
