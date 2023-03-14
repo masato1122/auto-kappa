@@ -276,8 +276,13 @@ def main(options):
             #    outdir += "/others"
             
             ### move directory
-            os.makedirs(outdir, exist_ok=True)
-            shutil.move(options.dir_apdb, outdir)
+            for i in range(20):
+                if i == 0:
+                    outdir2 = outdir + "/" + options.dir_apdb
+                else:
+                    outdir2 = outdir + "/" + options.dir_apdb + str(i+1)
+                os.makedirs(outdir2, exist_ok=True)
+                shutil.move(options.dir_apdb, outdir2)
             break
 
 if __name__ == '__main__':
