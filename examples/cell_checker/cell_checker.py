@@ -280,7 +280,7 @@ def main(options):
                 if i == 0:
                     outdir2 = outdir + "/" + options.dir_apdb
                 else:
-                    outdir2 = outdir + "/" + options.dir_apdb + str(i+1)
+                    outdir2 = outdir + "/" + options.dir_apdb + "-" + str(i+1)
                 
                 if os.path.exists(outdir2):
                     continue
