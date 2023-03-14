@@ -77,24 +77,34 @@ def print_options(options):
 def get_suggested_relaxed_cell(options):
     
     import os.path
-    from pymatgen.io.vasp.outputs import Vasprun
+    import ase.io
+    from auto_kappa.io.vasp import wasfinished
+    from auto_kappa.structure.crystal import get_standardized_structure_spglib
     
     out = None
     if os.path.exists(options.material_name) == False:
         out = "conventional"
     else:
-        file_xml = ("./" + options.material_name + "/" +
-                output_directories['relax'] + '/full-1/vasprun.xml')
-        if os.path.exists(file_xml) == False:
-            out = "conventional"
-        else:
-            xml = Vasprun(file_xml)
-            structure = xml.structures[-1]
-            prim = structure.get_primitive_structure()
+        
+        directory = ("./" + options.material_name + "/" +
+                output_directories['relax'] + '/full-1')
+        
+        if wasfinished(directory):
+            
+            file_xml = directory + "/vasprun.xml"
+            
+            structure = ase.io.read(file_xml, format='vasp-xml')
+            
+            prim = get_standardized_structure_spglib(structure, to_primitive=True)
+            
             if len(structure) > len(prim):
                 out = "conventional"
             else:
                 out = "primitive"
+        
+        else:
+            out = "conventional"
+    
     return out    
 
 def read_phonondb(directory):

@@ -100,7 +100,8 @@ def get_commensurate_points(supercell_matrix):
 
 def get_primitive_structure_spglib(structure, format='ase'):
     
-    prim = get_standardized_structure(structure, to_primitive=True, format=format)
+    prim = get_standardized_structure(
+            structure, to_primitive=True, format=format, version='spglib')
     
     if prim is None:
         warnings.warn(" WARRNING: the primitive could not be found.")
