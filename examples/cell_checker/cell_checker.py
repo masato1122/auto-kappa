@@ -1,4 +1,32 @@
-# -*- coding: utf-8 -*-
+#
+# cell_checker.py
+#
+# Copyright (c) 2023 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
+"""
+About this script
+------------------
+This script check if the old calculation was performed with the proper cells. If
+a improper cell was used, the directory is moved to "WRONGCELL" or "WORNGCELL2".
+If thermal conductivity has been calculated, the directory is moved to
+"WRONGCELL2" while if not, to "WORNGCELL".
+
+How to Use
+----------
+
+>>> mpid="mp-149"
+>>> dir_each=~phonondb-20180417/${mpid}
+>>> dir_apdb=./${mpid}
+>>> 
+>>> python cell_checker.py \
+>>>         --dir_phdb $dir_each \
+>>>         --dir_apdb $dir_apdb
+"""
+
 import os
 import os.path
 import numpy as np
