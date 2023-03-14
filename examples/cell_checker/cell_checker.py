@@ -281,8 +281,16 @@ def main(options):
                     outdir2 = outdir + "/" + options.dir_apdb
                 else:
                     outdir2 = outdir + "/" + options.dir_apdb + str(i+1)
-                os.makedirs(outdir2, exist_ok=True)
+                
+                if os.path.exists(outdir2):
+                    continue
+                
+                os.makedirs(outdir, exist_ok=True)
+                
                 shutil.move(options.dir_apdb, outdir2)
+            
+                break
+            
             break
 
 if __name__ == '__main__':
