@@ -407,7 +407,10 @@ class ApdbVasp():
             
             ###
             if to_primitive:
-                unitcell = get_supercell(struct_ase, self.primitive_matrix)
+                unitcell = get_supercell(
+                        struct_ase, 
+                        np.linalg.inv(self.primitive_matrix)
+                        )
             else:
                 unitcell = struct_ase.copy()
             
