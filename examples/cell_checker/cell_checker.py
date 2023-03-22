@@ -15,6 +15,9 @@ a improper cell was used, the directory is moved to "WRONGCELL" or "WORNGCELL2".
 If thermal conductivity has been calculated, the directory is moved to
 "WRONGCELL2" while if not, to "WORNGCELL".
 
+StructureMatcher in Pymatgen is used to check if the structures are equivalent
+or not.
+
 How to Use
 ----------
 
