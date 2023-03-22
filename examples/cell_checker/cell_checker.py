@@ -262,7 +262,10 @@ def _compare_cells(cell1, cell2, tol_len=0.1, tol_ang=1.0):
     
     return flag
 
-def compare_structures(structures_phdb, structures_apdb):
+def compare_structures(
+        structures_phdb, structures_apdb,
+        ltol=0.2, stol=0.3, angle_tol=3.0,
+        ):
     
     flags = {}
     for type in ['unitcell', 'supercell']:
@@ -270,7 +273,7 @@ def compare_structures(structures_phdb, structures_apdb):
         unit1 = structures_phdb[type]
         unit2 = structures_apdb[type]
 
-        flags[type] = 0
+        flags[type] = None
         
         if unit2 is None:
             if type == 'unitcell':
@@ -280,10 +283,35 @@ def compare_structures(structures_phdb, structures_apdb):
             continue
         
         else:
-            flags[type] += _compare_cells(
-                    unit1.cell.array,
-                    unit2.cell.array
+            
+            ### ver.1 homemade
+            #flags[type] += _compare_cells(
+            #        unit1.cell.array,
+            #        unit2.cell.array
+            #        )
+            #print(flags[type])
+            
+            #print(unit1.cell.array)
+            #print(unit2.cell.array)
+            
+            ### ver.2 phonopy
+            #from phonopy.structure.cells import isclose
+            #result = isclose(
+            #        change_structure_format(structures_phdb[type], format='phonopy'),
+            #        change_structure_format(structures_apdb[type], format='phonopy'),
+            #        rtol=3.0,
+            #        atol=3.0,
+            #        )
+            #print(result)
+            
+            ### ver.3 pymatgen
+            from pymatgen.analysis.structure_matcher import StructureMatcher
+            matcher = StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol,)
+            is_match = matcher.fit(
+                    change_structure_format(structures_phdb[type], format='pymatgen'),
+                    change_structure_format(structures_apdb[type], format='pymatgen'),
                     )
+            flags[type] = is_match
     
     return flags
 
@@ -311,25 +339,19 @@ def main(options):
         else:
             outdir = "WORNGCELL2"
         
-        ###
-        flag = flags[type]
-        if flag != 0:
+        if flags[type] == False:
             
-            print(" Error:", flag)  
             from auto_kappa.structure.crystal import get_spg_number
             num_phdb = get_spg_number(structures_phdb['unitcell'])
             num_apdb = get_spg_number(structures_apdb['unitcell'])
             print("* Spacegroup number:")
             print(" phdb: %d , apdb: %d" % (num_phdb, num_apdb))
             
-            #if flag == 1:
-            #    outdir += "/%s/length" % type
-            #elif flag == 10 or flag == 20:
-            #    outdir += "/%s/angle" % type
-            #elif flag == 11 or flag == 21:
-            #    outdir += "/%s/length_angle" % type
-            #else:
-            #    outdir += "/others"
+            print("* Lattice")
+            print(" phdb")
+            print(structures_phdb['unitcell'].cell.array)
+            print(" apdb")
+            print(structures_apdb['unitcell'].cell.array)
             
             ### move directory
             for i in range(20):
@@ -341,10 +363,12 @@ def main(options):
                 if os.path.exists(outdir2):
                     continue
                 
-                #os.makedirs(outdir, exist_ok=True)
+                if options.move_directory == 1:
+                    
+                    os.makedirs(outdir, exist_ok=True)
+                    
+                    shutil.move(options.dir_apdb, outdir2)
                 
-                #shutil.move(options.dir_apdb, outdir2)
-            
                 break
             
             break
@@ -358,6 +382,10 @@ if __name__ == '__main__':
     parser.add_option("--dir_apdb", dest="dir_apdb", type="string",
             default="./mp-2552", 
             help="directory for anharmonic phonon database")
+    
+    parser.add_option("--move_directory", dest="move_directory", type="int",
+            default=1,
+            help="move directory (1.yes, 0.no)")
     
     (options, args) = parser.parse_args()
     
