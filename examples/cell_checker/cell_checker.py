@@ -225,42 +225,42 @@ def _sort_cell(cell):
         cell_new[inew] = cell[ii]
     return cell_new
 
-def _compare_cells(cell1, cell2, tol_len=0.1, tol_ang=1.0):
-    
-    cell1 = _sort_cell(cell1)
-    cell2 = _sort_cell(cell2)
-    
-    lengths1, angles1 = _get_lengths_of_translational_vectors(cell1)
-    lengths2, angles2 = _get_lengths_of_translational_vectors(cell2)
-    
-    ### check lengths
-    slen1 = lengths1 / lengths1[0]
-    slen2 = lengths2 / lengths2[0]
-    
-    diff_max = np.max(abs(slen1 - slen2))
-    
-    flag = 0
-    if diff_max > tol_len:
-        print(" Error: lengths are different.", diff_max)
-        print("  Correct : ", end="")
-        #_print_cell(cell1)
-        print(" %7.2f " * 3 % tuple(slen1))
-        print("  Used    : ", end="")
-        print(" %7.2f " * 3 % tuple(slen2))
-        #_print_cell(cell2)
-        flag += 1
-     
-    ### check angles
-    diff_max = np.max(abs(angles1 - angles2))
-    if diff_max > tol_ang:
-        print(" Error: angles are different.", diff_max)
-        print("  Correct : ", end="")
-        print(" %7.2f " * 3 % tuple(angles1))
-        print("  Used    : ", end="")
-        print(" %7.2f " * 3 % tuple(angles2))
-        flag += 10
-    
-    return flag
+#def _compare_cells(cell1, cell2, tol_len=0.1, tol_ang=1.0):
+#    
+#    cell1 = _sort_cell(cell1)
+#    cell2 = _sort_cell(cell2)
+#    
+#    lengths1, angles1 = _get_lengths_of_translational_vectors(cell1)
+#    lengths2, angles2 = _get_lengths_of_translational_vectors(cell2)
+#    
+#    ### check lengths
+#    slen1 = lengths1 / lengths1[0]
+#    slen2 = lengths2 / lengths2[0]
+#    
+#    diff_max = np.max(abs(slen1 - slen2))
+#    
+#    flag = 0
+#    if diff_max > tol_len:
+#        print(" Error: lengths are different.", diff_max)
+#        print("  Correct : ", end="")
+#        #_print_cell(cell1)
+#        print(" %7.2f " * 3 % tuple(slen1))
+#        print("  Used    : ", end="")
+#        print(" %7.2f " * 3 % tuple(slen2))
+#        #_print_cell(cell2)
+#        flag += 1
+#     
+#    ### check angles
+#    diff_max = np.max(abs(angles1 - angles2))
+#    if diff_max > tol_ang:
+#        print(" Error: angles are different.", diff_max)
+#        print("  Correct : ", end="")
+#        print(" %7.2f " * 3 % tuple(angles1))
+#        print("  Used    : ", end="")
+#        print(" %7.2f " * 3 % tuple(angles2))
+#        flag += 10
+#    
+#    return flag
 
 def compare_structures(
         structures_phdb, structures_apdb,
@@ -327,7 +327,10 @@ def main(options):
             options.dir_apdb, prim_mat,
             natoms_prim=natoms_prim)  
     
-    flags = compare_structures(structures_phdb, structures_apdb)
+    flags = compare_structures(structures_phdb, structures_apdb,
+            stol=options.stol, ltol=options.ltol,
+            angle_tol=options.angle_tol
+            )
     
     import shutil
     for type in ['supercell', 'unitcell']:
@@ -385,7 +388,16 @@ if __name__ == '__main__':
     
     parser.add_option("--move_directory", dest="move_directory", type="int",
             default=1,
-            help="move directory (1.yes, 0.no)")
+            help="move directory (1.yes, 0.no) [1]")
+    
+    parser.add_option("--ltol", dest="ltol", type="float",
+            default=0.2, help="ltol [0.2]")
+    
+    parser.add_option("--stol", dest="stol", type="float",
+            default=0.3, help="stol [0.3]")
+    
+    parser.add_option("--angle_tol", dest="angle_tol", type="float",
+            default=3.0, help="angle_tol [3.0]")
     
     (options, args) = parser.parse_args()
     
