@@ -123,33 +123,51 @@ def _get_relaxed_structure(filename, prim_mat):
     unit_sort = sort(unit, tags=unit.get_chemical_symbols())
     return unit_sort
 
-def get_structures_apdb(dir_apdb, prim_mat):
+def get_structures_apdb(dir_apdb, prim_mat, natoms_prim=None):
     """ Read and return structures from calculated results
     """
     ### relaxed structure
     filename = dir_apdb + "/relax/relax.yaml"
+    unitcell = None
     try:
         unitcell = _get_relaxed_structure(filename, prim_mat)
     except Exception:
-        try:
-            filename = dir_apdb + "/relax/CONTCAR"
-            prim = ase.io.read(filename, format='vasp')
-            prim_pp = change_structure_format(prim, format='phonopy')
+        structure = None
+        struct_type = None
+        file_structure = None
+        for dd in ["relax/freeze-1", "relax/full-2", "relax/full-1", "relax"]:
+            filename = dir_apdb + "/" + dd + "/vasprun.xml"
+            try:
+                structure = ase.io.read(filename, format='vasp-xml')
+                file_structure = filename
+                if len(structure) == natoms_prim:
+                    struct_type = "prim"
+                elif len(structure) > natoms_prim:
+                    struct_type = "unit"
+                else:
+                    print(" Error:")
+                    exit()
+            except Exception:
+                pass
+            
+            ###
+            if structure is not None:
+                break
+        
+        if struct_type == "prim":
+
+            prim_pp = change_structure_format(structure, format='phonopy')
             unitcell = change_structure_format(
                     get_supercell(prim_pp, np.linalg.inv(prim_mat)),
                     format="ase"
                     )
-        except Exception:
-            try:
-                filename = dir_apdb + "/relax/full-2/CONTCAR"
-                prim = ase.io.read(filename, format='vasp')
-                prim_pp = change_structure_format(prim, format='phonopy')
-                unitcell = change_structure_format(
-                        get_supercell(prim_pp, np.linalg.inv(prim_mat)),
-                        format="ase"
-                        )
-            except Exception:
-                unitcell = None
+        elif struct_type == 'unit':
+
+            unitcell = structure.copy()
+
+        else:
+
+            unitcell = None
     
     ### supercell
     filename = dir_apdb + "/harm/force/prist/POSCAR"
@@ -159,7 +177,7 @@ def get_structures_apdb(dir_apdb, prim_mat):
         supercell = None
     
     structures = {'unitcell': unitcell, "supercell": supercell}
-
+    
     return structures
 
 def _get_lengths_of_translational_vectors(cell):
@@ -266,7 +284,7 @@ def compare_structures(structures_phdb, structures_apdb):
                     unit1.cell.array,
                     unit2.cell.array
                     )
-
+    
     return flags
 
 def main(options):
@@ -275,7 +293,11 @@ def main(options):
     
     structures_phdb = make_structures(unit, prim_mat, sc_mat)
     
-    structures_apdb = get_structures_apdb(options.dir_apdb, prim_mat)  
+    natoms_prim = len(structures_phdb["primitive"])
+    
+    structures_apdb = get_structures_apdb(
+            options.dir_apdb, prim_mat,
+            natoms_prim=natoms_prim)  
     
     flags = compare_structures(structures_phdb, structures_apdb)
     
@@ -293,7 +315,13 @@ def main(options):
         flag = flags[type]
         if flag != 0:
             
-            print(" Error:", flag)    
+            print(" Error:", flag)  
+            from auto_kappa.structure.crystal import get_spg_number
+            num_phdb = get_spg_number(structures_phdb['unitcell'])
+            num_apdb = get_spg_number(structures_apdb['unitcell'])
+            print("* Spacegroup number:")
+            print(" phdb: %d , apdb: %d" % (num_phdb, num_apdb))
+            
             #if flag == 1:
             #    outdir += "/%s/length" % type
             #elif flag == 10 or flag == 20:
@@ -313,9 +341,9 @@ def main(options):
                 if os.path.exists(outdir2):
                     continue
                 
-                os.makedirs(outdir, exist_ok=True)
+                #os.makedirs(outdir, exist_ok=True)
                 
-                shutil.move(options.dir_apdb, outdir2)
+                #shutil.move(options.dir_apdb, outdir2)
             
                 break
             
