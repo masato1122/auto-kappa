@@ -29,16 +29,16 @@ def start_autokappa():
     Font: stick letters
     """
     from auto_kappa.version import __version__
-    print("\n\
-                  ___  __                __   __       \n\
-         /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  \n\
-        /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ \n\
-        \n\
-        ver. %s\n\
-        \n" % (__version__))
+    msg = "\n"
+    msg += "              ___  __                __   __       \n"
+    msg += "     /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  \n"
+    msg += "    /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ \n"
+    msg += "    ver. %s\n" % __version__
+    msg += "\n"
     time = datetime.datetime.now()
-    print(" Start at", time.strftime("%m/%d/%Y %H:%M:%S"))
-    print("")
+    msg += " Start at " + time.strftime("%m/%d/%Y %H:%M:%S") + "\n"
+    msg += "\n"
+    print(msg)
 
 def print_times(times):
     ttot = times['total'].seconds
@@ -630,9 +630,9 @@ def main():
     
     times = {}
     
-    start_autokappa()
-    
     options = get_parser()
+    
+    start_autokappa()
     
     ### Get the name of the base directory
     if options.restart == 1:
