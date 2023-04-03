@@ -755,6 +755,7 @@ class AlamodeCalc():
                 verbosity=self.verbosity
                 )
         if almdisp is None:
+            warnings.warn(" Error: Couldn't obtain AlamodeDisplace object properly.")
             return None
         
         msg = "\n"
