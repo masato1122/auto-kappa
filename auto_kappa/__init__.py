@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from phonopy.version import __version__
 
 output_directories = {
         'relax': 'relax',
