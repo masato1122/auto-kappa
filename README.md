@@ -29,6 +29,10 @@ ALAMODE:
 
 - T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
+Phonopy:
+
+- Atsushi Togo and Isao Tanaka, Scr. Mater., 108, 1-5 (2015).
+
 
 To Do
 --------

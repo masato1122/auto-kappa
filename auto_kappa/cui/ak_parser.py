@@ -16,13 +16,19 @@ def get_parser():
     parser = OptionParser()
 
     ### parameters which need to be modified for each.
+    line = "Directory of Phonondb in which POSCAR-unitcell, phonopy.conf, "
+    line += "KPOINTS-**, etc. can be found. --directory or --file_structure "
+    line += "must be given. When both of them are given, --directory takes "
+    line += "priority over --file_structure."
     parser.add_option("-d", "--directory", dest="directory", type="string",
-            default="../mp-149", help="directory of phonondb")
+            default=None, help=line)
+     
+    parser.add_option("--file_structure", dest="file_structure", type="string",
+            default=None, help="Structure file name.")
     
     parser.add_option("--material_name", dest="material_name", type="string",
-            default="mp-149", 
-            help="material name such as mateiral ID which is used as "\
-                    "the name of directory [mp-149]")
+            default="./out", 
+            help="Material name which is used as the output directory [out]")
     
     parser.add_option("--restart", dest="restart", type="int",
             default=1,
@@ -49,17 +55,11 @@ def get_parser():
             dest="nmax_suggest", type="int", default=100, 
             help="Maximum number of suggested patterns for cubic FCs [100]")
     
-    #parser.add_option("--frac_nrandom", 
-    #        dest="frac_nrandom", type="float", default=0.02,
-    #        help="Ratio of the number of generated patterns with random "\
-    #                "displacement to the number for the suggested patterns "
-    #                "with ALM [0.02]")
-    #
     parser.add_option("--frac_nrandom", 
             dest="frac_nrandom", type="float", default=1.,
-            help="Npattern * Natom / Nfc3, where Npattern is the number of "\
-            "generated random displacement patterns, Natom is the number of "\
-            "atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
+            help="``Npattern * Natom / Nfc3``, where Npattern is the number "\
+            "of generated random displacement patterns, Natom is the number "\
+            "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
             )
     
     parser.add_option("--command_vasp", 
@@ -95,6 +95,31 @@ def get_parser():
     parser.add_option("--magnitude2", 
             dest="magnitude2", type="float", default=0.03, 
             help="magnitude of random displacement for FC3 [0.03]")
+    
+    parser.add_option("--volume_relaxation", 
+            dest="volume_relaxation", type="int", default=0,
+            help="relaxation with different volume (0.off or 1.on) [0]")
+    
+    parser.add_option("--relaxed_cell", 
+            dest="relaxed_cell", type="string", default=None,
+            help="Cell type used for the relaxation calculation [None]. "\
+                    "For a restart calculation, the same type as the previous "\
+                    "calculation is used while, for the new calculation, the "
+                    "conventional cell is used."
+            )
+    
+    ### parameters for k-mesh
+    parser.add_option("--k_length", dest="k_length", type="float", 
+            default=20, help="Length to determine k-mesh. [20]")
+    
+    ### parameters for supercell
+    parser.add_option("--max_natoms", dest="max_natoms", type="int", 
+            default=150, 
+            help="Maximum limit of the number of atoms in the supercell for FC2 [150]")
+    
+    parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
+            default=None, 
+            help="Maximum limit of the number of atoms in the supercell for FC3 [None]")
     
     (options, args) = parser.parse_args()
     

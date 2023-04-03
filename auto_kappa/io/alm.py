@@ -15,13 +15,16 @@ import warnings
 import re
 import numpy as np
 import pymatgen
-#from pymatgen.core.structure import IStructure
+
 from pymatgen.io.vasp import Poscar
 from ase import Atoms
 
 from auto_kappa.units import AToBohr
-from auto_kappa.structure import (change_structure_format, get_primitive_structure)
-from auto_kappa.structure.crystal import get_formula
+from auto_kappa.structure.crystal import (
+        get_formula,
+        change_structure_format, 
+        get_primitive_structure_spglib
+        )
 
 try:
     import f90nml
@@ -140,7 +143,7 @@ class AlmInput(MSONable, dict):
         return self.get_primitive()
 
     def get_primitive(self):
-        return get_primitive_structure(self.structure)
+        return get_primitive_structure_spglib(self.structure)
 
     @classmethod
     def from_dict(cls, alm_dict: Dict):
@@ -324,10 +327,13 @@ def _write_cell(cell):
     cell (ndarray), shape=(3,3), unit=[Bohr]
     """
     ## set length unit
-    lengths = np.zeros(3)
-    for j in range(3):
-        lengths[j] = np.linalg.norm(cell[j])
-    lunit = np.min(lengths)
+    #lengths = np.zeros(3)
+    #for j in range(3):
+    #    lengths[j] = np.linalg.norm(cell[j])
+    #lunit = np.min(lengths)
+    
+    ##
+    lunit = 1.0
     
     lines = []
     lines.append("&cell")
@@ -533,14 +539,19 @@ class AnphonInput(MSONable, dict):
 
     def get_primitive(self):
         
-        ### old version
+        ### ver.1
         #prim = get_primitive_structure(self.structure, format='ase')
         #
-        ### modified
-        struct_pmg = change_structure_format(self.structure, format='pmg')
-        prim = struct_pmg.get_primitive_structure()
+        ### ver.2
+        #struct_pmg = change_structure_format(self.structure, format='pmg')
+        #prim = struct_pmg.get_primitive_structure()
+        #
+        ### ver.3
+        prim = get_primitive_structure_spglib(
+                self.structure, to_primitive=True, format='ase')
+        
         return prim
-     
+    
     @classmethod
     def from_dict(cls, alm_dict: Dict):
         """ Write a ALM input file

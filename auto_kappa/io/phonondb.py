@@ -24,7 +24,6 @@ from auto_kappa import output_directories
 from auto_kappa.structure.crystal import change_structure_format
 from auto_kappa.io.vasp import read_incar, read_poscar, read_kpoints, wasfinished
 
-
 class Phonondb():
     """ Read files in phonondb
     Args
@@ -89,7 +88,6 @@ class Phonondb():
         if self._scell_matrix is None:
             sc, _ = read_phonopy_conf(self.directory + '/phonopy.conf')
             self._scell_matrix = sc
-            #self._primitive_matrix = pm
         return self._scell_matrix
     
     @property
@@ -130,7 +128,7 @@ class Phonondb():
     def get_primitive(self, format='phonopy'):
         self._phonon = self.phonon
         return change_structure_format(self._phonon.primitive, format=format)   
-
+    
     @property
     def supercell(self):
         if self._phonon is None:
@@ -193,7 +191,44 @@ def read_phonopy_conf(filename):
                 i2 = int(i%3)
                 matrix[ii][i1,i2] = float(Fraction(num))
     ##
-    scell = matrix[0]
+    scell = np.rint(matrix[0]).astype(int)
     primat = matrix[1]
     return scell, primat
+
+def read_forcesets(filename):
+    """ Read and return data in ``FORCE_SETS`` in phonondb
+    """
+    lines = open(filename, 'r').readlines()
+    natoms = int(lines[0].split()[0])
+    npatterns = int(lines[1].split()[0])
+    
+    all_data = []
+    for ip in range(npatterns):
+        
+        i0 = 2 + ip * (3 + natoms)
+        
+        all_data.append({})
+
+        ### atom index
+        data = lines[i0+1].split()
+        iat = int(data[0])
+        all_data[-1]['index'] = iat
+        
+        ### displacement
+        data = lines[i0+2].split()
+        disp = np.asarray([float(d) for d in data])
+        #displacements.append(disp)
+        all_data[-1]['displacement'] = disp
+        
+        ### forces
+        forces = np.zeros((natoms, 3))
+        for ii in range(natoms):
+            data = lines[i0+3].split()
+            each = np.asarray([float(f) for f in data])
+            forces[ii] = each
+        
+        all_data[-1]['force'] = forces
+    
+    return all_data
+
 
