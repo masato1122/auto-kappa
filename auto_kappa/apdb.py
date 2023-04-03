@@ -50,7 +50,8 @@ class ApdbVasp():
         
         primitive_matrix : float, shape=(3,3)
             transformation matrix from the unitcell to the primitive cell with 
-            the definition in Phonopy, which is not same as Pymatgen and ASE
+            the definition in Phonopy. Note that the definition in Phonopy is 
+            not same as that in Pymatgen and ASE
             
         scell_matrix : float, shape=(3,3)
             transformation matrix from the unitcell to the supercell with 
@@ -61,6 +62,7 @@ class ApdbVasp():
         Translational vectors of the primitive cell can be calculated as
         $$
         pcell = primitive_matrix.T @ unitcell.cell
+        pcell = np.dot(primitive_matrix.T, unitcell.cell)
         $$
         
         """

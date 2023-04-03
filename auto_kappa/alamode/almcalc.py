@@ -59,7 +59,7 @@ class AlamodeCalc():
     
     def __init__(self, 
             prim_given, 
-            material_name='mp',
+            base_directory='apdb_output',
             primitive_matrix=None,
             scell_matrix=None, 
             scell_matrix3=None,
@@ -79,9 +79,9 @@ class AlamodeCalc():
             Different formats such as pymatgen and ASE are accepted while the
             format is changed to ase-Atoms in this module.
 
-        material_name : string
-            Material ID, which is used to determine the directory name.
-            It can be anything such as the composition.
+        base_directory : string
+            The top directory of the output directories. For example, material
+            ID of Materials Project or composition [apdb_output]
         
         restart : int, default 1
             The calculation will restart (1) or NOT restart (0) when the
@@ -129,7 +129,7 @@ class AlamodeCalc():
         ----------
         >>> almcalc = AlamodeCalc(
         >>>     primitive,
-        >>>     material_name='mpid-149',
+        >>>     base_directory='mpid-149',
         >>>     primitive_matrix=pmat,
         >>>     scell_matrix=smat,
         >>>     cutoff2=-1, cutoff3=4.3,
@@ -147,7 +147,7 @@ class AlamodeCalc():
         >>> almcalc.run_alamode(propt='dos')
         """
         ### set name of the output directory
-        self.set_material_name(material_name, restart)
+        self.set_basedir_name(base_directory, restart)
         
         ###
         self._commands = {
@@ -163,17 +163,16 @@ class AlamodeCalc():
         self._commands.update(commands)
         
         ### output directories
-        dir_init = os.getcwd()
         self.out_dirs = {}
         for k1 in output_directories.keys():
             values1 = output_directories[k1]
             if type(values1) == str:
-                self.out_dirs[k1] = dir_init+'/'+material_name+'/'+values1
+                self.out_dirs[k1] = self.base_directory + '/' + values1
             else:
                 self.out_dirs[k1] = {}
                 for k2 in values1.keys():
                     values2 = values1[k2]
-                    self.out_dirs[k1][k2] = dir_init+'/'+material_name+'/' + values2
+                    self.out_dirs[k1][k2] = self.base_directory + '/' + values2
         
         ###
         self.outfiles = output_files
@@ -199,13 +198,6 @@ class AlamodeCalc():
                 )
         
         ### set unitcell, primitive cell, and two kinds of supercells
-        
-        ### ver. old
-        #self._unitcell = None
-        #self._supercell = {'structure': None, 'type': None}
-        #self._supercell3 = {'structure': None, 'type': None}
-        #
-        ### ver. new
         self._primitive = None
         self._unitcell = None
         self._supercell = None
@@ -213,7 +205,6 @@ class AlamodeCalc():
         
         self._set_structures(unit_pp)
         
-        ##
         self._num_elems = None
         
         ### nbody and cutoffs
@@ -303,25 +294,31 @@ class AlamodeCalc():
     def fc3_type(self):
         return self._fc3_type
     
-    @property
-    def material_name(self):
-        return self._material_name
+    #@property
+    #def material_name(self):
+    #    return self._material_name
 
-    def set_material_name(self, dir0, restart):
+    @property
+    def base_directory(self):
+        return self._base_directory
+    
+    def set_basedir_name(self, dir0, restart):
         """
         Note 
         -----
         If restart is off, the directory name needs to be determined carefully.
         """
         if restart == 1:
-            self._material_name = dir0
+            self._base_directory = dir0
         else:
             if os.path.exists(dir0):
                 for i in range(2, 100):
                     dir1 = dir0 + '-%d' % i
                     if os.path.exists(dir1) == False:
-                        self._material_name = dir1
+                        self._base_directory = dir1
                         break
+            else:
+                self._base_directory = dir0
     
     @property
     def commands(self):
@@ -758,6 +755,7 @@ class AlamodeCalc():
                 verbosity=self.verbosity
                 )
         if almdisp is None:
+            warnings.warn(" Error: Couldn't obtain AlamodeDisplace object properly.")
             return None
         
         msg = "\n"
@@ -1726,7 +1724,7 @@ class AlamodeCalc():
             
             if propt in ['lasso']:
                 self._plot_cvsets(order=order)
-        
+
     def _copy_generated_fcsfiles(self, propt=None, order=None):
         """ Copyr a FCs file into the "result" directory.
         """
@@ -2088,10 +2086,13 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
         
         ## run the job!!
         with open(logfile, 'w') as f:
+            
             proc = subprocess.Popen(
                     cmd.split(), env=os.environ, stdout=f,
                     stderr=subprocess.PIPE)
+            
             proc.wait()
+        
         val = 1
 
     else:
@@ -2102,6 +2103,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
     #os.environ.pop('OMP_NUM_THREADS', None)
     os.environ["OMP_NUM_THREADS"] = "1"
     os.chdir(dir_init)
+    
     return val
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
