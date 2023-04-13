@@ -87,25 +87,6 @@ class ApdbVasp():
         self._trajectory = []
         self.update_structures(unitcell)
         
-        ### prepare dictionaries for structures
-        #self.original_structure = {'prim': None, 'unit': None, 'scell': None}
-        # 
-        #self.original_structure['prim'] = \
-        #        change_structure_format(prim_pp, format='pmg-structure')
-        #
-        #self.original_structure['unit'] = unitcell.copy()
-        #
-        #if scell_matrix is not None:
-        #    self.original_structure['scell'] = \
-        #            make_supercell(unitcell, scell_matrix)
-        #
-        ###
-        #self.relaxed_structure = {
-        #        'prim': None,
-        #        'unit': None,
-        #        'scell': None,
-        #        }
-        
         ### VASP command
         self._command = command
         
@@ -307,14 +288,18 @@ class ApdbVasp():
         
         #### Get the relaxed structure obtained with the old version
         #### For the old version, the xml file is located under ``directory``.
-        #if wasfinished(directory, filename='vasprun.xml'):
-        #    filename = directory + "/vasprun.xml"
-        #    prim = ase.io.read(filename, format='vasp-xml')
-        #    prim_stand = get_standardized_structure(prim, to_primitive=True)
-        #    self.update_structures(prim_stand, cell_type='prim')
-        #    msg = "\n Already finised with the old version (single full relaxation)"
-        #    print(msg)
-        #    return 0
+        if wasfinished(directory, filename='vasprun.xml'):
+            filename = directory + "/vasprun.xml"
+            prim = ase.io.read(filename, format='vasp-xml')
+            
+            mat_p2u = np.linalg.inv(self.primitive_matrix)
+            unitcell = get_supercell(
+                    change_structure_format(prim, format='phonopy'),
+                    mat_p2u)
+            unitcell = change_structure_format(unitcell) 
+            self.update_structures(unitcell)
+            msg = "\n Already finised with the old version (single full relaxation)"
+            return 0
         
         ### perform relaxation calculations
         for ical in range(num_full+1):

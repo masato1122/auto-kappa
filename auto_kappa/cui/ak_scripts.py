@@ -38,77 +38,84 @@ def start_autokappa():
     time = datetime.datetime.now()
     msg += " Start at " + time.strftime("%m/%d/%Y %H:%M:%S") + "\n"
     msg += "\n"
-    print(msg)
+    print(msg, end="")
 
 def print_times(times):
     ttot = times['total'].seconds
-    print("")
-    print("")
-    print(" Calculation times:")
-    print(" ==================")
-    print("")
+    msg = "\n"
+    msg += "\n"
+    msg += " Calculation times:\n"
+    msg += " ==================\n"
+    msg += "\n"
     for key in times:
         if key == 'total':
             continue
         tt = float(times[key].seconds)
         percentage = 100.*tt/ttot
-        print(" %15s (sec): %13.3f (%.1f%%)" % (key, tt, percentage))
-    print("")
+        msg += " %15s (sec): %13.3f (%.1f%%)\n" % (key, tt, percentage)
+    msg += "\n"
+    print(msg, end="")
 
 def end_autokappa():
     
     time = datetime.datetime.now()
-    print("\n\
-         ___       __  \n\
-        |__  |\ | |  \ \n\
-        |___ | \| |__/ \n\
-        \n")
-    print(" at", time.strftime("%m/%d/%Y %H:%M:%S"), "\n\n")
+    msg = "\n"
+    msg += "     ___       __  \n"
+    msg += "    |__  |\ | |  \ \n"
+    msg += "    |___ | \| |__/ \n"
+    msg += "    \n"
+    msg += " at " + time.strftime("%m/%d/%Y %H:%M:%S") + " \n"
+    msg += "\n"
+    print(msg, end="")
 
 def print_options(options):
 
     msg = "\n"
     msg += " Input parameters:\n"
     msg += " =================\n"
-    print(msg)
     opt_dict = eval(str(options))
     for key in opt_dict:
         if opt_dict[key] is not None:
-            print("", key.ljust(20), " : ", opt_dict[key])
-    print("")
+            msg += " " + key.ljust(20) + " : " + str(opt_dict[key]) + "\n"
+    msg += "\n"
+    print(msg, end="")
 
 def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
     
+    msg = ""
     if cell_types is not None:
-        print(" Cell type")
-        print(" ---------")
+        msg += " Cell type\n"
+        msg += " ---------\n"
         for cal_type in cell_types:
-            print(" %6s : %10s" % (cal_type, cell_types[cal_type]))
-        print("")
-    
+            msg += " %6s : %10s\n" % (cal_type, cell_types[cal_type])
+        msg += "\n"
+     
     ###
     if trans_matrices is not None:
-        print(" Transformation matrix")
-        print(" ---------------------")
+        msg += " Transformation matrix\n"
+        msg += " ---------------------\n"
         for cell_type in trans_matrices:
-            print(" %10s : " % cell_type, end="")
+            msg += " %10s : " % cell_type
             for i in range(3):
                 vec = trans_matrices[cell_type][i]
                 if cell_type == "primitive":
-                    print("%.3f " * 3 % tuple(vec), end=" ")
+                    msg += "%.3f " * 3 % tuple(vec)
                 else:
-                    print("%d " * 3 % tuple(vec), end=" ")
-            print("")
-        print("")
-            
+                    msg += "%d " * 3 % tuple(vec)
+            msg += "\n"
+        msg += "\n"
+    
     ###
     if kpts_all is not None:
-        print(" k-mesh")
-        print(" ------")
+        msg += " k-mesh\n"
+        msg += " ------\n"
         for cal_type in kpts_all:
-            print(" %6s :" % (cal_type), " %d" * 3 % tuple(kpts_all[cal_type]))
-        print("")    
-    print("")
+            msg += (" %6s :" % (cal_type) + 
+                    " %d" * 3 % tuple(kpts_all[cal_type]) + 
+                    "\n")
+        msg += "\n"
+    
+    print(msg, end="")
 
 def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     """ Return the cell type (primitive or unit (conventional) cell) used for 
@@ -420,8 +427,8 @@ def _determine_kpoints_for_all(
         
         ### check
         if kpts_all[cal_type] is None:
-            print(" Error: cannot obtain k-mesh info properly.")
-            print(" k-mesh for %s is None." % cal_type)
+            mgs = " Error: cannot obtain k-mesh info properly.\n"
+            msg += " k-mesh for %s is None.\n" % cal_type
             exit()
     
     return kpts_all
@@ -736,7 +743,7 @@ def main():
             volume_relaxation=flag,
             cell_type=cell_types["relax"]
             )
-
+    
     ### Born effective charge
     if nac == 1:
         mode = 'nac'
@@ -824,10 +831,11 @@ def main():
         log.write_yaml()
         log.plot_times()
         
-        print("")
-        print(" Negative eigenvalues were found. Stop the calculation.")
-        print(" Minimum frequency : %.2f" % (almcalc.frequency_range[0]))
-        print("")
+        msg = "\n"
+        msg += " Negative eigenvalues were found. Stop the calculation.\n"
+        msg += " Minimum frequency : %.2f\n" % (almcalc.frequency_range[0])
+        msg += "\n"
+        print(msg, end="")
         exit()
     
     t13 = datetime.datetime.now()
@@ -891,10 +899,12 @@ def main():
                 propt='kappa', neglect_log=neglect_log, outdir=outdir)
     
     ### analyze phonons
-    print()
-    print()
-    print(" Plot anharmonic properties:")
-    print(" ---------------------------")
+    msg = "\n"
+    msg += "\n"
+    msg += " Plot anharmonic properties:\n"
+    msg += " ---------------------------\n"
+    print(msg, end="")
+    
     almcalc.plot_kappa()
     almcalc.plot_lifetime(temperatures="300:500")
     almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
