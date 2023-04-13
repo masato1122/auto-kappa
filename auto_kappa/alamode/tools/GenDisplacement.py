@@ -759,16 +759,17 @@ class AlamodeDisplace(object):
         for i in range(3):
             for j in range(3):
                 convertor[i, j] = float(round(convertor[i, j]))
-
+        
         shift = np.zeros((self._supercell.nat, 3))
         map_s2p = np.zeros(self._supercell.nat, dtype=int)
-
+        
         for iat in range(self._supercell.nat):
             xtmp = self._supercell.x_fractional[iat, :]
             xnew = np.dot(xtmp, convertor)
-
+            
             iloc = -1
-
+            
+            diff_min = 1000.
             for jat in range(self._nat_primitive):
                 xp = self._xp_fractional[jat, :]
                 xdiff = np.array((xnew - xp) % 1.0)
@@ -776,10 +777,12 @@ class AlamodeDisplace(object):
                     if xdiff[i] >= 0.5:
                         xdiff[i] -= 1.0
                 diff = math.sqrt(np.dot(xdiff[:], xdiff[:]))
+                diff_min = min(diff_min, diff)
                 if diff < tol_zero:
                     iloc = jat
                     break
             if iloc == -1:
+                print(diff_min)
                 raise RuntimeError("Equivalent atom not found")
 
             map_s2p[iat] = iloc

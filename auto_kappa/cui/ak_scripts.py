@@ -249,7 +249,7 @@ def _get_base_directory_name(label, restart=True):
     
     return outdir
 
-def _get_previously_used_parameters(outdir, lattice_unit):
+def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
     """ Read previously used parameters: transformation matrices and k-meshes.
     
     Parameters
@@ -324,14 +324,23 @@ def _get_previously_used_parameters(outdir, lattice_unit):
                 params_prev[label]["kpts"] = kpts
 
                 ### structure
-                structure = Poscar.from_file(fn_structure).structure
+                structure = Poscar.from_file(
+                        fn_structure, check_for_POTCAR=False).structure
                 lattice = structure.lattice.matrix
-
-                params_prev[label]["trans_matrix"] = \
-                        np.rint(np.dot(
-                            lattice, 
-                            np.linalg.inv(lattice_unit)).T
-                            ).astype(int)
+                
+                ### transformation matrix
+                ##
+                ## cell_trans.T = cell_orig.T @ Mtrans
+                ## => Mtrans = (cell_orig.T)^-1 @ cell_trans.T
+                ##
+                #### modified at April 13, 2023
+                mat = np.dot(np.linalg.inv(lattice_unit.T), lattice.T)
+                
+                ###
+                if cell_types[label] == "primitive":
+                    params_prev[label]["trans_matrix"] = mat
+                else:
+                    params_prev[label]["trans_matrix"] = np.rint(mat).astype(int)
     
     return params_prev
 
@@ -583,7 +592,8 @@ def _get_required_parameters(
     
     ### get previously used transformation matrices and kpoints
     params_prev = _get_previously_used_parameters(
-            base_directory, structures["unitcell"].cell.array)
+            base_directory, structures["unitcell"].cell.array,
+            cell_types=cell_types)
     
     ### prepare dictionary to compare with ``params_prev``
     params_suggest = {}
@@ -689,7 +699,7 @@ def main():
                     k_length=options.k_length,
                     celltype_relax_given=options.relaxed_cell,
                     )
-    
+
     ### print parameters
     print_options(options)
     

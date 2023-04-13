@@ -153,7 +153,7 @@ def get_unitcell_and_primitive_matrix(structure):
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
     
     primitive_matrix = np.dot(cell_prim[0], np.linalg.inv(cell_std[0])).T
-    
+
     return unitcell, primitive_matrix
     
 

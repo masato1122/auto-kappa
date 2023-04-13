@@ -268,7 +268,7 @@ class AlamodeCalc():
             sc = get_supercell(unit_pp, self.scell_matrix)
         
         self._supercell = change_structure_format(sc, format=format)
-        
+         
         ### supercell for cubic FCs
         xml_fd = self.out_dirs['cube']['force_fd'] + '/psist/vasprun.xml'
         xml_lasso = self.out_dirs['cube']['force_lasso'] + '/psist/vasprun.xml'
@@ -754,6 +754,7 @@ class AlamodeCalc():
                 primitive=self.primitive,
                 verbosity=self.verbosity
                 )
+        
         if almdisp is None:
             warnings.warn(" Error: Couldn't obtain AlamodeDisplace object properly.")
             return None
