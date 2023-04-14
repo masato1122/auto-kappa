@@ -294,10 +294,6 @@ class AlamodeCalc():
     def fc3_type(self):
         return self._fc3_type
     
-    #@property
-    #def material_name(self):
-    #    return self._material_name
-
     @property
     def base_directory(self):
         return self._base_directory
@@ -419,9 +415,6 @@ class AlamodeCalc():
     @property
     def scell_matrix3(self):
         return self._scell_matrix3
-    
-    #def set_scell_matrix3(self, matrix):
-    #    self._scell_matrix3 = matrix
     
     @property
     def primitive(self):

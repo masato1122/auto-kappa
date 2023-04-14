@@ -754,6 +754,10 @@ def main():
             cell_type=cell_types["relax"]
             )
     
+    ### Get relaxed structures
+    ### This part was omitted in the beggining of ver.0.2.
+    structures_relax = apdb.structures.copy()
+     
     ### Born effective charge
     if nac == 1:
         mode = 'nac'
@@ -776,7 +780,7 @@ def main():
             }
     
     almcalc = AlamodeCalc(
-            structures["primitive"],
+            structures_relax["prim"],
             base_directory=base_dir,
             restart=options.restart,
             primitive_matrix=trans_matrices["primitive"],
