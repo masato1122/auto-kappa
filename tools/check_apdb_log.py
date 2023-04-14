@@ -1,0 +1,89 @@
+#
+# check_apdb_log.py
+#
+# This script helps to check if the automation calculation was finished or not.
+#
+# Copyright (c) 2023 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
+"""
+Hot to use
+==========
+>>> python check_apdb_log.py --dir_apdb ${directory name}
+
+``directory name`` is the directory name of the automation calculation to check.
+If the calculation has not yet been finished, the return value is ``NotYet``.
+
+"""
+import os.path
+import numpy as np
+from optparse import OptionParser
+import yaml
+
+def get_minimum_energy(dir_name):
+    
+    fn_log = dir_name + "/result/log.yaml"
+    if os.path.exists(fn_log) == False:
+        return 0
+    
+    ##
+    with open(fn_log, "r") as yml:
+        config = yaml.safe_load(yml)
+    
+    ##
+    emin_band = config["harm"]["band"]["minimum_frequency"] 
+    emin_dos = config["harm"]["dos"]["minimum_frequency"] 
+    emin = min(emin_band, emin_dos)
+    return emin
+
+def check_log_yaml(dir_name, tol_zero=-1e-3):
+    """
+    Return
+    --------
+    0 : not yet finished
+    1 : finished at harmonic
+    2 : finished at cubic
+    """
+    try:
+        emin = get_minimum_energy(dir_name)
+    except Exception:
+        emin = None
+        return 0
+    
+    ##
+    if emin < tol_zero:
+        return 1
+    else:
+        figname = dir_name + "/kappa/fig_kappa.png"
+        if os.path.exists(figname):
+            return 2
+        else:
+            return 0
+
+def main(options):
+
+    flag = check_log_yaml(options.dir_apdb)
+    
+    print(options.dir_apdb, end=" ")
+    if flag == 0:
+        print("NotYet")
+    elif flag == 1:
+        print("Finished_harmonic")
+    elif flag == 2:
+        print("Finished_cubic")
+    else:
+        print("Error")
+    
+    
+if __name__ == '__main__':
+    parser = OptionParser()
+    
+    parser.add_option("-d", "--dir_apdb", dest="dir_apdb", type="string",
+            help="directory name for APDB")
+    
+    (options, args) = parser.parse_args()
+    main(options)
+

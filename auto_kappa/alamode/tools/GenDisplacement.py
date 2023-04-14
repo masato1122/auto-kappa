@@ -784,7 +784,7 @@ class AlamodeDisplace(object):
             if iloc == -1:
                 print(diff_min)
                 raise RuntimeError("Equivalent atom not found")
-
+            
             map_s2p[iat] = iloc
             shift[iat, :] = [float(round(xnew[i] - self._xp_fractional[iloc, i]))
                              for i in range(3)]

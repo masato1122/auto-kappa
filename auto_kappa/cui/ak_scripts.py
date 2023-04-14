@@ -337,11 +337,11 @@ def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
                 mat = np.dot(np.linalg.inv(lattice_unit.T), lattice.T)
                 
                 ###
-                if cell_types[label] == "primitive":
+                if cell_types[label] in ["primitive"]:
                     params_prev[label]["trans_matrix"] = mat
                 else:
                     params_prev[label]["trans_matrix"] = np.rint(mat).astype(int)
-    
+                
     return params_prev
 
 def _make_structures(unitcell, 
