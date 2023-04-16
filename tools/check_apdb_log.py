@@ -57,7 +57,7 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     if emin < tol_zero:
         return 1
     else:
-        figname = dir_name + "/kappa/fig_kappa.png"
+        figname = dir_name + "/result/fig_kappa.png"
         if os.path.exists(figname):
             return 2
         else:
@@ -67,7 +67,7 @@ def main(options):
 
     flag = check_log_yaml(options.dir_apdb)
     
-    print(options.dir_apdb, end=" ")
+    ##print(options.dir_apdb, end=" ")
     if flag == 0:
         print("NotYet")
     elif flag == 1:
