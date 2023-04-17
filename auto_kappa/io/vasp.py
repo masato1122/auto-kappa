@@ -247,7 +247,7 @@ def get_born_charges(filename):
     ## Read contents in "born_charges"
     borns = []
     for i in range(natoms):
-        if natons == 0:
+        if natoms == 0:
             lines = array['set']['v']
         else:
             lines = array['set'][i]['v']
