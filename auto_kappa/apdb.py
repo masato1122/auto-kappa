@@ -367,7 +367,6 @@ class ApdbVasp():
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
         
-        
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:
             from auto_kappa.vasp.relax import StrictRelaxation

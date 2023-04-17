@@ -208,7 +208,7 @@ def write_born_info(filename, outfile='BORNINFO'):
     """
     lines = []
     
-    vasprun = Vasprun(filename)
+    vasprun = Vasprun(filename, parse_potcar_file=False)
     dielectric_tensor = vasprun.epsilon_static
     born_charges = get_born_charges(filename)
     
@@ -247,7 +247,10 @@ def get_born_charges(filename):
     ## Read contents in "born_charges"
     borns = []
     for i in range(natoms):
-        lines = array['set'][i]['v']
+        if natons == 0:
+            lines = array['set']['v']
+        else:
+            lines = array['set'][i]['v']
         born = np.zeros((3,3))
         for i1, line in enumerate(lines):
             data = line.split()
