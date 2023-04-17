@@ -247,10 +247,13 @@ def get_born_charges(filename):
     ## Read contents in "born_charges"
     borns = []
     for i in range(natoms):
-        if natoms == 0:
+        
+        ### modified on April 17, 2023
+        if natoms == 1:
             lines = array['set']['v']
         else:
             lines = array['set'][i]['v']
+        
         born = np.zeros((3,3))
         for i1, line in enumerate(lines):
             data = line.split()
