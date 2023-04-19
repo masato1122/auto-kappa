@@ -2081,8 +2081,14 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=False,
         ## run the job!!
         with open(logfile, 'w') as f:
             
+            ### ver.1
+            #proc = subprocess.Popen(
+            #        cmd.split(), env=os.environ, stdout=f,
+            #        stderr=subprocess.PIPE)
+            #
+            ### ver.2
             proc = subprocess.Popen(
-                    cmd.split(), env=os.environ, stdout=f,
+                    cmd, shell=True, env=os.environ, stdout=f,
                     stderr=subprocess.PIPE)
             
             proc.wait()

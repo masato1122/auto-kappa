@@ -16,16 +16,18 @@ def get_parser():
     parser = OptionParser()
     
     ### parameters that need to be modified for each calculation
-    line = "Directory of Phonondb in which POSCAR-unitcell, phonopy.conf, "
-    line += "KPOINTS-**, etc. can be found. --directory or --file_structure "
+    line = "Directory of Phonondb where POSCAR-unitcell, phonopy.conf, "
+    line += "KPOINTS-**, etc. are located. --directory or --file_structure "
     line += "must be given. When both of them are given, --directory takes "
     line += "priority over --file_structure."
     parser.add_option("-d", "--directory", dest="directory", type="string",
             default=None, help=line)
      
     parser.add_option("--file_structure", dest="file_structure", type="string",
-            default=None, help="Structure file name.")
-    
+            default=None, 
+            help="Structure file name. Different kinds of format such as "\
+                    "POSCAR and cif file are accepted.")
+
     parser.add_option("--material_name", dest="material_name", type="string",
             default="./out", 
             help="Material name which is used as the output directory [out]")
@@ -35,28 +37,36 @@ def get_parser():
             default=2, help="Number of cores used for the calculation [2]")
     
     parser.add_option("--anphon_para", 
-            dest="anphon_para", type="string", default="omp", 
-            help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [omp]")
-    
+            dest="anphon_para", type="string", default="mpi", 
+            help="Parallel mode for \"anphon\". " \
+                    "Input value should be \"mpi\" for MPI and \"omp\" for OpenMP. "\
+                    "While \"mpi\", which is the default value, is "\
+                    "faster for most cases, "\
+                    "if the system is complex and requires a large memory, "\
+                    "use \"omp\". "\
+                    "It is also recommended to check if \"anphon\" is running "\
+                    "properly with MPI before starting "\
+                    "a high-throughput calculation. [mpi]")
+     
     parser.add_option("--mpirun", dest="mpirun", type="string",
             default="mpirun", help="MPI command [mpirun]")
     
     parser.add_option("--command_vasp", 
             dest="command_vasp", type="string", default="vasp", 
-            help="command to run vasp [vasp]")
+            help="Command to run vasp [vasp]")
     
     parser.add_option("--command_anphon", 
             dest="command_anphon", type="string", default="anphon", 
-            help="command to run anphon [anphon]")
+            help="Command to run anphon [anphon]")
     
     parser.add_option("--command_alm", 
             dest="command_alm", type="string", default="alm", 
-            help="command to run alm [alm]")
+            help="Command to run alm [alm]")
     
     ### Parameters for the calculation condictions
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, 
-            help="cutoff length for cubic force constants, unit=Ang, [4.3]")
+            help="Cutoff length for cubic force constants, unit=Ang, [4.3]")
     
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=100, 
