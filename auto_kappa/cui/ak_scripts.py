@@ -699,7 +699,12 @@ def main():
                     k_length=options.k_length,
                     celltype_relax_given=options.relaxed_cell,
                     )
-
+    
+    ### NONANALYTIC
+    if nac != 0:
+        if options.nonanalytic is not None:
+            nac = options.nonanalytic
+    
     ### print parameters
     print_options(options)
     
@@ -757,7 +762,7 @@ def main():
     ### Get relaxed structures
     ### This part was omitted in the beggining of ver.0.2.
     structures_relax = apdb.structures.copy()
-     
+    
     ### Born effective charge
     if nac == 1:
         mode = 'nac'

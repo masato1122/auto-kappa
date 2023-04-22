@@ -63,6 +63,12 @@ def get_parser():
             dest="command_alm", type="string", default="alm", 
             help="Command to run alm [alm]")
     
+    parser.add_option("--nonanalytic", 
+            dest="nonanalytic", type="int", default=2, 
+            help="NONANALYTIC tag for Anphon calculation. "\
+                    "The default value is 0 if NAC is not considered. "\
+                    "while this is set to be 1 if NAC is considered.")
+    
     ### Parameters for the calculation condictions
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, 
