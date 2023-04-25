@@ -860,6 +860,9 @@ def main():
     t13 = datetime.datetime.now()
     times['harm_alamode'] = t13 - t12
     
+    if options.harmonic_only == 1:
+        exit()
+
     ##############################
     ##                          ##
     ##  Start FC3 calculation   ##

@@ -133,6 +133,10 @@ def get_parser():
     parser.add_option("--neglect_log", dest="neglect_log", type="int",
             default=0, help="neglect log (1) or not (0) [0]")
     
+    parser.add_option("--harmonic_only", dest="harmonic_only", type="int",
+            default=0, 
+            help="calculate harmonic properties only (0.No, 1.Yes) [0]")
+    
     (options, args) = parser.parse_args()
     
     return options
