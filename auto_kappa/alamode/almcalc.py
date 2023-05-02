@@ -113,7 +113,7 @@ class AlamodeCalc():
             For lasso calculation, cuttoff3 is used for higher order FCs.
         
         nac : int
-            If nac=0, nac is not considered while, if nac=1, nac is considered.
+            If nac=0, nac is not considered while, if nac != 0, nac is considered.
     
         verbosity : int
             If verbosity=1, details are output while, if 0, not.
@@ -1364,7 +1364,7 @@ class AlamodeCalc():
         os.makedirs(dir_work, exist_ok=True)
         
         ## non-analytical term
-        if self.nac == 1 and alamode_type == 'anphon':
+        if self.nac != 0 and alamode_type == 'anphon':
             
             borninfo = 'BORNINFO'
             

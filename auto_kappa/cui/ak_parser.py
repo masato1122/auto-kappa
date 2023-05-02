@@ -93,7 +93,7 @@ def get_parser():
     
     parser.add_option("--magnitude2", 
             dest="magnitude2", type="float", default=0.03, 
-            help="magnitude of random displacement for FC3 [0.03]")
+            help="magnitude of random displacement for cubic FCs [0.03]")
     
     parser.add_option("--negative_freq", dest="negative_freq", type="float",
             default=-0.001, help="threshold of negative frequency [-0.001]")
@@ -118,7 +118,18 @@ def get_parser():
     
     parser.add_option("--max_natoms", dest="max_natoms", type="int", 
             default=150, 
-            help="Maximum limit of the number of atoms in the supercell "\
+            help="Initial maximum limit of the number of atoms in the "\
+                    "supercells [150]. When negative frequencies exist "\
+                    "at kpoints except for the commensurate points, "\
+                    "the maximum limit for harmonic FCs "
+                    "will be increased with the step of "\
+                    "\"interval_max_natoms\". Note that the maximum limit for "\
+                    "cubic FCs is not changed during the simlation. ")
+    
+    parser.add_option("--interval_max_natoms", dest="interval_max_natoms", 
+            type="int", default=50, 
+            help="Increasing interval of the aximum limit of the number of "\
+                    "atoms in the supercell."\
                     "for FC2 [150]. For the automation calculation, it is NOT"\
                     "recommended to modify this option.")
     

@@ -765,7 +765,7 @@ def main():
     structures_relax = apdb.structures.copy()
     
     ### Born effective charge
-    if nac == 1:
+    if nac != 0:
         mode = 'nac'
         apdb.run_vasp(mode,
                 out_dirs[mode],
