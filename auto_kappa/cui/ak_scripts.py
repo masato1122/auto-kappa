@@ -445,7 +445,8 @@ def _determine_kpoints_for_all(
 def _get_required_parameters(
         base_directory=None,
         dir_phdb=None, file_structure=None,
-        max_natoms=None, max_natoms3=None,
+        max_natoms=None, 
+        max_natoms3=None,
         k_length=None,
         celltype_relax_given=None,
         ):
@@ -521,7 +522,7 @@ def _get_required_parameters(
         
         ### Suggest the structure for FC3
         if max_natoms3 == max_natoms:
-            trans_matrices["supercell3"] = trans_matrices["supercell"]
+            trans_matrices["supercell3"] = trans_matrices["supercell"].copy()
         
         else:
             from auto_kappa.structure.supercell import estimate_supercell_matrix

@@ -67,12 +67,13 @@ def get_parser():
             dest="nonanalytic", type="int", default=2, 
             help="NONANALYTIC tag for Anphon calculation. "\
                     "The default value is 0 if NAC is not considered. "\
-                    "while this is set to be 1 if NAC is considered.")
+                    "while this is set to be 2 if NAC is considered.")
     
     ### Parameters for the calculation condictions
     parser.add_option("--cutoff3", dest="cutoff3", type="float",
             default=4.3, 
-            help="Cutoff length for cubic force constants, unit=Ang, [4.3]")
+            help="Cutoff length for cubic force constants with the unit of "\
+                    "angstrom: [4.3]")
     
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=100, 
@@ -99,14 +100,16 @@ def get_parser():
             
     parser.add_option("--volume_relaxation", 
             dest="volume_relaxation", type="int", default=0,
-            help="relaxation with different volume (0.off or 1.on) [0]")
+            help="strict relaxation with the relation between energy and "\
+                    "volume (0.off or 1.on) [0]")
     
     parser.add_option("--relaxed_cell", 
             dest="relaxed_cell", type="string", default=None,
             help="Cell type used for the relaxation calculation [None]. "\
-                    "For a restart calculation, the same type as the previous "\
-                    "calculation is used while, for the new calculation, the "
-                    "conventional cell is used."
+                    "For the restarted calculation, the same type "\
+                    "as that for the previous calculation is used "\
+                    "while, for the new calculation, the conventional cell "
+                    "is used."
             )
     
     ### Parameters to determine k-mesh densities and size of supercells
@@ -115,12 +118,16 @@ def get_parser():
     
     parser.add_option("--max_natoms", dest="max_natoms", type="int", 
             default=150, 
-            help="Maximum limit of the number of atoms in the supercell for FC2 [150]")
+            help="Maximum limit of the number of atoms in the supercell "\
+                    "for FC2 [150]. For the automation calculation, it is NOT"\
+                    "recommended to modify this option.")
     
     parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
             default=None, 
-            help="Maximum limit of the number of atoms in the supercell for FC3 [None]")
-
+            help="This options is invalid! PLEASE DO NOT USE this option."\
+                    "Maximum limit of the number of atoms in the supercell for "\
+                    " FC3 [None].")
+    
     ### Parameters that need to be changed for test calculations 
     parser.add_option("--restart", dest="restart", type="int",
             default=1,
