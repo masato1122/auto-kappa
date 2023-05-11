@@ -845,7 +845,7 @@ def main():
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
     
     ### Check negative frequency
-    if almcalc.frequency_range[0] < options.negative_freq:
+    if almcalc.minimum_frequency < options.negative_freq:
         
         log = AkLog(options.material_name)
         log.write_yaml()

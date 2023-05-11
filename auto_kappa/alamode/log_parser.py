@@ -635,7 +635,7 @@ def _get_cellsize_from_log(filename, type=None):
     
     return cell
     
-def _get_minimum_frequency(filename):
+def get_minimum_frequency_from_logfile(filename):
     
     lines = open(filename, 'r').readlines()
     
@@ -696,7 +696,7 @@ def read_log_eigen(directory, mode='band'):
     v = _get_alamode_runtime(filename)
     if v is not None:
         out['time'] = v
-    out.update(_get_minimum_frequency(filename))
+    out.update(get_minimum_frequency_from_logfile(filename))
     return out
 
 def get_ak_logs(directory):

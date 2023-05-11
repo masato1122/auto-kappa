@@ -244,6 +244,7 @@ class AlamodeCalc():
         ###
         self._prefix = get_formula(self.primitive)  ## prefix for input files
         self._frequency_range = None
+        #self._minimum_frequency = None
         
         self.verbosity = verbosity
     
@@ -402,15 +403,9 @@ class AlamodeCalc():
     def primitive_matrix(self):
         return self._primitive_matrix
     
-    #def set_primitive_matrix(self, matrix):
-    #    self._primitive_matrix = matrix
-    
     @property
     def scell_matrix(self):
         return self._scell_matrix
-    
-    #def set_scell_matrix(self, matrix):
-    #    self._scell_matrix = matrix
     
     @property
     def scell_matrix3(self):
@@ -436,46 +431,6 @@ class AlamodeCalc():
         else:
             return self._supercell
 
-        #"""
-        #self._supercell['structure'] : ASE Atoms
-        #self._supercell['type'] : string
-        #    None, "ase", or "xml"
-        #    ``pp`` indicates the structure is obtained with ``get_supercell``
-        #    module of Phonopy.
-        #    ``xml`` indicates the structure is obtained with ``vasprun.xml`` for
-        #    force calculation in ./mp-***/harm/force/prist.
-        #"""
-        #if self._supercell['type'] is not None:
-        #    if self._supercell['type'].lower() == 'xml':
-        #        return self._supercell['structure']
-        #
-        ###
-        #xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        #
-        #try:
-        #    self._supercell['structure'] = ase.io.read(xml, format='vasp-xml')
-        #    self._supercell['type'] = 'xml'
-        #
-        #except Exception:
-        #    
-        #    if self._supercell['structure'] is None:
-        #        structure = self.unitcell.copy()
-        #        
-        #        ### make a supercell with a Phonopy module
-        #        sc_pp = get_supercell(
-        #                change_structure_format(structure, format="phonopy"),
-        #                self.scell_matrix)
-        #        
-        #        self._supercell['structure'] = change_structure_format(
-        #                sc_pp, format="ase")
-        #        
-        #        self._supercell['type'] = 'ase'
-
-        #        print(" Please check!!!!!!!")
-        #        exit()
-        #
-        #return self._supercell['structure']
-    
     @property
     def supercell3(self):
         """
@@ -485,42 +440,6 @@ class AlamodeCalc():
         else:
             return self._supercell3
         
-        #"""
-        #self._supercell3['structure'] : ASE Atoms
-        #self._supercell3['type'] : string
-        #    None, "ase", or "xml"
-        #
-        #Read descriptions of supercell for the detail.
-        #"""
-        #if self._supercell3['type'] is not None:
-        #    if self._supercell3['type'].lower() == 'xml':
-        #        return self._supercell3['structure']
-        #
-        ###
-        #try:
-        #    xml = self.out_dirs['cube']['force_%s' % self.fc3_type] + '/prist/vasprun.xml'
-        #    self._supercell3['structure'] = ase.io.read(xml, format='vasp-xml')
-        #    self._supercell3['type'] = 'xml'
-        #
-        #except Exception:
-        #    if self._supercell3['structure'] is None:
-        #        
-        #        ### ver.1 with make_supercell in ASE
-        #        #structure = self.unitcell.copy()
-        #        #self._supercell3['structure'] = make_supercell(
-        #        #        structure, self.scell_matrix3)
-        #        #self._supercell3['type'] = 'ase'
-        #
-        #        ### ver. 2: with get_supercell in phonopy
-        #        unit_pp = change_structure_format(
-        #                self.unitcell, format='phonopy')
-        #        sc = get_supercell(unit_pp, self.scell_matrix3)
-        #        self._supercell3['structure'] = change_structure_format(
-        #                sc, format='ase')
-        #        self._supercell3['type'] = 'ase'
-        #
-        #return self._supercell3['structure']
-    
     @property
     def frequency_range(self):
         if self._frequency_range is None:
@@ -531,7 +450,36 @@ class AlamodeCalc():
                 fmin, fmax = _read_frequency_range(fn, format='anphon')
                 self._frequency_range = [fmin, fmax]
         return self._frequency_range
+    
+    @property
+    def minimum_frequency(self):
+        """ Read minimum frequencies from log files for band (band.log) and DOS
+        (dos.log) calculations and return the value
+        """
+        from auto_kappa.alamode.log_parser import (
+                get_minimum_frequency_from_logfile)
         
+        log_band = self.out_dirs['harm']['bandos'] + "/band.log"
+        log_dos = self.out_dirs['harm']['bandos'] + "/dos.log"
+        
+        fmin = 100000.
+        try:
+            out_band = get_minimum_frequency_from_logfile(log_band)
+            fmin = min(fmin, out_band['minimum_frequency'])
+        except Exception:
+            out_band = None
+        
+        try:
+            out_dos = get_minimum_frequency_from_logfile(log_dos)
+            fmin = min(fmin, out_dos['minimum_frequency'])
+        except Exception:
+            out_dos = None
+        
+        if fmin > 1e3:
+            return None
+        else:
+            return fmin
+    
     def _get_file_pattern(self, order):
         
         if order == 1:
@@ -689,33 +637,6 @@ class AlamodeCalc():
         
         return structures
     
-    #def _get_fd_displacements(self, filename: None):
-    #    
-    #    from .tools.VASP import VaspParser
-    #    from .tools.GenDisplacement import AlamodeDisplace
-    #    
-    #    codeobj = VaspParser()
-    #    codeobj.set_initial_structure(self.supercell)
-    #    
-    #    ### run with ALM library
-    #    almdisp = AlamodeDisplace(
-    #            'fd', codeobj,
-    #            #file_primitive=file_prim,
-    #            primitive=self.primitive,
-    #            verbosity=self.verbosity
-    #            )
-    #    if almdisp is None:
-    #        return None
-    #    
-    #    print(filename)
-    #    header_list, disp_list = almdisp.generate(file_pattern=filename,
-    #            magnitude=0.1)
-    #    
-    #    all_disps = np.zeros_like(disp_list)
-    #    for i, each in enumerate(disp_list):
-    #        all_disps[i] = np.dot(each, self.supercell.cell)
-    #    return all_disps 
-    
     def _get_displacements(
             self, displacement_mode: None,
             file_pattern=None, 
@@ -853,12 +774,6 @@ class AlamodeCalc():
         
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
-        #
-        ### ver.1 with ALM library
-        #structures = self.get_suggested_structures(order, disp_mode='fd')
-        #nsuggest =  len(structures)
-        #
-        ### ver. 2 from alamode output file
         if order <= 2:
             
             nsuggest = self._get_number_of_suggested_structures(order)
@@ -937,24 +852,6 @@ class AlamodeCalc():
             msg += " Fractional number of the random patterns : %.3f\n" % (frac_nrandom)
             print(msg)
             
-            #if newversion == False:
-            #    ### ver.1
-            #    structures = self.get_suggested_structures(
-            #            order, 
-            #            disp_mode='random_normalcoordinate',
-            #            number_of_displacements=ngenerated,
-            #            temperature=temperature,
-            #            classical=classical
-            #            )
-            #
-            #else:
-            #    ### ver.2
-            #    structures = self.get_suggested_structures(
-            #            order, 
-            #            disp_mode='random',
-            #            number_of_displacements=ngenerated,
-            #            )
-            
             if order == 2:
                 ## FC3 is obtained with random-displacement method
                 ## with a fixed displacement magnitude
@@ -1030,22 +927,6 @@ class AlamodeCalc():
             
             elif order == 2:
                 
-                ### old version
-                #if self.lasso:
-                #    
-                #    if newversion == False:
-                #        ### ver.1
-                #        #df_prefix = 'lasso'
-                #        fn0 = self.outfiles['lasso_dfset']
-                #    else:
-                #        ### ver.2
-                #        #df_prefix = 'cube_random'
-                #        fn0 = self.outfiles['cube_lasso_dfset']
-                #    
-                #else:
-                #    
-                #    fn0 = self.outfiles['cube_fd_dfset']
-                
                 fn0 = self.outfiles['cube_%s_dfset' % self.fc3_type]
             
             elif order > 2:
@@ -1070,178 +951,6 @@ class AlamodeCalc():
                 print(msg)
         print("")
     
-    #def calc_harmonic_force_constants_with_ALM(self, output=True):
-    #    """ calculate harmonic FCs with python ALM library and return ALM 
-    #    ALM library may incompatible with alm command when lmodel = enet for
-    #    some cases. Therefore, ALM library is not used in auto-kappa. 
-    #    
-    #    Args
-    #    -----
-    #    output : bool
-    #        If True, fcs.xml file is stored, if False, not.
-    #    
-    #    """
-    #    msg = "\n"
-    #    msg += " ### Calculate harmonic force constants\n"
-    #    msg += "\n"
-    #
-    #    ### prepare directory and file names
-    #    os.makedirs(self.out_dirs['result'], exist_ok=True)
-    #    
-    #    directory = self.out_dirs['harm']['force']
-    #    
-    #    out_dfset = self.out_dirs['result'] + '/' + self.outfiles['harm_dfset']
-    #    if output:
-    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
-    #    else:
-    #        out_xml = None
-    #    
-    #    ## get dfset
-    #    offset_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-    #    
-    #    if os.path.exists(out_dfset) == False:
-    #        
-    #        disps, forces = get_dfset(
-    #                directory, offset_xml=offset_xml, outfile=out_dfset)
-    #    
-    #    else:
-    #        
-    #        disps, forces = read_dfset(out_dfset, natoms=len(self.supercell))
-    #        
-    #    ## get structure
-    #    structure = ase.io.read(offset_xml)
-    #    
-    #    ## calculate force constants
-    #    ## out = [fc2_values, elem2_indices]
-    #    os.environ['OMP_NUM_THREADS'] = str(self.ncores)
-    #    out = run_alm(
-    #            structure, 1, self.cutoffs[0], [self.nbody[0]], 
-    #            mode='optimize',
-    #            displacements=disps, forces=forces, 
-    #            outfile=out_xml,
-    #            verbosity=self.verbosity
-    #            )
-    #    os.environ.pop('OMP_NUM_THREADS', None)
-    #    return out
-    
-    
-    #def calc_anharm_force_constants(self):
-    #    """ calculate cubic IFCs and return ALM 
-    #    
-    #    Args
-    #    ----
-    #    maxorder : int, default 5
-    #        order for lasso calculation
-    #    """
-    #    ### prepare directory and file names
-    #    os.makedirs(self.out_dirs['result'], exist_ok=True)
-    #    
-    #    mode = 'optimize'
-    #    
-    #    if self.lasso == False:
-    #
-    #        order = 2
-    #        
-    #        directory = self.out_dirs['cube']['force']
-    #        out_dfset = self.out_dirs['result'] + '/' + self.outfiles['cube_dfset']
-    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['cube_xml']
-    #        offset_xml = self.out_dirs['cube']['force'] + '/prist/vasprun.xml'
-    #        
-    #    else:
-    #        
-    #        order = self.order_lasso
-    #        
-    #        directory = self.out_dirs['lasso']['force']
-    #        out_dfset = self.out_dirs['result'] + '/' + self.outfiles['lasso_dfset']
-    #        out_xml = self.out_dirs['result'] + '/' + self.outfiles['lasso_xml']
-    #        offset_xml = self.out_dirs['lasso']['force'] + '/prist/vasprun.xml'
-    #        
-    #    ### print    
-    #    msg = "\n"
-    #    msg += " ### Calculate anharmonic FCs (order=%d)\n" % (order)
-    #    msg += "\n"
-    #    print(msg)
-    #    
-    #    ### set nbody
-    #    if len(self.nbody) < order:
-    #        self.set_nbody_automatically(order=order)
-    #    
-    #    nbody = []
-    #    for i in range(order):
-    #        nbody.append(self.nbody[i])
-    #
-    #    ### get dfset
-    #    if os.path.exists(out_dfset):
-    #        
-    #        disps, forces = read_dfset(
-    #                out_dfset,
-    #                natoms=len(self.supercell3)
-    #                )
-    #    
-    #    else:
-    #        
-    #        disps, forces = get_dfset(
-    #                directory, 
-    #                offset_xml=offset_xml, 
-    #                outfile=out_dfset
-    #                )
-    #    
-    #    ## For LASSO, extract only required data
-    #    ## This part is required when too many patterns were calculated, but
-    #    ## smaller data are needed for LASSO.
-    #    if self.lasso and self.nmax_suggest is not None:
-    #        if len(disps) > self.nmax_suggest:
-    #            disps = disps[:self.nmax_suggest]
-    #            forces = forces[:self.nmax_suggest]
-    #    
-    #    ## get fc2 and elem2
-    #    fc2_values, elem2_indices = \
-    #            self.calc_harmonic_force_constants(output=False)
-    #    
-    #    ## structure
-    #    structure = ase.io.read(offset_xml)
-    #    
-    #    ## 3rd order model
-    #    ## out = [fcs_values, fcs_indices]
-    #    os.environ['OMP_NUM_THREADS'] = str(self.ncores)
-    #    out = run_alm(
-    #            structure, order, self.cutoffs[:order], nbody, mode='optimize',
-    #            displacements=disps, forces=forces,
-    #            fc2info=[fc2_values, elem2_indices],
-    #            outfile=out_xml, lasso=self.lasso,
-    #            verbosity=self.verbosity)
-    #    os.environ.pop('OMP_NUM_THREADS', None)
-    #    return out
-    
-    #def suggested_outdir_for_kappa(self, kpts):
-    #    """
-    #    """
-    #    dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-    #    
-    #    imax = 0
-    #    for i in range(50):
-    #        if i == 0:
-    #            dir_i = dir_work
-    #        else:
-    #            dir_i = dir_work + "-%d" % i
-    #        
-    #        infile = dir_i + "/kappa.in"
-    #        if os.path.exists(infile) == False:
-    #            continue
-    #        
-    #        ## get kpts written in kappa.in
-    #        params = AnphonInput.from_file(infile)
-    #        kpts_i = params['kpoint']['kgrid']
-    #        
-    #        diff_max = np.max(abs(np.asarray(kpts) - np.asarray(kpts_i)))
-    #        imax = i
-    #        if diff_max < 1e-3:
-    #            return dir_i
-    #    
-    #    ## return the next directory name
-    #    dir_suggest = dir_work + "-%d" % (imax+1)
-    #    return dir_suggest
-
     def write_alamode_input(
             self, propt=None, order=None, kpts=[15,15,15],
             outdir=None,
@@ -2128,7 +1837,6 @@ def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
         cutoffs.append(np.asarray(np.ones((n,n)) * cc))
     return np.asarray(cutoffs)
 
-
 def _read_frequency_range(filename, format='anphon'):
     """ read minimum and maximum frequencies from .bands file created by anphon 
     """
@@ -2347,6 +2055,7 @@ def _read_kappa(dir_kappa, prefix):
             df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
     
     return df
+
 
 #def get_finite_displacements(structure, order, cutoffs=None, nbody=None, magnitude=None):
 #    """ Generate displacement patterns with ALM for FCs calculation
