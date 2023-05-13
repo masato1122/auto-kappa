@@ -92,7 +92,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         directory2=None, prefix2=None,
         fig_width=4.0, fig_aspect=0.5,
         ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
-        lw=0.4, wspace=0.05, 
+        lw=0.4, lw2=0.6, wspace=0.05, 
         dpi=300, col='blue', col2='grey',
         unit='cm', legend_loc='best',
         plot_dos=True, plot_pdos=True, plot_pr=True,
@@ -129,6 +129,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     myticks : int, default None
 
     lw : double, default 0.5
+    lw2 : double
+        line width for the second phonon dispersion
     wspace : double, default 0.05
 
     dpi : double, default 300
@@ -322,7 +324,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         if 'bands' in filenames2:
             band2 = Band(filename=filenames2['bands'])
             _plot_bands(ax1, band2.kpoints, band2.frequencies, band2.label, 
-                    col=col2, lw=lw*0.8, zorder=1)
+                    col=col2, lw=lw2, zorder=1)
         
         if 'dos' in filenames2 and plot_dos2:
             dos2 = Dos(filename=filenames2['dos'])
