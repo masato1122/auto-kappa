@@ -251,8 +251,13 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     
     if pr_ratio is None:
         
+        if prefix2 is not None:
+            lab = prefix
+        else:
+            lab = None
+
         _plot_bands(ax1, band.kpoints, band.frequencies, band.label, 
-                col=col, lw=lw, zorder=2)
+                col=col, lw=lw, zorder=2, label=lab)
     
     else:
         # --- coloring fllowing the participation ratio
@@ -324,7 +329,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         if 'bands' in filenames2:
             band2 = Band(filename=filenames2['bands'])
             _plot_bands(ax1, band2.kpoints, band2.frequencies, band2.label, 
-                    col=col2, lw=lw2, zorder=1)
+                    col=col2, lw=lw2, zorder=1, label=prefix2)
         
         if 'dos' in filenames2 and plot_dos2:
             dos2 = Dos(filename=filenames2['dos'])
@@ -336,6 +341,9 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ###        
     ax1.set_ylim(fmin, fmax)
     ax2.set_ylim(fmin, fmax)
+    
+    if prefix2 is not None:
+        set_legend(ax1, fs=6, alpha=0.5)
         
     if figname is not None:
         plt.savefig(figname, dpi=dpi, bbox_inches='tight')
@@ -343,7 +351,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         print(" Output", figname)
     return fig
 
-def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10):
+def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10,
+        label=None):
 
     kpoints = ks_tmp.copy()
     
@@ -365,10 +374,15 @@ def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10)
                 i0 = idx_zero[isec-1] + 1
                 i1 = len(kpoints)
             
+            if ib == 0 and isec == 0:
+                lab = label
+            else:
+                lab = None
+
             ax.plot(kpoints[i0:i1], frequencies[i0:i1,ib], 
                     marker="None", c=col,
                     mew=lw, ms=1, mfc='none', lw=lw,
-                    zorder=zorder)
+                    zorder=zorder, label=lab)
 
 def conv_unit(unit, band, dos):
     
