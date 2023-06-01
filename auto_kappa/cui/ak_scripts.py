@@ -808,18 +808,6 @@ def main():
     
     t11 = datetime.datetime.now()
     
-    ##### suggest and creat structures for harmonic FCs
-    ## ver.1: with ALM library
-    #almcalc.calc_forces(order=1, calculator=calc_force)
-    #
-    ## ver.2: with alm command
-    almcalc.write_alamode_input(propt='suggest', order=1)
-    almcalc.run_alamode(propt='suggest', order=1)
-    almcalc.calc_forces(order=1, calculator=calc_force)
-    
-    t12 = datetime.datetime.now()
-    times['harm_forces'] = t12 - t11
-    
     ###############################
     if options.neglect_log == 1:
         neglect_log = True
@@ -827,7 +815,17 @@ def main():
         neglect_log = False
     ###############################
     
-    ### calculate forces for harmonic FCs
+    ##### suggest and creat structures for harmonic FCs
+    almcalc.write_alamode_input(propt='suggest', order=1)
+    almcalc.run_alamode(propt='suggest', order=1)
+    
+    ### calculate forces
+    almcalc.calc_forces(order=1, calculator=calc_force)
+    
+    t12 = datetime.datetime.now()
+    times['harm_forces'] = t12 - t11
+    
+    ### calculate harmonic FCs
     almcalc.write_alamode_input(propt='fc2')
     almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
      
@@ -871,15 +869,6 @@ def main():
     ##############################
     
     ### calculate forces for cubic FCs
-    ## ver.1: with ALM library
-    #mode = 'force'
-    #almcalc.calc_forces(
-    #        2, calc_force, 
-    #        nmax_suggest=options.nmax_suggest,
-    #        frac_nrandom=options.frac_nrandom,
-    #        temperature=options.random_disp_temperature,
-    #        )
-    ## ver.2: with alm command
     almcalc.write_alamode_input(propt='suggest', order=2)
     almcalc.run_alamode(propt='suggest', order=2)
     almcalc.calc_forces(order=2, calculator=calc_force,

@@ -665,16 +665,67 @@ def get_minimum_frequency_from_logfile(filename):
             istart_freq = il
     
     ### get frequencies
+    eigen = get_eigenvalues_from_logfile(filename)
+    if eigen is None:
+        print("")
+        print(" WARRNING: cannot read %s properly." % filename)
+        return out
+    else:
+        kpoitns = eigen[0]
+        frequencies = eigen[1]
+    
+    out['minimum_frequency'] = float(np.amin(frequencies))
+    return out
+
+def get_eigenvalues_from_logfile(filename):
+
+    lines = open(filename, 'r').readlines()
+    nks = None
+    nk_irred = None
+    natoms_prim = None
+    for il, line in enumerate(lines):
+        if "Number of k points" in line:
+            nkpoints = int(line.split()[-1])
+        if "Number of irreducible k points" in line:
+            nk_irred = int(line.split()[-1])
+        if "Number of atoms in the primitive cell" in line:
+            natoms_prim = int(line.split()[-1])
+        if "Phonon frequencies below:"in line:
+            istart_freq = il
+    
+    ### check the type of kpoints
+    num = 2 + istart_freq
+    if "irred" in lines[num].lower():
+        if nk_irred is None:
+            print(" Error: cannot find the number of irreducible k points")
+            return None
+        nks = nk_irred
+    else:
+        if nkpoints is None:
+            print(" Error: cannot find the number of k poitns")
+            return None
+        nks = nkpoints
+    
+    ###
+    kpoints = []
     frequencies = []
-    out['number_of_bands'] = 3 * out['number_of_atoms_primitive']
+    nbands = natoms_prim * 3
     for ik in range(nks):
-        for ib in range(out['number_of_bands']):
-            num = 4 + istart_freq + ik*(3 + out['number_of_bands']) + ib
+        num = 2 + istart_freq + ik*(3 + nbands)
+        line = lines[num].replace("(", " ").replace(")", " ").replace(",", " ")
+        data = line.split()
+        kpoints.append([])
+        for j in range(3):
+            kpoints[-1].append(float(data[-3+j]))
+
+        for ib in range(nbands):
+            num = 4 + istart_freq + ik*(3 + nbands) + ib
             data = lines[num].split()
             frequencies.append(float(data[1]))
+    
+    kpoints = np.asarray(kpoints)
     frequencies = np.asarray(frequencies)
-    out['minimum_frequency'] = float(np.min(frequencies))
-    return out 
+    return kpoints, frequencies
 
 def read_log_eigen(directory, mode='band'):
     """ """
@@ -696,7 +747,11 @@ def read_log_eigen(directory, mode='band'):
     v = _get_alamode_runtime(filename)
     if v is not None:
         out['time'] = v
-    out.update(get_minimum_frequency_from_logfile(filename))
+    
+    ##out_log, _, _ = get_minimum_frequency_from_logfile(filename)
+    out_log = get_minimum_frequency_from_logfile(filename)
+    out.update(out_log)
+    
     return out
 
 def get_ak_logs(directory):

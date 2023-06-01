@@ -263,7 +263,7 @@ class Scattering():
             xorig = frequencies.reshape(nk*nbands)  ## 1/cm
         else:
             xorig = self.mfp.reshape(nk*nbands)     ## nm
-            
+
         kmodes = np.zeros_like(frequencies)
         for ik in range(nk):
             for ib in range(nbands):
@@ -279,9 +279,14 @@ class Scattering():
             ymod = yorig[idx]
             
             isort = np.argsort(xmod)
+            
+            ### adjust xmin
             xmin = xmod[isort[5]]
             if wrt == 'mfp':
-                xmin = max(5., np.min(xmod))
+                mm = max(5., np.min(xmod))
+                if mm < np.max(xmod):
+                    xmin = mm
+            
             xmin_log = np.log10(xmin)
             xmax_log = np.log10(np.max(xmod))
             xbins = np.logspace(xmin_log, xmax_log, nbins+1)
@@ -292,7 +297,7 @@ class Scattering():
             xmin = 0.
             xmax = np.max(xorig)
             xbins = np.linspace(xmin, xmax, nbins+1)
-         
+        
         xbins[0] = np.min(xorig) - 1e-3
         ybins = np.zeros_like(xbins)
         cats = pd.cut(xorig, xbins)

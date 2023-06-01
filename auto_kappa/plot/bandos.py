@@ -92,6 +92,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         directory2=None, prefix2=None,
         fig_width=4.0, fig_aspect=0.5,
         ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
+        fig_labels=[None, None],
         lw=0.4, lw2=0.6, wspace=0.05, 
         dpi=300, col='blue', col2='grey',
         unit='cm', legend_loc='best',
@@ -184,14 +185,19 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     f0 = np.amin(band.frequencies)
     f1 = np.amax(band.frequencies)
     df = f1 - f0
+    
     if ymin is None:
         fmin = f0 - df * 0.05
+    else:
+        fmin = ymin
     
     if ymax is None:
         if ('pr' in filenames or 'band.pr' in filenames) and plot_pr:
             fmax = f1 + df * 0.2
         else:
             fmax = f1 + df * 0.05
+    else:
+        fmax = ymax
     
     ### get participation ratio
     pr_ratio = None
@@ -201,6 +207,13 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             pr_ratio = Participation(file=prfile)
     
     ylabel = conv_unit(unit, band, dos)
+    
+    ##
+    if fig_labels[0] is None:
+        fig_labels[0] = prefix
+    
+    if fig_labels[1] is None:
+        fig_labels[1] = prefix2
     
     global plt
     
@@ -252,7 +265,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     if pr_ratio is None:
         
         if prefix2 is not None:
-            lab = prefix
+            lab = fig_labels[0]
         else:
             lab = None
 
@@ -329,7 +342,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         if 'bands' in filenames2:
             band2 = Band(filename=filenames2['bands'])
             _plot_bands(ax1, band2.kpoints, band2.frequencies, band2.label, 
-                    col=col2, lw=lw2, zorder=1, label=prefix2)
+                    col=col2, lw=lw2, zorder=1, label=fig_labels[1])
         
         if 'dos' in filenames2 and plot_dos2:
             dos2 = Dos(filename=filenames2['dos'])
@@ -343,7 +356,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ax2.set_ylim(fmin, fmax)
     
     if prefix2 is not None:
-        set_legend(ax1, fs=6, alpha=0.5)
+        set_legend(ax1, fs=6, alpha=0.5, loc='best')
         
     if figname is not None:
         plt.savefig(figname, dpi=dpi, bbox_inches='tight')
