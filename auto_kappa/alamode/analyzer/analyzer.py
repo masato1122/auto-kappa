@@ -10,6 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 import auto_kappa.units as units
 
@@ -169,7 +170,7 @@ def get_heat_capacity(fkay, temp, min_fkay=1e-8):
 #                velocities is not None and
 #                multiplicity is not None):
 #            print("Error: boundary effect is not yet supported.")
-#            exit()
+#            sys.exit()
 #            #rscat[it,:,:] += 2.*abs(velocities[it,:,)
 #            #......
 #    

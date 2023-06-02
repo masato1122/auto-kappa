@@ -14,6 +14,7 @@
 #
 import os.path
 import os
+import sys
 import warnings
 import numpy as np
 
@@ -277,7 +278,7 @@ class ApdbVasp():
             to_primitive = False
         else:
             print(" Error")
-            exit()
+            sys.exit()
         
         ### message
         if verbosity != 0:
@@ -330,7 +331,7 @@ class ApdbVasp():
                 fn = dir_pre + "/CONTCAR"
                 if os.path.exists(fn) == False:
                     warnings.warn(" Error: %s does not exist." % fn)
-                    exit()
+                    sys.exit()
                 
                 #print("")
                 #print(" Update the primitive structure:", fn)
@@ -416,7 +417,7 @@ class ApdbVasp():
         if spg_before != spg_after:
             print("")
             warnings.warn(" WARRNING: The crystal symmetry was changed due to the structure relaxation")
-            exit()
+            sys.exit()
     
     def _write_relax_yaml(self, params):
         import yaml

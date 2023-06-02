@@ -64,7 +64,7 @@ class Scattering():
 
         if file_result is None:
             warnings.warn(" Error: file_result must be given.")
-            exit()
+            sys.exit()
         self.result = Result(filename=file_result)
         
         ### properties

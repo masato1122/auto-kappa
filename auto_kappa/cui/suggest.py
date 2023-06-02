@@ -9,6 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 import warnings
 
@@ -39,7 +40,7 @@ def suggest_structures_and_kmeshes(
     ### check input parameters
     if filename is None and structure is None:
         print(" Error: filename or structure must be given.")
-        exit()
+        sys.exit()
     
     ## max natoms for FC3
     if max_natoms3 is None:
@@ -86,7 +87,7 @@ def suggest_structures_and_kmeshes(
     except Exception:
 
         warnings.warn(" Error: the primitive cell could not be obtained.")
-        exit()
+        sys.exit()
 
     ### collect obtained parameters
     structures = {

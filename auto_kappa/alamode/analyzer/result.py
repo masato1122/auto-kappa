@@ -10,9 +10,10 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import warnings
 import numpy as np
-from .analyzer import get_kmode
+from auto_kappa.alamode.analyzer.analyzer import get_kmode
 
 class Result():
     def __init__(self, filename=None):
@@ -68,7 +69,7 @@ class Result():
         """
         if self.filename is None:
             warnings.warn("Error: filename (*.result file) must be given.")
-            exit()
+            sys.exit()
         
         self._values = read_result_file(self.filename)
         
@@ -429,7 +430,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             if sword not in line:
                 data = line.split()
                 warnings.warn("Error: %s does not include %s" % (data[0], sword))
-                exit()
+                sys.exit()
             ### ik, ib
             il += 1
             data = lines[il].split()
@@ -438,7 +439,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             if ik != ik_check-1 or ib != ib_check-1:
                 warnings.warn("Error: ik(%d!=%d) or ib(%d!=%d)" %(
                     ik, ik_check-1, ib, ib_check-1))
-                exit()
+                sys.exit()
             ### multiplicity
             il += 1
             data = lines[il].split()
@@ -462,7 +463,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             il += 1
             if "#END GAMMA_EACH" not in lines[il]:
                 warnings.warn(" Error")
-                exit()
+                sys.exit()
     
     return {'multiplicity': multiplicity, 
             'velocities': velocities, 

@@ -10,6 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 
 class Isotope():
@@ -69,7 +70,7 @@ def read_isotope(filename):
     out = _get_numbers(filename)
     if out is None:
         warnings.warn(" Error in %s" % filename)
-        exit()
+        sys.exit()
     nk = out[0]
     nbands = out[1]
      
@@ -107,7 +108,7 @@ def read_isotope(filename):
             
             if il != i0 + 1:
                 warnings.warn("Error while reading %s." % filename)
-                exit()
+                sys.exit()
             
             for j in range(3):
                 kpoints[ik,j] = float(data[j+3])

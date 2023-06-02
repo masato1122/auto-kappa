@@ -9,6 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import os
 import os.path
 import numpy as np
@@ -166,7 +167,7 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
                 cell_type = "unitcell"
             else:
                 warnings.warn(" Error: cell type cannot be deteremined.")
-                exit()
+                sys.exit()
     
     ###
     if cell_type is None:
@@ -438,7 +439,7 @@ def _determine_kpoints_for_all(
         if kpts_all[cal_type] is None:
             mgs = " Error: cannot obtain k-mesh info properly.\n"
             msg += " k-mesh for %s is None.\n" % cal_type
-            exit()
+            sys.exit()
     
     return kpts_all
 
@@ -574,7 +575,7 @@ def _get_required_parameters(
         """ Case 3: error
         """
         warnings.warn(" Error: --directory or --file_structure must be given.")
-        exit()
+        sys.exit()
     
     ### Cell type used for the relaxation
     ### primitive or unitcell (conventional)
@@ -854,13 +855,13 @@ def main():
         msg += " Minimum frequency : %.2f\n" % (almcalc.frequency_range[0])
         msg += "\n"
         print(msg, end="")
-        exit()
+        sys.exit()
     
     t13 = datetime.datetime.now()
     times['harm_alamode'] = t13 - t12
     
     if options.harmonic_only == 1:
-        exit()
+        sys.exit()
 
     ##############################
     ##                          ##

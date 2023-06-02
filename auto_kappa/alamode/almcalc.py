@@ -16,6 +16,7 @@ To Do
 
 """
 # -*- coding: utf-8 -*-
+import sys
 import os
 import os.path
 import numpy as np
@@ -490,7 +491,7 @@ class AlamodeCalc():
                     '/%s.pattern_ANHARM%d' % (self.prefix, order+1))
         else:
             warnings.warn(" Error: order %d is not supported." % order)
-            exit()
+            sys.exit()
         return filename
     
     def _get_logfile_suggest(self, order):
@@ -501,7 +502,7 @@ class AlamodeCalc():
             filename = self.out_dirs['cube']['suggest'] + '/suggest.log'
         else:
             warnings.warn(" Error: order %d is not supported." % order)
-            exit()
+            sys.exit()
         return filename
     
     def _get_number_of_suggested_structures(self, order: None):
@@ -563,7 +564,7 @@ class AlamodeCalc():
             structure = self.supercell
         else:
             structure = self.supercell3
-            #exit()
+            #sys.exit()
         
         ### get displacements
         print("")
@@ -613,13 +614,13 @@ class AlamodeCalc():
         else:
             warnings.warn(" ERROR: displacement mode %s is not supported" %
                     (disp_mode))
-            exit()
+            sys.exit()
         
         ### error
         if all_disps is None:
             msg = "\n Error: Failed to obtain displacement patterns.\n"
             print(msg)
-            exit()
+            sys.exit()
         
         ## get pristine structure
         structures = {}
@@ -684,7 +685,7 @@ class AlamodeCalc():
             
             if file_pattern is None:
                 warnings.warn(" Error: file_pattern must be given.")
-                exit()
+                sys.exit()
 
             header_list, disp_list = almdisp.generate(
                     file_pattern=[file_pattern], magnitude=self.magnitude,
@@ -708,7 +709,7 @@ class AlamodeCalc():
         else:
             msg = " Error: %s is not supported." % (displacement_mode)
             warnings.warn(msg)
-            exit()
+            sys.exit()
         
         all_disps = np.zeros_like(disp_list)
         for i, each in enumerate(disp_list):
@@ -799,7 +800,7 @@ class AlamodeCalc():
             print("")
             print(" This part is still under development.")
             print("")
-            exit()
+            sys.exit()
         
         ### output directory
         if order == 1:
@@ -824,7 +825,7 @@ class AlamodeCalc():
         
         else:
             warnings.warning(" WARNING: given order (%d) is not supported yet." % order)
-            exit()
+            sys.exit()
         
         ### Compressive sensing, LASSO, is used when the number of the 
         ### suggested structure (nsuggest) exceeds nmax_suggest.
@@ -868,7 +869,7 @@ class AlamodeCalc():
                 print(" NEED TO BE CHECKED")
                 print("")
                 print("")
-                exit()
+                sys.exit()
                 ## High order FCs are obtained with
                 ## a random-displacment based on normal coordinate
                 structures = self.get_suggested_structures(
@@ -935,7 +936,7 @@ class AlamodeCalc():
 
             else:
                 warnings.warn(" Error: order=", order, " is not supported yet.")
-                exit()
+                sys.exit()
             
             os.makedirs(self.out_dirs['result'], exist_ok=True)
             offset_xml = outdir0 + '/prist/vasprun.xml'
@@ -971,7 +972,7 @@ class AlamodeCalc():
         if out is None:
             print("")
             warnings.warn(" Error: %s is not supported yet." % propt)
-            exit()
+            sys.exit()
         alamode_type = out[0]
         mode = out[1]
         
@@ -1014,7 +1015,7 @@ class AlamodeCalc():
                         )
                 if os.path.exists(fn_check) == False:
                     warnings.warn(" Error: FC3 has not been calculated.")
-                    exit()
+                    sys.exit()
             
             ## get fc2xml
             fc2xml = '../../result/' + self.outfiles['harm_xml']
@@ -1023,7 +1024,7 @@ class AlamodeCalc():
                     )
             if os.path.exists(fn_check) == False:
                 warnings.warn(" Error: FC2 has not been calculated.")
-                exit()
+                sys.exit()
                 
         elif propt == 'fc2':
             
@@ -1056,11 +1057,11 @@ class AlamodeCalc():
                 dir_work = self.out_dirs['higher']['suggest']
             else:
                 warnings.warn(" Error: order=", order, " is not supported.")
-                exit()
+                sys.exit()
         else:
             print("")
             warnings.warn(" Error: %s is not supported yet." % (propt))
-            exit()
+            sys.exit()
 
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
@@ -1214,14 +1215,14 @@ class AlamodeCalc():
                 if order is None:
                     #order = self.order_lasso
                     warnings.warn(" Error: order must be given.")
-                    exit()
+                    sys.exit()
             elif propt == 'suggest':
                 if order is None:
                     warnings.warn(" ERROR: order must be given.")
-                    exit()
+                    sys.exit()
             else:
                 print(" Error")
-                exit()
+                sys.exit()
             
             if len(self.nbody) < order:
                 self.set_nbody_automatically()
@@ -1262,7 +1263,7 @@ class AlamodeCalc():
         
         else:
             warnings.warn(" Error: %s is not supported." % propt)
-            exit()
+            sys.exit()
         
         inp.update(kwargs)
         inp.to_file(filename=filename)
@@ -1314,7 +1315,7 @@ class AlamodeCalc():
         out = self._get_alamodetype_mode(propt)
         if out is None:
             warnings.warn(" Error: %s is not supported yet." % propt)
-            exit()
+            sys.exit()
         alamode_type = out[0]
         mode = out[1]
 
@@ -1377,12 +1378,12 @@ class AlamodeCalc():
             else:
                 print("")
                 warnings.warn(" Error: order must be gien properly.")
-                exit()
+                sys.exit()
 
         else:
             print("")
             warnings.warn(" WARNNING: %s property is not supported." % (propt))
-            exit()
+            sys.exit()
         
         ### modify work directory
         if outdir is not None:
@@ -1465,7 +1466,7 @@ class AlamodeCalc():
         else:
             print("")
             warnings.warn(" Error: %s is not supported yet." % propt)
-            exit()
+            sys.exit()
         
         ##
         if os.path.exists(fn1) == False:
@@ -1847,7 +1848,7 @@ def _read_frequency_range(filename, format='anphon'):
         return fmin, fmax
     else:
         warnings.warn(" Error: %s is not supported yet." % format)
-        exit()
+        sys.exit()
 
 
 def _alamode_finished(logfile):
@@ -2087,7 +2088,7 @@ def _read_kappa(dir_kappa, prefix):
 #                all_disps[-1][each[0]] = each[1] * magnitude
 #            else:
 #                print(" Error during getting patterns.")
-#                exit()
+#                sys.exit()
 #    
 #    return all_disps
 

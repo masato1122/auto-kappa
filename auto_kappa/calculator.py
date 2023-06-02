@@ -10,6 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import os.path
 import numpy as np
 
@@ -65,7 +66,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     if calc.directory is None:
         warnings.warn(" WARNING: "\
                 "output directory is not set in the calculator.")
-        exit(0)
+        sys.exit()
     
     if 'ase' in method.lower():
         
@@ -80,7 +81,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     
     else:
         print(" Error: method %s is not supported." % (method))
-        exit(0)
+        sys.exit()
 
 def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,

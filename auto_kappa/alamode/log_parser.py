@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 import os.path
 import numpy as np
 from optparse import OptionParser
@@ -873,7 +874,7 @@ def main():
         print("")
         print(" Cannot find data in %s" % options.directory)
         print("")
-        exit()
+        sys.exit()
 
     log = AkLog(options.directory)
     

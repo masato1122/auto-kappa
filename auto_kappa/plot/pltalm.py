@@ -165,6 +165,10 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
         
         ### get only available data
         idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+        
+        if len(idx_pos) == 0:
+            continue
+        
         xdat = xorig[idx_pos]
         ydat = yorig[idx_pos]
         
