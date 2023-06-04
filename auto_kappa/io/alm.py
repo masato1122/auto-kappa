@@ -547,8 +547,7 @@ class AnphonInput(MSONable, dict):
         #prim = struct_pmg.get_primitive_structure()
         #
         ### ver.3
-        prim = get_primitive_structure_spglib(
-                self.structure, to_primitive=True, format='ase')
+        prim = get_primitive_structure_spglib(self.structure, format='ase')
         
         return prim
     
