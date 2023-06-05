@@ -803,9 +803,17 @@ def get_kpoint_path(primitive, deltak=0.01):
         is the corresponding k-point.
     """
     import seekpath
-    structure = [primitive.lattice.matrix,
-            primitive.frac_coords,
-            primitive.atomic_numbers]
+    
+    if "pymatgen" not in str(type(primitive)):
+        prim_pmg = change_structure_format(primitive, format='pymatgen')
+    else:
+        prim_pmg = primitive.copy()
+    
+    structure = [
+            prim_pmg.lattice.matrix,
+            prim_pmg.frac_coords,
+            prim_pmg.atomic_numbers
+            ]
     kpath = seekpath.get_path(
             structure, with_time_reversal=True, recipe='hpkot')
     
