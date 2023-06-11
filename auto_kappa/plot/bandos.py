@@ -376,10 +376,13 @@ def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10,
         
         koffset = 0.
         for isec in range(len(idx_zero)+1):
-            
+             
             if isec == 0:
                 i0 = 0
-                i1 = idx_zero[0] + 1
+                if len(idx_zero) == 0:
+                    i1 = len(kpoints)
+                else:
+                    i1 = idx_zero[0] + 1
             elif isec < len(idx_zero):
                 i0 = idx_zero[isec-1] + 1
                 i1 = idx_zero[isec] + 1
