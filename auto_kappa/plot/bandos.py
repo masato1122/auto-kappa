@@ -206,7 +206,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             prfile = filenames[ext]
             pr_ratio = Participation(file=prfile)
     
-    ylabel = conv_unit(unit, band, dos)
+    freq_scale, ylabel = conv_unit(unit, band, dos)
     
     ##
     if fig_labels[0] is None:
@@ -352,8 +352,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
                     zorder=1)
         
     ###        
-    ax1.set_ylim(fmin, fmax)
-    ax2.set_ylim(fmin, fmax)
+    ax1.set_ylim(fmin*freq_scale, fmax*freq_scale)
+    ax2.set_ylim(fmin*freq_scale, fmax*freq_scale)
     
     if prefix2 is not None:
         set_legend(ax1, fs=6, alpha=0.5, loc='best')
@@ -364,9 +364,11 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         print(" Output", figname)
     return fig
 
-def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10,
-        label=None):
-
+def _plot_bands(ax, ks_tmp, frequencies, xlabels, 
+        col='blue', lw=0.5, zorder=10, label=None, 
+        linestyle="-", marker="None", ms=1, mfc='none',
+        **args):
+    
     kpoints = ks_tmp.copy()
     
     nbands = len(frequencies[0])
@@ -394,18 +396,21 @@ def _plot_bands(ax, ks_tmp, frequencies, xlabels, col='blue', lw=0.5, zorder=10,
                 lab = label
             else:
                 lab = None
-
+            
             ax.plot(kpoints[i0:i1], frequencies[i0:i1,ib], 
-                    marker="None", c=col,
-                    mew=lw, ms=1, mfc='none', lw=lw,
-                    zorder=zorder, label=lab)
+                    linestyle=linestyle,
+                    marker=marker, c=col, 
+                    mew=lw, ms=ms, mfc=mfc, lw=lw,
+                    zorder=zorder, label=lab,
+                    **args
+                    )
 
 def conv_unit(unit, band, dos):
     
     from auto_kappa.units import CmToHz, CmToEv
 
     if unit.lower() == "thz":
-        unit_conv = CmToTHz
+        unit_conv = CmToHz * 1e-12
         ylabel = "THz"
     elif unit.lower() == "mev":
         unit_conv = CmToEv * 1e3
@@ -419,7 +424,7 @@ def conv_unit(unit, band, dos):
     band.frequencies *= unit_conv
     if dos is not None:
         dos.frequencies *= unit_conv
-    return ylabel
+    return unit_conv, ylabel
 
 
 #def main(bfile, dfile, options):
