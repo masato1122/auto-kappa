@@ -43,7 +43,7 @@ in advance.
 ``potpaw_PBE.54.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
 
 
-.. node::
+.. note::
 
     The latest version of Eigen (3.4) may not be compatible with Alamode 1.4.2.
     Eigen 3.3.* may need to be used.

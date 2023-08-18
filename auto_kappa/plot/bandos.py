@@ -145,10 +145,11 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     
     How to Use
     ------------
-    >>> plot_bandos(directory='.', prefix='Si',
-    >>>             figname='fig_bandos.png',
-    >>>             plot_pr=True)
-     
+    >>> plot_bandos(
+            directory='.', prefix='Si',
+            figname='fig_bandos.png',
+            plot_pr=True)
+    
     """
     ### anphon file names
     filenames = _get_band_files(directory, prefix)

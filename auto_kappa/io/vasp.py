@@ -21,11 +21,12 @@ from auto_kappa.units import BohrToA, RyToEv
 
 def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     """ Get dataset of displacements and forces from many vasprun.xml files.
+    
     Args
-    ======
+    -----
     directory : string
-        vasprun.xml can be found under ${directory}/*/ 
-        while ${directory}/prist/vasprun.xml is neglected.
+        vasprun.xml can be found under \${directory}/\*/ 
+        while \${directory}/prist/vasprun.xml is neglected.
     
     offset_xml : string
         vasprun.xml name for offset
@@ -35,6 +36,7 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     
     nset : int
         Number of data set. If not given, all data will be read.
+    
     """
     from ase.geometry import get_distances
     

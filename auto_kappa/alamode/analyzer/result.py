@@ -346,17 +346,18 @@ def read_temperature(filename):
     return {'tmin': t0, 'tmax': t1, 'dt': dt}
 
 def read_frequency(filename):
-    """ Read and return frequencies in rfile, which is *.result file.
+    """ Read and return frequencies in rfile, which is \*.result file.
     
     Args
     ----------
     filename : string
-        *.result file name
+        \*.result file name
 
     Return
     -------
     nkpoints, nbands : integer
         # of kpoints and bands
+    
     frequencies : ndarray, float, shape=(nkpoints, nbands)
         eigenvalues
     """

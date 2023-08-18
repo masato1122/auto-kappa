@@ -167,12 +167,15 @@ def get_nk_nbands(bfile):
 
 def get_symmetry_points(bfile):
     """Read symmetry points from band file
+    
     Returns
     ---------
     label : string
         label for symmetry points
+    
     ksym : double
-        |k| for symmetry points
+        \|k\| for symmetry points
+    
     """
     ifs = open(bfile, "r")
     nline = sum(1 for line in open(bfile))

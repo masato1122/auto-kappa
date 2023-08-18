@@ -14,6 +14,6 @@ Auto-KAPPA
     parameters
     tutorial/index
     
-..    ak
+    auto-kappa/modules
 
 

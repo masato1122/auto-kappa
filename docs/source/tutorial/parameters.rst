@@ -9,7 +9,7 @@ You can see descriptions for the input parameters of ``akrun`` with the followin
     akrun -h
 
 You can find the options below.
-[***] denotes the default value.
+[\*\*\*] denotes the default value.
 
 
 Parameters to be modified for each material

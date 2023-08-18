@@ -59,6 +59,7 @@ class Dos():
 
 def get_elements(dfile):
     """Read elements in a primitive cell
+    
     Parameter
     --------------
     dfile : string
@@ -85,6 +86,7 @@ def get_elements(dfile):
 
 def get_nfreq(dfile):
     """Get number of frequencies
+    
     Parameter
     -----------
     dfile : string

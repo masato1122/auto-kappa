@@ -16,15 +16,18 @@ import auto_kappa.units as units
 
 def convert_gamma2tau(gammas):
     """Convert gamma[1/cm] to lifetime[ps]
+    
     Args
     ----
     gammas : ndarray, float, shape=(nk,nb)
         GAMMS written in .result file
         unit : Kayser[1/cm]
+    
     Return
     --------
     lifetime : ndarray, float, shape=(nk,nb)
         lifetime[ps]
+
     """
     eps = 1e-10
     g_tmp = np.where(gammas<eps, 1.0, gammas)
@@ -34,9 +37,13 @@ def convert_gamma2tau(gammas):
 
 def get_average_at_degenerate_point(omega, tau, eps=1e-3):
     """Average value for degenerate point
+    
+    Args
+    -----
     omega, tau : ndarray, float, shape=(nk,nb)
         frequencies and lifetime, but any value is available for the secont
         variable.
+
     """
     nk = len(omega)
     nb = len(omega[0])

@@ -76,10 +76,12 @@ class AlamodeCalc():
             verbosity=0,
             yamlfile_for_outdir=None,
             ):
-        """ Calculations with ALM and Anphon are managed with this class.
+        """ This class helps to manage ALAMODE calculations including force
+        calculations with VASP.
         
         Args
-        =======
+        ------
+
         prim_given : primitive structure
             Different formats such as pymatgen and ASE are accepted while the
             format is changed to ase-Atoms in this module.
@@ -790,9 +792,9 @@ class AlamodeCalc():
             temperature=500., classical=False,
             calculate_forces=True, output_dfset=1,
             ):
-        ##nmax_suggest=100, frac_nrandom=0.02, 
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
+        
         VASP output will be stored in self.out_dirs['harm/cube']['force'].
         When the number of suggested patterns with ALM, nsuggest, is larger than
         ``nmax_suggest``, LASSO will be used and atoms are displaced with a random 
@@ -818,10 +820,8 @@ class AlamodeCalc():
         frac_nrandom : float, default 0.02
             Ratio of the number of patterns generated with a random displacement
             (``nrandom``) to that of the suggested patterns with ALM
-            (``nsuggest``). \\
-            ``nrandom``:math:`= \\max(` 
-                ``frac_nrandom`` :math:`\\times` ``nsuggest``,
-                ``nsuggest`` :math:`)`
+            (``nsuggest``).
+            ``nrandom`` = max(``frac_nrandom`` x ``nsuggest``, ``nsuggest``)
         
         output_dfset : int or bool, default=1
             If False or 0, DFSET file is not written.

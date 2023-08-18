@@ -12,6 +12,7 @@ Subpackages
    auto_kappa.io
    auto_kappa.plot
    auto_kappa.structure
+   auto_kappa.vasp
 
 Submodules
 ----------

@@ -154,11 +154,13 @@ class AlmInput(MSONable, dict):
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
         """ Make ALM input parameters from a structure file
+        
         Args
-        -------
+        -----
         filename (str): filename
-            Format must be supported by pymatgen's IStructure module: POSCAR,
+            Format must be supported by pymatgen's IStructure module: POSCAR, 
             .cif. etc.
+        
         """
         ## set norder
         kwargs['norder'] = norder
@@ -179,11 +181,14 @@ class AlmInput(MSONable, dict):
         Args
         --------
         structure (str, pymatgen's (I)Structure, ase's Atoms, or structure file 
+        
         such as POSCAR, .cif, etc.):
             If param is string (structure file), the file will be read with
             pymatgen.loadfn.
+        
         guess_primitive (bool):
             If it's True, the primitive structure will be guessed with spglib.
+        
         """
         alm_dict = {}
         
@@ -560,11 +565,13 @@ class AnphonInput(MSONable, dict):
     @classmethod
     def from_structure_file(cls, filename, **kwargs):
         """ Make ANPHON input parameters from a structure file
+        
         Args
         -------
         filename (str): filename
             Object should be supported by pymatgen's IStructure module: POSCAR,
             .cif. etc.
+        
         """
         ## get a structure
         cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure

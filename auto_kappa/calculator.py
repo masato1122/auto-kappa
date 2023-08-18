@@ -20,10 +20,13 @@ import re
 
 def run_vasp_with_custodian(calc, atoms, max_errors=10):
     """ Run a VASP job with Custodian
+    
     Args
     ------
     calc : ASE calculator
+    
     atoms : ASE Atoms obj
+    
     """
     from custodian.custodian import Custodian
     from custodian.vasp.handlers import (
@@ -54,6 +57,7 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
 
 def run_vasp(calc, atoms, method='custodian', max_errors=10):
     """ Run a VASP job 
+    
     Args
     -----
     calc : ASE VASP calculator
@@ -62,6 +66,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         "ase" or "custodian"
     max_errors : int
         parameter for "custodian"
+    
     """
     if calc.directory is None:
         warnings.warn(" WARNING: "\
@@ -113,9 +118,8 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     >>> #atoms = ase.io.read('POSCAR.supercell', format='vasp')
     >>> #mode = 'force'
     >>>
-    >>> calc = get_vasp_calculator(mode,
-    >>>     directory='./out',
-    >>>     kpts=[10,10,10])
+    >>> calc = get_vasp_calculator(
+            mode, directory='./out', kpts=[10,10,10])
     >>> calc.command = "mpirun -n 2 vasp"
     >>> calc.write_input(structure)
     
@@ -175,6 +179,7 @@ def get_enmax(ppp_list):
     Return
     ---------
     Maximum value of ENMAX
+    
     """
     enmaxes = []
     for filename in ppp_list:

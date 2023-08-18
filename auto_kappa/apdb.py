@@ -23,7 +23,6 @@ from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from phonopy import Phonopy
-#from phonopy.structure.cells import get_primitive as get_primitive_pp
 from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
@@ -60,8 +59,8 @@ class ApdbVasp():
             transformation matrix from the unitcell to the supercell with 
             the definition in Phonopy, which is not same as Pymatgen and ASE
 
-        Matrix
-        --------
+        Note
+        ------
         Translational vectors of the primitive cell can be calculated as
         $$
         pcell = primitive_matrix.T @ unitcell.cell

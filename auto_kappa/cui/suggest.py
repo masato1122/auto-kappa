@@ -163,30 +163,33 @@ def get_unitcell_and_primitive_matrix(structure):
 ### Copy from phonopy/structure/grid_points.py in Phonopy
 def klength2mesh(length, lattice, rotations=None):
     """Convert length to mesh for q-point sampling.
-
+    
     This conversion for each reciprocal axis follows VASP convention by
-        N = max(1, int(l * |a|^* + 0.5))
-    'int' means rounding down, not rounding to nearest integer.
-
+    
+    >>> N = max(1, int(l * |a|^* + 0.5))
+    
+    int means rounding down, not rounding to nearest integer.
+    
     Parameters
     ----------
     length : float
         Length having the unit of direct space length.
+    
     lattice : array_like
         Basis vectors of primitive cell in row vectors.
         dtype='double', shape=(3, 3)
-    rotations: array_like, optional
+    
+    rotations : array of int, shape=(3,), optional
         Rotation matrices in real space. When given, mesh numbers that are
         symmetrically reasonable are returned. Default is None.
-        dtype='int_', shape=(rotations, 3, 3)
 
     Returns
     -------
-    array_like
-        dtype=int, shape=(3,)
-
-    Reference
-    ---------
+    array_like : int, shape=(3,)
+    
+    
+    Note
+    -----
     This function is copied from Phonopy library.
     
     """
