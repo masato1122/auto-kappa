@@ -43,6 +43,8 @@ from auto_kappa.calculator import run_vasp
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
 
+from auto_kappa.io.files import write_output_yaml
+
 class AlamodeCalc():
     
     ### k1: alamode type, k2: mode, k3: propt
@@ -61,9 +63,10 @@ class AlamodeCalc():
     def __init__(self, 
             prim_given, 
             base_directory='apdb_output',
+            additional_directory=None,
             primitive_matrix=None,
             scell_matrix=None, 
-            scell_matrix3=None,
+            #scell_matrix3=None,
             restart=1,
             cutoffs=None, nbody=[2,3,3,2,2], magnitude=0.01, magnitude2=0.03,
             cutoff2=-1, cutoff3=4.3, 
@@ -71,6 +74,7 @@ class AlamodeCalc():
             nac=None,
             commands=None,
             verbosity=0,
+            yamlfile_for_outdir=None,
             ):
         """ Calculations with ALM and Anphon are managed with this class.
         
@@ -84,6 +88,10 @@ class AlamodeCalc():
             The top directory of the output directories. For example, material
             ID of Materials Project or composition [apdb_output]
         
+        additional_directory : string
+            ``base_directory`` + ``additional_directory`` will be used as the
+            base directory.
+        
         restart : int, default 1
             The calculation will restart (1) or NOT restart (0) when the
             directory exists.
@@ -94,9 +102,9 @@ class AlamodeCalc():
         primitive_matrix : array of float, shape=(3,3)
             transformation matrix from the unitcell to the primitive cell
         
-        scell_matrix3 : array of float, shape=(3,3)
-            transformation matrix from the unitcell to a supercell used to
-            calculate cubic FCs
+        #scell_matrix3 : array of float, shape=(3,3)
+        #    transformation matrix from the unitcell to a supercell used to
+        #    calculate cubic FCs
 
         cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
             cutoff radii for force constants. If it's not given, it will be set
@@ -125,6 +133,9 @@ class AlamodeCalc():
                 'mpirun': 'mpirun', "anphon_para": "omp", 
                 "ncores": 1, "anphon": "anphon", "alm": "alm",
                 }
+        
+        yamlfile_for_outdir : string
+            yaml file name to write output directory names
         
         Example
         ----------
@@ -164,16 +175,27 @@ class AlamodeCalc():
         self._commands.update(commands)
         
         ### output directories
+        self._additional_directory = additional_directory
+        
         self.out_dirs = {}
         for k1 in output_directories.keys():
+            
+            base_dir = None
+            if additional_directory is not None:
+                if k1 not in ["relax", "nac"]:
+                    base_dir = self.base_directory + "/" + additional_directory
+            if base_dir is None:
+                base_dir = self.base_directory
+            
+            ###
             values1 = output_directories[k1]
             if type(values1) == str:
-                self.out_dirs[k1] = self.base_directory + '/' + values1
+                self.out_dirs[k1] = base_dir + '/' + values1
             else:
                 self.out_dirs[k1] = {}
                 for k2 in values1.keys():
                     values2 = values1[k2]
-                    self.out_dirs[k1][k2] = self.base_directory + '/' + values2
+                    self.out_dirs[k1][k2] = base_dir + '/' + values2
         
         ###
         self.outfiles = output_files
@@ -185,12 +207,12 @@ class AlamodeCalc():
         if scell_matrix is None:
             warnings.warn(" Error: scell_matrix must be given.")
         
-        if scell_matrix3 is None:
-            scell_matrix3 = scell_matrix.copy()
+        #if scell_matrix3 is None:
+        #    scell_matrix3 = scell_matrix.copy()
         
         self._primitive_matrix = primitive_matrix
         self._scell_matrix = scell_matrix
-        self._scell_matrix3 = scell_matrix3
+        #self._scell_matrix3 = scell_matrix3
         
         ### make the unitcell with ``get_supercell`` in Phonopy
         unit_pp = get_supercell(
@@ -202,7 +224,7 @@ class AlamodeCalc():
         self._primitive = None
         self._unitcell = None
         self._supercell = None
-        self._supercell3 = None
+        #self._supercell3 = None
         
         self._set_structures(unit_pp)
         
@@ -230,12 +252,12 @@ class AlamodeCalc():
         
         self.lasso = False
         
-        self._fc3_type = None            ### 'df' or 'lasso'
+        self._fc3_type = ""            ### 'df', 'lasso', or ''
         
         self._nmax_suggest = None
 
         self._commands = commands
-
+        
         #self._order_lasso = order_lasso
         
         self._file_result = None
@@ -247,7 +269,35 @@ class AlamodeCalc():
         self._frequency_range = None
         #self._minimum_frequency = None
         
-        self.verbosity = verbosity
+        self._verbosity = verbosity
+        
+        self._yamlfile_for_outdir = yamlfile_for_outdir
+    
+        self._fc2xml = None
+        self._fc3xml = None
+        self._fcsxml = None
+    
+    @property
+    def fc2xml(self):
+        if self._fc2xml is None:
+            self._fc2xml = self.out_dirs["result"] + "/FC2.xml"
+        
+        if os.path.exists(self._fc2xml) == False:
+            self._fc2xml = None
+        
+        return self._fc2xml
+    
+    @property
+    def fc3xml(self):
+        if self._fc3xml is None:
+            self._fc3xml = (
+                    self.out_dirs["result"] + 
+                    "/FC3_%s.xml" % (self.fc3_type))
+        
+        if os.path.exists(self._fc3xml) == False:
+            self._fc3xml = None
+        
+        return self._fc3xml
     
     def _set_structures(self, unit_given, format='ase'):
         """ Set every structures with the given format: primitive, unit, and two
@@ -274,15 +324,16 @@ class AlamodeCalc():
         ### supercell for cubic FCs
         xml_fd = self.out_dirs['cube']['force_fd'] + '/psist/vasprun.xml'
         xml_lasso = self.out_dirs['cube']['force_lasso'] + '/psist/vasprun.xml'
-        try:
-            sc3 = ase.io.read(xml_fd, format='vasp-xml')
-        except Exception:
-            try:
-                sc3 = ase.io.read(xml_lasso, format='vasp-xml')
-            except Exception:
-                sc3 = get_supercell(unit_pp, self.scell_matrix3)
         
-        self._supercell3 = change_structure_format(sc3, format=format)
+        #try:
+        #    sc3 = ase.io.read(xml_fd, format='vasp-xml')
+        #except Exception:
+        #    try:
+        #        sc3 = ase.io.read(xml_lasso, format='vasp-xml')
+        #    except Exception:
+        #        sc3 = get_supercell(unit_pp, self.scell_matrix3)
+        #
+        #self._supercell3 = change_structure_format(sc3, format=format)
         
     @property
     def magnitude(self):
@@ -300,13 +351,17 @@ class AlamodeCalc():
     def base_directory(self):
         return self._base_directory
     
+    @property
+    def additional_directory(self):
+        return self._additional_directory
+    
     def set_basedir_name(self, dir0, restart):
         """
         Note 
         -----
         If restart is off, the directory name needs to be determined carefully.
         """
-        if restart == 1:
+        if restart:
             self._base_directory = dir0
         else:
             if os.path.exists(dir0):
@@ -331,7 +386,15 @@ class AlamodeCalc():
         if self._prefix is None:
             self._prefix = get_formula(self.primitive)
         return self._prefix
-
+    
+    @property
+    def verbosity(self):
+        return self._verbosity
+    
+    @property
+    def yamlfile_for_outdir(self):
+        return self._yamlfile_for_outdir
+    
     @property
     def nbody(self):
         return self._nbody
@@ -362,6 +425,7 @@ class AlamodeCalc():
     @property
     def cutoff3(self):
         return self._cutoff3
+    
     @cutoff3.setter
     def cutoffs(self, c3):
         self._cutoff3 = c3
@@ -408,9 +472,9 @@ class AlamodeCalc():
     def scell_matrix(self):
         return self._scell_matrix
     
-    @property
-    def scell_matrix3(self):
-        return self._scell_matrix3
+    #@property
+    #def scell_matrix3(self):
+    #    return self._scell_matrix3
     
     @property
     def primitive(self):
@@ -432,14 +496,14 @@ class AlamodeCalc():
         else:
             return self._supercell
 
-    @property
-    def supercell3(self):
-        """
-        """
-        if self._supercell3 is None:
-            warnings.warn(" Error: supercell for cubic FCs is not yet defined.")
-        else:
-            return self._supercell3
+    #@property
+    #def supercell3(self):
+    #    """
+    #    """
+    #    if self._supercell3 is None:
+    #        warnings.warn(" Error: supercell for cubic FCs is not yet defined.")
+    #    else:
+    #        return self._supercell3
         
     @property
     def frequency_range(self):
@@ -560,12 +624,16 @@ class AlamodeCalc():
             Number of patterns generated with the random displacement
         
         """
-        if order == 1:
-            structure = self.supercell
-        else:
-            structure = self.supercell3
-            #sys.exit()
-        
+        ### ver.1
+        #if order == 1:
+        #    structure = self.supercell
+        #else:
+        #    structure = self.supercell3
+        #    #sys.exit()
+        #
+        ### ver.2
+        structure = self.supercell
+
         ### get displacements
         print("")
         print(" Displacement mode :", disp_mode)
@@ -717,7 +785,6 @@ class AlamodeCalc():
         
         return all_disps 
     
-    
     def calc_forces(self, order: None, calculator=None, 
             nmax_suggest=100, frac_nrandom=10., 
             temperature=500., classical=False,
@@ -781,11 +848,15 @@ class AlamodeCalc():
             
             nfcs = self._get_number_of_free_fcs(order)[order]
             
-            if order == 1:
-                natoms = len(self.supercell)
-            else:
-                natoms = len(self.supercell3)
-            
+            ### ver.1
+            #if order == 1:
+            #    natoms = len(self.supercell)
+            #else:
+            #    natoms = len(self.supercell3)
+            #
+            ### ver.2
+            natoms = len(self.supercell)
+
             msg = "\n Number of the suggested structures with ALM : %d\n" % (nsuggest)
             print(msg)
             
@@ -794,8 +865,9 @@ class AlamodeCalc():
             nsuggest = nmax_suggest + 1
             
             nfcs = self._get_number_of_free_fcs(order)
-                
-            natoms = len(self.supercell3)
+            
+            #natoms = len(self.supercell3)
+            natoms = len(self.supercell)
             
             print("")
             print(" This part is still under development.")
@@ -888,7 +960,20 @@ class AlamodeCalc():
         nsuggest =  len(structures)
         for ii, key in enumerate(list(structures.keys())):
             
+            ### output directory
             outdir = outdir0 + '/' + str(key)
+            
+            ###### output yaml file
+            #name = "force-%d_order-%d" % (ii, order)
+            #if self.additional_directory is not None:
+            #    name += "_" + self.additional_directory
+            #info = {"directory": outdir.replace(self.base_directory, "."),
+            #        "kind": "VASP",
+            #        "note":
+            #        "force calculation (%d) for order %d" % (ii, order)}
+            #write_output_yaml(self.yamlfile_for_outdir, name, info)
+            
+            ### check
             if wasfinished(outdir):
                 print(" %s: skipped" % outdir)
                 num_done += 1
@@ -911,14 +996,14 @@ class AlamodeCalc():
             if os.path.exists(calculator.directory) == False:
                 os.makedirs(calculator.directory, exist_ok=True)
                 calculator.write_input(structure)
-            
+                
             if calculate_forces:
                 
                 run_vasp(calculator, structure, method='custodian')
                 num_done += 1
             
             print(" %s" % (calculator.directory))
-        
+            
         ### output DFSET
         if num_done == len(structures) and output_dfset:
              
@@ -950,6 +1035,7 @@ class AlamodeCalc():
                 msg = "\n"
                 msg += " %s already exists\n" % (outfile)
                 print(msg)
+            
         print("")
     
     def write_alamode_input(
@@ -966,6 +1052,11 @@ class AlamodeCalc():
         
         kpts : list of int, shape=(3)
             k-points
+        
+        outdir : string
+            should be given to use harmonic and cubic FCs obtained using
+            supercells of different sizes
+        
         """
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
@@ -980,7 +1071,7 @@ class AlamodeCalc():
         fc3xml = None
         
         ### prepare filenames
-        if propt == 'band' or propt == 'dos':
+        if propt in ['band', 'dos']:
             
             dir_work = self.out_dirs['harm']['bandos']
             fcsxml = '../../result/' + self.outfiles['harm_xml']
@@ -992,9 +1083,18 @@ class AlamodeCalc():
             
         elif propt == 'kappa':
             
-            dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-            fcsxml = '../../result/' + self.outfiles['cube_%s_xml' % self.fc3_type]
+            if (outdir is not None and "fcsxml" in kwargs.keys()):
+                """ Use harmonic and cubic FCs obtained using supercells of
+                different sizes
+                """
+                dir_work = outdir
+                fcsxml = kwargs["fcsxml"]
             
+            else:
+                dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+                fcsxml = ('../../result/' + 
+                        self.outfiles['cube_%s_xml' % self.fc3_type])
+        
         elif propt == 'lasso' or propt == 'cv':
             
             if order == 2:
@@ -1062,7 +1162,7 @@ class AlamodeCalc():
             print("")
             warnings.warn(" Error: %s is not supported yet." % (propt))
             sys.exit()
-
+        
         ##
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
         
@@ -1072,6 +1172,17 @@ class AlamodeCalc():
         
         ## prepare directory
         os.makedirs(dir_work, exist_ok=True)
+        
+        #### output yaml file
+        name = "%s" % (propt)
+        if name == "kappa":
+            name += "_%dx%dx%d" % (kpts[0], kpts[1], kpts[2])
+        if self.additional_directory is not None:
+            name += "_" + self.additional_directory
+        info = {"directory": dir_work.replace(self.base_directory, "."),
+                "kind": "ALAMODE",
+                "note": "ALAMODE calculation for %s" % (propt)}
+        write_output_yaml(self.yamlfile_for_outdir, name, info)
         
         ## non-analytical term
         if self.nac != 0 and alamode_type == 'anphon':
@@ -1103,7 +1214,7 @@ class AlamodeCalc():
                     fcsxml=fcsxml,
                     nonanalytic=self.nac, borninfo=borninfo
                 )
-        
+            
             ### set primitive cell with Pymatgen-structure
             inp.set_primitive(
                     change_structure_format(
@@ -1149,25 +1260,6 @@ class AlamodeCalc():
         elif propt == 'evec_commensurate':
             
             ###### supercell matrix wrt primitive cell
-            #### ver. old
-            #### critical error!!!
-            ##mat_p2s_tmp_old = np.dot(self.scell_matrix, np.linalg.inv(self.primitive_matrix))
-            ##
-            #### ver. corrected
-            ##Uinv = np.linalg.inv(self.unitcell.cell)
-            ##mat_p2s_tmp = np.dot(
-            ##        np.dot(
-            ##            Uinv,
-            ##            np.linalg.inv(
-            ##                self.primitive_matrix.T
-            ##                )
-            ##            ),
-            ##        np.dot(
-            ##            self.unitcell.cell.T,
-            ##            self.scell_matrix
-            ##            )
-            ##        )
-            ### ver. corrected 2
             mat_p2s_tmp = np.dot(
                     np.linalg.inv(self.primitive_matrix),
                     self.scell_matrix
@@ -1297,7 +1389,7 @@ class AlamodeCalc():
         if flag == False:
             return None
      
-    def run_alamode(self, propt=None, order=None, neglect_log=False, 
+    def run_alamode(self, propt=None, order=None, neglect_log=0, 
             outdir=None, **args):
         """ Run anphon
         
@@ -1306,7 +1398,7 @@ class AlamodeCalc():
         propt : string
             "band", "dos", "evec_commensurate", or "kappa"
 
-        neglect_log : bool
+        neglect_log : int
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
         
@@ -1318,7 +1410,7 @@ class AlamodeCalc():
             sys.exit()
         alamode_type = out[0]
         mode = out[1]
-
+        
         ## change directory
         if propt == 'band' or propt == 'dos':
             
@@ -1332,14 +1424,10 @@ class AlamodeCalc():
         
         elif propt == 'kappa':
             
-            #if newversion == False:
-            #    if self.lasso == False:
-            #        workdir = self.out_dirs['cube']['kappa_fd']
-            #    else:
-            #        workdir = self.out_dirs['higher']['kappa']
-            #else:
-            ##    
-            workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+            if outdir is None:
+                workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+            else:
+                workdir = outdir
         
         elif propt == 'evec_commensurate':
             
@@ -1379,7 +1467,7 @@ class AlamodeCalc():
                 print("")
                 warnings.warn(" Error: order must be gien properly.")
                 sys.exit()
-
+        
         else:
             print("")
             warnings.warn(" WARNNING: %s property is not supported." % (propt))
@@ -1709,12 +1797,6 @@ class AlamodeCalc():
 
     def plot_kappa(self):
         
-        #if self.lasso == False:
-        #    dir_kappa = self.out_dirs['cube']["kappa_%s" % self.fc3_type]
-        #else:
-        #    dir_kappa = self.out_dirs['lasso']["kappa"]
-        
-        
         dirs_kappa = self.get_kappa_directories()
         dfs = {}
         for lab in dirs_kappa:
@@ -1760,7 +1842,7 @@ class AlamodeCalc():
                 xscale=xscale, ylabel=ylabel1)
 
 
-def run_alamode(filename, logfile, workdir='.', neglect_log=False,
+def run_alamode(filename, logfile, workdir='.', neglect_log=0,
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
     """ Run alamode with a command (alm or anphon)
     

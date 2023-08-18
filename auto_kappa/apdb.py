@@ -33,6 +33,7 @@ from auto_kappa.structure.crystal import (
 from auto_kappa.calculator import run_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
+#from auto_kappa.io.files import write_output_yaml
 
 class ApdbVasp():
     
@@ -42,6 +43,7 @@ class ApdbVasp():
             scell_matrix=None,
             encut_scale_factor=1.3,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
+            #yamlfile_for_outdir=None,
             ):
         """
         Args
@@ -93,6 +95,8 @@ class ApdbVasp():
         
         ### parameters
         self.encut_factor = encut_scale_factor
+
+        #self._yamlfile_for_outdir = yamlfile_for_outdir
     
     @property
     def primitive_matrix(self):
@@ -105,7 +109,11 @@ class ApdbVasp():
     @property
     def command(self):
         return self._command
-
+    
+    #@property
+    #def yamlfile_for_outdir(self):
+    #    return self._yamlfile_for_outdir
+    
     def update_command(self, val):
         self._command.update(val)
     
@@ -260,7 +268,7 @@ class ApdbVasp():
     
     def run_relaxation(self, directory: './out', kpts: None,
             standardize_each_time=True,
-            volume_relaxation=False,
+            volume_relaxation=0,
             cell_type='p',
             force=False, num_full=2, verbosity=1): 
         """ Perform relaxation calculation, including full relaxation 
@@ -363,6 +371,16 @@ class ApdbVasp():
                     standardization=standardize_each_time
                     )
             
+            ### output to yaml
+            #name = "%s-%d" % (mode, ical)
+            #info = {"directory": dir_cur.replace(,
+            #        "kind": "",
+            #        "note": ""}
+            #write_output_yaml(self.yamlfile_for_outdir, name, info)
+            #print(dir_cur)
+            #exit()
+             
+            ### update
             dir_pre = dir_cur
 
         ### update structures

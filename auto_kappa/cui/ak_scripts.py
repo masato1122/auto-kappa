@@ -24,7 +24,9 @@ from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
 from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.structure.crystal import get_automatic_kmesh
-
+from auto_kappa.cui.suggest import klength2mesh
+from auto_kappa.io.files import write_output_yaml
+    
 def start_autokappa():
     """ Print the logo.
     Font: stick letters
@@ -41,19 +43,24 @@ def start_autokappa():
     msg += "\n"
     print(msg, end="")
 
-def print_times(times):
-    ttot = times['total'].seconds
+def print_times(times, labels):
+    
     msg = "\n"
     msg += "\n"
     msg += " Calculation times:\n"
     msg += " ==================\n"
     msg += "\n"
-    for key in times:
-        if key == 'total':
-            continue
-        tt = float(times[key].seconds)
+    nchar = 0
+    ttot = np.sum(np.asarray(times))
+    for i, lab in enumerate(labels):
+        tt = float(times[i])         ### sec
         percentage = 100.*tt/ttot
-        msg += " %15s (sec): %13.3f (%.1f%%)\n" % (key, tt, percentage)
+        line = "%25s (sec): %13.2f (%.1f%%)" % (lab, tt, percentage)
+        print(" ", line)
+        nchar = max(nchar, len(line))
+    
+    msg = " " + "-" * (nchar + 5) + "\n"
+    msg += "  %25s (sec): %13.2f \n" % ("total", ttot)
     msg += "\n"
     print(msg, end="")
 
@@ -69,15 +76,14 @@ def end_autokappa():
     msg += "\n"
     print(msg, end="")
 
-def print_options(options):
+def print_options(params):
 
     msg = "\n"
     msg += " Input parameters:\n"
     msg += " =================\n"
-    opt_dict = eval(str(options))
-    for key in opt_dict:
-        if opt_dict[key] is not None:
-            msg += " " + key.ljust(20) + " : " + str(opt_dict[key]) + "\n"
+    for key in params.keys():
+        if params[key] is not None:
+            msg += " " + key.ljust(25) + " : " + str(params[key]) + "\n"
     msg += "\n"
     print(msg, end="")
 
@@ -346,7 +352,10 @@ def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
     return params_prev
 
 def _make_structures(unitcell, 
-        primitive_matrix=None, supercell_matrix=None, supercell_matrix3=None):
+        primitive_matrix=None, 
+        supercell_matrix=None, 
+        #supercell_matrix3=None
+        ):
     """
     Parameters
     ------------
@@ -374,9 +383,9 @@ def _make_structures(unitcell,
         structures["supercell"] = change_structure_format(
                 get_supercell(unit_pp, supercell_matrix), format='ase')
     
-    if supercell_matrix3 is not None:
-        structures["supercell3"] = change_structure_format(
-                get_supercell(unit_pp, supercell_matrix3), format='ase')
+    #if supercell_matrix3 is not None:
+    #    structures["supercell3"] = change_structure_format(
+    #            get_supercell(unit_pp, supercell_matrix3), format='ase')
     
     return structures
 
@@ -447,7 +456,6 @@ def _get_required_parameters(
         base_directory=None,
         dir_phdb=None, file_structure=None,
         max_natoms=None, 
-        max_natoms3=None,
         k_length=None,
         celltype_relax_given=None,
         ):
@@ -522,24 +530,23 @@ def _get_required_parameters(
         trans_matrices["unitcell"] = np.identity(3).astype(int)
         
         ### Suggest the structure for FC3
-        if max_natoms3 == max_natoms:
-            trans_matrices["supercell3"] = trans_matrices["supercell"].copy()
-        
-        else:
-            from auto_kappa.structure.supercell import estimate_supercell_matrix
-            trans_matrices["supercell3"] = estimate_supercell_matrix(
-                    unitcell, max_num_atoms=max_natoms3)
+        #if max_natoms3 == max_natoms:
+        #    trans_matrices["supercell3"] = trans_matrices["supercell"].copy()
+        #
+        #else:
+        #    from auto_kappa.structure.supercell import estimate_supercell_matrix
+        #    trans_matrices["supercell3"] = estimate_supercell_matrix(
+        #            unitcell, max_num_atoms=max_natoms3)
         
         ### Set structures
         structures = _make_structures(
                 unitcell,
                 primitive_matrix=trans_matrices['primitive'],
                 supercell_matrix=trans_matrices['supercell'],
-                supercell_matrix3=trans_matrices['supercell3'],
+                #supercell_matrix3=trans_matrices['supercell3'],
                 )
         
         ### get suggested k-mesh
-        from auto_kappa.cui.suggest import klength2mesh
         kpts_suggested = {
                 "primitive": klength2mesh(
                     k_length, structures["primitive"].cell.array),
@@ -547,8 +554,8 @@ def _get_required_parameters(
                     k_length, structures["unitcell"].cell.array),
                 "supercell": klength2mesh(
                     k_length, structures["supercell"].cell.array),
-                "supercell3": klength2mesh(
-                    k_length, structures["supercell3"].cell.array),
+                #"supercell3": klength2mesh(
+                #    k_length, structures["supercell3"].cell.array),
                 }
     
     elif file_structure is not None:
@@ -562,7 +569,7 @@ def _get_required_parameters(
                 suggest_structures_and_kmeshes(
                         filename=file_structure,
                         max_natoms=max_natoms,
-                        max_natoms3=max_natoms3,
+                        #max_natoms3=max_natoms3,
                         k_length=k_length,
                         )
                     )
@@ -589,7 +596,7 @@ def _get_required_parameters(
             "relax": cell_type_relax,
             "nac": "primitive",
             "harm": "supercell",
-            "cube": "supercell3",
+            "cube": "supercell",
             }
     
     ### get previously used transformation matrices and kpoints
@@ -644,22 +651,342 @@ def _write_parameters(
     
     print(" Output", outfile)
 
+def _start_larger_supercell(almcalc):
+        
+    ### print
+    line = "Analyze with a larger supercell (%dx%dx%d)" % (
+            almcalc.scell_matrix[0][0],
+            almcalc.scell_matrix[1][1],
+            almcalc.scell_matrix[2][2])
+    msg = "\n"
+    msg += " ###" + "#" * (len(line)) + "###\n"
+    msg += " ## " + " " * (len(line)) + " ##\n"
+    msg += " ## " + line              + " ##\n"
+    msg += " ## " + " " * (len(line)) + " ##\n"
+    msg += " ###" + "#" * (len(line)) + "###"
+    print(msg)
+    
+    msg = "\n"
+    msg += " Number of atoms : %d\n" % len(almcalc.supercell)
+    msg += " Cell size : %.2f, %.2f, %.2f\n" % (
+            np.linalg.norm(almcalc.supercell.cell[0]),
+            np.linalg.norm(almcalc.supercell.cell[1]),
+            np.linalg.norm(almcalc.supercell.cell[2]),
+            )
+    print(msg)
 
+def analyze_harmonic_with_larger_supercells(
+        almcalc_orig, 
+        base_dir=None,
+        #
+        max_natoms_init=None,
+        delta_max_natoms=50,
+        max_loop=1,
+        #
+        k_length=20,
+        negative_freq=-1e-3,
+        neglect_log=False,
+        #
+        restart=1,
+        ):
+
+    from auto_kappa.structure.supercell import estimate_supercell_matrix
+    
+    count = 0
+    isc = 0
+    sc_mat_prev = almcalc_orig.scell_matrix
+    almcalc_new = None
+    while isc <= max_loop:
+        
+        count += 1
+        max_natoms = max_natoms_init + delta_max_natoms * count
+        
+        ### estimate a supercell from the max number of atoms
+        sc_mat = estimate_supercell_matrix(
+                almcalc_orig.unitcell, max_num_atoms=max_natoms
+                )
+        
+        ### check if the supercell is changed
+        diff = np.amax(np.asarray(sc_mat) - np.asarray(sc_mat_prev))
+        
+        if diff < 0.1:
+            continue
+        
+        ### label
+        sc_label = "%dx%dx%d" % (sc_mat[0,0], sc_mat[1,1], sc_mat[2,2])
+        added_dir = "sc-" + sc_label
+        
+        ### Set AlamodeCalc obj
+        almcalc_new = AlamodeCalc(
+                almcalc_orig.primitive,
+                base_directory=almcalc_orig.base_directory,
+                additional_directory=added_dir,
+                restart=restart,
+                primitive_matrix=almcalc_orig.primitive_matrix,
+                scell_matrix=sc_mat,
+                cutoff2=almcalc_orig.cutoff2,
+                cutoff3=almcalc_orig.cutoff3,
+                magnitude=almcalc_orig.magnitude,
+                magnitude2=almcalc_orig.magnitude2,
+                nac=almcalc_orig.nac,
+                commands=almcalc_orig.commands,
+                verbosity=almcalc_orig.verbosity,
+                yamlfile_for_outdir=almcalc_orig.yamlfile_for_outdir,
+                )
+        
+        _start_larger_supercell(almcalc_new)
+        
+        ### Set kmesh for VASP calculation
+        kpts = klength2mesh(k_length, almcalc_new.supercell.cell.array)
+        
+        ### ASE calculator for forces
+        apdb = ApdbVasp(
+                almcalc_orig.unitcell,
+                primitive_matrix=almcalc_orig.primitive_matrix,
+                scell_matrix=sc_mat,
+                command=almcalc_orig.commands["vasp"],
+                )
+        calc_force = apdb.get_calculator('force', kpts=kpts)
+        
+        ### analyze phonon properties with a supercell
+        analyze_harmonic_properties(
+                almcalc_new, calc_force, neglect_log=neglect_log)
+        
+        ### Finish
+        if almcalc_new.minimum_frequency > negative_freq:
+            line = "Negative frequencies have been removed with %s "\
+                    "supercell!!" % (sc_label)
+            msg += "\n"
+            msg += " " + line + "\n"
+            print(msg)
+            return almcalc_new
+        
+        isc += 1
+        if isc == max_loop:
+            break
+        
+        ### prepare for the next step
+        sc_mat_prev = almcalc_new.scell_matrix
+    
+    return almcalc_new
+
+def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
+    """ Analyze harmonic FCs and phonon properties.
+
+    Args
+    =====
+    almcalc : AlamodeCalc obj
+
+    calculator : ASE calculator for VASP
+    
+    """
+    ##### suggest and creat structures for harmonic FCs
+    almcalc.write_alamode_input(propt='suggest', order=1)
+    almcalc.run_alamode(propt='suggest', order=1)
+    
+    ### calculate forces
+    almcalc.calc_forces(order=1, calculator=calculator)
+    
+    ### calculate harmonic FCs
+    almcalc.write_alamode_input(propt='fc2')
+    almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
+     
+    ### calculate band
+    almcalc.write_alamode_input(propt='band')
+    almcalc.run_alamode(propt='band', neglect_log=neglect_log)
+    
+    ### calculate DOS
+    almcalc.write_alamode_input(propt='dos')
+    almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
+    almcalc.plot_bandos()
+    
+    ### eigenvalues at commensurate points
+    almcalc.write_alamode_input(propt='evec_commensurate')
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
+    
+def calculate_cubic_force_constants(
+        almcalc, calculator,
+        nmax_suggest=None, frac_nrandom=None, neglect_log=False
+        ):
+    """ Calculate cubic force constants
+    """
+    ### calculate forces for cubic FCs
+    almcalc.write_alamode_input(propt='suggest', order=2)
+    almcalc.run_alamode(propt='suggest', order=2)
+    almcalc.calc_forces(
+            order=2, calculator=calculator,
+            nmax_suggest=nmax_suggest,
+            frac_nrandom=frac_nrandom,
+            output_dfset=2,
+            )
+    
+    ### calculate anharmonic force constants
+    if almcalc.fc3_type == 'lasso':
+        from auto_kappa.io.vasp import get_dfset
+        for propt in ['cv', 'lasso']:
+            almcalc.write_alamode_input(propt=propt, order=2)
+            almcalc.run_alamode(propt, order=2, neglect_log=neglect_log)
+    else: 
+        ## ver.1 : with ALM library
+        ##almcalc.calc_anharm_force_constants()
+        ## ver.2: with alm command
+        almcalc.write_alamode_input(propt='fc3')
+        almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
+
+def calculate_thermal_conductivities(
+        almcalc, 
+        kdensities=[500, 1000, 1500], 
+        neglect_log=False,
+        temperatures_for_spectral="300:500",
+        **kwargs,
+        ):
+    """ Calculate thermal conductivities and plot spectral info
+    
+    Args
+    ======
+    almcalc : AlamodeCalc obj
+
+    kdensities : array of float
+
+    neglect_log : bool
+
+    temperatures_for_spectral : string of floats seperated by ":"
+
+    """
+    for kdensity in kdensities:
+        
+        kpts = get_automatic_kmesh(
+                almcalc.primitive, reciprocal_density=kdensity)
+            
+        outdir = (
+                almcalc.out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
+                "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
+                )
+        
+        ###
+        almcalc.write_alamode_input(
+                propt='kappa', order=2, kpts=kpts, outdir=outdir, **kwargs)
+        
+        almcalc.run_alamode(
+                propt='kappa', neglect_log=neglect_log, outdir=outdir, **kwargs)
+    
+    ### analyze phonons
+    msg = "\n"
+    msg += "\n"
+    msg += " Plot anharmonic properties:\n"
+    msg += " ---------------------------\n"
+    print(msg, end="")
+    
+    almcalc.plot_kappa()
+    almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
+    almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+    almcalc.plot_cumulative_kappa(
+            temperatures=temperatures_for_spectral, 
+            wrt='frequency', xscale='linear')
+    almcalc.plot_cumulative_kappa(
+            temperatures=temperatures_for_spectral, 
+            wrt='mfp', xscale='log')
+    
+
+def analyze_phonon_properties(
+        almcalc,
+        calc_force=None,
+        negative_freq=-1e-3,
+        material_name=None,
+        neglect_log=False,
+        #
+        harmonic_only=False,
+        calc_kappa=True,
+        #
+        nmax_suggest=None,
+        frac_nrandom=None,
+        ):
+    """ Analyze phonon properties
+    """
+    ###
+    ### 1. Calculate harmonic FCs and harmonic phonon properties
+    ###
+    analyze_harmonic_properties(almcalc, calc_force, neglect_log=neglect_log)
+    
+    ### Check negative frequency
+    if almcalc.minimum_frequency < negative_freq:
+        
+        log = AkLog(material_name)
+        log.write_yaml()
+        
+        msg = "\n"
+        msg += " Negative eigenvalues were found. Stop the calculation.\n"
+        msg += " Minimum frequency : %.2f\n" % (almcalc.minimum_frequency)
+        print(msg, end="")
+        return -1
+    
+    if harmonic_only:
+        msg = "\n"
+        msg += " Harmonic properties have been calculated.\n"
+        print(msg, end="")
+        return 1
+    
+    ###
+    ### 2. Calculate cubic FCs
+    ###
+    calculate_cubic_force_constants(
+        almcalc, calc_force,
+        nmax_suggest=nmax_suggest, 
+        frac_nrandom=frac_nrandom, 
+        neglect_log=neglect_log)
+    
+    ###
+    ### 3. Calculate kappa with different k-mesh densities
+    ###
+    if calc_kappa == False:
+        return 2
+    
+    calculate_thermal_conductivities(almcalc, 
+        kdensities=[500, 1000, 1500], 
+        neglect_log=neglect_log,
+        temperatures_for_spectral="300:500"
+        )
+    
+    ### output log.yaml 
+    log = AkLog(material_name)
+    log.write_yaml()
+    ##log.plot_times()
+    
+def _plot_bandos_for_different_sizes(
+        almcalc1, almcalc2, figname="fig_bandos.png"
+        ):
+    
+    ### Plot band and DOS
+    from auto_kappa.plot.bandos import plot_bandos
+    lab1 = ""
+    lab2 = ""
+    for j in range(3):
+        lab1 += "%d" % (almcalc1.scell_matrix[j][j])
+        lab2 += "%d" % (almcalc2.scell_matrix[j][j])
+        if j != 2:
+            lab1 += "x"
+            lab2 += "x"
+    
+    plot_bandos(
+            directory=almcalc1.out_dirs["harm"]["bandos"], 
+            prefix=almcalc1.prefix,
+            directory2=almcalc2.out_dirs["harm"]["bandos"], 
+            prefix2=almcalc2.prefix,
+            fig_labels=[lab1, lab2],
+            figname=figname,
+            )
+    
 def main():
     
-    times = {}
-    
     options = get_parser()
+    ak_params = eval(str(options))
     
     start_autokappa()
     
     ### Get the name of the base directory
-    if options.restart == 1:
-        restart = True
-    else:
-        restart = False
-    
-    base_dir = _get_base_directory_name(options.material_name, restart=restart)
+    base_dir = _get_base_directory_name(
+            ak_params['material_name'], restart=ak_params['restart']
+            )
     
     ### Set output directories
     out_dirs = {}
@@ -677,38 +1004,37 @@ def main():
     ### Adjust options ###
     ######################
     ### max_natoms3: maximun limit of the number of atoms for FC3
-    if options.max_natoms3 is None:
-        options.max_natoms3 = options.max_natoms
+    #if options.max_natoms3 is None:
+    #    options.max_natoms3 = options.max_natoms
     
     ### relaxed_cell
-    if options.relaxed_cell is not None:
-        if (options.relaxed_cell.lower()[0] == "u" or 
-                options.relaxed_cell.lower()[0] == "c"):
-            options.relaxed_cell = "unitcell"
-        elif options.relaxed_cell.lower()[0] == "p":
-            options.relaxed_cell = "primitive"
+    if ak_params['relaxed_cell'] is not None:
+        if (ak_params['relaxed_cell'].lower()[0] == "u" or 
+                ak_params['relaxed_cell'].lower()[0] == "c"):
+            ak_params['relaxed_cell'] = "unitcell"
+        elif ak_params['relaxed_cell'].lower()[0] == "p":
+            ak_params['relaxed_cell'] = "primitive"
     
-    ### Get required parameters for the calculation!!!!!
-    (
-            cell_types, structures, 
-            trans_matrices, kpts_used, nac
-            ) = _get_required_parameters(
-                    base_directory=base_dir,
-                    dir_phdb=options.directory, 
-                    file_structure=options.file_structure,
-                    max_natoms=options.max_natoms, 
-                    max_natoms3=options.max_natoms3,
-                    k_length=options.k_length,
-                    celltype_relax_given=options.relaxed_cell,
-                    )
+    ### Get required parameters for the calculation!
+    cell_types, structures, trans_matrices, kpts_used, nac = (
+            _get_required_parameters(
+                base_directory=base_dir,
+                dir_phdb=ak_params['directory'], 
+                file_structure=ak_params['file_structure'],
+                max_natoms=ak_params['max_natoms'], 
+                #max_natoms3=ak_params['max_natoms3'],
+                k_length=ak_params['k_length'],
+                celltype_relax_given=ak_params['relaxed_cell'],
+                )
+            )
     
-    ### NONANALYTIC
+    ### NONANALYTIC (primitive)
     if nac != 0:
-        if options.nonanalytic is not None:
-            nac = options.nonanalytic
+        if ak_params['nonanalytic'] is not None:
+            nac = ak_params['nonanalytic']
     
     ### print parameters
-    print_options(options)
+    print_options(ak_params)
     
     print_conditions(
             cell_types=cell_types, 
@@ -725,18 +1051,25 @@ def main():
             cell_types, trans_matrices, kpts_used, nac
             )
     
-    ### For materials with negative frequencies, options.max_natoms3 can be
+    ### output yaml file
+    yaml_outdir = base_dir + "/output_directories.yaml"
+    info = {"directory": out_dirs["result"].replace(base_dir, "."),
+            "kind": "others",
+            "note": "results"}
+    write_output_yaml(yaml_outdir, "result", info, overwrite=False)
+    
+    ### For materials with negative frequencies, options.max_natoms3 may be
     ### different from options.max_natoms.
-    if options.max_natoms != options.max_natoms3:
-        warnings.warn(" Error: max_natoms != max_natoms3 is not supported yet.")
-        exti()
+    #if options.max_natoms != options.max_natoms3:
+    #    warnings.warn(" Error: max_natoms != max_natoms3 is not supported yet.")
+    #    exti()
     
     ### command to run VASP jobs
     command_vasp = {
-            'mpirun': options.mpirun, 
-            'nprocs': options.ncores, 
+            'mpirun': ak_params['mpirun'], 
+            'nprocs': ak_params['ncores'], 
             'nthreads': 1, 
-            'vasp': options.command_vasp,
+            'vasp': ak_params['command_vasp'],
             }
     
     ### Set ApdbVasp object
@@ -745,199 +1078,149 @@ def main():
             primitive_matrix=trans_matrices["primitive"],
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
+            #yamlfile_for_outdir=yaml_outdir
             )
     
     ### Relaxation calculation
-    mode = 'relax'
-    if options.volume_relaxation == 0:
-        flag = False
-    else:
-        flag = True
-    
     apdb.run_relaxation(
-            out_dirs[mode],
+            out_dirs["relax"],
             kpts_used["relax"],
-            volume_relaxation=flag,
+            volume_relaxation=ak_params['volume_relaxation'],
             cell_type=cell_types["relax"]
             )
     
+    ### output yaml file
+    info = {
+            "directory": out_dirs["relax"].replace(base_dir, "."), 
+            "kind": "others",
+            "note": "structure optimization",
+            }
+    write_output_yaml(yaml_outdir, "relax", info)
+    
+    ##############################
     ### Get relaxed structures
     ### This part was omitted in the beggining of ver.0.2.
     structures_relax = apdb.structures.copy()
     
     ### Born effective charge
-    if nac != 0:
+    if nac:
         mode = 'nac'
         apdb.run_vasp(mode,
                 out_dirs[mode],
                 kpts_used["nac"],
                 print_params=True
                 )
+        
+        ### output yaml file
+        info = {
+                "directory": out_dirs[mode].replace(base_dir, "."), 
+                "kind": "VASP",
+                "note": "Born effective charge",
+                }
+        write_output_yaml(yaml_outdir, mode, info)
+    
+    ### command for ALAMODE
+    command_alamode = {
+        'mpirun': ak_params['mpirun'], 
+        'anphon_para': ak_params['anphon_para'], 
+        'ncores': ak_params['ncores'], 
+        'anphon': ak_params['command_anphon'],
+        'alm': ak_params['command_alm'],
+        }
     
     ### Set AlmCalc
-    commands = {
-            'alamode': {
-                'mpirun': options.mpirun, 
-                'anphon_para': options.anphon_para, 
-                'ncores': options.ncores, 
-                'anphon': options.command_anphon,
-                'alm': options.command_alm,
-                },
-            'vasp': command_vasp,
-            }
-    
     almcalc = AlamodeCalc(
-            structures_relax["prim"],
+            structures_relax['prim'],
             base_directory=base_dir,
-            restart=options.restart,
-            primitive_matrix=trans_matrices["primitive"],
-            scell_matrix=trans_matrices["supercell"],
-            cutoff2=-1, cutoff3=options.cutoff3, 
+            restart=ak_params['restart'],
+            primitive_matrix=trans_matrices['primitive'],
+            scell_matrix=trans_matrices['supercell'],
+            cutoff2=-1,
+            cutoff3=ak_params['cutoff3'],
             magnitude=0.01,
-            magnitude2=options.magnitude2,
+            magnitude2=ak_params['magnitude2'],
             nac=nac,
-            commands=commands,
-            verbosity=options.verbosity
+            commands={'alamode': command_alamode, 'vasp': command_vasp},
+            verbosity=ak_params['verbosity'],
+            yamlfile_for_outdir=yaml_outdir
             )
     
     ### ASE calculator for forces
-    mode = 'force'
-    calc_force = apdb.get_calculator(
-            mode,
-            kpts=kpts_used["harm"],
+    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
+    
+    ### Analyze phonon properties
+    out = analyze_phonon_properties(
+            almcalc,
+            calc_force=calc_force,
+            negative_freq=ak_params['negative_freq'],
+            material_name=ak_params['material_name'],
+            neglect_log=ak_params['neglect_log'],
+            harmonic_only=ak_params['harmonic_only'],
+            #
+            nmax_suggest=ak_params['nmax_suggest'],
+            frac_nrandom=ak_params['frac_nrandom'],
             )
     
-    t11 = datetime.datetime.now()
-    
-    ###############################
-    if options.neglect_log == 1:
-        neglect_log = True
-    elif options.neglect_log == 0:
-        neglect_log = False
-    ###############################
-    
-    ##### suggest and creat structures for harmonic FCs
-    almcalc.write_alamode_input(propt='suggest', order=1)
-    almcalc.run_alamode(propt='suggest', order=1)
-    
-    ### calculate forces
-    almcalc.calc_forces(order=1, calculator=calc_force)
-    
-    t12 = datetime.datetime.now()
-    times['harm_forces'] = t12 - t11
-    
-    ### calculate harmonic FCs
-    almcalc.write_alamode_input(propt='fc2')
-    almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
-     
-    ### calculate band
-    almcalc.write_alamode_input(propt='band')
-    almcalc.run_alamode(propt='band', neglect_log=neglect_log)
-
-    ### calculate DOS
-    almcalc.write_alamode_input(propt='dos')
-    almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
-    almcalc.plot_bandos()
-    
-    ### eigenvalues at commensurate points
-    almcalc.write_alamode_input(propt='evec_commensurate')
-    almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
-    
-    ### Check negative frequency
-    if almcalc.minimum_frequency < options.negative_freq:
+    ########################
+    ##  Larger supercell  ##
+    ########################
+    ### calculate harmonic properteis with larger supercells
+    if (almcalc.minimum_frequency < ak_params['negative_freq'] and 
+            ak_params["analyze_with_largersc"] == 1):
         
-        log = AkLog(options.material_name)
-        log.write_yaml()
-        log.plot_times()
-        
-        msg = "\n"
-        msg += " Negative eigenvalues were found. Stop the calculation.\n"
-        msg += " Minimum frequency : %.2f\n" % (almcalc.frequency_range[0])
-        msg += "\n"
-        print(msg, end="")
-        sys.exit()
-    
-    t13 = datetime.datetime.now()
-    times['harm_alamode'] = t13 - t12
-    
-    if options.harmonic_only == 1:
-        sys.exit()
-
-    ##############################
-    ##                          ##
-    ##  Start FC3 calculation   ##
-    ##                          ##
-    ##############################
-    
-    ### calculate forces for cubic FCs
-    almcalc.write_alamode_input(propt='suggest', order=2)
-    almcalc.run_alamode(propt='suggest', order=2)
-    almcalc.calc_forces(order=2, calculator=calc_force,
-            nmax_suggest=options.nmax_suggest,
-            frac_nrandom=options.frac_nrandom,
-            output_dfset=2,
-            )
-    
-    t21 = datetime.datetime.now()
-    times['anharm_forces'] = t21 - t13
-    
-    ### calculate anharmonic force constants
-    if almcalc.fc3_type == 'lasso':
-        from auto_kappa.io.vasp import get_dfset
-        for propt in ['cv', 'lasso']:
-            order = 2
-            almcalc.write_alamode_input(propt=propt, order=order)
-            almcalc.run_alamode(propt, order=order, neglect_log=neglect_log)
-    else: 
-        ## ver.1 : with ALM library
-        ##almcalc.calc_anharm_force_constants()
-        ## ver.2: with alm command
-        almcalc.write_alamode_input(propt='fc3')
-        almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
-    
-    t22 = datetime.datetime.now()
-    times['anharm_fcs'] = t22 - t21
-    
-    ### calculate kappa with different k-mesh densities
-    for kdensity in [500, 1000, 1500]:
-        kpts = get_automatic_kmesh(
-                almcalc.primitive, reciprocal_density=kdensity)
-        outdir = (
-                out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
-                "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
+        almcalc_large = analyze_harmonic_with_larger_supercells(
+                almcalc,
+                base_dir=base_dir,
+                #
+                max_natoms_init=ak_params['max_natoms'],
+                delta_max_natoms=options.delta_max_natoms,
+                max_loop=options.max_loop_for_largesc,
+                #
+                k_length=ak_params['k_length'],
+                negative_freq=ak_params['negative_freq'],
+                neglect_log=neglect_log,
+                #
+                restart=ak_params['restart'],
                 )
-        almcalc.write_alamode_input(
-                propt='kappa', order=2, kpts=kpts, outdir=outdir)
-        almcalc.run_alamode(
-                propt='kappa', neglect_log=neglect_log, outdir=outdir)
+        
+        ### plot band and DOS
+        figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
+        _plot_bandos_for_different_sizes(
+                almcalc_large, almcalc, figname=figname)
+        
+        ### If negative frequencies could be removed, calculate cubic FCs with
+        ### the supercell of initial size
+        if (almcalc_large.minimum_frequency > ak_params["negative_freq"] and 
+                ak_params['harmonic_only'] == 0):
+            
+            calculate_cubic_force_constants(
+                    almcalc, calc_force,
+                    nmax_suggest=ak_params['nmax_suggest'], 
+                    frac_nrandom=ak_params['frac_nrandom'], 
+                    neglect_log=neglect_log
+                    )
+            
+            ### calculate kappa
+            kdensities = [500, 1000, 1500]
+            calculate_thermal_conductivities(
+                    almcalc_large, 
+                    kdensities=kdensities,
+                    neglect_log=neglect_log,
+                    temperatures_for_spectral="300:500",
+                    fc2xml = almcalc_large.fc2xml,
+                    fcsxml = almcalc.fc3xml
+                    )
+            
+    ### plot and print calculation durations
+    from auto_kappa.io.times import get_times
+    times, labels = get_times(base_dir)
+
+    from auto_kappa.plot.pltalm import plot_times_with_pie
+    figname = base_dir + "/result/fig_times.png"
+    plot_times_with_pie(times, labels, figname=figname)
     
-    ### analyze phonons
-    msg = "\n"
-    msg += "\n"
-    msg += " Plot anharmonic properties:\n"
-    msg += " ---------------------------\n"
-    print(msg, end="")
-    
-    almcalc.plot_kappa()
-    almcalc.plot_lifetime(temperatures="300:500")
-    almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-    almcalc.plot_cumulative_kappa(
-            temperatures="300:500", wrt='frequency', xscale='linear')
-    almcalc.plot_cumulative_kappa(
-            temperatures="300:500", wrt='mfp', xscale='log')
-     
-    ### get time
-    t23 = datetime.datetime.now()
-    times['kappa'] = t23 - t22
-    times['total'] = t23 - t11
-    
-    ### output log.yaml and fig_times.png
-    log = AkLog(options.material_name)
-    log.write_yaml()
-    log.plot_times()
-    
+    print_times(times, labels)
+        
     ### END of calculations
-    print_times(times)
-    
     end_autokappa()
 

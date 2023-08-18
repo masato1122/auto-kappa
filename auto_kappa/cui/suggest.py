@@ -23,7 +23,9 @@ from auto_kappa.structure.supercell import estimate_supercell_matrix
 
 def suggest_structures_and_kmeshes(
         filename=None, structure=None,
-        max_natoms=150, max_natoms3=None, k_length=20,
+        max_natoms=150, 
+        #max_natoms3=None, 
+        k_length=20,
         ):
     """ Return the required parameters
 
@@ -43,8 +45,8 @@ def suggest_structures_and_kmeshes(
         sys.exit()
     
     ## max natoms for FC3
-    if max_natoms3 is None:
-        max_natoms3 = max_natoms
+    #if max_natoms3 is None:
+    #    max_natoms3 = max_natoms
     
     ### prepare the structure obj.
     if filename is not None:
@@ -67,13 +69,13 @@ def suggest_structures_and_kmeshes(
             format='ase')
     
     ### get the supercell matrix and supercell for FC3
-    sc_mat3 = estimate_supercell_matrix(unitcell, max_num_atoms=max_natoms3)
-    
-    supercell3 = change_structure_format(
-            get_supercell(
-                change_structure_format(unitcell, format='phonopy'), 
-                sc_mat3), 
-            format='ase')
+    #sc_mat3 = estimate_supercell_matrix(unitcell, max_num_atoms=max_natoms3)
+    #
+    #supercell3 = change_structure_format(
+    #        get_supercell(
+    #            change_structure_format(unitcell, format='phonopy'), 
+    #            sc_mat3), 
+    #        format='ase')
     
     ### get the primitive cell
     try:
@@ -94,14 +96,14 @@ def suggest_structures_and_kmeshes(
             "primitive": primitive, 
             "unitcell": unitcell, 
             "supercell": supercell,
-            "supercell3": supercell3,
+            #"supercell3": supercell3,
             }
     
     matrices = {
             "primitive": prim_mat, 
             "unitcell": np.identity(3).astype(int),
             "supercell": sc_mat,
-            "supercell3": sc_mat3
+            #"supercell3": sc_mat3
             }
     
     ### k-mesh
@@ -109,7 +111,7 @@ def suggest_structures_and_kmeshes(
             "primitive": klength2mesh(k_length, primitive.cell.array),
             "unitcell": klength2mesh(k_length, unitcell.cell.array),
             "supercell": klength2mesh(k_length, supercell.cell.array),
-            "supercell3": klength2mesh(k_length, supercell3.cell.array),
+            #"supercell3": klength2mesh(k_length, supercell3.cell.array),
             }
 
     return structures, matrices, kpts

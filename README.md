@@ -1,7 +1,7 @@
 Auto-KAPPA
 ============
 
-Version 0.2
+Version 0.3
 ---------------
 
 Auto-kappa is a software for automated calculations of thermal conductivity.
@@ -33,10 +33,4 @@ Phonopy:
 
 - Atsushi Togo and Isao Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-
-
-To Do
---------
-
-- Use AiiDa, or FireWorks and MongoDB
 

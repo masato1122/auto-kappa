@@ -17,6 +17,7 @@ output_directories = {
             'cv'   :        'cube/lasso',
             'lasso':        'cube/lasso',
             'kappa_lasso':  'cube/kappa_lasso',
+            'kappa_': 'cube/kappa',
             },
         ## high-order FCs
         'higher':{
