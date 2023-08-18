@@ -1149,12 +1149,13 @@ def main():
     calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
     
     ### Analyze phonon properties
+    neglect_log = ak_params['neglect_log']
     out = analyze_phonon_properties(
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
             material_name=ak_params['material_name'],
-            neglect_log=ak_params['neglect_log'],
+            neglect_log=neglect_log,
             harmonic_only=ak_params['harmonic_only'],
             #
             nmax_suggest=ak_params['nmax_suggest'],
