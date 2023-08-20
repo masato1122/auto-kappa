@@ -46,10 +46,11 @@ def start_autokappa():
 def print_times(times, labels):
     
     msg = "\n"
-    msg += "\n"
     msg += " Calculation times:\n"
     msg += " ==================\n"
     msg += "\n"
+    print(msg)
+
     nchar = 0
     ttot = np.sum(np.asarray(times))
     for i, lab in enumerate(labels):
