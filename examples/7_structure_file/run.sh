@@ -8,8 +8,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
 
 ncores=2
 
-poscar=POSCAR.init
-material_name=Si
+poscar=POSCAR.init   ## file name of the structure
+material_name=Si     ## this option is used only for the name of output directory
 
 akrun \
     --file_structure $poscar \

@@ -10,9 +10,9 @@ sh run.sh
 cd $WORKDIR/2_anphon
 sh run.sh
 
-# 3_vas_ase : test job for "VASP" with "auto-kappa"
+# 3_ase : test job for ASE with "auto-kappa"
 
-cd $WORKDIR/3_vasp_ase
+cd $WORKDIR/3_ase
 sh run.sh
 
 # 4_vasp_custodian : test job for VASP with "custodian"
@@ -20,7 +20,8 @@ sh run.sh
 cd $WORKDIR/4_vasp_custodian
 sh run.sh
 
-# 5_single : job script to analyze a material
+# 5_single : 
+# job script to analyze phonon properties of a material included in Phonondb
 
 cd $WORKDIR/5_single
 sh run.sh
@@ -36,5 +37,10 @@ sh run_massive.sh
 cd $WORKDIR/6_database_strict
 sh run_massive_neg.sh
 
-# 7_arbitrary : test job to analyze an arbitrary material
+# 7_structure_file : 
+# test job to analyze phonon properties using a structure file such as cif, POSCAR, etc.
+
+cd $WORKDIR/7_structure_file
+sh run.sh
+
 

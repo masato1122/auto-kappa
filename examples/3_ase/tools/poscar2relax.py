@@ -6,7 +6,7 @@ import ase.io
 from ase.build import make_supercell
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa.structure.crystal import (
-        get_primitive_structure,
+        get_primitive_structure_spglib,
         get_standardized_structure,
         )
 
@@ -18,13 +18,13 @@ parser.add_option("-f", "--filename", dest="filename", type="string",
 ### prepare structures
 unit = ase.io.read(options.filename, format='vasp')
 
-prim = get_primitive_structure(unit)
+prim = get_primitive_structure_spglib(unit)
 
 ### get the primitive matrix
 pmat = np.dot(np.linalg.inv(unit.cell), prim.cell)
 
 ### set ApdbVasp
-apdb = ApdbVasp(unit, primitive_matrix=pmat)
+apdb = ApdbVasp(unit, primitive_matrix=pmat, scell_matrix=np.identity(3))
 
 ### calculator
 kpts = [4, 4, 4]
