@@ -26,7 +26,8 @@ from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.io.files import write_output_yaml
-    
+from auto_kappa.cui import message
+
 def start_autokappa():
     """ Print the logo.
     Font: stick letters
@@ -915,12 +916,10 @@ def analyze_phonon_properties(
         log = AkLog(material_name)
         log.write_yaml()
         
-        msg = "\n"
-        msg += " Negative eigenvalues were found. Stop the calculation.\n"
-        msg += " Minimum frequency : %.2f\n" % (almcalc.minimum_frequency)
-        print(msg, end="")
+        message.negative_frequency(almcalc.minimum_frequency)
+        
         return -1
-    
+
     if harmonic_only:
         msg = "\n"
         msg += " Harmonic properties have been calculated.\n"
@@ -1212,7 +1211,11 @@ def main():
                     fc2xml = almcalc_large.fc2xml,
                     fcsxml = almcalc.fc3xml
                     )
+        
+        else:
             
+            message.negative_frequency(almcalc.minimum_frequency)
+      
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times
     times, labels = get_times(base_dir)

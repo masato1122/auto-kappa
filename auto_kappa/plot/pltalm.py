@@ -407,6 +407,7 @@ def plot_times_with_pie(times, labels, figname="fig_times.png",
     leg.get_frame().set_linewidth(0.2)
 
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    print("")
     print(" Output", figname)
     return fig
 
