@@ -529,7 +529,7 @@ class AlamodeCalc():
         log_band = self.out_dirs['harm']['bandos'] + "/band.log"
         log_dos = self.out_dirs['harm']['bandos'] + "/dos.log"
         
-        fmin = -1e7
+        fmin = 1e7
         try:
             out_band = get_minimum_frequency_from_logfile(log_band)
             fmin = min(fmin, out_band['minimum_frequency'])
