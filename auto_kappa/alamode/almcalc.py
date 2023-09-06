@@ -529,21 +529,25 @@ class AlamodeCalc():
         log_band = self.out_dirs['harm']['bandos'] + "/band.log"
         log_dos = self.out_dirs['harm']['bandos'] + "/dos.log"
         
-        fmin = 100000.
+        fmin = None
         try:
             out_band = get_minimum_frequency_from_logfile(log_band)
             fmin = min(fmin, out_band['minimum_frequency'])
         except Exception:
             out_band = None
+            warnings.warn(" Error: %s may contain error." % log_band)
         
         try:
             out_dos = get_minimum_frequency_from_logfile(log_dos)
             fmin = min(fmin, out_dos['minimum_frequency'])
         except Exception:
             out_dos = None
+            warnings.warn(" Error: %s may contain error." % log_dos)
         
-        if fmin > 1e3:
-            return None
+        if fmin is None:
+            ### alamode log file does not show extremely large negative values
+            ### properly.
+            return -1e6
         else:
             return fmin
     

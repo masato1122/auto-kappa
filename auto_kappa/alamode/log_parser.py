@@ -725,12 +725,17 @@ def get_eigenvalues_from_logfile(filename):
         for ib in range(nbands):
             num = 4 + istart_freq + ik*(3 + nbands) + ib
             data = lines[num].split()
-            frequencies.append(float(data[1]))
+            if data[1] != "cm^-1":
+                frequencies.append(float(data[1]))
+            else:
+                ### Alamode log file shows frequency w/o a space btw its index
+                ### when the frequnecy is an extremely large negative value.
+                frequencies.append(float(data[0][1:]))
     
     kpoints = np.asarray(kpoints)
     frequencies = np.asarray(frequencies)
     return kpoints, frequencies
-
+    
 def read_log_eigen(directory, mode='band'):
     """ """
     if mode == 'band':
@@ -752,8 +757,10 @@ def read_log_eigen(directory, mode='band'):
     if v is not None:
         out['time'] = v
     
-    ##out_log, _, _ = get_minimum_frequency_from_logfile(filename)
     out_log = get_minimum_frequency_from_logfile(filename)
+    
+    ## AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    
     out.update(out_log)
     
     return out
