@@ -881,6 +881,19 @@ def calculate_thermal_conductivities(
         
         almcalc.run_alamode(
                 propt='kappa', neglect_log=neglect_log, outdir=outdir, **kwargs)
+        
+        ### check output file for kappa
+        fn_kappa = outdir + "/" + almcalc.prefix + ".kl"
+        if (os.path.exists(fn_kappa) == False and 
+                almcalc.commands['alamode']['anphon_para'] == "mpi"):
+            ##
+            ## if thermal conductivity was not calculated with MPI, run the 
+            ## calculation again with OpenMP.
+            ##
+            almcalc.commands['alamode']['anphon_para'] = "omp"
+            almcalc.run_alamode(
+                    propt='kappa', neglect_log=neglect_log, 
+                    outdir=outdir, **kwargs)
     
     ### analyze phonons
     msg = "\n"
