@@ -493,6 +493,9 @@ def read_log_relax(directory):
                 pos = diri + '/POSCAR'
             count += 1
         ##
+        if out['full'] is None:
+            out['full'] = {}
+        
         out['full']['repeat'] = count
     
     ## get prefix

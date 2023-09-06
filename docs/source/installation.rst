@@ -163,33 +163,12 @@ Examples
 
 1. Test for VASP and ALAMODE
 
-.. code-block:: bash
-    
-    $ cd (move to an arbitrary directory outside auto-kappa directory)
-    $ cp -r (auto-kappa directory)/auto-kappa/examples ./
-    $ cd examples
-    $ ls
-    1_alm 2_anphon 3_vasp_ase 4_vasp_custodian 5_database massive phonondb
-    
-    $ cd 1_alm
-    $ sh run.sh
-    
-    $ cd ../2_anphon
-    $ sh run.sh
-    
-    $ sh ../3_vasp_ase
-    $ sh run.sh
-    
-    # This job takes time. You can stop after checking output files such as OUTCAR
-    # OSZICAR, etc. were created.
-    $ sh ../4_vasp_custodian
-    $ sh run.sh    
-    
-    # This job also takes time. You can stop a few minutes after starting the job.
-    # As shown by this example, you need to download data from Phonondb.
-    $ sh ../5_database
-    $ sh run.sh
-    
+Test jobs can be found in ``auto-kappa/examples``.
+Please read ``README`` in that directory.
+You can finde ``1_alm``, ``2_anphon``, etc., which are test jobs for
+``alamode`` (``alm`` and ``anphon``), ``ASE``, ``custodian``, and ``auto-kappa``.
+It is recommended to run these jobs before starting a massive calculation.
+
 
 2. ``database`` example
 
