@@ -730,8 +730,14 @@ def get_eigenvalues_from_logfile(filename):
             else:
                 ### Alamode log file shows frequency w/o a space btw its index
                 ### when the frequnecy is an extremely large negative value.
-                frequencies.append(float(data[0][1:]))
+                if "-" in data[0]:
+                    val = data[0].split("-")[1]
+                else:
+                    val = float(data[0][1:])
+                
+                frequencies.append(float(val))
     
+    ###
     kpoints = np.asarray(kpoints)
     frequencies = np.asarray(frequencies)
     return kpoints, frequencies

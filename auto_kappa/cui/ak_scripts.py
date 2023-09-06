@@ -800,6 +800,16 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
     ### calculate DOS
     almcalc.write_alamode_input(propt='dos')
     almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
+    
+    ### check DOS file
+    fn_dos = almcalc.out_dirs['harm']['bandos'] + "/" + almcalc.prefix + ".dos"
+    if (os.path.exists(fn_dos) == False and 
+            almcalc.commands['alamode']['anphon_para'] == "mpi"):
+        ### if DOS was not caluclated due to a problem, including the excessive
+        ### memory, DOS is calculated with OpenMP.
+        almcalc.commands['alamode']['anphon_para'] = "omp"
+        almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
+    
     almcalc.plot_bandos()
     
     ### eigenvalues at commensurate points
