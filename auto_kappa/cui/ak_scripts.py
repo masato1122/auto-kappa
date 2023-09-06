@@ -975,7 +975,21 @@ def _plot_bandos_for_different_sizes(
             fig_labels=[lab1, lab2],
             figname=figname,
             )
-    
+
+def _use_omp_for_anphon(base_dir):
+    import glob
+    from auto_kappa.alamode.log_parser import exceed_memory
+    line1 = base_dir + "/harm/bandos/dos.log"
+    line2 = base_dir + "/*/harm/bandos/dos.log"
+    line3 = base_dir + "/cube/kappa*/kappa.log"
+    for line in [line1, line2, line3]:
+        fns = glob.glob(line)
+        if len(fns) > 0:
+            for fn in fns:
+                if exceed_memory(fn):
+                    return True
+    return False
+
 def main():
     
     options = get_parser()
@@ -987,6 +1001,14 @@ def main():
     base_dir = _get_base_directory_name(
             ak_params['material_name'], restart=ak_params['restart']
             )
+    
+    ### memory check
+    if _use_omp_for_anphon(base_dir):
+        if ak_params["anphon_para"] != "omp":
+            msg = "\n"
+            msg += " Modify anphon_para option to \"omp\".\n"
+            print(msg)
+            ak_params["anphon_para"] = "omp"
     
     ### Set output directories
     out_dirs = {}
@@ -1014,7 +1036,7 @@ def main():
             ak_params['relaxed_cell'] = "unitcell"
         elif ak_params['relaxed_cell'].lower()[0] == "p":
             ak_params['relaxed_cell'] = "primitive"
-    
+     
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
             _get_required_parameters(
@@ -1035,7 +1057,7 @@ def main():
     
     ### print parameters
     print_options(ak_params)
-    
+
     print_conditions(
             cell_types=cell_types, 
             trans_matrices=trans_matrices,

@@ -759,8 +759,6 @@ def read_log_eigen(directory, mode='band'):
     
     out_log = get_minimum_frequency_from_logfile(filename)
     
-    ## AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    
     out.update(out_log)
     
     return out
@@ -857,6 +855,19 @@ def get_ak_logs(directory):
     ##times = _analyze_time(out_all)
 
     return out_all
+
+def exceed_memory(filename):
+    if os.path.exists(filename) == False:
+        return False
+    lines = open(filename, 'r').readlines()
+    for i in range(2):
+        try:
+            line = lines[-i]
+            if "bad_alloc" in line:
+                return True
+        except Exception:
+            return False
+    return False
 
 def get_parser():
 
