@@ -869,7 +869,7 @@ def exceed_memory(filename):
     for i in range(2):
         try:
             line = lines[-i]
-            if "bad_alloc" in line:
+            if "bad" in line.lower():
                 return True
         except Exception:
             return False
