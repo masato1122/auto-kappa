@@ -10,6 +10,9 @@
 import numpy as np
 import ase.io
 
+import logging
+logger = logging.getLogger(__name__)
+
 def get_mat_u2p_spglib(atoms, format='ase'):
     """ Obtain the conventional to primitive transformation matrix of the given
     structure with Spglib and return the matrix.
@@ -35,9 +38,8 @@ def get_mat_u2p_spglib(atoms, format='ase'):
     cell_conv = spglib.standardize_cell(cell_orig, to_primitive=False)
 
     if cell_prim is None or cell_conv is None:
-        print("")
-        print(" Error: Cannot obtain transformation matrix")
-        print("")
+        msg = "\n Error: Cannot obtain transformation matrix"
+        logger.error(msg)
         exit()
 
     ### transformation matrix: conventional to primitive

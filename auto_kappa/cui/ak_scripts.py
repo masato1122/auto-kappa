@@ -14,7 +14,6 @@ import os
 import os.path
 import numpy as np
 import datetime
-import warnings
 import yaml
 
 from auto_kappa.io.phonondb import Phonondb
@@ -26,7 +25,13 @@ from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.io.files import write_output_yaml
-from auto_kappa.cui import message
+
+#from auto_kappa.cui import message
+from auto_kappa.cui import ak_log
+
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('custodian').setLevel(logging.WARNING)
 
 def start_autokappa():
     """ Print the logo.
@@ -41,30 +46,34 @@ def start_autokappa():
     msg += "\n"
     time = datetime.datetime.now()
     msg += " Start at " + time.strftime("%m/%d/%Y %H:%M:%S") + "\n"
-    msg += "\n"
-    print(msg, end="")
+    
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
 
 def print_times(times, labels):
     
+    logger = logging.getLogger(__name__)
+
     msg = "\n"
     msg += " Calculation times:\n"
     msg += " ==================\n"
     msg += "\n"
-    print(msg)
-
+    logger.info(msg)
+    
     nchar = 0
     ttot = np.sum(np.asarray(times))
     for i, lab in enumerate(labels):
         tt = float(times[i])         ### sec
         percentage = 100.*tt/ttot
         line = "%25s (sec): %13.2f (%.1f%%)" % (lab, tt, percentage)
-        print(" ", line)
         nchar = max(nchar, len(line))
+        
+        msg = " " + line
+        logger.info(msg)
     
     msg = " " + "-" * (nchar + 5) + "\n"
-    msg += "  %25s (sec): %13.2f \n" % ("total", ttot)
-    msg += "\n"
-    print(msg, end="")
+    msg += " %25s (sec): %13.2f \n" % ("total", ttot)
+    logger.info(msg)
 
 def end_autokappa():
     
@@ -75,8 +84,9 @@ def end_autokappa():
     msg += "    |___ | \| |__/ \n"
     msg += "    \n"
     msg += " at " + time.strftime("%m/%d/%Y %H:%M:%S") + " \n"
-    msg += "\n"
-    print(msg, end="")
+    
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
 
 def print_options(params):
 
@@ -87,7 +97,9 @@ def print_options(params):
         if params[key] is not None:
             msg += " " + key.ljust(25) + " : " + str(params[key]) + "\n"
     msg += "\n"
-    print(msg, end="")
+    
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
 
 def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
     
@@ -124,7 +136,8 @@ def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
                     "\n")
         msg += "\n"
     
-    print(msg, end="")
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
 
 def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     """ Return the cell type (primitive or unit (conventional) cell) used for 
@@ -159,6 +172,8 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     from auto_kappa.io.vasp import wasfinished
     from auto_kappa.structure.crystal import get_standardized_structure_spglib
     
+    logger = logging.getLogger(__name__)
+
     cell_type = None
     
     ### check previous calculations
@@ -174,7 +189,8 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
             elif len(atoms) > natoms_prim:
                 cell_type = "unitcell"
             else:
-                warnings.warn(" Error: cell type cannot be deteremined.")
+                msg = " Error: cell type cannot be deteremined."
+                logger.error(msg)
                 sys.exit()
     
     ###
@@ -232,7 +248,6 @@ def read_phonondb(directory):
 
     return unitcell, matrices, kpts_all, phdb.nac
             
-
 def _get_base_directory_name(label, restart=True):
     """ Return the base directory name with an absolute path
     """
@@ -448,8 +463,9 @@ def _determine_kpoints_for_all(
         
         ### check
         if kpts_all[cal_type] is None:
-            mgs = " Error: cannot obtain k-mesh info properly.\n"
+            msg = " Error: cannot obtain k-mesh info properly.\n"
             msg += " k-mesh for %s is None.\n" % cal_type
+            logger.error(msg)
             sys.exit()
     
     return kpts_all
@@ -583,7 +599,8 @@ def _get_required_parameters(
     else:
         """ Case 3: error
         """
-        warnings.warn(" Error: --directory or --file_structure must be given.")
+        msg = " Error: --directory or --file_structure must be given."
+        logger.error(msg)
         sys.exit()
     
     ### Cell type used for the relaxation
@@ -627,6 +644,8 @@ def _write_parameters(
         outfile, unitcell, cell_types, trans_matrices, kpts_used, nac):
     """ Output parameters.yaml
     """
+    logger = logging.getLogger(__name__)
+    
     params = {}
     
     ### unitcell
@@ -651,7 +670,8 @@ def _write_parameters(
     with open(outfile, "w") as f:
         yaml.dump(params, f)
     
-    print(" Output", outfile)
+    msg = " Output %s" % outfile
+    logger.info(msg)
 
 def _start_larger_supercell(almcalc):
         
@@ -666,7 +686,9 @@ def _start_larger_supercell(almcalc):
     msg += " ## " + line              + " ##\n"
     msg += " ## " + " " * (len(line)) + " ##\n"
     msg += " ###" + "#" * (len(line)) + "###"
-    print(msg)
+    
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
     
     msg = "\n"
     msg += " Number of atoms : %d\n" % len(almcalc.supercell)
@@ -675,7 +697,7 @@ def _start_larger_supercell(almcalc):
             np.linalg.norm(almcalc.supercell.cell[1]),
             np.linalg.norm(almcalc.supercell.cell[2]),
             )
-    print(msg)
+    logger.info(msg)
 
 def analyze_harmonic_with_larger_supercells(
         almcalc_orig, 
@@ -756,11 +778,15 @@ def analyze_harmonic_with_larger_supercells(
         
         ### Finish
         if almcalc_new.minimum_frequency > negative_freq:
-            line = "Negative frequencies have been removed with %s "\
-                    "supercell!!" % (sc_label)
-            msg += "\n"
-            msg += " " + line + "\n"
-            print(msg)
+            
+            #line = "Negative frequencies have been removed with %s "\
+            #        "supercell!!" % (sc_label)
+            #msg += "\n"
+            #msg += " " + line + "\n"
+            #print(msg)
+            
+            ak_log.negative_frequency(almcalc_new.minimum_frequency)
+            
             return almcalc_new
         
         isc += 1
@@ -782,6 +808,8 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
     calculator : ASE calculator for VASP
     
     """
+    logger = logging.getLogger(__name__)
+    
     ##### suggest and creat structures for harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
     almcalc.run_alamode(propt='suggest', order=1)
@@ -811,7 +839,7 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
         almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     
     almcalc.plot_bandos()
-    
+     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
@@ -822,6 +850,8 @@ def calculate_cubic_force_constants(
         ):
     """ Calculate cubic force constants
     """
+    logger = logging.getLogger(__name__)
+    
     ### calculate forces for cubic FCs
     almcalc.write_alamode_input(propt='suggest', order=2)
     almcalc.run_alamode(propt='suggest', order=2)
@@ -900,7 +930,9 @@ def calculate_thermal_conductivities(
     msg += "\n"
     msg += " Plot anharmonic properties:\n"
     msg += " ---------------------------\n"
-    print(msg, end="")
+    
+    logger = logging.getLogger(__name__)
+    logger.info(msg)
     
     almcalc.plot_kappa()
     almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
@@ -928,25 +960,27 @@ def analyze_phonon_properties(
         ):
     """ Analyze phonon properties
     """
+    logger = logging.getLogger(__name__)
+    
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
     ###
     analyze_harmonic_properties(almcalc, calc_force, neglect_log=neglect_log)
-    
+     
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq:
         
         log = AkLog(material_name)
         log.write_yaml()
         
-        message.negative_frequency(almcalc.minimum_frequency)
+        ak_log.negative_frequency(almcalc.minimum_frequency)
         
         return -1
-
+    
     if harmonic_only:
         msg = "\n"
         msg += " Harmonic properties have been calculated.\n"
-        print(msg, end="")
+        logger.info(msg)
         return 1
     
     ###
@@ -1018,19 +1052,26 @@ def main():
     options = get_parser()
     ak_params = eval(str(options))
     
-    start_autokappa()
-    
     ### Get the name of the base directory
     base_dir = _get_base_directory_name(
             ak_params['material_name'], restart=ak_params['restart']
             )
+    os.makedirs(base_dir, exist_ok=True)
+    
+    ### set logger
+    logfile = base_dir + "/ak.log"
+    ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
+    logger = logging.getLogger(__name__)
+    
+    ### Start auto-kappa
+    start_autokappa()
     
     ### memory check
     if _use_omp_for_anphon(base_dir):
         if ak_params["anphon_para"] != "omp":
             msg = "\n"
             msg += " Modify anphon_para option to \"omp\".\n"
-            print(msg)
+            logger.info(msg)
             ak_params["anphon_para"] = "omp"
     
     ### Set output directories
@@ -1080,7 +1121,7 @@ def main():
     
     ### print parameters
     print_options(ak_params)
-
+    
     print_conditions(
             cell_types=cell_types, 
             trans_matrices=trans_matrices,
@@ -1106,7 +1147,8 @@ def main():
     ### For materials with negative frequencies, options.max_natoms3 may be
     ### different from options.max_natoms.
     #if options.max_natoms != options.max_natoms3:
-    #    warnings.warn(" Error: max_natoms != max_natoms3 is not supported yet.")
+    #    msg = " Error: max_natoms != max_natoms3 is not supported yet."
+    #    logger.error(msg)
     #    exti()
     
     ### command to run VASP jobs
@@ -1141,6 +1183,7 @@ def main():
             "note": "structure optimization",
             }
     write_output_yaml(yaml_outdir, "relax", info)
+    
     
     ##############################
     ### Get relaxed structures
@@ -1259,7 +1302,7 @@ def main():
         
         else:
             
-            message.negative_frequency(almcalc.minimum_frequency)
+            ak_log.negative_frequency(almcalc.minimum_frequency)
       
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times

@@ -14,12 +14,15 @@
 import os, sys
 import os.path
 import numpy as np
-import warnings
+#import warnings
 import pandas as pd
 
 import auto_kappa.units as units
 from .result import Result
 from .analyzer import get_average_at_degenerate_point, get_kmode
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Scattering():
     """
@@ -63,7 +66,7 @@ class Scattering():
         self.verbosity = verbosity
 
         if file_result is None:
-            warnings.warn(" Error: file_result must be given.")
+            logger.error(" Error: file_result must be given.")
             sys.exit()
         self.result = Result(filename=file_result)
         
@@ -183,7 +186,7 @@ class Scattering():
                 self._total_scattering_rate += self.scattering_rates[key]
         msg += "\n"
         if self.verbosity > 0:
-            print(msg)
+            logger.info(ms)
         
         self.set_lifetime()
         self.set_kmode()
@@ -416,10 +419,10 @@ class Scattering():
         self._temperature = self.result['temperatures'][idx]
         
         if abs(self.temperature - temperature) > 0.1:
-            print("")
-            print(" NOTE: target temperature is adjusted from %.1f K to "
-                    "%.1f K." % (temperature, self.temperature))
-            print("")
+            msg = "\n NOTE: target temperature is adjusted from %.1f K to "\
+                    "%.1f K.\n" % (temperature, self.temperature)
+            logger.info(msg)
+            sys.exit()
         
         self.set_scattering_rate_phph()
         self.set_total_scattering_rate()
@@ -447,7 +450,7 @@ class Scattering():
     def set_scattering_rate_isotope(self):
         from .isotope import Isotope
         if os.path.exists(self.file_isotope) == False:
-            warnings.warn(" %s does not exist." % filename)
+            logger.warning(" %s does not exist." % filename)
         else:
             iso = Isotope(filename=self.file_isotope)
             ## 1/ps
@@ -490,68 +493,5 @@ def convert_scatrate2lifetime(rscat, epsilon=1e-10):
     rscat_tmp = np.where(rscat<epsilon, 1.0, rscat)
     lifetime = np.where(rscat<epsilon, 0.0, 1./rscat_tmp)
     return lifetime
-
-#def dump_scattering_rate(filename, freqs, rscat_tot, temp,
-#        rscat_phph=None, rscat_iso=None, rscat_bdy=None,
-#        size=None, model=None, gamma=None,
-#        rscat_ts=None):
-#    """Output scattering rate
-#    freqs, rscat_**: ndarray, float, shape=(nk,nb)
-#        frequencies[1/cm] and scattering rate[1/ps]
-#    rscat_iso, rscat_bdy, rscat_ts : ndarray, float, shape=(nk,nb)
-#        scattering rate [1/ps] due to isotope, boundary, tunneling states,
-#        respectively
-#    size : float
-#        grain size [nm]
-#    model : string (n... or h...)
-#    gamma : float
-#        gamma parameter of Hori model
-#    """
-#    ofs = open(filename, "w")
-#    # ---- beggining
-#    ofs.write("# Scattering rate [1/ps] including the following effects.\n")
-#    ofs.write("# Tempearture : {:.2f} K\n".format(temp))
-#    ofs.write("# - Phonon-phonon scattering\n")
-#    if size:
-#        ofs.write("# - Boundary scattering due to {:.2f} nm "
-#                "grain\n".format(size))
-#        if model.lower()[0] == "n":
-#            ofs.write("#   calculated by 2*|v|/L model\n")
-#        if model.lower()[0] == "h":
-#            ofs.write("#   calculated by SL+nanocrystal model ")
-#            ofs.write("with gamma = {:f}\n".format(gamma))
-#    else:
-#        ofs.write("#\n")
-#    if rscat_iso is not None:
-#        ofs.write("# - Isotope scattering\n")
-#    else:
-#        ofs.write("#\n")
-#    ofs.write("#ik ib Frequency[1/cm]  total")
-#    if rscat_phph is not None:
-#        ofs.write("      ph-ph")
-#    if rscat_iso is not None:
-#        ofs.write("         isotope")
-#    if rscat_bdy is not None:
-#        ofs.write("       boundary({:s})".format(model))
-#    if rscat_ts is not None:
-#        ofs.write("      tunnling")
-#    ofs.write("\n")
-#    # --- dump data
-#    for ik in range(len(rscat_tot)):
-#        for ib in range(len(rscat_tot[ik])):
-#            ofs.write("{:2d} {:2d} ".format(ik, ib))
-#            ofs.write("{:12.5f}".format(freqs[ik,ib]))
-#            ofs.write(" {:13.5e}".format(rscat_tot[ik,ib]))
-#            if rscat_phph is not None:
-#                ofs.write(" {:13.5e}".format(rscat_phph[ik,ib]))
-#            if rscat_iso is not None:
-#                ofs.write(" {:13.5e}".format(rscat_iso[ik,ib]))
-#            if rscat_bdy is not None:
-#                ofs.write(" {:13.5e}".format(rscat_bdy[ik,ib]))
-#            if rscat_ts is not None:
-#                ofs.write(" {:13.5e}".format(rscat_ts[ik,ib]))
-#            ofs.write("\n")
-#    ofs.close()
-#    print(" Output", filename)
 
 

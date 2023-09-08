@@ -14,6 +14,9 @@ import sys
 import numpy as np
 import auto_kappa.units as units
 
+import logging
+logger = logging.getLogger(__name__)
+
 def convert_gamma2tau(gammas):
     """Convert gamma[1/cm] to lifetime[ps]
     
@@ -111,8 +114,9 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
                         ) / multi)
             # -- heat capacity
             if frequencies[ik,ib] < 0.:
-                print(" SKIP ik: %d  ib: %d  %.2f cm^-1"%(
-                    ik, ib, frequencies[ik,ib]))
+                msg = " SKIP ik: %d  ib: %d  %.2f cm^-1"%(
+                    ik, ib, frequencies[ik,ib])
+                logger.info(msg)
                 kmode[ik,ib] = np.zeros((3,3))
             else:
                 Cph = get_heat_capacity(frequencies[ik,ib], temp)   # J/K

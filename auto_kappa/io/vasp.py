@@ -19,6 +19,9 @@ from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
 from auto_kappa.units import BohrToA, RyToEv
 
+import logging
+logger = logging.getLogger(__name__)
+
 def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     """ Get dataset of displacements and forces from many vasprun.xml files.
     
@@ -115,10 +118,10 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
         ofs = open(outfile, 'w')
         ofs.write("\n".join(all_lines))
         ofs.close()
-        print("")
-        print(" Output", outfile)
-        print("")
-    
+        
+        msg = "\n Output " + outfile
+        logger.info(msg)
+
     return [all_disps, all_forces]
 
 def read_dfset(filename, natoms=None, nstructures=None):
@@ -266,10 +269,13 @@ def get_born_charges(filename):
 
 def print_vasp_params(params):
     
-    print("")
+    msg = ""
     for name in params.keys():
-        print(" ", name.upper().ljust(13), "=", params[name])
-    print("")
+        msg += (" " +  str(name.upper().ljust(13)) + " = " + 
+                str(params[name]) + "\n")
+    
+    msg += "\n"
+    logger.info(msg)
 
 #
 #class Vasprun:

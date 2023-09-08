@@ -69,7 +69,7 @@ def read_isotope(filename):
     """
     out = _get_numbers(filename)
     if out is None:
-        warnings.warn(" Error in %s" % filename)
+        logger.error(" Error in %s" % filename)
         sys.exit()
     nk = out[0]
     nbands = out[1]
@@ -107,7 +107,7 @@ def read_isotope(filename):
         elif line.find("## xk =") != -1:
             
             if il != i0 + 1:
-                warnings.warn("Error while reading %s." % filename)
+                logger.error(" Error while reading %s." % filename)
                 sys.exit()
             
             for j in range(3):

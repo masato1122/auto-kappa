@@ -11,9 +11,13 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
-import warnings
+#import warnings
 import numpy as np
+
 from auto_kappa.alamode.analyzer.analyzer import get_kmode
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Result():
     def __init__(self, filename=None):
@@ -58,9 +62,9 @@ class Result():
             for k2 in self._values[k1]:
                 if k2 == key:
                     return self._values[k1][k2]
-        print()
-        warnings.warn(" Warning: %s cannot be found." % key)
-        print()
+        
+        msg = "\n Warning: %s cannot be found.\n" % key
+        logger.warning(msg)
         return None
     
     def set_result(self):
@@ -68,7 +72,7 @@ class Result():
         Read self.filename and set class
         """
         if self.filename is None:
-            warnings.warn("Error: filename (*.result file) must be given.")
+            logger.error(" Error: filename (*.result file) must be given.")
             sys.exit()
         
         self._values = read_result_file(self.filename)
@@ -430,7 +434,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             line = lines[il]
             if sword not in line:
                 data = line.split()
-                warnings.warn("Error: %s does not include %s" % (data[0], sword))
+                logger.error(" Error: %s does not include %s" % (data[0], sword))
                 sys.exit()
             ### ik, ib
             il += 1
@@ -438,7 +442,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ik_check = int(data[0])
             ib_check = int(data[1])
             if ik != ik_check-1 or ib != ib_check-1:
-                warnings.warn("Error: ik(%d!=%d) or ib(%d!=%d)" %(
+                logger.error("Error: ik(%d!=%d) or ib(%d!=%d)" %(
                     ik, ik_check-1, ib, ib_check-1))
                 sys.exit()
             ### multiplicity
@@ -463,7 +467,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ### #END GAMMA_EACH
             il += 1
             if "#END GAMMA_EACH" not in lines[il]:
-                warnings.warn(" Error")
+                logger.error(" Error while reading %s" % filename)
                 sys.exit()
     
     return {'multiplicity': multiplicity, 

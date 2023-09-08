@@ -6,11 +6,13 @@ from optparse import OptionParser
 import ase.io
 import datetime
 import yaml
-import warnings
 import glob
 from pymatgen.io.vasp import Poscar
 
 from auto_kappa import output_directories as out_dirs
+
+import logging
+logger = logging.getLogger(__name__)
 
 class AkLog():
     """
@@ -47,9 +49,10 @@ class AkLog():
             outfile = self.directory+'/'+out_dirs['result']+'/log.yaml'
         with open(outfile, "w") as f:
             yaml.dump(self.out, f)
-            print("")
-            print(" Output", outfile)
-    
+            
+            msg = "\n Output " + outfile
+            logger.info(msg)
+
     def get_times(self):
         
         times = {}
@@ -524,7 +527,8 @@ def read_log_forces(directory, mode, fc3_type=None):
         dir1 = directory + '/' + out_dirs[mode]['force']
     
     else:
-        warnings.warn(" Warning: %s is not supported." % mode)
+        msg = " Warning: %s is not supported." % mode
+        logger.warning(msg)
         return None
 
     if os.path.exists(dir1) == False:
@@ -550,8 +554,8 @@ def read_log_forces(directory, mode, fc3_type=None):
         out_each = _read_each_vaspjob(dir_vasp)
 
         if out_each is None:
-            print(" Cannot find %s or the calculation has not been done." % dir_vasp)
-            #warnings.warn(" Error in %s" % dir_vasp)
+            msg = " Cannot find %s or the calculation has not been done." % dir_vasp
+            logger.warning(msg)
             continue
         
         ## total time
@@ -671,8 +675,8 @@ def get_minimum_frequency_from_logfile(filename):
     ### get frequencies
     eigen = get_eigenvalues_from_logfile(filename)
     if eigen is None:
-        print("")
-        print(" WARRNING: cannot read %s properly." % filename)
+        msg = "\n WARNING: cannot read %s properly." % filename
+        logger.warning(msg)
         return out
     else:
         kpoitns = eigen[0]
@@ -701,12 +705,14 @@ def get_eigenvalues_from_logfile(filename):
     num = 2 + istart_freq
     if "irred" in lines[num].lower():
         if nk_irred is None:
-            print(" Error: cannot find the number of irreducible k points")
+            msg = " Error: cannot find the number of irreducible k points"
+            logger.error(msg)
             return None
         nks = nk_irred
     else:
         if nkpoints is None:
-            print(" Error: cannot find the number of k poitns")
+            msg = " Error: cannot find the number of k poitns"
+            logger.error(msg)
             return None
         nks = nkpoints
     
@@ -751,7 +757,8 @@ def read_log_eigen(directory, mode='band'):
     elif mode == 'dos':
         filename = directory+'/'+out_dirs['harm']['bandos']+'/dos.log'
     else:
-        warnings.warn(" Error: %s is not supported." % mode)
+        msg = " Error: %s is not supported." % mode
+        logger.error(msg)
         return None
     ##
     if os.path.exists(filename) == False:
@@ -898,9 +905,8 @@ def main():
     
     dirname = options.directory + '/' + out_dirs['result']
     if os.path.exists(dirname) == False:
-        print("")
-        print(" Cannot find data in %s" % options.directory)
-        print("")
+        msg = "\n Cannot find data in %s\n" % options.directory
+        logger.error(msg)
         sys.exit()
 
     log = AkLog(options.directory)

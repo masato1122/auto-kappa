@@ -13,10 +13,13 @@
 import sys
 import os.path
 import numpy as np
+import re
 
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
-import re
+
+import logging
+logger = logging.getLogger(__name__)
 
 def run_vasp_with_custodian(calc, atoms, max_errors=10):
     """ Run a VASP job with Custodian
@@ -69,8 +72,8 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     
     """
     if calc.directory is None:
-        warnings.warn(" WARNING: "\
-                "output directory is not set in the calculator.")
+        msg = " WARNING: output directory is not set in the calculator."
+        logger.warning(msg)
         sys.exit()
     
     if 'ase' in method.lower():
@@ -85,7 +88,8 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         return value
     
     else:
-        print(" Error: method %s is not supported." % (method))
+        msg = " Error: method %s is not supported." % (method)
+        logger.error(msg)
         sys.exit()
 
 def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
@@ -186,7 +190,7 @@ def get_enmax(ppp_list):
         lines = open(filename, 'r').readlines()
         line = [l for l in lines if 'ENMAX' in l]
         if len(line) == 0:
-            print(' Error')
+            logger.error(" Error")
             return 300.
         data = re.split(r'\s+|;|=', line[0])
         data2 = [d for d in data if d != '']

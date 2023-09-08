@@ -11,7 +11,6 @@
 #
 import sys
 import numpy as np
-import warnings
 
 import ase
 import spglib
@@ -20,6 +19,9 @@ from phonopy.structure.cells import get_supercell, get_primitive
 
 from auto_kappa.structure.crystal import change_structure_format
 from auto_kappa.structure.supercell import estimate_supercell_matrix
+
+import logging
+logger = logging.getLogger(__name__)
 
 def suggest_structures_and_kmeshes(
         filename=None, structure=None,
@@ -41,7 +43,8 @@ def suggest_structures_and_kmeshes(
     """
     ### check input parameters
     if filename is None and structure is None:
-        print(" Error: filename or structure must be given.")
+        msg = " Error: filename or structure must be given."
+        logger.info(msg)
         sys.exit()
     
     ## max natoms for FC3
@@ -88,7 +91,8 @@ def suggest_structures_and_kmeshes(
 
     except Exception:
 
-        warnings.warn(" Error: the primitive cell could not be obtained.")
+        msg = " Error: the primitive cell could not be obtained."
+        logger.error(msg)
         sys.exit()
 
     ### collect obtained parameters

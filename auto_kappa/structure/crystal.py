@@ -10,7 +10,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import warnings
+#import warnings
 
 from phonopy.structure.cells import get_primitive as get_primitive_phonopy
 import spglib 
@@ -21,6 +21,9 @@ import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Kpoints
 from phonopy.structure.atoms import PhonopyAtoms
+
+import logging
+logger = logging.getLogger(__name__)
 
 #def make_supercell(atoms0, P):
 #    """ Make a supercell of the given structure
@@ -47,7 +50,7 @@ def get_automatic_kmesh(struct_init, reciprocal_density=1500,
     #    Kpoints.automatic_density(structure, grid_density)
     
     else:
-        warnings.warn(" Error: %s is not supported." % method)
+        logger.warning(" Error: %s is not supported." % method)
         exit()
     
     return kpts
@@ -104,7 +107,7 @@ def get_primitive_structure_spglib(structure, format='ase'):
             structure, to_primitive=True, format=format, version='spglib')
     
     if prim is None:
-        warnings.warn(" WARRNING: the primitive could not be found.")
+        logger.warning(" WARNING: the primitive could not be found.")
 
     return prim
 
@@ -242,7 +245,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         coords = structure.get_scaled_positions()
     
     else:
-        warnings.warn(" Structure type {} is not supported".format(
+        logger.error(" Structure type {} is not supported".format(
             type(structure)))
         exit()
     
@@ -279,7 +282,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
             )
     else:
         
-        warnings.warn(" Structure type '{}' is not supported. "\
+        logger.warning(" Structure type '{}' is not supported. "\
                 "The structure type did not changed.".format(format))
         return structure
 

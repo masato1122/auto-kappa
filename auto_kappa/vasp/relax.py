@@ -12,14 +12,12 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 #
+import sys
 import os.path
 import numpy as np
 import ase
 import glob
 import yaml
-
-import matplotlib
-matplotlib.use('Agg')
 
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
@@ -29,6 +27,12 @@ from auto_kappa.calculator import get_vasp_calculator, run_vasp
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
+
+import matplotlib
+matplotlib.use('Agg')
+
+import logging
+logger = logging.getLogger(__name__)
 
 class StrictRelaxation():
 
@@ -47,28 +51,25 @@ class StrictRelaxation():
         if self._optimal_volume is not None:
             return self._optimal_volume
         else:
-            print("")
-            print(" Caution: Optimal volume is not yet obtained.")
-            print("")
+            msg = "\n Caution: Optimal volume is not yet obtained.\n"
+            logger.warning(msg)
     
     @property
     def volumes(self):
         if self._volumes is not None:
             return self._volumes
         else:
-            print("")
-            print(" Caution: volumes were not yet set.")
-            print("")
+            msg = "\n Caution: volumes were not yet set.\n"
+            logger.warning(msg)
 
     @property
     def energies(self):
         if self._energies is not None:
             return self._energies
         else:
-            print("")
-            print(" Caution: energies were not yet set.")
-            print("")
-
+            msg = "\n Caution: energies were not yet set.\n"
+            logger.warning(msg)
+    
     def with_different_volumes(self, 
             initial_strain_range=[-0.01, 0.05], nstrains=11,
             tol_frac_ediff=0.5,
@@ -84,8 +85,8 @@ class StrictRelaxation():
         msg = "\n" + line + "\n"
         msg += " " + "=" * len(line) + "\n"
         if verbosity > 0:
-            print(msg)
-        
+            logger.info(msg)
+         
         ### get the strain interval
         strain_interval = (
                 (initial_strain_range[1] - initial_strain_range[0]) /
@@ -162,13 +163,17 @@ class StrictRelaxation():
     
     def output_structures(self):
         
+        logger.info("")
+
         outfile = self.outdir + "/POSCAR.init"
         self.initial_structure.to(filename=outfile)
-        print(" Output", outfile)
+        msg = " Output %s" % outfile
+        logger.info(msg)
 
         outfile = self.outdir + "/POSCAR.opt"
         self.get_optimal_structure().to(filename=outfile)
-        print(" Output", outfile)
+        msg = " Output %s" % outfile
+        logger.info(msg)
     
     def get_calculated_volumes_and_energies(self):
         Vs, Es = _get_calculated_volumes_and_energies(self.outdir)
@@ -189,8 +194,8 @@ class StrictRelaxation():
         if type == 'mae':
             mae = np.sum(abs(self.energies - Es_fit)) / len(self.energies)
         else:
-            print(" Not yet supported")
-            exit()
+            logger.error(" Not yet supported.")
+            sys.exit()
         return mae
 
     def plot_bm(self, figname='fig_bm.png'):
@@ -201,7 +206,7 @@ class StrictRelaxation():
         bm.fit()
         
         plt = bm.plot().savefig(figname, bbox_inches='tight')
-        print(" Output", figname)
+        logger.info(" Output %s" % figname)
     
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
@@ -230,13 +235,14 @@ class StrictRelaxation():
         s_len = self._strain_volume2length(s_vol)
         mae = self.get_fitting_error()
 
-        print("")
-        print(" Minimum energy : %8.3f eV" % bm.e0)
-        print(" Bulk modulus   : %8.3f GPa" % bm.b0_GPa)
-        print(" Optimal volume : %8.3f A^3" % self.optimal_volume)
-        print(" Initial volume : %8.3f A^3" % vinit)
-        print(" Initial strain : %8.3f" % (s_len))
-        print(" Error (MAE)    : %8.5f eV" % (mae))
+        msg = "\n"
+        msg += " Minimum energy : %8.3f eV\n" % bm.e0
+        msg += " Bulk modulus   : %8.3f GPa\n" % bm.b0_GPa
+        msg += " Optimal volume : %8.3f A^3\n" % self.optimal_volume
+        msg += " Initial volume : %8.3f A^3\n" % vinit
+        msg += " Initial strain : %8.3f\n" % (s_len)
+        msg += " Error (MAE)    : %8.5f eV\n" % (mae)
+        logger.info(msg)
         
         out = {}
         out['minimum_energy'] = [float(bm.e0), 'eV']
@@ -248,9 +254,9 @@ class StrictRelaxation():
         
         with open(self.outfile_yaml, 'w') as f:
             yaml.dump(out, f)
-            print("")
-            print(" Output", self.outfile_yaml)
-
+            msg = "\n Output %s" % self.outfile_yaml
+            logger.info(msg)
+    
 
 def _get_calculated_results(base_dir):
     """ Read all the results which have been already obtained.
@@ -397,11 +403,11 @@ def relaxation_with_different_volumes(
             if np.min(abs(calculated_strains - strain)) < tol_strain:
                 continue
         
-        line = " Strain: %f" % strain
-        msg = line + "\n"
-        msg += " " + "-" * len(line)
+        line = "Strain: %f" % strain
+        msg = "\n " + line
+        msg += "\n " + "-" * len(line)
         if verbosity > 0:
-            print(msg)
+            logger.info(msg)
         
         ### set the output directory
         flag = False
@@ -414,7 +420,7 @@ def relaxation_with_different_volumes(
             count += 1
         
         if verbosity > 0:
-            print(" Output directory:", outdir)
+            logger.info("\n Output directory: %s" % outdir)
         
         #### prepare a strained structure
         #structure = get_strained_structure(struct_init, strain, format='pmg')
@@ -457,14 +463,13 @@ def relaxation_with_different_volumes(
             yaml.dump(out_data, f)
         
         if verbosity > 0:
-            print(" strain: %f  volume: %f  energy: %f" % (
-                strain, volume, energy))
-            print("")
+            msg = "\n strain: %f  volume: %f  energy: %f" % (
+                    strain, volume, energy)
+            logger.info(msg)
     
     ##
     Vs, Es = _get_calculated_volumes_and_energies(base_directory)
     return Vs, Es
-
 
 #from pymatgen.io.vasp import Poscar
 #

@@ -15,7 +15,6 @@
 import os.path
 import os
 import sys
-import warnings
 import numpy as np
 
 import ase.io
@@ -32,7 +31,11 @@ from auto_kappa.structure.crystal import (
 from auto_kappa.calculator import run_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
+from auto_kappa.cui import ak_log
 #from auto_kappa.io.files import write_output_yaml
+
+import logging
+logger = logging.getLogger(__name__)
 
 class ApdbVasp():
     
@@ -76,10 +79,12 @@ class ApdbVasp():
         self._mat_u2s = scell_matrix
         
         if primitive_matrix is None:
-            print(" Error: primitive_matrix must be given.")
+            msg = " Error: primitive_matrix must be given."
+            logger(msg)
         
         if scell_matrix is None:
-            print(" Error: scell_matrix must be given.")
+            msg = " Error: scell_matrix must be given."
+            logger(msg)
         
         ### set structure variables
         ### Every structures will be stored in ``self._trajectory``.
@@ -167,12 +172,9 @@ class ApdbVasp():
         return self._structures['prim']
         ##
         #if self.relaxed_structure['prim'] is not None:
-        #    #print(" Return relaxed structure.")
         #    return self.relaxed_structure['prim']
         #
         #elif self.original_structure['prim'] is not None:
-        #    print("")
-        #    print(" Return UNrelaxed structure.")
         #    return self.original_structure['prim']
         #
         #else:
@@ -202,7 +204,6 @@ class ApdbVasp():
         #    return self.relaxed_structure['unit']
         #
         #elif self.original_structure['unit'] is not None:
-        #    print(" Return UNrelaxed structure.")
         #    return self.original_structure['unit']
         # 
         #else:
@@ -226,7 +227,6 @@ class ApdbVasp():
         #    return self.relaxed_structure['scell']
         #
         #elif self.original_structure['scell'] is not None:
-        #    print(" Return UNrelaxed structure.")
         #    return self.original_structure['scell']
         #
         #else:
@@ -274,8 +274,6 @@ class ApdbVasp():
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
         """
-        spg_before = get_spg_number(self.primitive)
-        
         ### relaxation cell type
         if cell_type[0].lower() == 'p':
             cell_type = 'primitive'
@@ -284,7 +282,8 @@ class ApdbVasp():
             cell_type = 'conventional'
             to_primitive = False
         else:
-            print(" Error")
+            msg = " Error"
+            logger.info(msg)
             sys.exit()
         
         ### message
@@ -292,8 +291,8 @@ class ApdbVasp():
             line = "Structure optimization with %s cell" % cell_type
             msg = "\n\n " + line + "\n"
             msg += " " + "=" * (len(line))
-            print(msg)
-        
+            logger.info(msg)
+         
         #### Get the relaxed structure obtained with the old version
         #### For the old version, the xml file is located under ``directory``.
         if wasfinished(directory, filename='vasprun.xml'):
@@ -309,6 +308,10 @@ class ApdbVasp():
             msg = "\n Already finised with the old version (single full relaxation)"
             return 0
         
+        spg_before = get_spg_number(self.unitcell)
+        #print(spg_before)
+        #exit()
+         
         ### perform relaxation calculations
         for ical in range(num_full+1):
             
@@ -327,21 +330,22 @@ class ApdbVasp():
                 line = "%s (%d)" % (mode, num)
                 msg = "\n " + line + "\n"
                 msg += " " + "-" * len(line)
-                print(msg)
+                
+                logger.info(msg)
             
             ###
             if ical == 0:
-                #structure = self.primitive
                 print_params = True
             
             else:
                 fn = dir_pre + "/CONTCAR"
                 if os.path.exists(fn) == False:
-                    warnings.warn(" Error: %s does not exist." % fn)
+                    msg = "\n Error: %s does not exist." % fn
+                    logger.error(msg)
                     sys.exit()
                 
-                #print("")
-                #print(" Update the primitive structure:", fn)
+                #msg = ""
+                #msg += " Update the primitive structure: " + fn
                 #structure = ase.io.read(fn, format='vasp')
                 print_params = False
             
@@ -376,7 +380,6 @@ class ApdbVasp():
             #        "kind": "",
             #        "note": ""}
             #write_output_yaml(self.yamlfile_for_outdir, name, info)
-            #print(dir_cur)
             #exit()
              
             ### update
@@ -432,10 +435,9 @@ class ApdbVasp():
             })
         
         if spg_before != spg_after:
-            print("")
-            warnings.warn(" WARRNING: The crystal symmetry was changed due to the structure relaxation")
+            ak_log.symmetry_error(spg_before, spg_after)
             sys.exit()
-    
+
     def _write_relax_yaml(self, params):
         import yaml
         outfile = params['directory'] + '/relax.yaml'
@@ -507,14 +509,14 @@ class ApdbVasp():
             line = "VASP calculation (%s)" % (mode)
             msg = "\n\n " + line + "\n"
             msg += " " + "=" * (len(line)) + "\n"
-            print(msg)
+            logger.info(msg)
         
         os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
         
         if wasfinished(directory, filename='vasprun.xml') and force == False:
-            print("")
-            print(" The calculation had been already finished.")
-         
+            msg = "\n The calculation has been already finished."
+            logger.info(msg)
+        
         else:
         
             #### ver.1 relax with one shot
@@ -551,6 +553,14 @@ class ApdbVasp():
                 new_unitcell = get_supercell(
                         change_structure_format(new_prim, format='phonopy'),
                         mat_p2u)
+            
+            ##
+            num_init = get_spg_number(structure)
+            num_mod = get_spg_number(new_unitcell)
+            if num_init != num_mod:
+                
+                ak_log.symmetry_error(num_init, num_mod)
+                sys.exit()
             
             self.update_structures(new_unitcell, standardization=standardization)
      

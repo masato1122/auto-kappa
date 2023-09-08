@@ -20,7 +20,6 @@ import sys
 import os
 import os.path
 import numpy as np
-import warnings
 import logging
 
 import ase
@@ -44,6 +43,8 @@ from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
 
 from auto_kappa.io.files import write_output_yaml
+
+logger = logging.getLogger(__name__)
 
 class AlamodeCalc():
     
@@ -204,10 +205,12 @@ class AlamodeCalc():
         
         ### matrices
         if primitive_matrix is None:
-            warnings.warn(" Error: primitive_matrix must be given.")
+            msg = " Error: primitive_matrix must be given."
+            logger.warning(msg)
         
         if scell_matrix is None:
-            warnings.warn(" Error: scell_matrix must be given.")
+            msg = " Error: scell_matrix must be given."
+            logger.warning(msg)
         
         #if scell_matrix3 is None:
         #    scell_matrix3 = scell_matrix.copy()
@@ -485,7 +488,8 @@ class AlamodeCalc():
     @property
     def unitcell(self):
         if self._unitcell is None:
-            warnings.warn(" Error: unitcell is not yet defined.")
+            msg = " Error: unitcell is not yet defined."
+            logger.error(msg)
         else:
             return self._unitcell
     
@@ -494,7 +498,8 @@ class AlamodeCalc():
         """
         """
         if self._supercell is None:
-            warnings.warn(" Error: supercell is not yet defined.")
+            msg = " Error: supercell is not yet defined."
+            logger.error(msg)
         else:
             return self._supercell
 
@@ -503,7 +508,8 @@ class AlamodeCalc():
     #    """
     #    """
     #    if self._supercell3 is None:
-    #        warnings.warn(" Error: supercell for cubic FCs is not yet defined.")
+    #        msg = " Error: supercell for cubic FCs is not yet defined."
+    #        logger.error(msg)
     #    else:
     #        return self._supercell3
         
@@ -512,7 +518,8 @@ class AlamodeCalc():
         if self._frequency_range is None:
             fn = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.bands'
             if os.path.exists(fn) == False:
-                print(" Phonon dispersion needs to be calculated.")
+                msg = " Phonon dispersion needs to be calculated."
+                logger.info(msg)
             else:
                 fmin, fmax = _read_frequency_range(fn, format='anphon')
                 self._frequency_range = [fmin, fmax]
@@ -535,14 +542,16 @@ class AlamodeCalc():
             fmin = min(fmin, out_band['minimum_frequency'])
         except Exception:
             out_band = None
-            warnings.warn(" Error: %s may contain error." % log_band)
+            msg = " Error: %s may contain error." % log_band
+            logger.error(msg)
         
         try:
             out_dos = get_minimum_frequency_from_logfile(log_dos)
             fmin = min(fmin, out_dos['minimum_frequency'])
         except Exception:
             out_dos = None
-            warnings.warn(" Error: %s may contain error." % log_dos)
+            msg = " Error: %s may contain error." % log_dos
+            logger.error(msg)
         
         if fmin is None:
             ### alamode log file does not show extremely large negative values
@@ -560,7 +569,8 @@ class AlamodeCalc():
             filename = (self.out_dirs['cube']['suggest'] + 
                     '/%s.pattern_ANHARM%d' % (self.prefix, order+1))
         else:
-            warnings.warn(" Error: order %d is not supported." % order)
+            msg = " Error: order %d is not supported." % order
+            logger.error(msg)
             sys.exit()
         return filename
     
@@ -571,7 +581,8 @@ class AlamodeCalc():
         elif order == 2:
             filename = self.out_dirs['cube']['suggest'] + '/suggest.log'
         else:
-            warnings.warn(" Error: order %d is not supported." % order)
+            msg = " Error: order %d is not supported." % order
+            logger.error(msg)
             sys.exit()
         return filename
     
@@ -641,9 +652,8 @@ class AlamodeCalc():
         structure = self.supercell
 
         ### get displacements
-        print("")
-        print(" Displacement mode :", disp_mode)
-        print("")
+        msg = "\n Displacement mode : " + disp_mode + "\n"
+        logger.info(msg)
         if disp_mode == "fd":
             
             ### ver.1 with ALM library
@@ -686,14 +696,14 @@ class AlamodeCalc():
                     )
          
         else:
-            warnings.warn(" ERROR: displacement mode %s is not supported" %
-                    (disp_mode))
+            msg = "\n Error: displacement mode %s is not supported" % disp_mode
+            logger.error(msg)
             sys.exit()
         
         ### error
         if all_disps is None:
             msg = "\n Error: Failed to obtain displacement patterns.\n"
-            print(msg)
+            logger.error(msg)
             sys.exit()
         
         ## get pristine structure
@@ -745,7 +755,8 @@ class AlamodeCalc():
                 )
         
         if almdisp is None:
-            warnings.warn(" Error: Couldn't obtain AlamodeDisplace object properly.")
+            msg = " Error: Couldn't obtain AlamodeDisplace object properly."
+            logger.error(msg)
             return None
         
         msg = "\n"
@@ -753,12 +764,13 @@ class AlamodeCalc():
         msg += " Displacement mode : %s\n" % displacement_mode
         msg += " %d patterns will be generated.\n" % (number_of_displacements)
         msg += "\n"
-        print(msg)
+        logger.info(msg)
         
         if displacement_mode == 'fd':
             
             if file_pattern is None:
-                warnings.warn(" Error: file_pattern must be given.")
+                msg = " Error: file_pattern must be given."
+                logger.error(msg)
                 sys.exit()
 
             header_list, disp_list = almdisp.generate(
@@ -782,7 +794,7 @@ class AlamodeCalc():
 
         else:
             msg = " Error: %s is not supported." % (displacement_mode)
-            warnings.warn(msg)
+            logger.warning(msg)
             sys.exit()
         
         all_disps = np.zeros_like(disp_list)
@@ -840,8 +852,8 @@ class AlamodeCalc():
         
         msg = "\n\n " + line + "\n"
         msg += " " + "=" * (len(line)) + "\n"
-        print(msg)
-        
+        logger.info(msg)
+         
         self._nmax_suggest = nmax_suggest
         
         ### get suggsted structures with ALM
@@ -861,8 +873,8 @@ class AlamodeCalc():
             ### ver.2
             natoms = len(self.supercell)
 
-            msg = "\n Number of the suggested structures with ALM : %d\n" % (nsuggest)
-            print(msg)
+            msg = "\n Number of the suggested structures with ALM : %d" % (nsuggest)
+            logger.info(msg)
             
         else:
             
@@ -870,12 +882,10 @@ class AlamodeCalc():
             
             nfcs = self._get_number_of_free_fcs(order)
             
-            #natoms = len(self.supercell3)
             natoms = len(self.supercell)
             
-            print("")
-            print(" This part is still under development.")
-            print("")
+            msg = "\n This part is still under development.\n"
+            logger.error(msg)
             sys.exit()
         
         ### output directory
@@ -900,7 +910,8 @@ class AlamodeCalc():
             outdir0 = self.out_dirs['higher']['force']
         
         else:
-            warnings.warning(" WARNING: given order (%d) is not supported yet." % order)
+            msg = " WARNING: given order (%d) is not supported yet." % order
+            logger.error(msg)
             sys.exit()
         
         ### Compressive sensing, LASSO, is used when the number of the 
@@ -927,8 +938,8 @@ class AlamodeCalc():
             msg += " Number of suggested patterns exceeds the maximum limit.\n"
             msg += "\n"
             msg += " Fractional number of the random patterns : %.3f\n" % (frac_nrandom)
-            print(msg)
-            
+            logger.info(msg)
+             
             if order == 2:
                 ## FC3 is obtained with random-displacement method
                 ## with a fixed displacement magnitude
@@ -939,13 +950,11 @@ class AlamodeCalc():
                         )
 
             elif order > 2:
-
-                print("")
-                print("")
-                print(" NEED TO BE CHECKED")
-                print("")
-                print("")
+                
+                msg = "\n\n NEED TO BE CHECKED\n\n"
+                logger.error(msg)
                 sys.exit()
+                
                 ## High order FCs are obtained with
                 ## a random-displacment based on normal coordinate
                 structures = self.get_suggested_structures(
@@ -979,7 +988,8 @@ class AlamodeCalc():
             
             ### check
             if wasfinished(outdir):
-                print(" %s: skipped" % outdir)
+                msg = " %s: skipped" % outdir
+                logger.info(msg)
                 num_done += 1
                 continue
             
@@ -1006,7 +1016,7 @@ class AlamodeCalc():
                 run_vasp(calculator, structure, method='custodian')
                 num_done += 1
             
-            print(" %s" % (calculator.directory))
+            logger.info(" %s" % calculator.directory)
             
         ### output DFSET
         if num_done == len(structures) and output_dfset:
@@ -1024,7 +1034,8 @@ class AlamodeCalc():
                 fn0 = self.outfiles['lasso_dfset']
 
             else:
-                warnings.warn(" Error: order=", order, " is not supported yet.")
+                msg = " Error: order= " + str(order) + " is not supported yet."
+                logger.error(msg)
                 sys.exit()
             
             os.makedirs(self.out_dirs['result'], exist_ok=True)
@@ -1036,11 +1047,10 @@ class AlamodeCalc():
                         nset=nsuggest-1,
                         )
             else:
-                msg = "\n"
-                msg += " %s already exists\n" % (outfile)
-                print(msg)
-            
-        print("")
+                msg = "\n %s already exists\n" % (outfile)
+                logger.info(msg)
+        
+        logger.info("")
     
     def write_alamode_input(
             self, propt=None, order=None, kpts=[15,15,15],
@@ -1065,8 +1075,8 @@ class AlamodeCalc():
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
         if out is None:
-            print("")
-            warnings.warn(" Error: %s is not supported yet." % propt)
+            msg = "\n Error: %s is not supported yet.\n" % propt
+            logger.error(msg)
             sys.exit()
         alamode_type = out[0]
         mode = out[1]
@@ -1118,7 +1128,8 @@ class AlamodeCalc():
                         self.outfiles['cube_%s_xml' % self.fc3_type]
                         )
                 if os.path.exists(fn_check) == False:
-                    warnings.warn(" Error: FC3 has not been calculated.")
+                    msg = " Error: FC3 has not been calculated."
+                    logger.error(msg)
                     sys.exit()
             
             ## get fc2xml
@@ -1127,7 +1138,8 @@ class AlamodeCalc():
                     self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
                     )
             if os.path.exists(fn_check) == False:
-                warnings.warn(" Error: FC2 has not been calculated.")
+                msg = " Error: FC2 has not been calculated."
+                logger.error(msg)
                 sys.exit()
                 
         elif propt == 'fc2':
@@ -1146,8 +1158,8 @@ class AlamodeCalc():
         elif propt == 'suggest':
             
             if order is None:
-                print("")
-                print(" Order is not given. Set order = 1.")
+                msg = "\n Order is not given. Set order = 1."
+                logger.info(msg)
                 order = 1
             
             dfset = None
@@ -1160,11 +1172,12 @@ class AlamodeCalc():
             elif order > 2:
                 dir_work = self.out_dirs['higher']['suggest']
             else:
-                warnings.warn(" Error: order=", order, " is not supported.")
+                msg = " Error: order= " + str(order) + " is not supported."
+                logger.error(msg)
                 sys.exit()
         else:
-            print("")
-            warnings.warn(" Error: %s is not supported yet." % (propt))
+            msg = "\n Error: %s is not supported yet." % (propt)
+            logger.error(msg)
             sys.exit()
         
         ##
@@ -1273,10 +1286,10 @@ class AlamodeCalc():
             mat_p2s = np.rint(mat_p2s_tmp).astype(int)
             diff_max = np.amax(abs(mat_p2s - mat_p2s_tmp))
             if diff_max > 1e-3:
-                print("")
-                print(" CAUTION: please check the cell size of primitive and "\
-                        "supercell")
-                print(diff_max)
+                msg = "\n CAUTION: please check the cell size of primitive "\
+                        "and supercell\n"
+                msg += str(diff_max)
+                logger.warning(msg)
             
             ### commensurate points
             from auto_kappa.structure.crystal import get_commensurate_points
@@ -1310,15 +1323,16 @@ class AlamodeCalc():
                 order = 2
             elif propt == 'cv' or propt == 'lasso':
                 if order is None:
-                    #order = self.order_lasso
-                    warnings.warn(" Error: order must be given.")
+                    msg = " Error: order must be given."
+                    logger.error(msg)
                     sys.exit()
             elif propt == 'suggest':
                 if order is None:
-                    warnings.warn(" ERROR: order must be given.")
+                    msg = " ERROR: order must be given."
+                    logger.error(msg)
                     sys.exit()
             else:
-                print(" Error")
+                logger.error(" Error")
                 sys.exit()
             
             if len(self.nbody) < order:
@@ -1359,7 +1373,8 @@ class AlamodeCalc():
                     inp.update({'l1_alpha': alpha})      ### read l1_alpha
         
         else:
-            warnings.warn(" Error: %s is not supported." % propt)
+            msg = " Error: %s is not supported." % propt
+            logger.error(msg)
             sys.exit()
         
         inp.update(kwargs)
@@ -1380,7 +1395,8 @@ class AlamodeCalc():
                     return alpha
             return None
         except Exception:
-            warnings.warn(" Warning: cannot find %s" % fn)
+            msg = " Warning: cannot find %s" % fn
+            logger.warning(msg)
             return None
     
     def _get_alamodetype_mode(self, propt):
@@ -1411,8 +1427,10 @@ class AlamodeCalc():
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
         if out is None:
-            warnings.warn(" Error: %s is not supported yet." % propt)
+            msg = " Error: %s is not supported yet." % propt
+            logger.error(msg)
             sys.exit()
+
         alamode_type = out[0]
         mode = out[1]
         
@@ -1469,13 +1487,13 @@ class AlamodeCalc():
             elif order > 2:
                 workdir = self.out_dirs['higher']['suggest']
             else:
-                print("")
-                warnings.warn(" Error: order must be gien properly.")
+                msg = "\n Error: order must be gien properly."
+                logger.error(msg)
                 sys.exit()
         
         else:
-            print("")
-            warnings.warn(" WARNNING: %s property is not supported." % (propt))
+            msg = "\n WARNING: %s property is not supported.\n" % (propt)
+            logger.error(msg)
             sys.exit()
         
         ### modify work directory
@@ -1488,8 +1506,8 @@ class AlamodeCalc():
         msg += " " + line + "\n"
         msg += " " + "-" * (len(line)) + "\n\n"
         msg += " Working directory : " + workdir + "\n"
-        print(msg)
-            
+        logger.info(msg)
+         
         filename = "%s.in" % propt
         logfile = propt + '.log'
         
@@ -1510,7 +1528,8 @@ class AlamodeCalc():
                 )
         
         if val == 2:
-            print(" %s has been already calculated." % propt)
+            msg = " %s has been already calculated." % propt
+            logger.info(msg)
         
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
@@ -1557,14 +1576,15 @@ class AlamodeCalc():
                     )
         
         else:
-            print("")
-            warnings.warn(" Error: %s is not supported yet." % propt)
+            msg = "\n Error: %s is not supported yet." % propt
+            logger.error(msg)
             sys.exit()
         
         ##
         if os.path.exists(fn1) == False:
             
-            warnings.warn(' %s does not exist.' % fn1)
+            msg = ' %s does not exist.' % fn1
+            logger.info(msg)
         
         else:
             if os.path.exists(fn2):
@@ -1573,7 +1593,7 @@ class AlamodeCalc():
             else:
                 msg = "\n"
                 msg += " %s was created.\n" % fn2
-            print(msg)
+            logger.info(msg)
             shutil.copy(fn1, fn2)
     
     #def write_lifetime(self, temperature=300, outfile=None):
@@ -1648,10 +1668,12 @@ class AlamodeCalc():
         self._file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
         
         if os.path.exists(self.file_result) == False:
-            warnings.warn(" Error: %s does not exist." % self.file_result)
+            msg = " Error: %s does not exist." % self.file_result
+            logger.error(msg)
         
         if os.path.exists(self.file_isotope) == False:
-            warnings.warn(" Error: %s does not exist." % self.file_isotope)
+            msg = " Error: %s does not exist." % self.file_isotope
+            logger.error(msg)
             self._file_isotope = None
         
         ###
@@ -1737,8 +1759,9 @@ class AlamodeCalc():
     def _plot_cvsets(self, order=None):
         
         from auto_kappa.plot.pltalm import plot_cvsets
-        print("")
-        print(" ### Plot CV results ###")
+        
+        msg = "\n ### Plot CV results ###"
+        logger.info(msg)
         
         #if newversion == False:
         #    figname = self.out_dirs['result'] + '/fig_cvsets.png'
@@ -1760,8 +1783,8 @@ class AlamodeCalc():
                     figname=figname
                     )
         
-        print("")
-
+        logger.info("")
+    
     def plot_bandos(self, **args):
         
         ### set figure name
@@ -1771,13 +1794,13 @@ class AlamodeCalc():
             figname = args['figname']
         
         from auto_kappa.plot.bandos import plot_bandos
-        
+
         ### output title
         line = "Plot band and DOS:"
         msg = "\n " + line + "\n"
         msg += " " + "-" * len(line) + "\n"
-        print(msg)
-         
+        logger.info(msg)
+        
         fig = plot_bandos(
                 directory=self.out_dirs['harm']['bandos'], 
                 prefix=self.prefix, 
@@ -1934,7 +1957,8 @@ def _read_frequency_range(filename, format='anphon'):
         fmin = np.min(data[:,1])
         return fmin, fmax
     else:
-        warnings.warn(" Error: %s is not supported yet." % format)
+        msg = " Error: %s is not supported yet." % format
+        logger.error(msg)
         sys.exit()
 
 
@@ -1992,7 +2016,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             msg += " ALM calculation (%s) has been already finished.\n" % (mode)
             msg += " See: %s" % (outfile)
             msg += "\n"
-            print(msg)
+            logger.info(msg)
             return None
     
     from alm import ALM
@@ -2010,7 +2034,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
     #    msg = "\n"
     #    msg = " Perform LASSO with Scikit_learn...\n"
     #    msg = "\n"
-    #    print(msg)
+    #    logger.info(msg)
     #    from .alamode_tools.lasso import (
     #            get_training_data,
     #            run_lasso_by_scikit_learn
@@ -2038,7 +2062,8 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
         if mode == 'suggest':
             info = alm.suggest()
             if info == 1:
-                warnings.warn(" Error during ALM calculation")
+                msg = " Error during ALM calculation"
+                logger.error(msg)
                 return None
             else:
                 patterns = alm.get_displacement_patterns(order)
@@ -2077,11 +2102,13 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             
             if outfile is not None:
                 alm.save_fc(outfile, format='alamode')
-                print(" Output", outfile)
+                msg = "\n Output " + outfile
+                logger.info(msg)
             return alm.get_fc(order)
         
         else:
-            warnings.warn(" WARNING: mode %s is nto supported" % (mode))
+            msg = " WARNING: mode %s is not supported" % (mode)
+            logger.warning(msg)
     
 
 def _read_kappa(dir_kappa, prefix):
@@ -2112,7 +2139,8 @@ def _read_kappa(dir_kappa, prefix):
         data2 = np.genfromtxt(fn_kc)
 
         if np.max(abs(data[:,0] - data2[:,0])) > 0.5:
-            warnings.warn(" Warning: temperatures are incompatible.")
+            msg = " Warning: temperatures are incompatible."
+            logger.warning(msg)
     
     nt = len(data)
     df['temperature'] = data[:,0]

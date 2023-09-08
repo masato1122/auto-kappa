@@ -11,11 +11,15 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
+
+import logging
+logger = logging.getLogger(__name__)
 
 def plot_kappa(dfs, figname='fig_kappa.png',
         dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.5, ms=2.0):
@@ -66,8 +70,10 @@ def plot_kappa(dfs, figname='fig_kappa.png',
     set_legend(ax, fs=5, alpha=0.5)
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print()
-    print(" Output", figname)
+    
+    msg = " Output " + figname
+    logger.info(msg)
+    
     return fig
 
 def _get_log_range(vmin, vmax, space=0.05):
@@ -139,8 +145,10 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print("")
-    print(" Output", figname)
+    
+    msg = " Output " + figname
+    logger.info(msg)
+
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
         figname='fig_scat_rates.png', 
@@ -202,8 +210,9 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print("")
-    print(" Output", figname)
+    
+    msg = " Output " + figname
+    logger.info(msg)
     return fig
 
 def plot_cumulative_kappa(dfs, 
@@ -273,8 +282,9 @@ def plot_cumulative_kappa(dfs,
     ax2.tick_params(labelleft=False, left=False, which='both')
     
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print()
-    print(" Output", figname)
+    
+    msg = " Output " + figname
+    logger.info(msg)
     return fig
 
 def plot_cvsets(directory='.', figname='fig_cvsets.png',
@@ -304,7 +314,10 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
             continue
         
         fn = fns[0]
-        print(" Read", fn)
+        
+        msg = "\n Read " + fn
+        logger.info(msg)
+
         data = np.genfromtxt(fn)
         
         xdat = data[:,0]
@@ -365,8 +378,8 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
     
     if figname is not None:
         fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-        print()
-        print(" Output", figname)
+        msg = " Output " + figname
+        logger.info(msg)
     return fig
 
 def _get_recommended_alpha(filename):
@@ -407,7 +420,8 @@ def plot_times_with_pie(times, labels, figname="fig_times.png",
     leg.get_frame().set_linewidth(0.2)
 
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print("")
-    print(" Output", figname)
+    
+    msg = " Output " + figname
+    logger.info(msg)
     return fig
 

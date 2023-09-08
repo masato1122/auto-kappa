@@ -26,6 +26,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+import logging
+logger = logging.getLogger(__name__)
+
 def file_check(file):
     if os.path.exists(file) == False:
         return False
@@ -157,19 +160,22 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ### check keys
     #for key in params:
     #    if key not in _get_default_figure_parameters():
-    #        print(" Attention: %s is not defined." % key)
+    #        msg = " Attention: %s is not defined." % key
+    #        logger.debug(msg)
     
     ### get band
     from auto_kappa.plot.alamode.band import Band
     band = None
     if 'bands' not in filenames:
-        print("")
-        print(" Error: fn_band must be given.")
-        print("")
+        msg = "\n"
+        msg += " Error: fn_band must be given.\n"
+        msg += "\n"
+        logger.error(msg)
         return None
     else:
         if os.path.exists(filenames['bands']) == False:
-            print(" %s does not exist." % fn_band)
+            msg = " %s does not exist." % fn_band
+            logger.info(msg)
         else:
             band = Band(filename=filenames['bands'])
      
@@ -178,7 +184,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     dos = None
     if 'dos' in filenames and plot_dos:
         if os.path.exists(filenames['dos']) == False:
-            print(" %s does not exist." % fn_dos)
+            msg = " %s does not exist." % fn_dos
+            logger.info(msg)
         else:
             dos = Dos(filename=filenames['dos'])
     
@@ -362,7 +369,9 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     if figname is not None:
         plt.savefig(figname, dpi=dpi, bbox_inches='tight')
         plt.close()
-        print(" Output", figname)
+        msg = " Output %s" % figname
+        logger.info(msg)
+    
     return fig
 
 def _plot_bands(ax, ks_tmp, frequencies, xlabels, 
@@ -420,113 +429,12 @@ def conv_unit(unit, band, dos):
         unit_conv = 1.
         ylabel = "$\\rm{cm^{-1}}$"
     else:
-        print("Error: {:s} is not defined.".format(unit))
+        msg = " Error: %s is not defined." % unit
+        logger.error(msg)
         sys.exit()
     band.frequencies *= unit_conv
     if dos is not None:
         dos.frequencies *= unit_conv
     return unit_conv, ylabel
 
-
-#def main(bfile, dfile, options):
-#    band = Band(file=bfile)
-#    if file_check(dfile):
-#        dos = Dos(file=dfile)
-#    else:
-#        dos = None
-#        options.plot_pdos = 0
-#    
-#    if options.plot_pdos != 0 and dos.elements is not None:
-#        plot_pdos = True
-#    else:
-#        plot_pdos = False
-#     
-#    LABEL = get_label(bfile)
-#    if options.figname is None:
-#        figname = "fig_{:s}_bandos.png".format(LABEL)
-#    else:
-#        figname = options.figname
-#    plot_bandos(
-#            figname, band, dos, options, 
-#            pdos=plot_pdos, wspace=options.wspace,
-#            legend_loc=options.legend_loc
-#            )
-#
-#if __name__ == '__main__':
-#    parser = OptionParser()
-#    
-#    parser.add_option("--prefix", dest="prefix", type="string", 
-#            help="prefix (prefix.band, prefix.dos will be read.)")
-#    
-#    parser.add_option("--figname", dest="figname", type="string", 
-#            help="figure name")
-#    
-#    parser.add_option("--plot_pdos", dest="plot_pdos", type="int", 
-#            default=1, help="0. not plot PDOS, 1. plot PDOS")
-#    
-#    parser.add_option("--prefix2", dest="prefix2", type="string", 
-#            help="[optional] prefix for the second phonon band (prefix2.band "
-#            "and prefix2.dos will be read when they are exist.)")
-#    parser.add_option("--pr_ratio", dest="pr_ratio", type="int", 
-#            default=0,
-#            help="Flag for participation ratio (0.off, 1.on)")
-#    
-#    parser.add_option("--y0", dest="y0", type="float", 
-#            help="Minimum frequency")
-#    parser.add_option("--y1", dest="y1", type="float", 
-#            help="Maximum frequency")
-#    
-#    parser.add_option("--maxdos", dest="maxdos", type="float", 
-#            help="Maximum DOS")
-#    
-#    parser.add_option("--lw", dest="lw", type="float", 
-#            default=0.3, help="line width of the figure (default: 0.3)")
-#    parser.add_option("--yticks", dest="yticks", type="float", 
-#            default=100, help="ticks of y-axis (default: 100)")
-#    parser.add_option("--myticks", dest="myticks", type="int", 
-#            default=2, help="mticks of y-axis (default: 2)")
-#    
-#    parser.add_option("--fig_width", dest="fig_width", type="float", 
-#            default=3.3, help="width of figure (default: 3.3)") 
-#    parser.add_option("--fig_aspect", dest="fig_aspect", type="float", 
-#            default=1.0, help="aspect ratio of figure (default: 1.0)") 
-#    
-#    parser.add_option("--dpi", dest="dpi", type="int", 
-#            default=300, 
-#            help="dpi: resolution of the figure (default: 300)")
-#    
-#    parser.add_option("--col", dest="col", type="string", 
-#            default="blue", help="line color (default: blue)")
-#    parser.add_option("--col2", dest="col2", type="string", 
-#            default="grey", help="line color of 2nd band (default: grey)")
-#    
-#    parser.add_option("--wspace", dest="wspace", type="float", 
-#            default=0.05, help="wspace")
-#    
-#    parser.add_option("--unit", dest="unit", type="string", 
-#            default="cm", 
-#            help="unit of frequency, cm, THz, or meV. (default: cm(^-1))")
-#    
-#    parser.add_option("--colorbar", dest="colorbar", type="int", 
-#            default=1, help="color bar")
-#    
-#    parser.add_option("--legend", dest="legend", type="int", 
-#            default=1, help="legend")
-#    
-#    parser.add_option("--legend_loc", dest="legend_loc", type="string", 
-#            default='best', help="legend location")
-#    
-#    (options, args) = parser.parse_args()
-#    if options.prefix is None:
-#        print("Input prefix")
-#        sys.exit()
-#    
-#    prefix = options.prefix
-#    BFILE = "{:s}.bands".format(prefix)
-#    DFILE = "{:s}.dos".format(prefix)
-#    if file_check(BFILE) is False:
-#        print("Cannot find ", BFILE)
-#        exit()
-#
-#    main(BFILE, DFILE, options)
 

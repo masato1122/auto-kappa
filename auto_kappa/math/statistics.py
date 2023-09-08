@@ -9,8 +9,12 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 import auto_kappa.units as unit
+
+import logging
+logger = logging.getLogger(__name__)
 
 EPS_DEFAULT = 1e-7
 
@@ -34,8 +38,8 @@ def get_statistical(ftype, temperature, ene_tmp, diff=0, eps=EPS_DEFAULT):
         if diff == 0:
             return np.where(abs(temperature)<eps, 0., 1/(np.exp(X)+1.0))
     
-    print("Error")
-    exit()
+    logger.getLogger(" ERROR")
+    sys.exit()
 
 def get_bose(temperature, frequency, diff=0, eps=EPS_DEFAULT):
     return get_statistical("BE", temperature, frequency, diff=diff, eps=eps)
