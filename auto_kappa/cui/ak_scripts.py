@@ -944,7 +944,6 @@ def calculate_thermal_conductivities(
             temperatures=temperatures_for_spectral, 
             wrt='mfp', xscale='log')
     
-
 def analyze_phonon_properties(
         almcalc,
         calc_force=None,

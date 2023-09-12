@@ -4,7 +4,7 @@
 # Class to generate displacements of atoms
 #
 # Copyright (c) 2020 Terumasa Tadano
-# Modyfied by Masato Ohnishi, 2022
+# Modyfied by Masato Ohnishi, 2023
 #
 # This file is distributed under the terms of the MIT license.
 # Please see the file 'LICENCE.txt' in the root directory
@@ -17,6 +17,8 @@ import copy
 import math
 import cmath
 
+import logging
+logger = logging.getLogger(__name__)
 
 class AlamodeDisplace(object):
 
@@ -783,6 +785,12 @@ class AlamodeDisplace(object):
                     break
             if iloc == -1:
                 print(diff_min)
+                msg = "\n"
+                msg += " min. diff. : %f\n" % diff_min
+                msg += " Error : Equivalent atom not found. "\
+                        "Check the relaxed structure. The relaxation "\
+                        "calculation may need to be run again."
+                logger.error(msg)
                 raise RuntimeError("Equivalent atom not found")
             
             map_s2p[iat] = iloc

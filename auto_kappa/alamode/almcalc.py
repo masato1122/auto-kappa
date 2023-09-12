@@ -753,7 +753,7 @@ class AlamodeCalc():
                 primitive=self.primitive,
                 verbosity=self.verbosity
                 )
-        
+         
         if almdisp is None:
             msg = " Error: Couldn't obtain AlamodeDisplace object properly."
             logger.error(msg)
