@@ -927,22 +927,29 @@ def calculate_thermal_conductivities(
     
     ### analyze phonons
     msg = "\n"
-    msg += "\n"
     msg += " Plot anharmonic properties:\n"
-    msg += " ---------------------------\n"
+    msg += " ---------------------------"
     
     logger = logging.getLogger(__name__)
     logger.info(msg)
     
-    almcalc.plot_kappa()
-    almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
-    almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-    almcalc.plot_cumulative_kappa(
-            temperatures=temperatures_for_spectral, 
-            wrt='frequency', xscale='linear')
-    almcalc.plot_cumulative_kappa(
-            temperatures=temperatures_for_spectral, 
-            wrt='mfp', xscale='log')
+    out = almcalc.plot_kappa()
+    
+    if out >= 0:
+        almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
+        almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+        almcalc.plot_cumulative_kappa(
+                temperatures=temperatures_for_spectral, 
+                wrt='frequency', xscale='linear')
+        almcalc.plot_cumulative_kappa(
+                temperatures=temperatures_for_spectral, 
+                wrt='mfp', xscale='log')
+    else:
+        msg = "\n"
+        msg += " Error: Stop the calculation. "
+        msg += "Please check anphon calculations."
+        logger.error(msg)
+        sys.exit()
     
 def analyze_phonon_properties(
         almcalc,

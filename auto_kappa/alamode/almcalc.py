@@ -1702,13 +1702,13 @@ class AlamodeCalc():
             nbands = len(omegas[0])
             dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
             dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
-        
-        figname = self.out_dirs['result'] + '/fig_lifetime.png'
 
+        figname = self.out_dirs['result'] + '/fig_lifetime.png'
+        
         ### plot a figure
         from auto_kappa.plot.pltalm import plot_lifetime
-        plot_lifetime(dfs, figname=figname)
-    
+        out = plot_lifetime(dfs, figname=figname)
+        return out
     
     def plot_scattering_rates(self, temperature=300., grain_size=1000.):
         
@@ -1826,15 +1826,34 @@ class AlamodeCalc():
     def plot_kappa(self):
         
         dirs_kappa = self.get_kappa_directories()
+        
+        keys = dirs_kappa.keys()
+        
         dfs = {}
-        for lab in dirs_kappa:
-            dfs[lab] = _read_kappa(dirs_kappa[lab], self.prefix)
+        for i, key in enumerate(keys):
+            dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
+            
+            if i == 0:
+                
+                if "kp_xx" in dfs[key].columns:
+                    kxx_max = np.max(dfs[key]["kp_xx"].values)
+                    if kxx_max < 1e-7:
+                        msg = "\n"
+                        msg += " Warning : Minimum thermal conductivity is "\
+                                "too small (%.3e cm^-1)." % (kxx_max)
+                        logger.warning(msg)
+                        return -1
+                else:
+                    msg = "\n"
+                    msg += " Warning: kp_xx cannot be found."
+                    logger.warning(msg)
+                    return -2
         
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
         plot_kappa(dfs, figname=figname)
-    
-    
+        return 0
+
     def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
             figname=None, xscale='linear', nbins=150):
         

@@ -109,6 +109,7 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
         
         ### get only available data
         idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+        
         xdat = xorig[idx_pos]
         ydat = yorig[idx_pos]
         
@@ -119,7 +120,15 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
         
         ### axes range
         idx_sort = np.argsort(xdat)
-        idx = np.where(xdat > 1e-5)[0]
+        
+        if len(idx_sort) < 6:
+            msg = "\n"
+            msg += " Error: the number of available lifetime data is too "\
+                    "small.\n"
+            msg += " Something wrong may happen for the lifetime calculation.\n"
+            logger.warning(msg)
+            return -1
+        
         xmin = np.min(xdat[idx_sort[5:]])
         xmax = np.max(xdat)
         xlim[0] = min(xlim[0], xmin)
@@ -148,7 +157,7 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
     
     msg = " Output " + figname
     logger.info(msg)
-
+    return 0
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
         figname='fig_scat_rates.png', 
