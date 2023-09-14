@@ -957,21 +957,20 @@ def calculate_thermal_conductivities(
     
     out = almcalc.plot_kappa()
     
-    if out >= 0:
-        almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
-        almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-        almcalc.plot_cumulative_kappa(
-                temperatures=temperatures_for_spectral, 
-                wrt='frequency', xscale='linear')
-        almcalc.plot_cumulative_kappa(
-                temperatures=temperatures_for_spectral, 
-                wrt='mfp', xscale='log')
-    else:
-        msg = "\n"
-        msg += " Error: Stop the calculation. "
-        msg += "Please check anphon calculations."
-        logger.error(msg)
-        sys.exit()
+    #if out < 0:
+    #    msg = "\n"
+    #    msg += " Warning: thermal conductivity may be too small."
+    #    logger.error(msg)
+    
+    ###
+    almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
+    almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+    almcalc.plot_cumulative_kappa(
+            temperatures=temperatures_for_spectral, 
+            wrt='frequency', xscale='linear')
+    almcalc.plot_cumulative_kappa(
+            temperatures=temperatures_for_spectral, 
+            wrt='mfp', xscale='log')
     
 def analyze_phonon_properties(
         almcalc,
