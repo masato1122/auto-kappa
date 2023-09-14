@@ -41,4 +41,10 @@ def symmetry_error(spg_init, spg_fin):
     msg += " The calculation was stopped. Consider to use ISYM = 2."
     logger.warning(msg)
 
+def rerun_with_omp():
     
+    logger = logging.getLogger(__name__)
+    msg = "\n Modify the parallel method from MPI to OpenMP and rerun the "\
+            "calculation."
+    logger.info(msg)
+

@@ -387,7 +387,7 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
     
     if figname is not None:
         fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-        msg = " Output " + figname
+        msg = "\n Output " + figname
         logger.info(msg)
     return fig
 

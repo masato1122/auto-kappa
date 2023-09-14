@@ -26,7 +26,6 @@ from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.io.files import write_output_yaml
 
-#from auto_kappa.cui import message
 from auto_kappa.cui import ak_log
 
 import logging
@@ -169,7 +168,7 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     """
     import os.path
     import ase.io
-    from auto_kappa.io.vasp import wasfinished
+    #from auto_kappa.io.vasp import wasfinished
     from auto_kappa.structure.crystal import get_standardized_structure_spglib
     
     logger = logging.getLogger(__name__)
@@ -830,11 +829,13 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
     almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     
     ### check DOS file
-    fn_dos = almcalc.out_dirs['harm']['bandos'] + "/" + almcalc.prefix + ".dos"
-    if (os.path.exists(fn_dos) == False and 
-            almcalc.commands['alamode']['anphon_para'] == "mpi"):
-        ### if DOS was not caluclated due to a problem, including the excessive
-        ### memory, DOS is calculated with OpenMP.
+    dos_log = almcalc.out_dirs['harm']['bandos'] + "/dos.log"
+    flag = _should_rerun_alamode(dos_log) 
+    
+    if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
+        ### if DOS was not caluclated due to a problem, including the 
+        ### excessive memory, DOS is calculated with OpenMP again.
+        ak_log.rerun_with_omp()
         almcalc.commands['alamode']['anphon_para'] = "omp"
         almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     
@@ -875,6 +876,24 @@ def calculate_cubic_force_constants(
         almcalc.write_alamode_input(propt='fc3')
         almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
 
+def _should_rerun_alamode(logfile):
+    """
+    Args
+    ======
+
+    logfile : string
+        alamode log file
+    
+    """
+    from auto_kappa.alamode.almcalc import _alamode_finished
+    if os.path.exists(logfile) == False:
+        return True
+    else:
+        if _alamode_finished(logfile) == False:
+            return True
+    return False
+
+
 def calculate_thermal_conductivities(
         almcalc, 
         kdensities=[500, 1000, 1500], 
@@ -895,6 +914,7 @@ def calculate_thermal_conductivities(
     temperatures_for_spectral : string of floats seperated by ":"
 
     """
+    
     for kdensity in kdensities:
         
         kpts = get_automatic_kmesh(
@@ -913,13 +933,15 @@ def calculate_thermal_conductivities(
                 propt='kappa', neglect_log=neglect_log, outdir=outdir, **kwargs)
         
         ### check output file for kappa
-        fn_kappa = outdir + "/" + almcalc.prefix + ".kl"
-        if (os.path.exists(fn_kappa) == False and 
-                almcalc.commands['alamode']['anphon_para'] == "mpi"):
+        kappa_log = outdir + "/kappa.log"
+        flag = _should_rerun_alamode(kappa_log) 
+        
+        if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
             ##
             ## if thermal conductivity was not calculated with MPI, run the 
             ## calculation again with OpenMP.
             ##
+            ak_log.rerun_with_omp()
             almcalc.commands['alamode']['anphon_para'] = "omp"
             almcalc.run_alamode(
                     propt='kappa', neglect_log=neglect_log, 
