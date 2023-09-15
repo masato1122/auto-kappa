@@ -966,13 +966,13 @@ def calculate_thermal_conductivities(
     try:
         almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
     except Exception:
-        logger.warning(" Warning: "\
+        logger.warning("\n Warning: "\
                 "the figure of lifetime was not created properly.")
     
     try:
         almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
     except Exception:
-        logger.warning(" Warning: the figure of "\
+        logger.warning("\n Warning: the figure of "\
                 "scattering rated was not created properly.")
     
     try:
@@ -980,7 +980,7 @@ def calculate_thermal_conductivities(
                 temperatures=temperatures_for_spectral, 
                 wrt='frequency', xscale='linear')
     except Exception:
-        logger.warning(" Warning: the figure of "\
+        logger.warning("\n Warning: the figure of "\
                 "scattering rated was not created properly.")
     
     try:
@@ -988,7 +988,7 @@ def calculate_thermal_conductivities(
                 temperatures=temperatures_for_spectral, 
                 wrt='mfp', xscale='log')
     except Exception:
-        logger.warning(" Warning: the figure of "\
+        logger.warning("\n Warning: the figure of "\
                 "cummulative TCs was not created properly.")
     
 def analyze_phonon_properties(
