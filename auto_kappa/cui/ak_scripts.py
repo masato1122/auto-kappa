@@ -1092,6 +1092,42 @@ def _use_omp_for_anphon(base_dir):
                 if exceed_memory(fn):
                     return True
     return False
+    
+def _compress_directory(dir_orig):
+    
+    import tarfile
+    import shutil
+    
+    logger = logging.getLogger(__name__)
+    
+    data = dir_orig.split("/")
+    dir_base = ""
+    for i in range(len(data)-1):
+        dir_base += data[i]
+        if i < len(data)-2:
+            dir_base += "/"
+    
+    ###
+    cwd = os.getcwd()
+    os.chdir(dir_base)
+    
+    ### compress
+    dir0 = data[-1]
+    for j in range(1, 1000):
+        tar_dir = dir0 + "_error%d.tar.gz" % j
+        if os.path.exists(tar_dir) == False:
+            with tarfile.open(tar_dir, 'w:gz') as tar:
+                tar.add(dir0)
+            break
+    
+    ### delete the original directory
+    shutil.rmtree(dir0)
+    os.chdir(cwd)
+        
+    ###
+    msg = "\n Compress and delete %s.\n" % dir_orig
+    msg += " Create %s." % (tar_dir)
+    logger.info(msg)
 
 def main():
     
@@ -1215,13 +1251,38 @@ def main():
             )
     
     ### Relaxation calculation
-    apdb.run_relaxation(
+    out = apdb.run_relaxation(
             out_dirs["relax"],
             kpts_used["relax"],
             volume_relaxation=ak_params['volume_relaxation'],
             cell_type=cell_types["relax"]
             )
     
+    if out == -1:
+        
+        ###
+        ### Relaxation calculation with ISYM == 2
+        ###
+        
+        ### comparess and delete the directory
+        _compress_directory(out_dirs["relax"])
+        
+        ### run calculation
+        out = apdb.run_relaxation(
+                out_dirs["relax"],
+                kpts_used["relax"],
+                volume_relaxation=ak_params['volume_relaxation'],
+                cell_type=cell_types["relax"],
+                isym=2,
+                )
+
+        if out == -1:
+            msg = "\n Error: the crystal symmetry was changed during the "\
+                    "relaxation calculation.\n"
+            msg += " Stop the calcualtion."
+            logger.error(msg)
+            sys.exit()
+            
     ### output yaml file
     info = {
             "directory": out_dirs["relax"].replace(base_dir, "."), 

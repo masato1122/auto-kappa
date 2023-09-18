@@ -63,10 +63,14 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     
     Args
     -----
+    
     calc : ASE VASP calculator
+    
     atoms : ASE Atoms obj
+    
     method : string
         "ase" or "custodian"
+    
     max_errors : int
         parameter for "custodian"
     
@@ -84,7 +88,8 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     
     elif 'custodian' in method.lower():
         
-        value = run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
+        value = run_vasp_with_custodian(
+                calc, atoms, max_errors=max_errors)
         return value
     
     else:
@@ -96,6 +101,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         encut_scale_factor=1.3,
         setups='recommended', xc='pbesol',
         #auto_lreal_scell_size=65,
+        **args,
         ):
     """ Get VASP parameters for the given mode. Parameters are similar to those
     used for phonondb.
@@ -111,6 +117,9 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
         output directory
     
     kpts : list of float, shape=(3)
+    
+    args : dict
+        input parameters for VASP
     
     How to Use
     -----------
@@ -160,6 +169,9 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     if kpts is not None:
         calc.set(kpts=kpts)
         params['gamma'] = True
+    
+    ### update
+    params.update(args)
     
     ### output directory
     if directory is None:

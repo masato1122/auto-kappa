@@ -232,7 +232,7 @@ class ApdbVasp():
         #else:
         #    return None
     
-    def get_calculator(self, mode, directory=None, kpts=None):
+    def get_calculator(self, mode, directory=None, kpts=None, **args):
         """ Return VASP calculator created by ASE
         Args
         ------
@@ -258,6 +258,7 @@ class ApdbVasp():
                 atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
+                **args,
                 )
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 
@@ -269,10 +270,36 @@ class ApdbVasp():
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
-            force=False, num_full=2, verbosity=1): 
+            force=False, num_full=2, verbosity=1, **args): 
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
+        
+        Args
+        =======
+
+        directory : string
+            working directory for VASP
+
+        kpts : array, shape=(3)
+            k-mesh for VASP
+
+        standardize_each_time : bool
+        
+        volume_relaxation : int
+
+        cell_type : string
+
+        force : bool
+
+        num_full : int,
+            Number of relxation calculation w/o any restriction [default: 2]
+
+        verbosity : int
+
+        args : dictionary
+            input parameters for VASP
+        
         """
         ### relaxation cell type
         if cell_type[0].lower() == 'p':
@@ -365,15 +392,19 @@ class ApdbVasp():
             #
             
             ### run a relaxation calculation
-            self.run_vasp(
+            out = self.run_vasp(
                     mode, dir_cur, kpts, 
                     structure=structure, force=force, 
                     print_params=print_params,
                     cell_type=cell_type,
                     verbosity=0,
-                    standardization=standardize_each_time
+                    standardization=standardize_each_time,
+                    **args
                     )
-            
+
+            if out == -1:
+                return out
+
             ### output to yaml
             #name = "%s-%d" % (mode, ical)
             #info = {"directory": dir_cur.replace(,
@@ -436,8 +467,10 @@ class ApdbVasp():
         
         if spg_before != spg_after:
             ak_log.symmetry_error(spg_before, spg_after)
-            sys.exit()
-
+            return -1
+         
+        return 0
+    
     def _write_relax_yaml(self, params):
         import yaml
         outfile = params['directory'] + '/relax.yaml'
@@ -478,7 +511,7 @@ class ApdbVasp():
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 
-            standardization=True, verbosity=1
+            standardization=True, verbosity=1, **args
             ):
         """ Run relaxation and born effective charge calculation
         
@@ -504,6 +537,10 @@ class ApdbVasp():
         force : bool, default=False
             If it's True, the calculation will be done forcelly even if it had
             been already finished.
+        
+        args : dict
+            input parameters for VASP
+        
         """
         if verbosity != 0:
             line = "VASP calculation (%s)" % (mode)
@@ -518,10 +555,10 @@ class ApdbVasp():
             logger.info(msg)
         
         else:
-        
+            
             #### ver.1 relax with one shot
             calc = self.get_calculator(
-                    mode.lower(), directory=directory, kpts=kpts
+                    mode.lower(), directory=directory, kpts=kpts, **args
                     )
             ##
             if print_params:
@@ -558,10 +595,10 @@ class ApdbVasp():
             num_init = get_spg_number(structure)
             num_mod = get_spg_number(new_unitcell)
             if num_init != num_mod:
-                
                 ak_log.symmetry_error(num_init, num_mod)
-                sys.exit()
+                return -1
             
             self.update_structures(new_unitcell, standardization=standardization)
-     
+        
+        return 0
 
