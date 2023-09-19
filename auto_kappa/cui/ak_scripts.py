@@ -31,7 +31,9 @@ from auto_kappa.cui import ak_log
 import logging
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 logging.getLogger('custodian').setLevel(logging.WARNING)
-logging.getLogger('pymatgen').setLevel(logging.WARNING)
+
+import warnings
+warnings.filterwarnings('ignore')
 
 def start_autokappa():
     """ Print the logo.
