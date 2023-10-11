@@ -783,6 +783,7 @@ class AlamodeDisplace(object):
                 if diff < tol_zero:
                     iloc = jat
                     break
+            
             if iloc == -1:
                 print(diff_min)
                 msg = "\n"

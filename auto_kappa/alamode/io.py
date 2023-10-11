@@ -68,12 +68,3 @@ def read_fcs(filename):
     
     return dfs
 
-#if __name__ == '__main__':
-#    parser = OptionParser()
-#    parser.add_option("-f", "--filename", dest="filename", type="string",
-#            default="../mp-3038/cube/force/Al2HgSe4.fcs",
-#            help="fcs file name")
-#    (options, args) = parser.parse_args()
-#    
-#    main(options)
-

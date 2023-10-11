@@ -91,8 +91,11 @@ def _get_kind_of_time(relative_path):
                     kind = "force(cube)"
                 elif "kappa" in d2:
                     tmp = d2.split("_")[-1]
-                    kpts = [int(dd) for dd in tmp.split("x")]
-                    kind = "kappa(%s)" % tmp
+                    try:
+                        kpts = [int(dd) for dd in tmp.split("x")]
+                        kind = "kappa(%s)" % tmp
+                    except Exception:
+                        kind = "kappa"
         return kind
     
     data = relative_path.split("/")

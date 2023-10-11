@@ -434,17 +434,21 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             line = lines[il]
             if sword not in line:
                 data = line.split()
-                logger.error(" Error: %s does not include %s" % (data[0], sword))
+                logger.error("\n Error: %s does not include %s" % (data[0], sword))
                 sys.exit()
+            
             ### ik, ib
             il += 1
             data = lines[il].split()
             ik_check = int(data[0])
             ib_check = int(data[1])
             if ik != ik_check-1 or ib != ib_check-1:
-                logger.error("Error: ik(%d!=%d) or ib(%d!=%d)" %(
-                    ik, ik_check-1, ib, ib_check-1))
-                sys.exit()
+                msg = "\n Error in %s" % filename
+                msg += "\n ik(%d!=%d) or ib(%d!=%d)" % (ik, ik_check-1, ib, ib_check-1)
+                msg += "\n " + lines[il]
+                logger.error(msg)
+                return None
+            
             ### multiplicity
             il += 1
             data = lines[il].split()

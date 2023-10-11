@@ -1505,7 +1505,7 @@ class AlamodeCalc():
         line = "Run %s for %s:" % (alamode_type, propt)
         msg += " " + line + "\n"
         msg += " " + "-" * (len(line)) + "\n\n"
-        msg += " Working directory : " + workdir + "\n"
+        msg += " Working directory : " + workdir
         logger.info(msg)
          
         filename = "%s.in" % propt

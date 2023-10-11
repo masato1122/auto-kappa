@@ -9,8 +9,10 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-from typing import Any, Dict, List, Optional, Union
+#from typing import Any, Dict, List, Optional, Union
+from typing import Dict
 from monty.json import MSONable
+import sys
 import warnings
 import re
 import numpy as np
@@ -25,6 +27,12 @@ from auto_kappa.structure.crystal import (
         change_structure_format, 
         get_primitive_structure_spglib
         )
+
+from ase.data import atomic_masses as atomic_masses_ase
+from ase.data import atomic_numbers
+
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import f90nml
@@ -515,8 +523,11 @@ class AnphonInput(MSONable, dict):
             analysis_keys + ['cell', 'kpoint', 'kpmode']
             )
     
-    ## added keys for k-point 
-    kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
+    ### added keys for k-point 
+    ##kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
+    
+    ### atomic massses which are not included in default setting of ALAMODE
+    atoms_no_mass = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Np", "Pu"]
     
     def __init__(self, **kwargs):
         """
@@ -705,7 +716,26 @@ class AnphonInput(MSONable, dict):
                     self['borninfo'] = 'BORNINFO'
         except:
             pass
-
+    
+    def _add_mass_info(self):
+        """ Add mass info """
+        
+        self["mass"] = get_mass_info(self["kd"])
+        
+    def _add_isofact_info(self):
+        """ Add isofact info """
+        
+        out = get_isofact_info(self["kd"])
+        
+        if out is None:
+            isotope_orig = self["isotope"]
+            self["isotope"] = 0
+            msg = "\n Modify ISOTOPE option: %d => 0." % isotope_orig
+            logger.info(msg)
+        else:
+            self["isotope"] = 1
+            self["isofact"] = out
+        
     def to_file(self, filename: str = None):
         """ Make ANPHON input file
         Args
@@ -726,6 +756,23 @@ class AnphonInput(MSONable, dict):
             else:
                 filename = self['mode']+'.in'
         
+        ### add mass and isotope info
+        all_masses_are_given = True
+        for el in self["kd"]:
+            if el in self.atoms_no_mass:
+                all_masses_are_given = False
+        
+        if all_masses_are_given == False:
+            
+            line = "Make an input script"
+            msg = "\n " + line
+            msg += "\n " + "-" * len(line)
+            logger.info(msg)
+            
+            self._add_mass_info()
+            if "isotope" in self:
+                self._add_isofact_info()
+
         ## general parameters
         general_dict = _get_subdict(self, self.general_keys)
         general_nml = f90nml.Namelist({"general": general_dict})
@@ -759,6 +806,71 @@ class AnphonInput(MSONable, dict):
         inp_dict = _read_alamode_input(filename)
         return cls(**inp_dict)
 
+def get_mass_info(elements):
+    """ get mass info 
+    
+    Args
+    =======
+
+    elements : array of string
+        name of elements
+    
+    Return
+    ========
+
+    array of float
+    
+    """
+    msg = "\n Add MASS info.\n"
+    mass_info = []
+    for el in elements:
+        num = atomic_numbers[el]
+        mass = atomic_masses_ase[num]
+        mass_info.append(mass)
+        msg += " %s: %.5f" % (el, mass)
+    logger.info(msg)
+    return mass_info
+
+def get_isofact_info(elements):
+    """ Get isofact info """
+    
+    from auto_kappa.io.isotopes import isotopes
+    
+    msg = "\n Get IFOFACT info."
+    g2_factors = []
+    for el in elements:
+
+        num = atomic_numbers[el]
+        mass1 = atomic_masses_ase[num]
+        
+        ### calc. average mass
+        mave = 0.
+        for num2 in isotopes[num]:
+            mass2 = isotopes[num][num2]['mass']
+            frac = isotopes[num][num2]['composition']
+            mave = mass2 * frac
+        
+        ### check average mass
+        if abs((mave - mass1) / mass1) > 0.1:
+            msg += "\n Could not obtain isotope info for %s." % (el)
+            logger.info(msg)
+            return None
+        
+        ### calc. g2 factor for Tamura model
+        g2 = 0.
+        for num2 in isotopes[num]:
+            mass2 = isotopes[num][num2]["mass"]
+            frac = isotopes[num][num2]['composition']
+            g2 += frac * np.power(1. - mass2 / mave)
+        g2_factors.append(g2)
+    
+    ### output log
+    msg = "\n"
+    for i, el in enumerate(elements):
+        msg += " %s: %.3f " % (el, g2_factors[i])
+    logger.info(msg)
+
+    return g2_factors
 
 def _write_kpoint(params, kpoint=None):
     lines = []
