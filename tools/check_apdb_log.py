@@ -22,23 +22,21 @@ import os.path
 import numpy as np
 from optparse import OptionParser
 import yaml
+import glob
 
 def get_minimum_energy(dir_name):
-    
-    fn_log = dir_name + "/result/log.yaml"
-    if os.path.exists(fn_log) == False:
-        return 0
-    
-    ##
-    with open(fn_log, "r") as yml:
-        config = yaml.safe_load(yml)
-    
-    ##
-    emin_band = config["harm"]["band"]["minimum_frequency"] 
-    emin_dos = config["harm"]["dos"]["minimum_frequency"] 
-    emin = min(emin_band, emin_dos)
-    return emin
+    """ Check minimum frequency """ 
+    from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
 
+    fmin = 1000
+    for kind in ["band", "dos"]:
+        logfile = dir_name + "/harm/bandos/%s.log" % kind
+        if os.path.exists(logfile) == False:
+            return None
+        fmin_each = get_minimum_frequency_from_logfile(logfile)
+        fmin = min(fmin, fmin_each["minimum_frequency"])
+    return fmin
+    
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
     Return
@@ -47,10 +45,9 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     1 : finished at harmonic
     2 : finished at cubic
     """
-    try:
-        emin = get_minimum_energy(dir_name)
-    except Exception:
-        emin = None
+    
+    emin = get_minimum_energy(dir_name)
+    if emin is None:
         return 0
     
     ##
