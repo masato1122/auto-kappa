@@ -33,8 +33,11 @@ def get_minimum_energy(dir_name):
         logfile = dir_name + "/harm/bandos/%s.log" % kind
         if os.path.exists(logfile) == False:
             return None
-        fmin_each = get_minimum_frequency_from_logfile(logfile)
-        fmin = min(fmin, fmin_each["minimum_frequency"])
+        try:
+            fmin_each = get_minimum_frequency_from_logfile(logfile)
+            fmin = min(fmin, fmin_each["minimum_frequency"])
+        except Exception:
+            return None
     return fmin
     
 def check_log_yaml(dir_name, tol_zero=-1e-3):
