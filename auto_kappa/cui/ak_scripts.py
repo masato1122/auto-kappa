@@ -1417,7 +1417,7 @@ def main():
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times
     times, labels = get_times(base_dir)
-
+    
     from auto_kappa.plot.pltalm import plot_times_with_pie
     figname = base_dir + "/result/fig_times.png"
     plot_times_with_pie(times, labels, figname=figname)

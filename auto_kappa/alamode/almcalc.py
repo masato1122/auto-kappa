@@ -1047,7 +1047,7 @@ class AlamodeCalc():
                         nset=nsuggest-1,
                         )
             else:
-                msg = "\n %s already exists\n" % (outfile)
+                msg = "\n %s already exists" % (outfile)
                 logger.info(msg)
         
         logger.info("")
@@ -1831,7 +1831,11 @@ class AlamodeCalc():
         
         dfs = {}
         for i, key in enumerate(keys):
-            dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
+            
+            try:
+                dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
+            except Exception:
+                continue
             
             if i == 0:
                 
@@ -2034,7 +2038,6 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
             msg = "\n"
             msg += " ALM calculation (%s) has been already finished.\n" % (mode)
             msg += " See: %s" % (outfile)
-            msg += "\n"
             logger.info(msg)
             return None
     
