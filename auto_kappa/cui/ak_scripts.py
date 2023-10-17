@@ -838,12 +838,14 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
         flag = _should_rerun_alamode(logfile) 
         
         if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
-            ### if DOS was not caluclated due to a problem, including the 
-            ### excessive memory, DOS is calculated with OpenMP again.
+            ### If phonon property was not caluclated due to a problem, 
+            ### including the excessive memory, 
+            ### run the calculation again with OpenMP again.
             ak_log.rerun_with_omp()
             almcalc.commands['alamode']['anphon_para'] = "omp"
             almcalc.run_alamode(propt=which, neglect_log=neglect_log)
     
+    ### plot band and DOS
     almcalc.plot_bandos()
      
     ### eigenvalues at commensurate points
