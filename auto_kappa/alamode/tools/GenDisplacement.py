@@ -172,10 +172,10 @@ class AlamodeDisplace(object):
 
             if self._verbosity > 0:
                 print(" Displacement mode              : Finite displacement\n")
-                print(" %d displacement pattern are generated from\n"
+                print(" %d displacement patterns are generated from\n"
                       " the given *.pattern_* files" % len(self._pattern))
                 print("")
-
+            
             for pattern in self._pattern:
                 header, disp = self._get_finite_displacement(pattern)
                 self._counter += 1

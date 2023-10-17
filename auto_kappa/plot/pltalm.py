@@ -22,7 +22,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def plot_kappa(dfs, figname='fig_kappa.png',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.5, ms=2.0):
+        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9):
 
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
@@ -51,15 +51,27 @@ def plot_kappa(dfs, figname='fig_kappa.png',
                 label = "${\\rm \\kappa_p^{%s}}$" % direct
             else:
                 label = None
+            
+            ### marker width and size
+            if direct == "ave":
+                alpha = 1.0
+                ms = 2.3
+                lw = 0.5
+            else:
+                alpha = 0.5
+                ms = 2.0
+                lw = 0.3
+            
             ax.plot(xdat, ydat, linestyle='None', lw=lw,
                     marker=markers[jj], markersize=ms,
-                    mfc='none', mew=lw, mec=col, label=label
-                    )
-        
+                    mfc='none', mew=lw, mec=col, label=label,
+                    alpha=alpha)
+         
         ### kp+kc(ave)
         xdat = dfs[klab]['temperature'].values
         ydat = dfs[klab]['ksum_ave'].values
         
+        lw = 0.5
         label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
         ax.plot(xdat, ydat, linestyle='-', lw=lw,
                 marker=None, c=col,
@@ -324,9 +336,13 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
         
         fn = fns[0]
         
-        msg = "\n Read " + fn
+        if i == 0:
+            msg = "\n"
+        else:
+            msg = ""
+        msg += " Read " + fn
         logger.info(msg)
-
+        
         data = np.genfromtxt(fn)
         
         xdat = data[:,0]
