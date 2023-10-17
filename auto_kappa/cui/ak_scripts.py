@@ -832,15 +832,17 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
     almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
     
     ### check DOS file
-    dos_log = almcalc.out_dirs['harm']['bandos'] + "/dos.log"
-    flag = _should_rerun_alamode(dos_log) 
-    
-    if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
-        ### if DOS was not caluclated due to a problem, including the 
-        ### excessive memory, DOS is calculated with OpenMP again.
-        ak_log.rerun_with_omp()
-        almcalc.commands['alamode']['anphon_para'] = "omp"
-        almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
+    for which in ["band", "dos"]:
+        
+        logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % which
+        flag = _should_rerun_alamode(logfile) 
+        
+        if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
+            ### if DOS was not caluclated due to a problem, including the 
+            ### excessive memory, DOS is calculated with OpenMP again.
+            ak_log.rerun_with_omp()
+            almcalc.commands['alamode']['anphon_para'] = "omp"
+            almcalc.run_alamode(propt=which, neglect_log=neglect_log)
     
     almcalc.plot_bandos()
      

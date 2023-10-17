@@ -1518,7 +1518,7 @@ class AlamodeCalc():
         else:
             _nprocs = 1
             _nthreads = self.commands['alamode']['ncores']
-            
+        
         val = run_alamode(filename, logfile, workdir=workdir, 
                 neglect_log=neglect_log,
                 mpirun=self.commands['alamode']['mpirun'], 
@@ -1589,10 +1589,10 @@ class AlamodeCalc():
         else:
             if os.path.exists(fn2):
                 msg = "\n"
-                msg += " %s was overwritten.\n" % (fn2)
+                msg += " %s was overwritten." % (fn2)
             else:
                 msg = "\n"
-                msg += " %s was created.\n" % fn2
+                msg += " %s was created." % fn2
             logger.info(msg)
             shutil.copy(fn1, fn2)
     
