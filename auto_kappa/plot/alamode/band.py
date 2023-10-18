@@ -197,10 +197,16 @@ def get_symmetry_points(bfile):
                 lab = "%s|%s" % (lab0, label_tmp[it+1])
             if abs(kpoints[it] - kpoints[it-1]) < 1e-5:
                 lab = "%s|%s" % (label_tmp[it-1], lab0)
-        if "gamma" in lab.lower() or 'G' in lab:
-            label.append("G")
-        else:
-            label.append("%s"%(lab))
+
+        ### ver.1
+        #if "gamma" in lab.lower() or 'G' in lab:
+        #    label.append("G")
+        #else:
+        #    label.append("%s"%(lab))
+        #
+        ### ver.2
+        lab = lab.upper()
+        label.append(lab.replace("GAMMA", "G"))
     
     ### adjust
     lab_new = []
