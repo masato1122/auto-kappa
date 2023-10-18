@@ -96,7 +96,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         fig_width=4.0, fig_aspect=0.5,
         ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
         fig_labels=[None, None],
-        lw=0.3, lw2=0.5, wspace=0.05, 
+        lw=0.3, lw2=0.6, wspace=0.05,
+        linestyle="-", linestyle2=".",
         dpi=300, col='blue', col2='grey',
         unit='cm', legend_loc='best',
         plot_dos=True, plot_pdos=True, plot_pr=True,
@@ -284,7 +285,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             lab = None
 
         _plot_bands(ax1, band.kpoints, band.frequencies, 
-                col=col, lw=lw, zorder=2, label=lab)
+                col=col, lw=lw, linestyle=linestyle, zorder=2, label=lab)
     
     else:
         # --- coloring fllowing the participation ratio
@@ -355,7 +356,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         
         if 'bands' in filenames2:
             band2 = Band(filename=filenames2['bands'])
-            _plot_bands(ax1, band2.kpoints, band2.frequencies, 
+            _plot_bands(ax1, band2.kpoints, band2.frequencies,
+                    linestyle=linestyle2,
                     col=col2, lw=lw2, zorder=1, label=fig_labels[1])
         
         if 'dos' in filenames2 and plot_dos2:
