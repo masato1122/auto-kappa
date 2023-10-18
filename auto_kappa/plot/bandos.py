@@ -374,7 +374,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     
     return fig
 
-def plot_bands(ax, ks_tmp, frequencies, 
+def _plot_bands(ax, ks_tmp, frequencies, 
         col='blue', lw=0.5, zorder=10, label=None, 
         linestyle="-", marker="None", ms=1, mfc='none',
         **args):
