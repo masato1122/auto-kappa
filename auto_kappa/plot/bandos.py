@@ -260,7 +260,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
                     if "|" in label and fw_each < 0.1:
                         names = lab.split('|')
                         lab = "^{%s}/_{%s}" % (names[0], names[1])
-                    
+                        break
             ###
             #print("%15s => %15s" % (label, lab))
             label_mod.append("${\\rm %s}$" % lab)
