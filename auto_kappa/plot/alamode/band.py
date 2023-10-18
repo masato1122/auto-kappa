@@ -206,7 +206,7 @@ def get_symmetry_points(bfile):
         #
         ### ver.2
         lab = lab.upper()
-        label.append(lab.replace("GAMMA", "G"))
+        label.append(lab)
     
     ### adjust
     lab_new = []
