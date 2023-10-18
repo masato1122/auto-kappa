@@ -250,11 +250,16 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             lab = lab.replace("DELTA", " \\Delta ")
             
             if i < len(labels)-1:
-                dk_each = ksym[i+1] - ksym[i]
-                fw_each = dk_each / dk_all
-                if "|" in label and fw_each < 0.1:
-                    names = lab.split('|')
-                    lab = "^{%s}/_{%s}" % (names[0], names[1])
+                for j in range(2):
+                    if j == 0:
+                        num = i - 1
+                    else:
+                        num = i + 1
+                    dk_each = ksym[num] - ksym[i]
+                    fw_each = dk_each / dk_all
+                    if "|" in label and fw_each < 0.1:
+                        names = lab.split('|')
+                        lab = "^{%s}/_{%s}" % (names[0], names[1])
                     
             ###
             #print("%15s => %15s" % (label, lab))
