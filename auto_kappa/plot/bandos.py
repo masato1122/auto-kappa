@@ -132,8 +132,8 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     yticks : double, default None
     myticks : int, default None
 
-    lw : double, default 0.5
-    lw2 : double
+    lw : double, default 0.3
+    lw2 : double, default 0.5
         line width for the second phonon dispersion
     wspace : double, default 0.05
 
