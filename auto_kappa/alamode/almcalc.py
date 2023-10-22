@@ -1929,13 +1929,22 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             #        cmd.split(), env=os.environ, stdout=f,
             #        stderr=subprocess.PIPE)
             #
-            ### ver.2
+            #### ver.2
+            #proc = subprocess.Popen(
+            #        cmd, shell=True, env=os.environ, stdout=f,
+            #        stderr=subprocess.PIPE)
+            #proc.wait()
+
+            ### ver.3: ohtaka
             proc = subprocess.Popen(
                     cmd, shell=True, env=os.environ, stdout=f,
                     stderr=subprocess.PIPE)
+            output, error = proc.communicate()
+            p_status = proc.wait()
             
-            proc.wait()
-        
+            msg = os.get_cwd() + " " + p_status
+            logger.info(msg)
+
         val = 1
 
     else:
