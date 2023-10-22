@@ -15,6 +15,7 @@ import os.path
 import numpy as np
 import datetime
 import yaml
+import time
 
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa.apdb import ApdbVasp
@@ -844,7 +845,23 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
             ak_log.rerun_with_omp()
             almcalc.commands['alamode']['anphon_para'] = "omp"
             almcalc.run_alamode(propt=which, neglect_log=neglect_log)
-    
+            
+            ### Check the calculation. If the calculation has not run properly.
+            ### Stop the calculation.
+            for iwait in range(5):
+                if _should_rerun_alamode(logfile):
+                    waiting_time = 300
+                    msg = "\n Warning: ALAMODE calculation has not been "\
+                            "finished. Wait for %d seconds..." % waiting_time
+                    logger.error(msg)
+                    time.sleep(waiting_time)
+            
+            if _should_rerun_alamode(logfile):
+                msg = "\n Error: ALAMODE calculation has not been finished. "\
+                        "Stope the job."
+                logger.error(msg)
+                sys.exit()
+
     ### plot band and DOS
     almcalc.plot_bandos()
      
