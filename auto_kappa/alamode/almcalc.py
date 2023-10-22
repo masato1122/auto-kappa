@@ -1942,7 +1942,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             output, error = proc.communicate()
             p_status = proc.wait()
             
-            msg = os.get_cwd() + " " + p_status
+            msg = os.getcwd() + " " + p_status
             logger.info(msg)
 
         val = 1
