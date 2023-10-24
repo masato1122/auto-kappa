@@ -20,6 +20,7 @@ import sys
 import os
 import os.path
 import numpy as np
+import time
 import logging
 
 import ase
@@ -38,6 +39,7 @@ from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
 from auto_kappa.calculator import run_vasp
+from auto_kappa.alamode.memory import get_used_memory
 
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
@@ -1940,15 +1942,25 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             #        cmd, shell=True, env=os.environ, stdout=f,
             #        stderr=subprocess.PIPE)
             #proc.wait()
-
+            
             ### ver.3: ohtaka
+            print(get_used_memory())
             proc = subprocess.Popen(
                     "exec " + cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=subprocess.PIPE)
-            p_status = proc.wait()
             
-            msg = os.getcwd() + " : " + str(p_status)
+            max_memory = 0.
+            while proc.poll() is None:
+                print(get_used_memory())
+                max_memory = max(max_memory, get_used_memory())
+                time.sleep(3)
+            
+            msg = "\n Maximum memory : %.3f GB" % (max_memory / 1e9)
             logger.info(msg)
+            p_status = proc.wait()
+            #msg = os.getcwd() + " : " + str(p_status)
+            #logger.info(msg)
+            sys.exit()
         
         if p_status == 0:
             val = 0

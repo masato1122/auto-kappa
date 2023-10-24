@@ -57,6 +57,7 @@ def main(build_dir):
             install_requires=[
               'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 
               'custodian', 'xmltodict', 'mkl', 'f90nml', 'PyYAML',
+              'psutil', 'platform', 'resource',
               ],
             scripts=scripts_autokappa,
             url='https://github.com/masato1122/auto_kappa.git',
