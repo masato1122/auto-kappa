@@ -1527,7 +1527,13 @@ class AlamodeCalc():
                 command=self.commands['alamode'][alamode_type],
                 )
         
-        if val == 2:
+        if val == 1:
+            msg = " Error: %s might not have been claculated properly." % propt
+            msg += "\n Stop the calculation."
+            logger.error(msg)
+            sys.exit()
+        
+        elif val == 2:
             msg = " %s has been already calculated." % propt
             logger.info(msg)
         
@@ -1944,9 +1950,12 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             
             msg = os.getcwd() + " : " + str(p_status)
             logger.info(msg)
-
-        val = 1
-
+        
+        if p_status == 0:
+            val = 0
+        else:
+            val = 1
+    
     else:
         val = 2
     
