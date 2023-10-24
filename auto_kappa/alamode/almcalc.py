@@ -1942,10 +1942,9 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             #proc.wait()
 
             ### ver.3: ohtaka
-            cmd = "exec " + cmd
             proc = subprocess.Popen(
-                    cmd, shell=True, env=os.environ, stdout=f,
-                    stderr=subprocess.PIPE)
+                    "exec " + cmd, shell=True, env=os.environ, 
+                    stdout=f, stderr=subprocess.PIPE)
             p_status = proc.wait()
             
             msg = os.getcwd() + " : " + str(p_status)
