@@ -1944,23 +1944,22 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             #proc.wait()
             
             ### ver.3: ohtaka
-            print(get_used_memory())
             proc = subprocess.Popen(
                     "exec " + cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=subprocess.PIPE)
             
             max_memory = 0.
             while proc.poll() is None:
-                print(get_used_memory())
+                #print(get_used_memory())
                 max_memory = max(max_memory, get_used_memory())
-                time.sleep(3)
+                time.sleep(5)
             
-            msg = "\n Maximum memory : %.3f GB" % (max_memory / 1e9)
+            msg = "\n Maximum used memory : %.3f GB" % (max_memory / 1e9)
             logger.info(msg)
             p_status = proc.wait()
             #msg = os.getcwd() + " : " + str(p_status)
             #logger.info(msg)
-            sys.exit()
+            #sys.exit()
         
         if p_status == 0:
             val = 0
