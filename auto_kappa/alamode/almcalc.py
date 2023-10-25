@@ -38,7 +38,7 @@ from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
-from auto_kappa.calculator import run_vasp
+from auto_kappa.calculator import run_vasp, backup_vasp
 from auto_kappa.alamode.memory import get_used_memory
 
 from auto_kappa.io.vasp import write_born_info
@@ -989,12 +989,16 @@ class AlamodeCalc():
             #write_output_yaml(self.yamlfile_for_outdir, name, info)
             
             ### check
+            filename = outdir + "/vasprun.xml"
             if wasfinished(outdir):
-                msg = " %s: skipped" % outdir
-                logger.info(msg)
-                num_done += 1
-                continue
-            
+                if are_forces_available(filename):
+                    msg = " %s: skipped" % outdir
+                    logger.info(msg)
+                    num_done += 1
+                    continue
+                else:
+                    out = backup_vasp(outdir)
+             
             ## set output directory
             calculator.directory = outdir
             
@@ -1015,7 +1019,21 @@ class AlamodeCalc():
                 
             if calculate_forces:
                 
-                run_vasp(calculator, structure, method='custodian')
+                count = 0
+                while count < 3:
+                    
+                    run_vasp(calculator, structure, method='custodian')
+                    
+                    ### check forces
+                    filename = calculator.directory + "/vasprun.xml"
+                    if are_forces_available(filename):
+                        break
+                    else:
+                        ### backup the previous result
+                        backup_vasp(calculator.directory)
+                    
+                    count += 1
+                
                 num_done += 1
             
             logger.info(" %s" % calculator.directory)
@@ -2221,6 +2239,24 @@ def _read_kappa(dir_kappa, prefix):
             df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
     
     return df
+
+def are_forces_available(filename):
+    """ Check vasprun.xml file. If forces are available, return True, while if
+    not, return False. """
+    
+    import ase.io
+    try:
+        atoms = ase.io.read(filename, format='vasp-xml')
+        forces = atoms.get_forces()
+        n1 = len(forces)
+        for i1 in range(n1):
+            for j in range(3):
+                if isinstance(forces[i1,j], float) == False:
+                    return False
+        ##
+        return True
+    except Exception:
+        return False
 
 
 #def get_finite_displacements(structure, order, cutoffs=None, nbody=None, magnitude=None):

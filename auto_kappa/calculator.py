@@ -14,6 +14,8 @@ import sys
 import os.path
 import numpy as np
 import re
+import tarfile
+import glob
 
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
@@ -210,4 +212,45 @@ def get_enmax(ppp_list):
     ##
     enmaxes = np.asarray(enmaxes)
     return np.max(enmaxes)
+
+def backup_vasp(
+        directory,
+        filenames = {
+            "INCAR", "KPOINTS", "POSCAR", "OUTCAR", "CONTCAR", "OSZICAR",
+            "vasprun.xml", "vasp.out", "std_err.txt"},
+        prefix="error"):
+    """
+    Backup files to a tar.gz file. Used, for example, in backing up the
+    files of an errored run before performing corrections.
+    
+    This module is originally in custodian.utils.
+    
+    Args:
+        filenames ([str]): List of files to backup. Supports wildcards, e.g.,
+            *.*.
+        prefix (str): prefix to the files. Defaults to error, which means a
+            series of error.1.tar.gz, error.2.tar.gz, ... will be generated.
+    """
+    ### move to the new directory
+    cwd = os.getcwd()
+    if os.path.exists(directory):
+        os.chdir(directory)
+    else:
+        msg = "\n Error: cannot find %s" % directory
+        logger.error(msg)
+        return None
+    
+    num = max([0] + [int(f.split(".")[1]) for f in glob.glob(f"{prefix}.*.tar.gz")])
+    filename = f"{prefix}.{num + 1}.tar.gz"
+    
+    msg = " Backing up run to %s" % filename
+    logging.info(msg)
+    with tarfile.open(filename, "w:gz") as tar:
+        for fname in filenames:
+            for f in glob.glob(fname):
+                tar.add(f)
+    
+    ### go back to the original directory
+    os.chdir(cwd)
+    return 0
 
