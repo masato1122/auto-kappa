@@ -1974,7 +1974,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                 if proc.poll() is not None:
                     break
             
-            msg = "\n Maximum used memory : %.3f GB" % (max_memory / 1e9)
+            msg = "\n Maximum memory usage : %.3f GB" % (max_memory / 1e9)
             logger.info(msg)
             status = proc.poll()
             #p_status = proc.wait()
