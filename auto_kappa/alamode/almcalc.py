@@ -1547,15 +1547,15 @@ class AlamodeCalc():
                 command=self.commands['alamode'][alamode_type],
                 )
         
-        if val == 1:
-            msg = " Error: %s might not have been claculated properly." % propt
+        if val == -1:
+            msg = " %s has been already calculated." % propt
+            logger.info(msg)
+            
+        elif val == 1:
+            msg = "\n Error: %s might not have been claculated properly." % propt
             msg += "\n Stop the calculation."
             logger.error(msg)
             sys.exit()
-        
-        elif val == 2:
-            msg = " %s has been already calculated." % propt
-            logger.info(msg)
         
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
@@ -1948,6 +1948,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
         ## run the job!!
+        status = None
         with open(logfile, 'w') as f:
             
             ### ver.1
@@ -1967,33 +1968,29 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                     stdout=f, stderr=subprocess.PIPE)
             
             max_memory = 0.
-            while proc.poll() is None:
-                #print(get_used_memory())
+            while True:
                 max_memory = max(max_memory, get_used_memory())
-                time.sleep(5)
+                time.sleep(10)
+                if proc.poll() is not None:
+                    break
             
             msg = "\n Maximum used memory : %.3f GB" % (max_memory / 1e9)
             logger.info(msg)
-            p_status = proc.wait()
+            status = proc.poll()
+            #p_status = proc.wait()
             #msg = os.getcwd() + " : " + str(p_status)
             #logger.info(msg)
             #sys.exit()
         
-        if p_status == 0:
-            val = 0
-        else:
-            val = 1
-    
     else:
-        val = 2
+        status = -1
     
     #### Return to the original directory
     ## sometimes this way leads to a problem.
     #os.environ.pop('OMP_NUM_THREADS', None)
     os.environ["OMP_NUM_THREADS"] = "1"
     os.chdir(dir_init)
-    
-    return val
+    return status
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     """ 
