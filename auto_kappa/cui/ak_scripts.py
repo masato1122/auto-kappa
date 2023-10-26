@@ -803,7 +803,9 @@ def analyze_harmonic_with_larger_supercells(
     return almcalc_new
 
 def analyze_harmonic_properties(
-        almcalc, calculator, neglect_log=False, max_num_corrections=5):
+        almcalc, calculator, neglect_log=False, max_num_corrections=5,
+        deltak=0.01, reciprocal_density=1500,
+        ):
     """ Analyze harmonic FCs and phonon properties.
 
     Args
@@ -811,6 +813,12 @@ def analyze_harmonic_properties(
     almcalc : AlamodeCalc obj
 
     calculator : ASE calculator for VASP
+    
+    deltak : float
+        resolution of phonon dispersion
+
+    reciprocal_density : float
+        resolution of DOS
     
     """
     logger = logging.getLogger(__name__)
@@ -822,13 +830,29 @@ def analyze_harmonic_properties(
     ### calculate forces
     almcalc.calc_forces(order=1, calculator=calculator)
     
+    _ncores_given = almcalc.commands['alamode']['ncores']
+    _para_given = almcalc.commands['alamode']['anphon_para']
     for propt in ["fc2", "band", "dos"]:
         
         _ncores_orig = almcalc.commands['alamode']['ncores']
         _para_orig = almcalc.commands['alamode']['anphon_para']
-
+        
         ### make the input script for ALAMODE
-        almcalc.write_alamode_input(propt=propt, deltak=0.01)
+        if propt == "band":
+            
+            deltak = 0.01
+            almcalc.write_alamode_input(propt=propt, deltak=deltak)
+        
+        elif propt == "dos":
+            
+            nkts = get_automatic_kmesh(
+                    almcalc.primitive, 
+                    reciprocal_density=reciprocal_density)
+            almcalc.write_alamode_input(propt=propt, nkts=nkts)
+        
+        else:
+            
+            almcalc.write_alamode_input(propt=propt)
         
         ### get log file name
         if propt == "fc2":
@@ -899,10 +923,13 @@ def analyze_harmonic_properties(
             msg += "\n Stop the job."
             logger.error(msg)
             sys.exit()
-            
+        
         ###
         almcalc.commands['alamode']['ncores'] = _ncores_orig
         almcalc.commands['alamode']['anphon_para'] = _para_orig
+    
+    almcalc.commands['alamode']['ncores'] = _ncores_given
+    almcalc.commands['alamode']['anphon_para'] = _para_given
     
     ### plot band and DOS
     almcalc.plot_bandos()
