@@ -944,7 +944,7 @@ def get_kpoint_path(primitive, deltak=0.01):
         k0 = np.asarray(kpath['point_coords'][each[0]])
         kvec = k1 - k0 
         kleng = np.linalg.norm(kvec)
-        nk = int(np.ceil(kleng / deltak))
+        nk = max(int(np.ceil(kleng / deltak)), 3)
         kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
     return kpoints
 

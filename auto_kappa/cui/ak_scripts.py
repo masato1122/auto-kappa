@@ -776,8 +776,9 @@ def analyze_harmonic_with_larger_supercells(
         calc_force = apdb.get_calculator('force', kpts=kpts)
         
         ### analyze phonon properties with a supercell
-        analyze_harmonic_properties(
-                almcalc_new, calc_force, neglect_log=neglect_log)
+        #analyze_harmonic_properties(
+        #        almcalc_new, calc_force, neglect_log=neglect_log)
+        analyze_harmonic_properties(almcalc_new, calc_force)
         
         ### Finish
         if almcalc_new.minimum_frequency > negative_freq:
@@ -801,7 +802,8 @@ def analyze_harmonic_with_larger_supercells(
     
     return almcalc_new
 
-def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
+def analyze_harmonic_properties(
+        almcalc, calculator, neglect_log=False, max_num_corrections=5):
     """ Analyze harmonic FCs and phonon properties.
 
     Args
@@ -820,51 +822,91 @@ def analyze_harmonic_properties(almcalc, calculator, neglect_log=False):
     ### calculate forces
     almcalc.calc_forces(order=1, calculator=calculator)
     
-    ### calculate harmonic FCs
-    almcalc.write_alamode_input(propt='fc2')
-    almcalc.run_alamode(propt='fc2', neglect_log=neglect_log)
-     
-    ### calculate band
-    almcalc.write_alamode_input(propt='band')
-    almcalc.run_alamode(propt='band', neglect_log=neglect_log)
-    
-    ### calculate DOS
-    almcalc.write_alamode_input(propt='dos')
-    almcalc.run_alamode(propt='dos', neglect_log=neglect_log)
-    
-    ### check DOS file
-    for which in ["band", "dos"]:
+    for propt in ["fc2", "band", "dos"]:
         
-        logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % which
-        flag = _should_rerun_alamode(logfile) 
-        
-        if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
-            ### If phonon property was not caluclated due to a problem, 
-            ### including the excessive memory, 
-            ### run the calculation again with OpenMP again.
-            ak_log.rerun_with_omp()
-            almcalc.commands['alamode']['anphon_para'] = "omp"
-            almcalc.run_alamode(propt=which, neglect_log=neglect_log)
-            
-            ### Check the calculation. If the calculation has not run properly.
-            ### Stop the calculation.
-            for iwait in range(5):
-                if _should_rerun_alamode(logfile):
-                    waiting_time = 300
-                    msg = "\n Warning: ALAMODE calculation has not been "\
-                            "finished. Wait for %d seconds..." % waiting_time
-                    logger.error(msg)
-                    time.sleep(waiting_time)
-            
-            if _should_rerun_alamode(logfile):
-                msg = "\n Error: ALAMODE calculation has not been finished. "\
-                        "Stope the job."
-                logger.error(msg)
-                sys.exit()
+        _ncores_orig = almcalc.commands['alamode']['ncores']
+        _para_orig = almcalc.commands['alamode']['anphon_para']
 
+        ### make the input script for ALAMODE
+        almcalc.write_alamode_input(propt=propt, deltak=0.01)
+        
+        ### get log file name
+        if propt == "fc2":
+            logfile = almcalc.out_dirs['harm']['force'] + "/%s.log" % propt
+        else:
+            logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % propt
+        
+        count = 0
+        has_error = False
+        while True:
+
+            if count == 0:
+                neglect_log = 0
+            else:
+                neglect_log = 1
+            
+            ### calculate phonon property
+            almcalc.run_alamode(propt=propt, neglect_log=neglect_log)
+            count += 1 
+            
+            ### check log file
+            flag = _should_rerun_alamode(logfile) 
+            
+            ### check band
+            if propt == "band":
+                file_band = (
+                        almcalc.out_dirs['harm']['bandos'] + 
+                        "/%s.bands" % almcalc.prefix)
+                flag = _should_rerun_band(file_band)
+            
+            ### the property has been calculated properly.
+            if flag == False:
+                break
+            
+            ### decreasing step of the number of OMP
+            ncores_step = max(int(_ncores_orig/(max_num_corrections-2)), 1)
+            
+            ### modify the MPI and OpenMPI conditions or finish the job
+            has_error = False
+            if count == 1:
+                
+                ### Change to OMP parallelization
+                ak_log.rerun_with_omp()
+                almcalc.commands['alamode']['anphon_para'] == "omp"
+            
+            elif count > 1 and count < max_num_corrections:
+                
+                ### modify the number of threads
+                ncores = _ncores_orig - ncores_step * (count - 1)
+                
+                if ncores <= 0:
+                    has_error = True
+                    break
+                
+                almcalc.commands['alamode']['ncores'] = ncores
+                msg = "\n Rerun the ALAMODE job with OMP_NUM_THREADS = %d" % ncores
+                logger.error(msg)
+            
+            elif count == max_num_corrections:
+                has_error = True
+                break
+            else:
+                has_error = True
+                break
+        
+        if has_error:
+            msg = "\n Error: ALAMODE job has not been finished properly."
+            msg += "\n Stop the job."
+            logger.error(msg)
+            sys.exit()
+            
+        ###
+        almcalc.commands['alamode']['ncores'] = _ncores_orig
+        almcalc.commands['alamode']['anphon_para'] = _para_orig
+    
     ### plot band and DOS
     almcalc.plot_bandos()
-     
+    
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
@@ -916,6 +958,26 @@ def _should_rerun_alamode(logfile):
         if _alamode_finished(logfile) == False:
             return True
     return False
+
+def _should_rerun_band(filename):
+    """ Check phonon dispersion calculated with ALAMODE
+    Args
+    ======
+
+    filename : string
+        alamode band file (***.bands)
+    
+    """
+    data = np.genfromtxt(filename)
+    data = data[:,1:]
+    n1 = len(data)
+    n2 = len(data[0])
+    eigenvalues = data.reshape(n1*n2)
+    nan_data = eigenvalues[np.isnan(eigenvalues)]
+    if len(nan_data) == 0:
+        return False
+    else:
+        return True
 
 
 def calculate_thermal_conductivities(
@@ -1035,7 +1097,8 @@ def analyze_phonon_properties(
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
     ###
-    analyze_harmonic_properties(almcalc, calc_force, neglect_log=neglect_log)
+    #analyze_harmonic_properties(almcalc, calc_force, neglect_log=neglect_log)
+    analyze_harmonic_properties(almcalc, calc_force)
      
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq:

@@ -1073,12 +1073,13 @@ class AlamodeCalc():
         logger.info("")
     
     def write_alamode_input(
-            self, propt=None, order=None, kpts=[15,15,15],
+            self, propt=None, order=None, 
+            deltak=0.01, kpts=[15,15,15],
             outdir=None,
             **kwargs
             ):
         """ Write Anphon Input
-
+        
         Args
         -----
         propt : string
@@ -1090,6 +1091,9 @@ class AlamodeCalc():
         outdir : string
             should be given to use harmonic and cubic FCs obtained using
             supercells of different sizes
+        
+        deltak : float
+            resolution of phonon dispersion [0.01]
         
         """
         ### get alamode_type and mode
@@ -1278,7 +1282,7 @@ class AlamodeCalc():
         filename = dir_work + '/' + propt + '.in'
         if propt == 'band':
             
-            inp.set_kpoint(deltak=0.01)
+            inp.set_kpoint(deltak=deltak)
         
         elif propt == 'dos':
             
@@ -1507,7 +1511,7 @@ class AlamodeCalc():
             elif order > 2:
                 workdir = self.out_dirs['higher']['suggest']
             else:
-                msg = "\n Error: order must be gien properly."
+                msg = "\n Error: order must be given properly."
                 logger.error(msg)
                 sys.exit()
         
@@ -1532,7 +1536,8 @@ class AlamodeCalc():
         logfile = propt + '.log'
         
         ## prepare command and environment
-        if alamode_type == 'anphon' and self.commands['alamode']['anphon_para'] == 'mpi':
+        if (alamode_type == 'anphon' and 
+                self.commands['alamode']['anphon_para'] == 'mpi'):
             _nprocs = self.commands['alamode']['ncores']
             _nthreads = 1
         else:
@@ -1551,11 +1556,11 @@ class AlamodeCalc():
             msg = " %s has been already calculated." % propt
             logger.info(msg)
             
-        elif val == 1:
-            msg = "\n Error: %s might not have been claculated properly." % propt
-            msg += "\n Stop the calculation."
-            logger.error(msg)
-            sys.exit()
+        #elif val == 1:
+        #    msg = "\n Error: %s might not have been claculated properly." % propt
+        #    msg += "\n Stop the calculation."
+        #    logger.error(msg)
+        #    sys.exit()
         
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
@@ -2018,9 +2023,19 @@ def _read_frequency_range(filename, format='anphon'):
     """ read minimum and maximum frequencies from .bands file created by anphon 
     """
     if format == 'anphon':
+        
         data = np.genfromtxt(filename)
-        fmax = np.max(data[:,-1])
-        fmin = np.min(data[:,1])
+        
+        fmax = np.nan
+        fmin = np.nan
+        for idx in [-1, 1]:
+            branch = data[:,idx]
+            branch = branch[~np.isnan(branch)]
+            if idx == -1:
+                fmax = np.max(branch)
+            elif idx == 1:
+                fmin = np.min(branch)
+        
         return fmin, fmax
     else:
         msg = " Error: %s is not supported yet." % format
