@@ -939,7 +939,7 @@ def analyze_harmonic_properties(
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
-    almcalc.run_alamode(propt='evec_commensurate', neglect_log=1)
+    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
     
 def calculate_cubic_force_constants(
         almcalc, calculator,
