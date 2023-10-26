@@ -1969,7 +1969,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
             
             ### ver.3: ohtaka
             proc = subprocess.Popen(
-                    "exec " + cmd, shell=True, env=os.environ, 
+                    cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=subprocess.PIPE)
             
             max_memory = 0.
