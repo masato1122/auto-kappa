@@ -39,7 +39,7 @@ from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
 from auto_kappa.calculator import run_vasp, backup_vasp
-from auto_kappa.alamode.memory import get_used_memory
+#from auto_kappa.alamode.memory import get_used_memory
 
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
@@ -1972,15 +1972,37 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                     cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=subprocess.PIPE)
             
-            max_memory = 0.
+            mem_max = -1
             while True:
-                max_memory = max(max_memory, get_used_memory())
-                time.sleep(10)
+                
+                ##mem = get_used_memory()
+                
                 if proc.poll() is not None:
                     break
+                
+                ### get memory info if available
+                mem_percentage = 0.
+                try:
+                    import psutil
+                    mem_info = psutil.virtual_memory()
+                    mem_max = max(mem_max, mem_info.used)
+                    mem_tot = mem_info.total
+                    mem_percentage = mem_info.percentage
+                    
+                    if mem_percentage > 90.:
+                        logger.info("\n Caution: memory usage is %.2f%%" % (
+                            mem_info.percentage))
+                        break
+                
+                except Exception:
+                    pass
+                
+                time.sleep(10)
             
-            msg = "\n Maximum memory usage : %.3f GB" % (max_memory / 1e9)
-            logger.info(msg)
+            if mem_max > 0.:
+                msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
+                logger.info(msg)
+            
             status = proc.poll()
             #p_status = proc.wait()
             #msg = os.getcwd() + " : " + str(p_status)

@@ -830,12 +830,12 @@ def analyze_harmonic_properties(
     ### calculate forces
     almcalc.calc_forces(order=1, calculator=calculator)
     
-    _ncores_given = almcalc.commands['alamode']['ncores']
-    _para_given = almcalc.commands['alamode']['anphon_para']
+    _ncores_orig = almcalc.commands['alamode']['ncores']
+    _para_orig = almcalc.commands['alamode']['anphon_para']
     for propt in ["fc2", "band", "dos"]:
         
-        _ncores_orig = almcalc.commands['alamode']['ncores']
-        _para_orig = almcalc.commands['alamode']['anphon_para']
+        _ncores_tmp = almcalc.commands['alamode']['ncores']
+        _para_tmp = almcalc.commands['alamode']['anphon_para']
         
         ### make the input script for ALAMODE
         if propt == "band":
@@ -876,7 +876,7 @@ def analyze_harmonic_properties(
             ### check log file
             flag = _should_rerun_alamode(logfile) 
             
-            ### check band
+            ### check phonon band
             if propt == "band":
                 file_band = (
                         almcalc.out_dirs['harm']['bandos'] + 
@@ -888,7 +888,7 @@ def analyze_harmonic_properties(
                 break
             
             ### decreasing step of the number of OMP
-            ncores_step = max(int(_ncores_orig/(max_num_corrections-2)), 1)
+            #ncores_step = max(int(_ncores_orig/(max_num_corrections-2)), 1)
             
             ### modify the MPI and OpenMPI conditions or finish the job
             has_error = False
@@ -901,7 +901,10 @@ def analyze_harmonic_properties(
             elif count > 1 and count < max_num_corrections:
                 
                 ### modify the number of threads
-                ncores = _ncores_orig - ncores_step * (count - 1)
+                #ncores = _ncores_orig - ncores_step * (count - 1)
+                ncores /= 2 
+                if ncores > 1:
+                    ncores += int(ncores % 2)
                 
                 if ncores <= 0:
                     has_error = True
@@ -910,11 +913,11 @@ def analyze_harmonic_properties(
                 almcalc.commands['alamode']['ncores'] = ncores
                 msg = "\n Rerun the ALAMODE job with OMP_NUM_THREADS = %d" % ncores
                 logger.error(msg)
+                
+                if ncores == 1:
+                    count = max_num_corrections
             
-            elif count == max_num_corrections:
-                has_error = True
-                break
-            else:
+            elif count >= max_num_corrections:
                 has_error = True
                 break
         
@@ -925,11 +928,11 @@ def analyze_harmonic_properties(
             sys.exit()
         
         ###
-        almcalc.commands['alamode']['ncores'] = _ncores_orig
-        almcalc.commands['alamode']['anphon_para'] = _para_orig
+        almcalc.commands['alamode']['ncores'] = _ncores_tmp
+        almcalc.commands['alamode']['anphon_para'] = _para_tmp
     
-    almcalc.commands['alamode']['ncores'] = _ncores_given
-    almcalc.commands['alamode']['anphon_para'] = _para_given
+    almcalc.commands['alamode']['ncores'] = _ncores_orig
+    almcalc.commands['alamode']['anphon_para'] = _para_orig
     
     ### plot band and DOS
     almcalc.plot_bandos()

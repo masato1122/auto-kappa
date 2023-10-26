@@ -35,7 +35,7 @@ def _get_used_memory_psutil():
     import psutil
     mem_percent = psutil.virtual_memory().percent
     if mem_percent > 80:
-        msg = "\n Memory used percentage : %.1f%%" % mem_percent
+        msg = "\n Warning: memory usage percentage : %.1f%%" % mem_percent
         logger.warning(msg)
         
     mem = psutil.virtual_memory().used     ## byte
@@ -46,12 +46,13 @@ def _get_used_memory_resource():
     import platform
     import resource
     system = platform.system()
-    r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    if system == "Darwin":
-        mem = r / 1024 / 1024
-    else:
-        mem = r / 1024
-    return mem
+    #r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    #if system == "Darwin":
+    #    mem = r / 1024 / 1024
+    #else:
+    #    mem = r / 1024
+    #return mem
+    return None
 
 #print("psutil  :", _get_used_memory_psutil())
 #print("resource:", _get_used_memory_resource())
