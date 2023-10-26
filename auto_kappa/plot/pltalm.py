@@ -11,6 +11,8 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
+import os
+import time
 
 import matplotlib
 matplotlib.use('Agg')
@@ -81,11 +83,7 @@ def plot_kappa(dfs, figname='fig_kappa.png',
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=5, alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    
-    msg = " Output " + figname
-    logger.info(msg)
-    
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def _get_log_range(vmin, vmax, space=0.05):
@@ -165,10 +163,7 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
     set_axis(ax, xscale=xscale, yscale='log')
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    
-    msg = " Output " + figname
-    logger.info(msg)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return 0
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
@@ -230,10 +225,7 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    
-    msg = " Output " + figname
-    logger.info(msg)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def plot_cumulative_kappa(dfs, 
@@ -302,10 +294,7 @@ def plot_cumulative_kappa(dfs,
     ax.tick_params(labelright=False, right=False, which='both')
     ax2.tick_params(labelleft=False, left=False, which='both')
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    
-    msg = " Output " + figname
-    logger.info(msg)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def plot_cvsets(directory='.', figname='fig_cvsets.png',
@@ -401,10 +390,7 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
     set_axis(ax, xscale='log')
     set_legend(ax, fs=6, alpha=0.5)
     
-    if figname is not None:
-        fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-        msg = "\n Output " + figname
-        logger.info(msg)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def _get_recommended_alpha(filename):
@@ -443,10 +429,40 @@ def plot_times_with_pie(times, labels, figname="fig_times.png",
     leg.set_bbox_to_anchor([0.9, 0.5])
     leg.get_frame().set_alpha(0.5)
     leg.get_frame().set_linewidth(0.2)
-
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     
-    msg = " Output " + figname
-    logger.info(msg)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
+
+def savefigure(fig, figname, dpi=300, bbox_inches="tight", max_waiting_time=300):
+    """ Save figure  """
+    
+    if figname is None:
+        return -1
+    
+    fig.savefig(figname, dpi=dpi, bbox_inches=bbox_inches)
+    
+    count = 0
+    each_waiting_time = 5
+    max_num_wait = int(max_waiting_time / each_waiting_time)
+    
+    has_error = False
+    while True:
+        if os.path.exists(figname):
+            break
+        else:
+            time.sleep(each_waiting_time)
+        count += 1
+        if count == max_num_wait:
+            has_error = True
+            break
+    
+    if has_error:
+        msg = "\n Error: %s might not be created." % figname
+        logger.error(msg)
+        sys.exit()
+    else:
+        msg = " Output " + str(figname)
+        logger.info(msg)
+    
+    return 0
 
