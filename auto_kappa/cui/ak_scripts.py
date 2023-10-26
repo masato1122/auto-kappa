@@ -861,6 +861,7 @@ def analyze_harmonic_properties(
             logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % propt
         
         count = 0
+        ncores = _ncores_tmp
         has_error = False
         while True:
 
@@ -902,7 +903,7 @@ def analyze_harmonic_properties(
                 
                 ### modify the number of threads
                 #ncores = _ncores_orig - ncores_step * (count - 1)
-                ncores /= 2 
+                ncores /= 2
                 if ncores > 1:
                     ncores += int(ncores % 2)
                 
