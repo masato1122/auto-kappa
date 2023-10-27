@@ -55,6 +55,8 @@ class AkLog():
     def out(self):
         return self._out
     
+    #def set_authors(self):
+
     def write_yaml(self, outfile=None):
         if outfile is None:
             outfile = self.directory+'/'+out_dirs['result']+'/log.yaml'

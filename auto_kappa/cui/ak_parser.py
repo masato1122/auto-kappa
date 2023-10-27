@@ -172,6 +172,12 @@ def get_parser():
             default=0, 
             help="Calculate harmonic properties only (0.No, 1.Yes) [0]")
     
+    ### author
+    parser.add_option("--authors", dest="authors", type="string",
+            default=None, help="authors' name (A^1, B^1, C^2)")
+    parser.add_option("--affiliations", dest="affiliations", type="string",
+            default=None, help="affiliation (1. Univ. 1, 2. Univ. 2)")
+    
     (options, args) = parser.parse_args()
     
     return options

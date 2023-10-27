@@ -1266,14 +1266,6 @@ def main():
     ### Start auto-kappa
     start_autokappa()
     
-    ### memory check
-    if _use_omp_for_anphon(base_dir):
-        if ak_params["anphon_para"] != "omp":
-            msg = "\n"
-            msg += " Modify anphon_para option to \"omp\".\n"
-            logger.info(msg)
-            ak_params["anphon_para"] = "omp"
-    
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
@@ -1285,6 +1277,24 @@ def main():
             for k2 in values1.keys():
                 values2 = values1[k2]
                 out_dirs[k1][k2] = base_dir + '/' + values2
+    
+    #### authors
+    #if "authors" in ak_params.keys():
+    #    msg = "\n Authors:"
+    #    msg += "\n ========"
+    #    msg += "\n Authors      : %s" % ak_params["authors"]
+    #    if "affiliations" in ak_params.keys():
+    #        msg += "\n Affiliations : %s" % ak_params["affiliations"]
+    #    logger.info(msg)
+
+    ### memory check
+    if _use_omp_for_anphon(base_dir):
+        if ak_params["anphon_para"] != "omp":
+            msg = "\n"
+            msg += " Change anphon_para option to \"omp\".\n"
+            logger.info(msg)
+            ak_params["anphon_para"] = "omp"
+    
     
     ######################
     ### Adjust options ###

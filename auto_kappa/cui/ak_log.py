@@ -47,7 +47,7 @@ def symmetry_error(spg_init, spg_fin):
 def rerun_with_omp():
     
     logger = logging.getLogger(__name__)
-    msg = "\n Modify the parallel method from MPI to OpenMP and rerun the "\
+    msg = "\n Change the parallel method from MPI to OpenMP and rerun the "\
             "calculation."
     logger.info(msg)
 
