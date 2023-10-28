@@ -931,15 +931,18 @@ class AlamodeCalc():
             #
             ### ver.2
             nrandom = int(frac_nrandom * nfcs / natoms)
-             
-            ngenerated = max(5, nrandom)
             
-            msg = "\n"
-            msg += " Maximum limit of the number of suggested patterns : %d\n" % (nmax_suggest)
+            ngen_min = 10
+            ngenerated = max(ngen_min, nrandom)
+            
+            msg  = "\n Maximum limit of the number of suggested patterns : %d" % (nmax_suggest)
+            msg += "\n The number of suggested patterns exceeds the maximum limit."
             msg += "\n"
-            msg += " Number of suggested patterns exceeds the maximum limit.\n"
-            msg += "\n"
-            msg += " Fractional number of the random patterns : %.3f\n" % (frac_nrandom)
+            msg += "\n Number of FCs (Nfcs)     : %d" % (nfcs)
+            msg += "\n Number of atoms (Natoms) : %d" % (natoms)
+            msg += "\n Fractional number of the random patterns (frac) : %.3f" % (frac_nrandom)
+            msg += "\n Number of the generated random patterns (Ngen)  : %d" % (ngenerated)
+            msg += "\n Ngen = max(%d, int(frac * Nfcs / Natoms))" % (ngen_min)
             logger.info(msg)
              
             if order == 2:

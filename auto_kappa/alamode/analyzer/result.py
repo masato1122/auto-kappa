@@ -446,6 +446,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
                 msg = "\n Error in %s" % filename
                 msg += "\n ik(%d!=%d) or ib(%d!=%d)" % (ik, ik_check-1, ib, ib_check-1)
                 msg += "\n " + lines[il]
+                msg += "\n Thermal conductivity may need to be calculated again. "
                 logger.error(msg)
                 return None
             
