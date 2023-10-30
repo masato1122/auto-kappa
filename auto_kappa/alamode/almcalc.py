@@ -728,7 +728,7 @@ class AlamodeCalc():
             self, displacement_mode: None,
             file_pattern=None, 
             #
-            file_evec=None, number_of_displacements=1, temperature=500., 
+            file_evec=None, number_of_displacements=None, temperature=500., 
             classical=False,
             ):
         """ Return displacements
@@ -764,8 +764,7 @@ class AlamodeCalc():
         msg = "\n"
         msg += " Generate displacements with an Alamode tool\n"
         msg += " Displacement mode : %s\n" % displacement_mode
-        msg += " %d patterns will be generated.\n" % (number_of_displacements)
-        msg += "\n"
+        #msg += " %d patterns will be generated.\n" % (number_of_displacements)
         logger.info(msg)
         
         if displacement_mode == 'fd':
@@ -1001,7 +1000,7 @@ class AlamodeCalc():
                     continue
                 else:
                     out = backup_vasp(outdir)
-             
+            
             ## set output directory
             calculator.directory = outdir
             
@@ -1023,7 +1022,8 @@ class AlamodeCalc():
             if calculate_forces:
                 
                 count = 0
-                while count < 3:
+                max_num_try = 3
+                while True:
                     
                     run_vasp(calculator, structure, method='custodian')
                     
@@ -1036,6 +1036,12 @@ class AlamodeCalc():
                         backup_vasp(calculator.directory)
                     
                     count += 1
+
+                    if count == max_num_try:
+                        msg = " Error: "\
+                                "atomic forces could be calculated properly."
+                        logger.error(msg)
+                        sys.exit()
                 
                 num_done += 1
             
