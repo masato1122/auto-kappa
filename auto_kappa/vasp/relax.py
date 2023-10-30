@@ -205,8 +205,8 @@ class StrictRelaxation():
         bm = BirchMurnaghan(Vs, Es)
         bm.fit()
         
-        plt = bm.plot().savefig(figname, bbox_inches='tight')
-        logger.info(" Output %s" % figname)
+        from auto_kappa.plot.fitting import plot_fitting_result
+        fig = plot_fitting_result(bm, figname=figname)
     
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
