@@ -8,7 +8,9 @@ output_directories = {
             'force': 'harm/force',               ## FC2 with finite displacement
             'bandos': 'harm/bandos',
             'evec' : 'harm/evec',
+            'pes'  : 'harm/pes',
             },
+        ## cubic FCs
         'cube':{
             'suggest':  'cube/suggest',
             'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
@@ -33,15 +35,14 @@ output_directories = {
 output_files = {
         'harm_dfset' : 'DFSET.harm',
         'harm_xml'   : "FC2.xml",
-        #'harm_xml'   : "FCs_harm.xml",
         #
         #'cube_dfset' : 'DFSET.cube',       ## not used anymore
         #'cube_xml'   : "FCs_cube.xml",     ## not used anymore
         #
-        #'cube_fd_xml'   : "FC3_cube_fd.xml",
+        #'cube_fd_xml'     : "FC3_cube_fd.xml",
         #'cube_lasso_xml'  : "FC3_cube_lasso.xml",
-        'cube_fd_dfset' : 'DFSET.cube_fd',
-        'cube_fd_xml'   : "FC3_fd.xml",
+        'cube_fd_dfset'   : 'DFSET.cube_fd',
+        'cube_fd_xml'     : "FC3_fd.xml",
         'cube_lasso_dfset': 'DFSET.cube_lasso',
         'cube_lasso_xml'  : "FC3_lasso.xml",
         #

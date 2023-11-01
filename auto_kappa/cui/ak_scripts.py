@@ -1419,7 +1419,6 @@ def main():
             }
     write_output_yaml(yaml_outdir, "relax", info)
     
-    
     ##############################
     ### Get relaxed structures
     ### This part was omitted in the beggining of ver.0.2.

@@ -1931,6 +1931,10 @@ class AlamodeCalc():
         from auto_kappa.plot.pltalm import plot_cumulative_kappa
         plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
                 xscale=xscale, ylabel=ylabel1)
+    
+    def calculte_pes(self):
+
+        pass
 
 
 def run_alamode(filename, logfile, workdir='.', neglect_log=0,
@@ -1981,6 +1985,7 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                     cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=subprocess.PIPE)
             
+            count = 0
             mem_max = -1
             while True:
                 
@@ -2006,7 +2011,9 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                 except Exception:
                     pass
                 
-                time.sleep(10)
+                waiting_time = min(10, count)
+                time.sleep(waiting_time)
+                count += 1
             
             if mem_max > 0.:
                 msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)

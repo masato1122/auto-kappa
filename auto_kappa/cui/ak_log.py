@@ -27,10 +27,9 @@ def set_logging(
 
 def negative_frequency(fmin):
     
-    logger = logging.getLogger(__name__)    
-    msg = "\n"
-    msg += " Negative eigenvalues were found. Stop the calculation.\n"
-    msg += " Minimum frequency : %.2f" % (fmin)
+    logger = logging.getLogger(__name__)
+    msg = "\n Negative eigenvalues were found."
+    msg += "\n Minimum frequency : %.2f" % (fmin)
     logger.warning(msg)
 
 def symmetry_error(spg_init, spg_fin):

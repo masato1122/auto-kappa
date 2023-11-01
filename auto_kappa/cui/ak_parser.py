@@ -123,6 +123,7 @@ def get_parser():
             "N = max(1, int(k_length * |a|^* + 0.5))."
             )
     
+    ### options for supercell
     parser.add_option("--max_natoms", dest="max_natoms", type="int", 
             default=150, 
             help="Initial maximum limit of the number of atoms in the "
@@ -133,6 +134,7 @@ def get_parser():
             "\"delta_max_natoms\". Note that the maximum limit for "
             "cubic FCs is not changed during the simlation. ")
     
+    ### three options for larger supercell
     parser.add_option("--analyze_with_larger_supercell", 
             dest="analyze_with_largersc", type="int", default=0,
             help="Analyze harmonic properties with larger supercells if "
@@ -149,6 +151,14 @@ def get_parser():
             type="int", default=1, 
             help="Number of the maximum loop for larger supercell [1]."
             "This options is used only when ``--analyze_with_largersc`` == 1.")
+    
+    ### calculate potential energy sruface
+    parser.add_option("--calculate_pes", dest="calculate_pes", 
+            type="int", default=0, 
+            help="Calculate potential energy surface with respect to "
+            "a phonon mode with negative frequency. "
+            "(0. not calculated, 1. calculated only for larger supercell, "
+            "2. caluclated for small and larger supercells")
     
     #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
     #        default=None, 
