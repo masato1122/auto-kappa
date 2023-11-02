@@ -1932,7 +1932,19 @@ class AlamodeCalc():
         plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
                 xscale=xscale, ylabel=ylabel1)
     
-    def calculte_pes(self):
+    def calculte_pes(self, outdir=None, fc2xml=None):
+        
+        if outdir is None:
+            outdir = self.out_dirs['harm']['pes']
+        
+        if fc2xml is None:
+            msg = "\n Error: fc2xml must be given."
+            logger.error(msg)
+            return None
+
+        ###
+        calculate_potential_energy_surface(outdir, fc2xml)
+        #fc2xml = self.out_dirs[
 
         pass
 

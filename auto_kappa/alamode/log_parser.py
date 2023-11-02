@@ -740,12 +740,13 @@ def get_eigenvalues_from_logfile(filename):
         kpoints.append([])
         for j in range(3):
             kpoints[-1].append(float(data[-3+j]))
-
+        
+        frequencies.append([])
         for ib in range(nbands):
             num = 4 + istart_freq + ik*(3 + nbands) + ib
             data = lines[num].split()
             if data[1] != "cm^-1":
-                frequencies.append(float(data[1]))
+                frequencies[-1].append(float(data[1]))
             else:
                 ### Alamode log file shows frequency w/o a space btw its index
                 ### when the frequnecy is an extremely large negative value.
@@ -753,8 +754,7 @@ def get_eigenvalues_from_logfile(filename):
                     val = data[0].split("-")[1]
                 else:
                     val = float(data[0][1:])
-                
-                frequencies.append(float(val))
+                frequencies[-1].append(float(val))
     
     ###
     kpoints = np.asarray(kpoints)
@@ -762,7 +762,7 @@ def get_eigenvalues_from_logfile(filename):
     return kpoints, frequencies
     
 def read_log_eigen(directory, mode='band'):
-    """ """
+    """ Get eigenvalues in log file """
     if mode == 'band':
         filename = directory+'/'+out_dirs['harm']['bandos']+'/band.log'
     elif mode == 'evec':
@@ -788,6 +788,71 @@ def read_log_eigen(directory, mode='band'):
     out.update(out_log)
     
     return out
+
+def get_kpath(filename):
+    """ Get k-path from the log file 
+    
+    Args
+    =======
+    
+    filename : string
+        log file for band
+
+    Return
+    =======
+    
+    array of dictionary :
+        each array element contains two dictionary elements with the name of
+        symmetry point
+    
+    """
+    line_search = "List of k paths"
+    
+    ### look for ``line_search``
+    lines = open(filename, 'r').readlines()
+    npaths = None
+    il_init = None
+    for il, line in enumerate(lines):
+        
+        if "Number of paths" in line:
+            data = line.split()
+            npaths = int(data[-1])
+        
+        if line_search in line:
+            il_init = il
+            break
+    
+    ### cannot find the ``line_search``
+    if npaths is None or il_init is None:
+        return None
+    
+    iadd = 1
+    count = 0
+    kpaths = []
+    while True:
+        
+        line = lines[il_init+iadd]
+        iadd += 1
+        data = line.split()
+        
+        if len(data) == 0:
+            continue
+        
+        ### read line
+        lmod = line.replace(":", " ").replace("(", " ").replace(")", " ")
+        data = lmod.split()
+        
+        ### get kpath
+        kpaths.append({})
+        kpaths[-1][data[1]] = np.asarray([float(data[i+2]) for i in range(3)])
+        kpaths[-1][data[5]] = np.asarray([float(data[i+6]) for i in range(3)])
+        
+        count += 1
+        if count == npaths:
+            break
+    
+    return kpaths
+
 
 def get_ak_logs(directory):
     """ Return diffent information in log files
