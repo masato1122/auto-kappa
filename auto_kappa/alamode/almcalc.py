@@ -1936,8 +1936,8 @@ class AlamodeCalc():
 
         pass
 
-
-def run_alamode(filename, logfile, workdir='.', neglect_log=0,
+def run_alamode(
+        filename, logfile, workdir='.', neglect_log=0,
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
     """ Run alamode with a command (alm or anphon)
     
@@ -2015,6 +2015,11 @@ def run_alamode(filename, logfile, workdir='.', neglect_log=0,
                 time.sleep(waiting_time)
                 count += 1
             
+            if proc.returncode != 0:
+                msg = " Error termination of Alamode job. Stop the calculation."
+                logger.error(msg)
+                sys.exit()
+
             if mem_max > 0.:
                 msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
                 logger.info(msg)

@@ -37,7 +37,7 @@ def plot_fitting_result(bm, figname='fig.png', color='black',
         return None
     
     ax = plt.subplot()
-    ax.set_xlabel('Volume (${\\rm \\AA}$)')
+    ax.set_xlabel('Volume (${\\rm \\AA^3}$)')
     ax.set_ylabel('Energy (eV)')
     
     ### plot original data
