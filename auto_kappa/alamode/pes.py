@@ -134,4 +134,5 @@ print(itype, kmin)
 sym_points = get_symmetry_points_for_kpoint(kmin, filename=log_band)
 print(sym_points)
 
+# test
 
