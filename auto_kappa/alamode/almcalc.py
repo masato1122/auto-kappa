@@ -1949,7 +1949,7 @@ class AlamodeCalc():
         pass
 
 def run_alamode(
-        filename, logfile, workdir='.', neglect_log=0,
+        filename, logfile, workdir='.', neglect_log=0, file_err="std_err.txt",
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
     """ Run alamode with a command (alm or anphon)
     
@@ -1979,7 +1979,7 @@ def run_alamode(
         
         ## run the job!!
         status = None
-        with open(logfile, 'w') as f:
+        with open(logfile, 'w') as f, open(file_err, "w", buffering=1) as f_err:
             
             ### ver.1
             #proc = subprocess.Popen(
@@ -1993,9 +1993,14 @@ def run_alamode(
             #proc.wait()
             
             ### ver.3: ohtaka
+            #proc = subprocess.Popen(
+            #        cmd, shell=True, env=os.environ, 
+            #        stdout=f, stderr=subprocess.PIPE)
+            
+            ### ver.4
             proc = subprocess.Popen(
                     cmd, shell=True, env=os.environ, 
-                    stdout=f, stderr=subprocess.PIPE)
+                    stdout=f, stderr=f_err)
             
             count = 0
             mem_max = -1
