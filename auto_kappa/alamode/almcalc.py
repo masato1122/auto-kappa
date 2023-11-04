@@ -48,6 +48,11 @@ from auto_kappa.io.files import write_output_yaml
 
 logger = logging.getLogger(__name__)
 
+try:
+    import psutil
+except ImportError:
+    pass
+
 class AlamodeCalc():
     
     ### k1: alamode type, k2: mode, k3: propt
@@ -1971,10 +1976,29 @@ def run_alamode(
     dir_init = os.getcwd()
     os.chdir(workdir)
     
+    busy_thred = 80
+    
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
         
+        ### memory check
+        try:
+            count = 0
+            while True:
+                cpu_percent = psutil.cpu_percent(interval=1)
+                if cpu_percent < busy_thred:
+                    break
+                time.sleep(10)
+                count += 1
+                if count == 180:
+                    msg = " Error: CPU is busy. Stop the calculation"
+                    logger.error(msg)
+                    sys.exit()
+        except Exception:
+            pass
+        
+        ### set the number of threads for OpenMP
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
         ## run the job!!
@@ -2014,13 +2038,12 @@ def run_alamode(
                 ### get memory info if available
                 mem_percentage = 0.
                 try:
-                    import psutil
                     mem_info = psutil.virtual_memory()
                     mem_max = max(mem_max, mem_info.used)
                     mem_tot = mem_info.total
                     mem_percentage = mem_info.percentage
                     
-                    if mem_percentage > 90.:
+                    if mem_percentage > 80.:
                         logger.info("\n Caution: memory usage is %.2f%%" % (
                             mem_info.percentage))
                         break

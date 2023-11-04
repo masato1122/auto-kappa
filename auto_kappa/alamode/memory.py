@@ -29,18 +29,27 @@ def get_used_memory():
         except ModuleNotFoundError:
             
             return None
-        
-def _get_used_memory_psutil():
+
+def _get_used_memory_psutil(busy_thread=80):
 
     import psutil
     mem_percent = psutil.virtual_memory().percent
-    if mem_percent > 80:
+    if mem_percent > busy_thred:
         msg = "\n Warning: memory usage percentage : %.1f%%" % mem_percent
         logger.warning(msg)
         
     mem = psutil.virtual_memory().used     ## byte
     return mem
 
+def is_node_busy(busy_thred=80):
+    """ Check if the node is busy or not. """
+    try:
+        import psutil
+        cpu_percent = psutil.cpu_percent(interval=1)
+    except Exception:
+        cpu_percent = 0.
+    return cpu_percent > busy_thred
+    
 def _get_used_memory_resource():
 
     import platform
