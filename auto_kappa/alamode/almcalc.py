@@ -1987,12 +1987,14 @@ def run_alamode(
             count = 0
             while True:
                 cpu_percent = psutil.cpu_percent(interval=1)
+                msg = "\n CPU usage : %f" % cpu_percent
+                logger.info(msg)
                 if cpu_percent < busy_thred:
                     break
                 time.sleep(10)
                 count += 1
                 if count == 180:
-                    msg = " Error: CPU is busy. Stop the calculation"
+                    msg = "\n Error: CPU is busy. Stop the calculation"
                     logger.error(msg)
                     sys.exit()
         except Exception:
