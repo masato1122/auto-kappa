@@ -1980,23 +1980,23 @@ def run_alamode(
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
         
-        ### memory check
-        try:
-            count = 0
-            busy_thred = 50
-            while True:
-                cpu_percent = psutil.cpu_percent(interval=1)
-                msg = "\n CPU usage : %f" % cpu_percent
-                if cpu_percent < busy_thred:
-                    break
-                time.sleep(10)
-                count += 1
-                if count == 180:
-                    msg = "\n Error: CPU is busy. Stop the calculation"
-                    logger.error(msg)
-                    sys.exit()
-        except Exception:
-            pass
+        #### CPU check
+        #try:
+        #    count = 0
+        #    busy_threshold = 50   ## %
+        #    while True:
+        #        cpu_percent = psutil.cpu_percent(interval=1)
+        #        msg = "\n CPU usage : %f" % cpu_percent
+        #        if cpu_percent < busy_threshold:
+        #            break
+        #        time.sleep(10)
+        #        count += 1
+        #        if count == 180:
+        #            msg = "\n Error: CPU is busy. Stop the calculation"
+        #            logger.error(msg)
+        #            sys.exit()
+        #except Exception:
+        #    pass
         
         ### set the number of threads for OpenMP
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
@@ -2029,8 +2029,6 @@ def run_alamode(
             count = 0
             mem_max = -1
             while True:
-                
-                ##mem = get_used_memory()
                 
                 if proc.poll() is not None:
                     break
