@@ -1976,8 +1976,6 @@ def run_alamode(
     dir_init = os.getcwd()
     os.chdir(workdir)
     
-    busy_thred = 80
-    
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
@@ -1985,10 +1983,10 @@ def run_alamode(
         ### memory check
         try:
             count = 0
+            busy_thred = 50
             while True:
                 cpu_percent = psutil.cpu_percent(interval=1)
                 msg = "\n CPU usage : %f" % cpu_percent
-                logger.info(msg)
                 if cpu_percent < busy_thred:
                     break
                 time.sleep(10)
