@@ -1970,7 +1970,13 @@ def run_alamode(
         work directory
     
     """
-    cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
+    if "srun" in mpirun:
+        cmd = "%s -n %d -c %d %s %s" %(mpirun, nprocs, nthreads, command, filename)
+    else:
+        cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
+        
+        ### set the number of threads for OpenMP
+        os.environ['OMP_NUM_THREADS'] = str(nthreads)
     
     ### change directory
     dir_init = os.getcwd()
@@ -1979,9 +1985,6 @@ def run_alamode(
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
-        
-        ### set the number of threads for OpenMP
-        os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
         ## run the job!!
         status = None
