@@ -1980,24 +1980,6 @@ def run_alamode(
     ## The job status is judged from *.log file.
     if _alamode_finished(logfile) == False or neglect_log:
         
-        #### CPU check
-        #try:
-        #    count = 0
-        #    busy_threshold = 50   ## %
-        #    while True:
-        #        cpu_percent = psutil.cpu_percent(interval=1)
-        #        msg = "\n CPU usage : %f" % cpu_percent
-        #        if cpu_percent < busy_threshold:
-        #            break
-        #        time.sleep(10)
-        #        count += 1
-        #        if count == 180:
-        #            msg = "\n Error: CPU is busy. Stop the calculation"
-        #            logger.error(msg)
-        #            sys.exit()
-        #except Exception:
-        #    pass
-        
         ### set the number of threads for OpenMP
         os.environ['OMP_NUM_THREADS'] = str(nthreads)
         
@@ -2005,23 +1987,18 @@ def run_alamode(
         status = None
         with open(logfile, 'w') as f, open(file_err, "w", buffering=1) as f_err:
             
-            ### ver.1
-            #proc = subprocess.Popen(
-            #        cmd.split(), env=os.environ, stdout=f,
-            #        stderr=subprocess.PIPE)
-            #
-            #### ver.2
+            #### ver.1
             #proc = subprocess.Popen(
             #        cmd, shell=True, env=os.environ, stdout=f,
             #        stderr=subprocess.PIPE)
             #proc.wait()
             
-            ### ver.3: ohtaka
+            ### ver.2
             #proc = subprocess.Popen(
             #        cmd, shell=True, env=os.environ, 
             #        stdout=f, stderr=subprocess.PIPE)
             
-            ### ver.4
+            ### ver.3: error file, termination check
             proc = subprocess.Popen(
                     cmd, shell=True, env=os.environ, 
                     stdout=f, stderr=f_err)
@@ -2058,11 +2035,7 @@ def run_alamode(
                 logger.info(msg)
             
             status = proc.poll()
-            #p_status = proc.wait()
-            #msg = os.getcwd() + " : " + str(p_status)
-            #logger.info(msg)
-            #sys.exit()
-        
+    
     else:
         status = -1
     
@@ -2170,7 +2143,7 @@ def run_alm(structure, order, cutoffs, nbody, mode=None,
     if outfile is not None:
         if os.path.exists(outfile):
             msg = "\n"
-            msg += " ALM calculation (%s) has been already finished.\n" % (mode)
+            msg += " ALM calculation (%s) has been already done.\n" % (mode)
             msg += " See: %s" % (outfile)
             logger.info(msg)
             return None

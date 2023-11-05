@@ -551,7 +551,7 @@ class ApdbVasp():
         os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
         
         if wasfinished(directory, filename='vasprun.xml') and force == False:
-            msg = "\n The calculation has been already finished."
+            msg = "\n The calculation has been already done."
             logger.info(msg)
         
         else:

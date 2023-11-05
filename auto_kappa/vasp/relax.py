@@ -19,6 +19,7 @@ import ase
 import glob
 import yaml
 
+import ase.io
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
@@ -82,8 +83,8 @@ class StrictRelaxation():
         
         """
         line = " Relaxation with different volumes"
-        msg = "\n" + line + "\n"
-        msg += " " + "=" * len(line) + "\n"
+        msg = "\n" + line
+        msg += "\n " + "=" * len(line)
         if verbosity > 0:
             logger.info(msg)
          
@@ -257,31 +258,53 @@ class StrictRelaxation():
             msg = "\n Output %s" % self.outfile_yaml
             logger.info(msg)
     
-
-def _get_calculated_results(base_dir):
-    """ Read all the results which have been already obtained.
+def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
+    """ Get all the results which have been already obtained.
     
     Args
     ----
     base_dir : string
         VASP calculations were performed in base_dir+"/*".
-
+    
+    cell_pristine : ndarray, shape=(3,3)
+        cell size w/o strain
+    
     Return
     -------
     all_results : list of dictionary
         each element contains the info in strain.yaml file
     """
-    line = base_dir + "/*"
-    dirs = glob.glob(line)
+    ### get possible directories 
+    dirs = []
+    for ii in range(num_max):
+        dir_each = base_dir + "/%d" % ii
+        file_xml = dir_each + "/vasprun.xml"
+        if os.path.exists(file_xml):
+            dirs.append(dir_each)
+    
+    ### check each directory
     all_results = []
     for diri in dirs:
         
-        if wasfinished(diri, filename='vasprun.xml') == False:
+        ### check result (vasprun.xml)
+        ### ver.1
+        #if wasfinished(diri, filename='vasprun.xml') == False:
+        #    continue
+        
+        ### ver.2
+        file_xml = diri + "/vasprun.xml"
+        try:
+            vasprun = Vasprun(file_xml, parse_potcar_file=False)
+        except Exception:
             continue
         
+        ### Make strain.yaml if it doesn't exist and possible.
         file_yaml = diri + "/strain.yaml"
         if os.path.exists(file_yaml) == False:
-            continue
+            try:
+                _make_strain_yaml(diri, cell_pristine=cell_pristine)
+            except Exception:
+                continue
         
         with open(file_yaml, 'r') as yml:
             data = yaml.safe_load(yml)
@@ -289,9 +312,39 @@ def _get_calculated_results(base_dir):
     
     return all_results
 
-def _get_results_all(base_dir, keys=['strain']):
+def _make_strain_yaml(directory, cell_pristine=None):
+    """ Make strain.yaml file """
     
-    all_results = _get_calculated_results(base_dir)
+    ### read file 
+    file_xml = directory + "/vasprun.xml"
+    vasprun = Vasprun(file_xml, parse_potcar_file=False)
+    structure = vasprun.final_structure
+    
+    ### get strain
+    l1 = np.linalg.norm(structure.lattice.matrix[0])
+    l0 = np.linalg.norm(cell_pristine[0])
+    strain = (l1 - l0) / l0
+    
+    ### get parameters
+    out_data = {}
+    out_data['strain'] = float(strain)
+    out_data['energy'] = [
+            float(vasprun.final_energy.real),
+            str(vasprun.final_energy.unit)]
+    out_data['volume'] = float(structure.volume)
+    
+    ### output file
+    outfile = directory + "/strain.yaml"
+    with open(outfile, "w") as f:
+        yaml.dump(out_data, f)
+        msg = "\n Output %s" % outfile
+        logger.info(msg)
+    
+    return 0
+
+def _get_results_all(base_dir, keys=['strain'], cell_pristine=None):
+    
+    all_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine)
     extracted_data = []
     for each in all_results:
         try:
@@ -303,17 +356,37 @@ def _get_results_all(base_dir, keys=['strain']):
             pass
     return extracted_data
 
-def _get_calculated_strains(base_dir, key='strain'):
+def _get_calculated_strains(
+        base_dir, key='strain', cell_pristine=None, tol_strain=1e-9):
+    """ Get list of strains for which the energy has been already calculated. 
+    """
+    value_tmp = _get_results_all(
+            base_dir, keys=[key], 
+            cell_pristine=cell_pristine)
     
-    value_tmp = _get_results_all(base_dir, keys=[key])
     if len(value_tmp) == 0:
         return []
     else:
-        return np.asarray(value_tmp)[:,0]
+        strains_all = np.sort(np.asarray(value_tmp)[:,0])
+        
+        ### remove duplicative data
+        strains = []
+        for i in range(len(strains_all)):
+            if i == 0:
+                strains.append(strains_all[0])
+            else:
+                if strains_all[i] - strains_all[i-1] > tol_strain:
+                    strains.append(strains_all[i])
+        strains = np.asarray(strains)
+        return strains
 
-def _get_calculated_volumes_and_energies(base_dir, keys=['volume', 'energy']):
+def _get_calculated_volumes_and_energies(
+        base_dir, keys=['volume', 'energy'], cell_pristine=None):
     
-    value_tmp = _get_results_all(base_dir, keys=keys)
+    value_tmp = _get_results_all(
+            base_dir, keys=keys, 
+            cell_pristine=cell_pristine)
+    
     Vs = []
     Es = []
     for each in value_tmp:
@@ -389,20 +462,33 @@ def relaxation_with_different_volumes(
     nstrains : integer
         number of strains to be applied
     """
-    
-    #cell0 = struct_init.lattice.matrix
-    #scaled_positions0 = struct_init.frac_coords
+    ### list of strains to be analyzed
     strains = np.linspace(strain_range[0], strain_range[1], nstrains)
     
     ### get the calculated strains
-    calculated_strains = _get_calculated_strains(base_directory)
+    calculated_strains = _get_calculated_strains(
+            base_directory, 
+            cell_pristine=struct_init.lattice.matrix,
+            tol_strain=tol_strain*0.1)
     
+    ### print already-analyzed-strains
+    if len(calculated_strains) > 0:
+        line = "Strains already calcuclated (%):"
+        msg = "\n %s" % line
+        msg += "\n " + "-" * len(line)
+        msg += "\n "
+        for each in calculated_strains:
+            msg += "%.3f, " % (each*100.)
+        logger.info(msg)
+    
+    ### calculate the potential energy for each strain value
     for ist, strain in enumerate(strains):
         
         if len(calculated_strains) > 0:
             if np.min(abs(calculated_strains - strain)) < tol_strain:
                 continue
         
+        ### print strain value
         line = "Strain: %f" % strain
         msg = "\n " + line
         msg += "\n " + "-" * len(line)
@@ -444,18 +530,14 @@ def relaxation_with_different_volumes(
         run_vasp(calc, atoms, method='custodian')
         
         ### output data
-        vasprun = Vasprun(outdir + "/vasprun.xml")
+        vasprun = Vasprun(outdir + "/vasprun.xml", parse_potcar_file=False)
         
         volume = float(atoms.get_volume())
         energy = float(vasprun.final_energy.real)
-        out_data = {
-                'strain': float(strain), 
-                'energy': [
-                    energy,
-                    str(vasprun.final_energy.unit),
-                    ],
-                'volume': float(atoms.get_volume()),
-                }
+        out_data = {}
+        out_data['strain'] = float(strain)
+        out_data['energy'] = [energy, str(vasprun.final_energy.unit)]
+        out_data['volume'] = float(atoms.get_volume())
         
         ### output yamle file
         outfile = outdir + "/strain.yaml"
