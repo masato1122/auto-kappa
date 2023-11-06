@@ -2096,22 +2096,29 @@ def _read_frequency_range(filename, format='anphon'):
 
 
 def _alamode_finished(logfile):
+    """ Check the ALAMODE job has been finished or not with the log file.
+    """
     try:
         lines = open(logfile, 'r').readlines()
         n = len(lines)
-        for i in range(10):
-            line = lines[n-1-i]
+        num_fin = 0
+        for line in lines:
             data = line.split()
             if len(data) != 0:
-                if 'Job finished' in line:
-                    return True
-                #else:
-                #    return False
+                if "Job finished" in line:
+                    num_fin += 1
+        ###
+        if num_fin > 1:
+            msg = "\n Warning: ALAMODE was not compiled properly."
+            msg += "\n Please check %s " % logfile
+            msg += "and compile ALAMODE again."
+            logger.error(msg)
+            sys.exit()
+        return num_fin
+    
     except Exception:
         return False
     
-    return False
-
 def run_alm(structure, order, cutoffs, nbody, mode=None,
         displacements=None, forces=None, outfile=None,
         fc2info=None, lasso=False, lasso_type='alm', verbosity=0
