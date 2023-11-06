@@ -42,7 +42,7 @@ def get_minimum_energy(dir_name):
     
 def too_many_symmetry_errors(directory, tol_number=5):
     """ check symmetry error during energy minimization """
-    dir_error = "%s/relax_error%d.tar.gz" % tol_number
+    dir_error = "%s/relax_error%d.tar.gz" % (directory, tol_number)
     if os.path.exists(dir_error):
         return True
     else:
