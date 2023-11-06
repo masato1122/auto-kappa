@@ -2113,7 +2113,6 @@ def _alamode_finished(logfile):
             msg += "\n Please check %s " % logfile
             msg += "and compile ALAMODE again."
             logger.error(msg)
-            sys.exit()
         return num_fin
     
     except Exception:
