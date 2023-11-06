@@ -2020,8 +2020,8 @@ def run_alamode(
                     mem_tot = mem_info.total
                     mem_percentage = mem_info.percentage
                     
-                    if mem_percentage > 80.:
-                        logger.info("\n Caution: memory usage is %.2f%%" % (
+                    if mem_percentage > 95.:
+                        logger.info("\n Warning: memory usage is %.2f%%" % (
                             mem_info.percentage))
                         break
                 
@@ -2041,11 +2041,11 @@ def run_alamode(
     else:
         status = -1
     
-    #### Return to the original directory
-    ## sometimes this way leads to a problem.
-    #os.environ.pop('OMP_NUM_THREADS', None)
+    ###
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ['SLURM_CPUS_PER_TASK'] = "1"
+    
+    #### Return to the original directory
     os.chdir(dir_init)
     return status
 
