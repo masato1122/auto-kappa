@@ -40,7 +40,7 @@ def get_minimum_energy(dir_name):
             return None
     return fmin
     
-def too_many_errors_of_symmetry_change(directory, tol_number=5):
+def too_many_symmetry_errors(directory, tol_number=5):
     """ check symmetry error during energy minimization """
     dir_error = "%s/relax_error%d.tar.gz" % tol_number
     if os.path.exists(dir_error):
@@ -61,7 +61,7 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     
     ### Band and DOS were not calculated.
     if emin is None:
-        if too_many_errors_of_symmetry_error(dir_name):
+        if too_many_symmetry_errors(dir_name):
             return 3
         return 0
     
