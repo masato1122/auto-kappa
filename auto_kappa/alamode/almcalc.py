@@ -1970,13 +1970,12 @@ def run_alamode(
         work directory
     
     """
-    if "srun" in mpirun:
-        cmd = "%s -n %d -c %d %s %s" %(mpirun, nprocs, nthreads, command, filename)
-    else:
-        cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
-        
-        ### set the number of threads for OpenMP
-        os.environ['OMP_NUM_THREADS'] = str(nthreads)
+    ### set number of parallelization
+    cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
+    ##cmd = "%s -n %d -c %d %s %s" %(mpirun, nprocs, nthreads, command, filename)
+    
+    os.environ['OMP_NUM_THREADS'] = str(nthreads)
+    os.environ['SLURM_CPUS_PER_TASK'] = str(nthreads)
     
     ### change directory
     dir_init = os.getcwd()
@@ -2046,6 +2045,7 @@ def run_alamode(
     ## sometimes this way leads to a problem.
     #os.environ.pop('OMP_NUM_THREADS', None)
     os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ['SLURM_CPUS_PER_TASK'] = "1"
     os.chdir(dir_init)
     return status
 
