@@ -444,7 +444,6 @@ def get_strained_structure(structure0, strain, format='pmg'):
     
     return structure
 
-
 def relaxation_with_different_volumes(
         struct_init, strain_range=[-0.01, 0.05], nstrains=11, kpts=[2,2,2],
         base_directory='./volume', encut_factor=1.3, 

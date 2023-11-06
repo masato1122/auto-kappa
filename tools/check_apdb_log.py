@@ -40,6 +40,14 @@ def get_minimum_energy(dir_name):
             return None
     return fmin
     
+def too_many_errors_of_symmetry_change(directory, tol_number=5):
+    """ check symmetry error during energy minimization """
+    dir_error = "%s/relax_error%d.tar.gz" % tol_number
+    if os.path.exists(dir_error):
+        return True
+    else:
+        return False
+
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
     Return
@@ -50,13 +58,19 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
     
     emin = get_minimum_energy(dir_name)
+    
+    ### Band and DOS were not calculated.
     if emin is None:
+        if too_many_errors_of_symmetry_error(dir_name):
+            return 3
         return 0
     
-    ##
+    ###
     if emin < tol_zero:
+        """ with negative frequencies """
         return 1
     else:
+        """ w/o negative frequencies """
         figname = dir_name + "/result/fig_kappa.png"
         if os.path.exists(figname):
             return 2
@@ -74,6 +88,9 @@ def main(options):
         print("Finished_harmonic")
     elif flag == 2:
         print("Finished_cubic")
+    elif flag == 3:
+        ## too many errors of the symmetry change
+        print("Symmetry_error")
     else:
         print("Error")
     
