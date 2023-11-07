@@ -48,6 +48,18 @@ def too_many_symmetry_errors(directory, tol_number=5):
     else:
         return False
 
+def aborted_with_symmetry_error(directory):
+    """ check if the previous calcualtion was aborted with a symmetry error. """
+    logfile = directory + "/ak.log"
+    if os.path.exists(logfile) == False:
+        return False
+    
+    lines = open(logfile, 'r').readlines()
+    for line in lines:
+        if "STOP THE CALCULATION" in line:
+            return True
+    return False
+    
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
     Return
@@ -62,6 +74,8 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     ### Band and DOS were not calculated.
     if emin is None:
         if too_many_symmetry_errors(dir_name):
+            return 3
+        if aborted_with_symmetry_error(dir_name):
             return 3
         return 0
     

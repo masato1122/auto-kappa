@@ -856,8 +856,8 @@ class AlamodeCalc():
         else:
             line = "Generate displacement structures (order: %s)" % order
         
-        msg = "\n\n " + line + "\n"
-        msg += " " + "=" * (len(line)) + "\n"
+        msg = "\n\n " + line
+        msg += "\n " + "=" * (len(line))
         logger.info(msg)
          
         self._nmax_suggest = nmax_suggest
@@ -1011,6 +1011,7 @@ class AlamodeCalc():
             
             if ii == 0:
                 print_vasp_params(calculator.asdict()['inputs'])
+                logger.info("")
             
             structure = structures[key].copy()
             
@@ -1044,7 +1045,7 @@ class AlamodeCalc():
 
                     if count == max_num_try:
                         msg = " Error: "\
-                                "atomic forces could be calculated properly."
+                                "atomic forces could not be calculated properly."
                         logger.error(msg)
                         sys.exit()
                 
@@ -1974,9 +1975,11 @@ def run_alamode(
     cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
     ##cmd = "%s -n %d -c %d %s %s" %(mpirun, nprocs, nthreads, command, filename)
     
-    os.environ['OMP_NUM_THREADS'] = str(nthreads)
-    os.environ['SLURM_CPUS_PER_TASK'] = str(nthreads)
-    
+    ### set OpenMP
+    omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
+    for key in omp_keys:
+        os.environ[key] = str(nthreads)
+     
     ### change directory
     dir_init = os.getcwd()
     os.chdir(workdir)
@@ -2041,10 +2044,10 @@ def run_alamode(
     else:
         status = -1
     
-    ###
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ['SLURM_CPUS_PER_TASK'] = "1"
-    
+    ### set back OpenMP
+    for key in omp_keys:
+        os.environ[key] = "1"
+     
     #### Return to the original directory
     os.chdir(dir_init)
     return status

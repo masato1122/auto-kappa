@@ -28,7 +28,7 @@ from auto_kappa.structure.crystal import (
         get_standardized_structure_spglib,
         change_structure_format,
         )
-from auto_kappa.calculator import run_vasp
+from auto_kappa.calculator import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.cui import ak_log
@@ -266,11 +266,14 @@ class ApdbVasp():
                 self.command['vasp'])
         return calc
     
-    def run_relaxation(self, directory: './out', kpts: None,
+    def run_relaxation(
+            self, directory: './out', kpts: None,
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
-            force=False, num_full=2, verbosity=1, **args): 
+            force=False, num_full=2, verbosity=1, 
+            **args
+            ):
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
@@ -315,13 +318,15 @@ class ApdbVasp():
         
         ### message
         if verbosity != 0:
-            line = "Structure optimization with %s cell" % cell_type
-            msg = "\n\n " + line + "\n"
-            msg += " " + "=" * (len(line))
+            #line = "Cell type for structure optimization: %s" % cell_type
+            line = "Structure optimization"
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
+            msg += "\n\n Cell type : %s" % cell_type
             logger.info(msg)
          
-        #### Get the relaxed structure obtained with the old version
-        #### For the old version, the xml file is located under ``directory``.
+        ### Get the relaxed structure obtained with the old version
+        ### For the old version, the xml file is located under ``directory``.
         if wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
             prim = ase.io.read(filename, format='vasp-xml')
@@ -336,34 +341,36 @@ class ApdbVasp():
             return 0
         
         spg_before = get_spg_number(self.unitcell)
-        #print(spg_before)
-        #exit()
-         
+        
         ### perform relaxation calculations
-        for ical in range(num_full+1):
+        count = 0
+        count_err = 0
+        max_sym_err = 2
+        while True:
             
             ### set working directory and mode
-            if ical < num_full:
-                num = ical + 1
+            if count < num_full:
+                ## full relxation
+                num = count + 1
                 dir_cur = directory + "/full-%d" % num
                 mode = 'relax-full'
             
             else:
-                num = ical - num_full + 1
+                ## relaxation of atomic positions
+                num = count - num_full + 1
                 dir_cur = directory + "/freeze-%d" % num
                 mode = 'relax-freeze'
             
             if verbosity != 0:
                 line = "%s (%d)" % (mode, num)
-                msg = "\n " + line + "\n"
-                msg += " " + "-" * len(line)
-                
+                msg = "\n " + line
+                msg += "\n " + "-" * len(line)
                 logger.info(msg)
             
-            ###
-            if ical == 0:
-                print_params = True
-            
+            ##
+            if count == 0:
+                if count_err == 0:
+                    print_params = True
             else:
                 fn = dir_pre + "/CONTCAR"
                 if os.path.exists(fn) == False:
@@ -371,27 +378,16 @@ class ApdbVasp():
                     logger.error(msg)
                     sys.exit()
                 
-                #msg = ""
-                #msg += " Update the primitive structure: " + fn
-                #structure = ase.io.read(fn, format='vasp')
                 print_params = False
             
             ### get the structure used for the analysis
             if to_primitive:
                 structure = self.primitive
-
             else:
                 structure = self.unitcell
             
-            #### standardization
-            #if standardize_each_time:
-            #    
-            #    structure = get_standardized_structure_spglib(
-            #            structure, to_primitive=to_primitive, format='ase'
-            #            )
-            #
-            
             ### run a relaxation calculation
+            ### out == -1 : symmetry was changed
             out = self.run_vasp(
                     mode, dir_cur, kpts, 
                     structure=structure, force=force, 
@@ -401,20 +397,32 @@ class ApdbVasp():
                     standardization=standardize_each_time,
                     **args
                     )
-
+            
             if out == -1:
-                return out
-
-            ### output to yaml
-            #name = "%s-%d" % (mode, ical)
-            #info = {"directory": dir_cur.replace(,
-            #        "kind": "",
-            #        "note": ""}
-            #write_output_yaml(self.yamlfile_for_outdir, name, info)
-            #exit()
-             
+                
+                ### backup failed result
+                backup_vasp(dir_cur, delete_files=True)
+                
+                ### set ISYM = 2 explicitly
+                args["isym"] = 2
+                
+                count_err += 1
+                if max_sym_err == count_err:
+                    msg =  "\n The calculation was failed %d times." % (count_err)
+                    msg += "\n Abort the relaxation calculation."
+                    logger.info(msg)
+                    return -1
+                else:
+                    logger.info("\n Retry the relaxation calculation.")
+                    continue
+            
             ### update
             dir_pre = dir_cur
+            
+            count += 1
+            count_err = 0
+            if count == num_full + 1:
+                break
 
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
@@ -541,15 +549,25 @@ class ApdbVasp():
         args : dict
             input parameters for VASP
         
+        Return
+        --------
+        integer :
+            0. w/o error
+            1. symmetry was changed during the relaxation calculation
+        
         """
         if verbosity != 0:
             line = "VASP calculation (%s)" % (mode)
-            msg = "\n\n " + line + "\n"
-            msg += " " + "=" * (len(line)) + "\n"
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
             logger.info(msg)
         
-        os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
+        ### set OpenMP
+        omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
+        for key in omp_keys:
+            os.environ[key] = str(self.command['nthreads'])
         
+        ### perform the calculation
         if wasfinished(directory, filename='vasprun.xml') and force == False:
             msg = "\n The calculation has been already done."
             logger.info(msg)
@@ -569,8 +587,10 @@ class ApdbVasp():
             
             run_vasp(calc, structure, method=method)
         
-        os.environ["OMP_NUM_THREADS"] = "1"
-        
+        ### set back OpenMP 
+        for key in omp_keys:
+            os.environ[key] = "1"
+         
         ### Read the relaxed structure
         if 'relax' in mode.lower():
             
@@ -601,4 +621,39 @@ class ApdbVasp():
             self.update_structures(new_unitcell, standardization=standardization)
         
         return 0
+
+#def _compress_and_delete_directory(directory):
+#    """ compress and delete directory """
+#    
+#    import tarfile
+#    import shutil
+#
+#    ### get directory names
+#    data = directory.split("/")
+#    dir_work = directory[:-len(data[-1])-1]
+#    dir_target = data[-1]
+#    
+#    ### move to the directory
+#    cwd = os.getcwd()
+#    os.chdir(dir_work)
+#    
+#    ### comipress
+#    for j in range(1, 1000):
+#        tar_dir = dir_target + "_error%d.tar.gz" % j
+#        if os.path.exists(tar_dir) == False:
+#            
+#            print(dir_target, tar_dir)
+#            sys.exit()
+#            
+#            with tarfile.open(tar_dir, 'w:gz') as tar:
+#                tar.add(dir_target)
+#            break
+#
+#    
+#    print(directory)
+#    print(dir_work)
+#    print(dir_target)
+#
+#    sys.exit()
+
 

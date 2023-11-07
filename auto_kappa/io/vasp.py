@@ -268,13 +268,11 @@ def get_born_charges(filename):
     return borns
 
 def print_vasp_params(params):
-    
+    """ print the contents of a dictionary """
     msg = ""
     for name in params.keys():
-        msg += (" " +  str(name.upper().ljust(13)) + " = " + 
-                str(params[name]) + "\n")
-    
-    msg += "\n"
+        msg += ("\n " +  str(name.upper().ljust(13)) + " = " + 
+                str(params[name]))
     logger.info(msg)
 
 #

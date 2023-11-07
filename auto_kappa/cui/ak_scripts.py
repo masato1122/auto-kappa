@@ -1228,7 +1228,7 @@ def _compress_directory(dir_orig):
     ###
     cwd = os.getcwd()
     os.chdir(dir_base)
-    
+
     ### compress
     dir0 = data[-1]
     for j in range(1, 1000):
@@ -1241,7 +1241,7 @@ def _compress_directory(dir_orig):
     ### delete the original directory
     shutil.rmtree(dir0)
     os.chdir(cwd)
-        
+
     ###
     msg = "\n Compress and delete %s.\n" % dir_orig
     msg += " Create %s." % (tar_dir)
@@ -1388,26 +1388,26 @@ def main():
     
     if out == -1:
         
-        ###
-        ### Relaxation calculation with ISYM == 2
-        ###
+        ####
+        #### Relaxation calculation by explicitly setting ISYM == 2
+        ####
+        #### run calculation
+        #out = apdb.run_relaxation(
+        #        out_dirs["relax"],
+        #        kpts_used["relax"],
+        #        volume_relaxation=ak_params['volume_relaxation'],
+        #        cell_type=cell_types["relax"],
+        #        isym=2,
+        #        )
         
-        ### comparess and delete the directory
-        _compress_directory(out_dirs["relax"])
-        
-        ### run calculation
-        out = apdb.run_relaxation(
-                out_dirs["relax"],
-                kpts_used["relax"],
-                volume_relaxation=ak_params['volume_relaxation'],
-                cell_type=cell_types["relax"],
-                isym=2,
-                )
-
         if out == -1:
-            msg = "\n Error: the crystal symmetry was changed during the "\
-                    "relaxation calculation.\n"
-            msg += " Stop the calcualtion."
+            msg = "\n Error: crystal symmetry was changed during the "\
+                    "relaxation calculation."
+            msg += "\n"
+            msg += "\n STOP THE CALCULATION"
+            time = datetime.datetime.now()
+            msg += "\n at " + time.strftime("%m/%d/%Y %H:%M:%S")
+            msg += "\n"
             logger.error(msg)
             sys.exit()
             

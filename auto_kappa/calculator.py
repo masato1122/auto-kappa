@@ -218,7 +218,7 @@ def backup_vasp(
         filenames = {
             "INCAR", "KPOINTS", "POSCAR", "OUTCAR", "CONTCAR", "OSZICAR",
             "vasprun.xml", "vasp.out", "std_err.txt"},
-        prefix="error"):
+        prefix="error", delete_files=False):
     """
     Backup files to a tar.gz file. Used, for example, in backing up the
     files of an errored run before performing corrections.
@@ -249,6 +249,11 @@ def backup_vasp(
         for fname in filenames:
             for f in glob.glob(fname):
                 tar.add(f)
+    
+    ### delete files
+    if delete_files:
+        for filename in filenames:
+            os.remove(filename)
     
     ### go back to the original directory
     os.chdir(cwd)

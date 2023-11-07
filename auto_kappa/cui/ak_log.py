@@ -40,7 +40,7 @@ def symmetry_error(spg_init, spg_fin):
     #msg += " The calculation was stopped. Consider to use ISYM = 2."
     msg = "\n Warning: The spacegroup number was changed from %d to %d "\
             "due to a relaxation calculation.\n" % (spg_init, spg_fin)
-    msg += " Consider to use ISYM = 2."
+    #msg += " Consider to use ISYM = 2."
     logger.warning(msg)
 
 def rerun_with_omp():
