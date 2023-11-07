@@ -18,9 +18,10 @@ def get_parser():
     ### parameters that need to be modified for each calculation
     parser.add_option("-d", "--directory", dest="directory", type="string",
             default=None, help=""
-            "Directory of Phonondb where POSCAR-unitcell, phonopy.conf, "
-            "KPOINTS-**, etc. are located. ``--directory`` or "
-            "``--file_structure`` must be given. "
+            "Directory name for data of Phonondb "
+            "where POSCAR-unitcell, phonopy.conf, KPOINTS-**, etc. "
+            "are located. "
+            "``--directory`` or ``--file_structure`` must be given. "
             "When both of them are given, ``--directory`` takes "
             "priority over ``--file_structure``."
             )
@@ -28,12 +29,12 @@ def get_parser():
     parser.add_option("--file_structure", dest="file_structure", type="string",
             default=None, 
             help="Structure file name. Different kinds of format such as "
-            "POSCAR and cif file can be read by ``Structure.from_read`` module "
+            "POSCAR and cif file can be read by ``Structure.from_file`` module "
             "in ``Pymatgen.core.structure``.")
     
     parser.add_option("--material_name", dest="material_name", type="string",
             default="./out", 
-            help="Material name which is used as the output directory [out]")
+            help="Material name which is used as the output directory [./out]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option("-n", "--ncores", dest="ncores", type="int",
@@ -153,12 +154,17 @@ def get_parser():
             "This options is used only when ``--analyze_with_largersc`` == 1.")
     
     ### calculate potential energy sruface
-    parser.add_option("--calculate_pes", dest="calculate_pes", 
+    parser.add_option("--pes", dest="pes",
             type="int", default=0, 
-            help="Calculate potential energy surface with respect to "
-            "a phonon mode with negative frequency. "
-            "(0. not calculated, 1. calculated only for larger supercell, "
-            "2. caluclated for small and larger supercells")
+            help="Calculate potential energy surface (PES) "
+            "with respect to a phonon mode with a negative frequency. [0] "
+            "PES is "
+            "0. not calculated, "
+            "1. calculated only for larger supercells, or "
+            "2. calculated for both of small and larger supercells. "
+            "A representative k-point is chosen to calculate the PES: "
+            "Gamma point, commensurate point, or grid-point for DOS."
+            )
     
     #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
     #        default=None, 

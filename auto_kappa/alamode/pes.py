@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+import os, os.path
 import math
 import numpy as np
 import pandas as pd
@@ -6,6 +8,20 @@ import pandas as pd
 from auto_kappa.alamode.log_parser import (
         get_eigenvalues_from_logfile,
         get_minimum_frequency_from_logfile)
+
+def calculate_pes(directories):
+    """ Calculate potential energy surface """
+    
+    for key in directories:
+        print(key)
+        if type(directories[key]) == str:
+            print(directories[key])
+        else:
+            for k2 in directories[key]:
+                print(k2)
+                print(" ", directories[key][k2])
+    sys.exit()
+
 
 def get_representative_kpoint_with_negative_frequency(
         logfile_band=None, logfile_dos=None, 
@@ -122,18 +138,18 @@ def get_symmetry_points_for_kpoint(kpoint, filename=None, tol=1e-5):
     return None
 
 
-log_band = "./bandos/band.log"
-log_dos = "./bandos/dos.log"
-log_com = "./evec/evec_commensurate.log"
-
-kp_type, kmin = get_representative_kpoint_with_negative_frequency(
-        logfile_band=log_band, 
-        logfile_dos=log_dos, 
-        logfile_commensurate=log_com)
-
-print(kp_type, kmin)
-
-if kp_type == "band":
-    sym_points = get_symmetry_points_for_kpoint(kmin, filename=log_band)
-    print(sym_points)
+#log_band = "./bandos/band.log"
+#log_dos = "./bandos/dos.log"
+#log_com = "./evec/evec_commensurate.log"
+#
+#kp_type, kmin = get_representative_kpoint_with_negative_frequency(
+#        logfile_band=log_band, 
+#        logfile_dos=log_dos, 
+#        logfile_commensurate=log_com)
+#
+#print(kp_type, kmin)
+#
+#if kp_type == "band":
+#    sym_points = get_symmetry_points_for_kpoint(kmin, filename=log_band)
+#    print(sym_points)
 

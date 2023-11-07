@@ -19,10 +19,11 @@ import time
 
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa.apdb import ApdbVasp
-from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
+from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa.alamode.log_parser import AkLog
+from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.io.files import write_output_yaml
@@ -1128,7 +1129,6 @@ def analyze_phonon_properties(
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
     ###
-    #analyze_harmonic_properties(almcalc, calc_force, neglect_log=neglect_log)
     analyze_harmonic_properties(almcalc, calc_force)
      
     ### Check negative frequency
@@ -1171,8 +1171,7 @@ def analyze_phonon_properties(
     ### output log.yaml 
     log = AkLog(material_name)
     log.write_yaml()
-    ##log.plot_times()
-    
+
 def _plot_bandos_for_different_sizes(
         almcalc1, almcalc2, figname="fig_bandos.png"
         ):
@@ -1211,41 +1210,41 @@ def _use_omp_for_anphon(base_dir):
                     return True
     return False
     
-def _compress_directory(dir_orig):
-    
-    import tarfile
-    import shutil
-    
-    logger = logging.getLogger(__name__)
-    
-    data = dir_orig.split("/")
-    dir_base = ""
-    for i in range(len(data)-1):
-        dir_base += data[i]
-        if i < len(data)-2:
-            dir_base += "/"
-    
-    ###
-    cwd = os.getcwd()
-    os.chdir(dir_base)
-
-    ### compress
-    dir0 = data[-1]
-    for j in range(1, 1000):
-        tar_dir = dir0 + "_error%d.tar.gz" % j
-        if os.path.exists(tar_dir) == False:
-            with tarfile.open(tar_dir, 'w:gz') as tar:
-                tar.add(dir0)
-            break
-    
-    ### delete the original directory
-    shutil.rmtree(dir0)
-    os.chdir(cwd)
-
-    ###
-    msg = "\n Compress and delete %s.\n" % dir_orig
-    msg += " Create %s." % (tar_dir)
-    logger.info(msg)
+#def _compress_directory(dir_orig):
+#    
+#    import tarfile
+#    import shutil
+#    
+#    logger = logging.getLogger(__name__)
+#    
+#    data = dir_orig.split("/")
+#    dir_base = ""
+#    for i in range(len(data)-1):
+#        dir_base += data[i]
+#        if i < len(data)-2:
+#            dir_base += "/"
+#    
+#    ###
+#    cwd = os.getcwd()
+#    os.chdir(dir_base)
+#
+#    ### compress
+#    dir0 = data[-1]
+#    for j in range(1, 1000):
+#        tar_dir = dir0 + "_error%d.tar.gz" % j
+#        if os.path.exists(tar_dir) == False:
+#            with tarfile.open(tar_dir, 'w:gz') as tar:
+#                tar.add(dir0)
+#            break
+#    
+#    ### delete the original directory
+#    shutil.rmtree(dir0)
+#    os.chdir(cwd)
+#
+#    ###
+#    msg = "\n Compress and delete %s.\n" % dir_orig
+#    msg += " Create %s." % (tar_dir)
+#    logger.info(msg)
 
 def main():
     
@@ -1278,15 +1277,6 @@ def main():
                 values2 = values1[k2]
                 out_dirs[k1][k2] = base_dir + '/' + values2
     
-    #### authors
-    #if "authors" in ak_params.keys():
-    #    msg = "\n Authors:"
-    #    msg += "\n ========"
-    #    msg += "\n Authors      : %s" % ak_params["authors"]
-    #    if "affiliations" in ak_params.keys():
-    #        msg += "\n Affiliations : %s" % ak_params["affiliations"]
-    #    logger.info(msg)
-
     ### memory check
     if _use_omp_for_anphon(base_dir):
         if ak_params["anphon_para"] != "omp":
@@ -1294,7 +1284,6 @@ def main():
             msg += " Change anphon_para option to \"omp\".\n"
             logger.info(msg)
             ak_params["anphon_para"] = "omp"
-    
     
     ######################
     ### Adjust options ###
@@ -1386,31 +1375,18 @@ def main():
             cell_type=cell_types["relax"]
             )
     
+    ### Stop because of the change of symmetry during the structure opt.
     if out == -1:
+        msg = "\n Error: crystal symmetry was changed during the "\
+                "relaxation calculation."
+        msg += "\n"
+        msg += "\n STOP THE CALCULATION"
+        time = datetime.datetime.now()
+        msg += "\n at " + time.strftime("%m/%d/%Y %H:%M:%S")
+        msg += "\n"
+        logger.error(msg)
+        sys.exit()
         
-        ####
-        #### Relaxation calculation by explicitly setting ISYM == 2
-        ####
-        #### run calculation
-        #out = apdb.run_relaxation(
-        #        out_dirs["relax"],
-        #        kpts_used["relax"],
-        #        volume_relaxation=ak_params['volume_relaxation'],
-        #        cell_type=cell_types["relax"],
-        #        isym=2,
-        #        )
-        
-        if out == -1:
-            msg = "\n Error: crystal symmetry was changed during the "\
-                    "relaxation calculation."
-            msg += "\n"
-            msg += "\n STOP THE CALCULATION"
-            time = datetime.datetime.now()
-            msg += "\n at " + time.strftime("%m/%d/%Y %H:%M:%S")
-            msg += "\n"
-            logger.error(msg)
-            sys.exit()
-            
     ### output yaml file
     info = {
             "directory": out_dirs["relax"].replace(base_dir, "."), 
@@ -1484,6 +1460,14 @@ def main():
             frac_nrandom=ak_params['frac_nrandom'],
             )
     
+    ### Calculate PES
+    #if (almcalc.minimum_frequency < ak_params['negative_freq'] 
+    #        and ak_params['pes'] == 2):
+    if (almcalc.minimum_frequency < 10 and ak_params['pes'] == 2):
+        calculate_pes(almcalc.out_dirs)
+        print(' calculate pes')
+        sys.exit()
+    
     ########################
     ##  Larger supercell  ##
     ########################
@@ -1537,7 +1521,13 @@ def main():
         else:
             
             ak_log.negative_frequency(almcalc.minimum_frequency)
-      
+            
+            ### calculate PES
+            if ak_params['pes'] == 1:
+                print(' calculate pes')
+                #calculate_pes(almcalc_large.out_dirs)
+                sys.exit()
+    
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times
     times, labels = get_times(base_dir)
