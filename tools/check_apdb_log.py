@@ -24,6 +24,13 @@ from optparse import OptionParser
 import yaml
 import glob
 
+POSSIBLE_STATUSES = {
+        0: "NotYet",
+        1: "Finished_harmonic",
+        2: "Finished_cubic",
+        3: "Symmetry_error",
+        }
+
 def get_minimum_energy(dir_name):
     """ Check minimum frequency """ 
     from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
@@ -88,8 +95,13 @@ def check_results_with_larger_sc(dir_orig):
     if dir_sc is None:
         return None
     else:
-        status = check_log_yaml(dir_sc)
-        return status
+        num = check_log_yaml(dir_sc)
+        
+        statuses = POSSIBLE_STATUSES
+        if num in list(statuses.keys()):
+            return statuses[num]
+        else:
+            return "Error"
     
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
@@ -127,20 +139,11 @@ def main(options):
     
     flag = check_log_yaml(options.dir_apdb)
     
-    ##print(options.dir_apdb, end=" ")
-    if flag == 0:
-        print("NotYet")
-    elif flag == 1:
-        print("Finished_harmonic")
-    elif flag == 2:
-        print("Finished_cubic")
-    elif flag == 3:
-        ## too many errors of the symmetry change
-        print("Symmetry_error")
+    if flag in list(POSSIBLE_STATUSES.keys()):
+        print(POSSIBLE_STATUSES[flag])
     else:
         print("Error")
-    
-    
+
 if __name__ == '__main__':
     parser = OptionParser()
     
