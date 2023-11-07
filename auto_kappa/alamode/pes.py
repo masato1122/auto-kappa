@@ -17,11 +17,13 @@ def get_representative_kpoint_with_negative_frequency(
     
     Return
     -------
-    integer : 
-        0. Gamma point
-        1. kpoint on phonon dispersion
-        2. kpoint of the commensurate points
-        3. kpoint on k-mesh for DOS
+    string :
+        "band"        : kpoint on phonon dispersion
+        "commensurate": kpoint of the commensurate points
+        "dos"         : kpoint on k-mesh for DOS
+
+    array : 
+        kpoint for a negative frequency
     """
     def _get_kpoint_of_fmin(kpoints, frequencies):
         """ Get kpoint of the minimum frequency
@@ -57,7 +59,7 @@ def get_representative_kpoint_with_negative_frequency(
     ks2, es2 = get_eigenvalues_from_logfile(logfile_commensurate)
     ks3, es3 = get_eigenvalues_from_logfile(logfile_dos)
     
-    imod = None
+    kp_type = None
     kmin = None
     fmin = 10000.
     
@@ -66,37 +68,37 @@ def get_representative_kpoint_with_negative_frequency(
     if kfmin1 is not None:
         
         if kfmin1[1] < fmin:
-            imod = 1
+            kp_type = "band"
             kmin = kfmin1[0]
             fmin = kfmin1[1]
         
         ### case 1: w < 0 at k = 0
         if np.linalg.norm(kfmin1[0]) < tol_k:
-            return 0, kfmin1[0]
+            return "band", kfmin1[0]
     
     ### commensurate points
     kfmin2 = _get_kpoint_of_fmin(ks2, es2)
     if kfmin2 is not None:
         
         if kfmin2[1] < fmin:
-            imod = 2
+            kp_type = "commensurate"
             kmin = kfmin2[0]
             fmin = kfmin2[1]
         
         ### case 2: w < 0 at commensurate points
-        return 1, kfmin2[0]
+        return "commensurate", kfmin2[0]
     
     ### DOS
     kfmin3 = _get_kpoint_of_fmin(ks3, es3)
     if kfmin3 is not None:
 
         if kfmin3[1] < fmin:
-            imod = 3
-            kmin = kfmin2[0]
-            fmin = kfmin2[1]
+            kp_type = "dos"
+            kmin = kfmin3[0]
+            fmin = kfmin3[1]
     
     ### case 3: return kpoint with the min. freq.
-    return imod, kmin
+    return kp_type, kmin
 
 def get_symmetry_points_for_kpoint(kpoint, filename=None, tol=1e-5):
     """ Search the given kpoint in the band file (*.bands) and return the
@@ -124,15 +126,14 @@ log_band = "./bandos/band.log"
 log_dos = "./bandos/dos.log"
 log_com = "./evec/evec_commensurate.log"
 
-itype, kmin = get_representative_kpoint_with_negative_frequency(
+kp_type, kmin = get_representative_kpoint_with_negative_frequency(
         logfile_band=log_band, 
         logfile_dos=log_dos, 
         logfile_commensurate=log_com)
 
-print(itype, kmin)
+print(kp_type, kmin)
 
-sym_points = get_symmetry_points_for_kpoint(kmin, filename=log_band)
-print(sym_points)
-
-# test
+if kp_type == "band":
+    sym_points = get_symmetry_points_for_kpoint(kmin, filename=log_band)
+    print(sym_points)
 

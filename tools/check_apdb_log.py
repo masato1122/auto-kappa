@@ -59,6 +59,37 @@ def aborted_with_symmetry_error(directory):
         if "STOP THE CALCULATION" in line:
             return True
     return False
+
+
+def _get_directory_name_for_largesc(dir_orig):
+    """ get a directory name for larger SC """
+    
+    line = dir_orig + "/sc-*"
+    dirs = glob.glob(line)
+    if len(dirs) == 0:
+        return None
+    
+    ### get the largest SC
+    nsc_max = 0
+    dir_tmp = None
+    for dd in dirs:
+        data = dd.split("/")[-1].replace("sc-", "").split("x")
+        nsc_i = 0
+        for j in range(3):
+            nsc_i += int(data[j])
+        if nsc_i > nsc_max:
+            nsc_max = nsc_i
+            dir_tmp = dd
+    return dir_tmp
+
+def check_results_with_larger_sc(dir_orig):
+    """ check results for larger supercell """
+    dir_sc = _get_directory_name_for_largesc(dir_orig)
+    if dir_sc is None:
+        return None
+    else:
+        status = check_log_yaml(dir_sc)
+        return status
     
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
@@ -68,7 +99,6 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     1 : finished at harmonic
     2 : finished at cubic
     """
-    
     emin = get_minimum_energy(dir_name)
     
     ### Band and DOS were not calculated.
@@ -93,6 +123,8 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
 
 def main(options):
 
+    #flag_sc = check_results_with_larger_sc(options.dir_apdb)
+    
     flag = check_log_yaml(options.dir_apdb)
     
     ##print(options.dir_apdb, end=" ")
