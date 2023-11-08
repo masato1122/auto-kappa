@@ -29,7 +29,6 @@ def calculate_pes(
      
     ### make vibration
 
-    
     exit()
     return None
 

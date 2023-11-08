@@ -552,22 +552,22 @@ def read_log_forces(directory, mode, fc3_type=None):
     fmaxes = []
     total_time = 0.
     count = 0
-    for i in range(500):
+    for i in range(1000):
         if i == 0:
             prefix = 'prist'
         else:
             prefix = str(i)
         
         ### read vasprun.xml
-        dir_vasp = dir1 + '/'+prefix
+        dir_vasp = dir1 + '/' + prefix
         
         if os.path.exists(dir_vasp) == False:
             break
         
         out_each = _read_each_vaspjob(dir_vasp)
-
+        
         if out_each is None:
-            msg = " Cannot find %s or the calculation has not been done." % dir_vasp
+            msg = "\n Caution: Cannot find %s or the calculation has not finished." % dir_vasp
             logger.warning(msg)
             continue
         
@@ -582,12 +582,16 @@ def read_log_forces(directory, mode, fc3_type=None):
         else:
             count += 1
             fmaxes.append(out_each['max_force'])
-       
+    
     out['number_of_patterns'] = count
     out['time'] = {'value': total_time, 'unit': 'sec'}
     
-    fmaxes = np.asarray(fmaxes)
-    out['minimum_fmax_patterns'] = float(np.min(fmaxes))
+    try:
+        fmaxes = np.asarray(fmaxes)
+        out['minimum_fmax_patterns'] = float(np.min(fmaxes))
+    except Exception:
+        pass
+    
     return out
 
 def read_log_lasso(directory):
