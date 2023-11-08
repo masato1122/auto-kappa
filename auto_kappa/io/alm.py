@@ -719,7 +719,6 @@ class AnphonInput(MSONable, dict):
     
     def _add_mass_info(self):
         """ Add mass info """
-        
         self["mass"] = get_mass_info(self["kd"])
         
     def _add_isofact_info(self):
@@ -744,6 +743,9 @@ class AnphonInput(MSONable, dict):
         """
         self.check_parameters()
         
+        msg = "\n Make an input script for ALAMODE : %s" % filename
+        logger.info(msg)
+        
         ## output file name
         if filename is None:
             if self['mode'].lower() == 'phonons':
@@ -764,15 +766,13 @@ class AnphonInput(MSONable, dict):
         
         if all_masses_are_given == False:
             
-            line = "Make an input script"
-            msg = "\n " + line
-            msg += "\n " + "-" * len(line)
+            msg = "\n Add mass info which are not given by ALAMODE."
             logger.info(msg)
             
             self._add_mass_info()
             if "isotope" in self:
                 self._add_isofact_info()
-
+        
         ## general parameters
         general_dict = _get_subdict(self, self.general_keys)
         general_nml = f90nml.Namelist({"general": general_dict})

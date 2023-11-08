@@ -1229,12 +1229,18 @@ class AlamodeCalc():
         ## prepare directory
         os.makedirs(dir_work, exist_ok=True)
         
-        #### output yaml file
+        #### write output directory in a yaml file
         name = "%s" % (propt)
         if name == "kappa":
             name += "_%dx%dx%d" % (kpts[0], kpts[1], kpts[2])
-        if self.additional_directory is not None:
-            name += "_" + self.additional_directory
+        
+        if self.scell_matrix is not None:
+            name += "_%dx%dx%d" % (
+                    self.scell_matrix[0][0],
+                    self.scell_matrix[1][1],
+                    self.scell_matrix[2][2],
+                    )
+        
         info = {"directory": dir_work.replace(self.base_directory, "."),
                 "kind": "ALAMODE",
                 "note": "ALAMODE calculation for %s" % (propt)}
@@ -1938,21 +1944,61 @@ class AlamodeCalc():
         plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
                 xscale=xscale, ylabel=ylabel1)
     
-    def calculte_pes(self, outdir=None, fc2xml=None):
+    def calculate_pes(self, negative_freq=-1e-3):
+        """ Calculate PES """
         
-        if outdir is None:
-            outdir = self.out_dirs['harm']['pes']
+        ### start PES
+        line = "Calculate PES"
+        msg = "\n " + line
+        msg += "\n " + "=" * len(line)
+        logger.info(msg)
         
-        if fc2xml is None:
-            msg = "\n Error: fc2xml must be given."
+        ### get a representative kpoint
+        from auto_kappa.alamode.pes import get_representative_kpoint
+        
+        log_band = self.out_dirs["harm"]["bandos"] + "/band.log"
+        log_commensurate = self.out_dirs["harm"]["evec"] + "/evec_commensurate.log"
+        log_dos = self.out_dirs["harm"]["bandos"] + "/dos.log"
+        
+        out = get_representative_kpoint(
+                log_band=log_band, log_dos=log_dos,
+                log_commensurate=log_commensurate,
+                epsilon=1e-5, negative_freq=negative_freq)
+        
+        if out is None:
+            return None
+        
+        kp_type, kpoint = out
+        
+        ### harmonic FCs
+        fc2xml = self.out_dirs['result'] + "/" + self.outfiles['harm_xml']
+        if os.path.exists(fc2xml) == False:
+            msg = "\n Error: cannot find %s" % fc2xml
             logger.error(msg)
             return None
-
-        ###
-        calculate_potential_energy_surface(outdir, fc2xml)
-        #fc2xml = self.out_dirs[
-
-        pass
+        
+        ### move directory
+        dir_init = os.getcwd()
+        dir_pes = self.out_dirs["harm"]["pes"]
+        os.makedirs(dir_pes, exist_ok=True)
+        os.chdir(dir_pes)
+        
+        ### make BORNINFO
+        if self.nac != 0:
+            xml4born = self.out_dirs["nac"] + "/vasprun.xml"
+        else:
+            xml4born = None
+        
+        ### calculate PES
+        from auto_kappa.alamode.pes import calculate_pes
+        calculate_pes(
+                self.primitive, kpoint, 
+                outdir=self.out_dirs["harm"]["pes"], fcsxml=fc2xml, 
+                command=self.commands["alamode"],
+                nac=self.nac, vasp_xml=xml4born)
+        
+        ### move back to the initial directory
+        os.chdir(dir_init)
 
 def run_alamode(
         filename, logfile, workdir='.', neglect_log=0, file_err="std_err.txt",

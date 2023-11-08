@@ -1464,9 +1464,7 @@ def main():
     #if (almcalc.minimum_frequency < ak_params['negative_freq'] 
     #        and ak_params['pes'] == 2):
     if (almcalc.minimum_frequency < 10 and ak_params['pes'] == 2):
-        calculate_pes(almcalc.out_dirs)
-        print(' calculate pes')
-        sys.exit()
+        almcalc.calculate_pes(negative_freq=ak_params['negative_freq'])
     
     ########################
     ##  Larger supercell  ##
@@ -1520,12 +1518,12 @@ def main():
         
         else:
             
-            ak_log.negative_frequency(almcalc.minimum_frequency)
+            ak_log.negative_frequency(almcalc_large.minimum_frequency)
             
             ### calculate PES
-            if ak_params['pes'] == 1:
-                print(' calculate pes')
-                #calculate_pes(almcalc_large.out_dirs)
+            if ak_params['pes'] > 0:
+                almcalc_large.calculate_pes(
+                        negative_freq=ak_params['negative_freq'])
                 sys.exit()
     
     ### plot and print calculation durations
