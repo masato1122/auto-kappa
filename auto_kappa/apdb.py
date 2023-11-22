@@ -273,7 +273,7 @@ class ApdbVasp():
             volume_relaxation=0,
             cell_type='p',
             force=False, num_full=2, verbosity=1,
-            max_error=20, **args
+            max_error=None, **args
             ):
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
@@ -375,8 +375,9 @@ class ApdbVasp():
                 mode = 'relax-freeze'
             
             ### check the number of errors
-            if too_many_errors(dir_cur, max_error=max_error):
-                return -2
+            if max_error is not None:
+                if too_many_errors(dir_cur, max_error=max_error):
+                    return -2
             
             if verbosity != 0:
                 line = "%s (%d)" % (mode, num)

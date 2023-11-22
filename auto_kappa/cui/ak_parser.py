@@ -189,9 +189,9 @@ def get_parser():
             help="Calculate harmonic properties only (0.No, 1.Yes) [0]")
     
     parser.add_option("--max_relax_error", dest="max_relax_error", type="int",
-            default=20, 
+            default=500, 
             help="Maximum number of errors for relaxation calculations with "
-            "VASP [20]")
+            "VASP. Set this option if the number of error is too many. [500]")
     
     ### author
     parser.add_option("--authors", dest="authors", type="string",
