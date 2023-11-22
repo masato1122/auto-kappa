@@ -951,25 +951,27 @@ def analyze_harmonic_properties(
                 max_num_corrections=max_num_corrections,
                 deltak=deltak, reciprocal_density=reciprocal_density)
         
-        #### select a proper nac : 1  or 2
-        #if propt != "fc2" and almcalc.nac != 0:
+        ###### select a proper nac : 1  or 2
+        #if (propt != "fc2" and 
+        #        almcalc.nac != 0 and
+        #        almcalc.get_minimum_frequency(which=propt) < negative_freq
+        #        ):
         #    
-        #    logfile = almcalc.out_dirs["harm"]["bandos"] + "/%s.log" % propt
-        #    fmin = get_minimum_frequency_from_logfile(logfile)
+        #    if almcalc.nac == 1:
+        #        nac_new = 2
+        #    else:
+        #        nac_new = 1
         #    
-        #    if fmin < minimum_freq:
-        #        
-        #        if almcalc.nac == 1:
-        #            nac_new = 2
-        #        else:
-        #            nac_new = 1
-        #        
-        #        almcalc.nac = nac_new
-        #        _analyze_each_harm_propt(
-        #                propt, almcalc, neglect_log=neglect_log,
-        #                max_num_corrections=max_num_corrections,
-        #                deltak=deltak, reciprocal_density=reciprocal_density)
-    
+        #    #almcalc.nac = nac_new
+        #
+        #if propt != "fc2":
+        #    print(almcalc.get_minimum_frequency(which=propt))
+        #    #exit()
+        #    #_analyze_each_harm_propt(
+        #    #        propt, almcalc, neglect_log=neglect_log,
+        #    #        max_num_corrections=max_num_corrections,
+        #    #        deltak=deltak, reciprocal_density=reciprocal_density)
+
     ###
     almcalc.commands['alamode']['ncores'] = _ncores_orig
     almcalc.commands['alamode']['anphon_para'] = _para_orig
@@ -1410,13 +1412,19 @@ def main():
             out_dirs["relax"],
             kpts_used["relax"],
             volume_relaxation=ak_params['volume_relaxation'],
-            cell_type=cell_types["relax"]
+            cell_type=cell_types["relax"],
+            max_error=ak_params["max_relax_error"],
             )
     
     ### Stop because of the change of symmetry during the structure opt.
-    if out == -1:
-        msg = "\n Error: crystal symmetry was changed during the "\
-                "relaxation calculation."
+    if out < 0:
+        if out == -1:
+            msg = "\n Error: crystal symmetry was changed during the "\
+                    "relaxation calculation."
+        elif out == -2:
+            msg = "\n Error: too many number of errors for the relaxation "\
+                    "calculation."
+        ##
         msg += "\n"
         msg += "\n STOP THE CALCULATION"
         time = datetime.datetime.now()

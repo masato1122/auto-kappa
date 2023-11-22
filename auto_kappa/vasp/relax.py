@@ -14,6 +14,7 @@
 #
 import sys
 import os.path
+import math
 import numpy as np
 import ase
 import glob
@@ -212,7 +213,7 @@ class StrictRelaxation():
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
         """
-        return np.power((s_vol + 1.), 1/3) - 1
+        return math.pow((s_vol + 1.), 1/3) - 1
     
     def get_optimal_structure(self, format='pmg'):
         

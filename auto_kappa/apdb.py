@@ -16,6 +16,7 @@ import os.path
 import os
 import sys
 import numpy as np
+import glob
 
 import ase.io
 from ase.calculators.vasp import Vasp
@@ -271,8 +272,8 @@ class ApdbVasp():
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
-            force=False, num_full=2, verbosity=1, 
-            **args
+            force=False, num_full=2, verbosity=1,
+            max_error=20, **args
             ):
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
@@ -299,9 +300,21 @@ class ApdbVasp():
             Number of relxation calculation w/o any restriction [default: 2]
 
         verbosity : int
-
+        
+        max_error : int
+            Max number of retry the calculation. If error.{max_error}.tar(.gz) 
+            exists, stop the calculation.
+        
         args : dictionary
             input parameters for VASP
+        
+        Return
+        ========
+        
+        integer :
+            If negative value, stop the job.
+            -1 : symmetry error
+            -2 : too many errors
         
         """
         ### relaxation cell type
@@ -360,6 +373,10 @@ class ApdbVasp():
                 num = count - num_full + 1
                 dir_cur = directory + "/freeze-%d" % num
                 mode = 'relax-freeze'
+            
+            ### check the number of errors
+            if too_many_errors(dir_cur, max_error=max_error):
+                return -2
             
             if verbosity != 0:
                 line = "%s (%d)" % (mode, num)
@@ -622,38 +639,15 @@ class ApdbVasp():
         
         return 0
 
-#def _compress_and_delete_directory(directory):
-#    """ compress and delete directory """
-#    
-#    import tarfile
-#    import shutil
-#
-#    ### get directory names
-#    data = directory.split("/")
-#    dir_work = directory[:-len(data[-1])-1]
-#    dir_target = data[-1]
-#    
-#    ### move to the directory
-#    cwd = os.getcwd()
-#    os.chdir(dir_work)
-#    
-#    ### comipress
-#    for j in range(1, 1000):
-#        tar_dir = dir_target + "_error%d.tar.gz" % j
-#        if os.path.exists(tar_dir) == False:
-#            
-#            print(dir_target, tar_dir)
-#            sys.exit()
-#            
-#            with tarfile.open(tar_dir, 'w:gz') as tar:
-#                tar.add(dir_target)
-#            break
-#
-#    
-#    print(directory)
-#    print(dir_work)
-#    print(dir_target)
-#
-#    sys.exit()
+def too_many_errors(directory, max_error=100):
+    """ check the number of errors in ``directory`` """    
+    for file_err in glob.glob(directory+"/error.*"):
+        try:
+            num = int(file_err.split("/")[-1].split(".")[1])
+        except Exception:
+            continue
+        if num >= max_error:
+            return True
+    return False
 
 

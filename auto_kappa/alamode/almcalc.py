@@ -534,33 +534,33 @@ class AlamodeCalc():
     
     @property
     def minimum_frequency(self):
+        return self.get_minimum_frequency(which="both")
+    
+    def get_minimum_frequency(self, which="both"):
         """ Read minimum frequencies from log files for band (band.log) and DOS
         (dos.log) calculations and return the value
         """
         from auto_kappa.alamode.log_parser import (
                 get_minimum_frequency_from_logfile)
         
-        log_band = self.out_dirs['harm']['bandos'] + "/band.log"
-        log_dos = self.out_dirs['harm']['bandos'] + "/dos.log"
+        if which == "both":
+            properties = ["band", "dos"]
+        else:
+            properties = [which]
         
-        fmin = 1e7
-        try:
-            out_band = get_minimum_frequency_from_logfile(log_band)
-            fmin = min(fmin, out_band['minimum_frequency'])
-        except Exception:
-            out_band = None
-            msg = " Error: %s may contain error." % log_band
-            logger.error(msg)
+        fmin = 1e9
+        for propt in properties:
+            
+            logfile = self.out_dirs['harm']['bandos'] + "/%s.log" % propt
+             
+            try:
+                out = get_minimum_frequency_from_logfile(logfile)
+                fmin = min(fmin, out["minimum_frequency"])
+            except Exception:
+                msg = " Error: %s may contain error." % logfile
+                logger.error(msg)
         
-        try:
-            out_dos = get_minimum_frequency_from_logfile(log_dos)
-            fmin = min(fmin, out_dos['minimum_frequency'])
-        except Exception:
-            out_dos = None
-            msg = " Error: %s may contain error." % log_dos
-            logger.error(msg)
-        
-        if fmin is None:
+        if fmin > 100.:
             ### alamode log file does not show extremely large negative values
             ### properly.
             return -1e6

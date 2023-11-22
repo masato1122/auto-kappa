@@ -188,6 +188,11 @@ def get_parser():
             default=0, 
             help="Calculate harmonic properties only (0.No, 1.Yes) [0]")
     
+    parser.add_option("--max_relax_error", dest="max_relax_error", type="int",
+            default=20, 
+            help="Maximum number of errors for relaxation calculations with "
+            "VASP [20]")
+    
     ### author
     parser.add_option("--authors", dest="authors", type="string",
             default=None, help="authors' name (A^1, B^1, C^2)")

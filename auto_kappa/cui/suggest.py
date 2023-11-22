@@ -10,6 +10,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
+import math
 import numpy as np
 
 import ase

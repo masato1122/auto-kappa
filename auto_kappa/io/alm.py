@@ -15,6 +15,7 @@ from monty.json import MSONable
 import sys
 import warnings
 import re
+import math
 import numpy as np
 import pymatgen
 
@@ -861,7 +862,7 @@ def get_isofact_info(elements):
         for num2 in isotopes[num]:
             mass2 = isotopes[num][num2]["mass"]
             frac = isotopes[num][num2]['composition']
-            g2 += frac * np.power(1. - mass2 / mave)
+            g2 += frac * math.pow(1. - mass2 / mave)
         g2_factors.append(g2)
     
     ### output log
