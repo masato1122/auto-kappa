@@ -29,6 +29,7 @@ POSSIBLE_STATUSES = {
         1: "Finished_harmonic",
         2: "Finished_cubic",
         3: "Symmetry_error",
+        4: "Stop_with_error",
         }
 
 def get_minimum_energy(dir_name):
@@ -55,8 +56,8 @@ def too_many_symmetry_errors(directory, tol_number=5):
     else:
         return False
 
-def aborted_with_symmetry_error(directory):
-    """ check if the previous calcualtion was aborted with a symmetry error. """
+def stop_with_error(directory):
+    """ Check if the log file contains "STOP THE CALCULATION" or not. """
     logfile = directory + "/ak.log"
     if os.path.exists(logfile) == False:
         return False
@@ -66,7 +67,6 @@ def aborted_with_symmetry_error(directory):
         if "STOP THE CALCULATION" in line:
             return True
     return False
-
 
 def _get_directory_name_for_largesc(dir_orig):
     """ get a directory name for larger SC """
@@ -102,6 +102,19 @@ def check_results_with_larger_sc(dir_orig):
             return statuses[num]
         else:
             return "Error"
+
+#def too_many_relaxation_errors(dir_name, max_errors=None):
+#    """ Check number of errors for VASP calculation """
+#    for dd in ["freeze-1", "full-2", "full-1"]:
+#        line = dir_name + "/relax/" + dd + "/error.*.tar*"
+#        dirs = glob.glob(line)
+#        for deach in dirs:
+#            num = int(deach.replace(dir_name, "").split("error.")[-1].split(".")[0])
+#            if num >= max_errors:
+#                return True
+#        if len(dirs) > 0:
+#            return False
+#    return False
     
 def check_log_yaml(dir_name, tol_zero=-1e-3):
     """
@@ -117,8 +130,10 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     if emin is None:
         if too_many_symmetry_errors(dir_name):
             return 3
-        if aborted_with_symmetry_error(dir_name):
-            return 3
+        if stop_with_error(dir_name):
+            return 4
+        #if too_many_relaxation_errors(dir_name, max_errors=200):
+        #    return 4
         return 0
     
     ###
