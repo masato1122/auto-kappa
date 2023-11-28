@@ -24,8 +24,8 @@ Nav = 6.02214086e23        # mol^-1
 DToCM = (1e-21/clight) # C*m/Debye
 
 ## Distance [M]
-AToBohr = 1.889725989        # Bohr/A
-BohrToA = 0.529177249        # A/Bohr
+AToBohr = 1.8897259886       # Bohr/A
+BohrToA = (1./AToBohr)       # A/Bohr
 BohrToM = BohrToA * 1e-10    # m/Bohr
 
 ## Energy

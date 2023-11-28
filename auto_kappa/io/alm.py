@@ -832,45 +832,75 @@ def get_mass_info(elements):
     logger.info(msg)
     return mass_info
 
-def get_isofact_info(elements):
-    """ Get isofact info """
+def calc_g2_factor(isotopes, element=None, check_mass=True):
+    """ Calculate g2 factor for Tamura model
     
-    from auto_kappa.io.isotopes import isotopes
+    Args
+    ------
+    isotopes : dictionary
+        each element containes "mass" and "composition"
     
-    msg = "\n Get IFOFACT info."
-    g2_factors = []
-    for el in elements:
-
-        num = atomic_numbers[el]
-        mass1 = atomic_masses_ase[num]
-        
-        ### calc. average mass
-        mave = 0.
-        for num2 in isotopes[num]:
-            mass2 = isotopes[num][num2]['mass']
-            frac = isotopes[num][num2]['composition']
-            mave = mass2 * frac
-        
-        ### check average mass
+    element : string
+        name of element
+    
+    Return
+    ---------
+    float
+    
+    """
+    num = atomic_numbers[element]
+    mass1 = atomic_masses_ase[num]
+    
+    ### calc. average mass
+    mave = 0.
+    for num2 in isotopes:
+        m_iso = isotopes[num2]['mass']
+        f_iso = isotopes[num2]['composition']
+        mave += m_iso * f_iso
+    
+    ### check average mass
+    if check_mass:
         if abs((mave - mass1) / mass1) > 0.1:
             msg += "\n Could not obtain isotope info for %s." % (el)
             logger.info(msg)
             return None
-        
-        ### calc. g2 factor for Tamura model
-        g2 = 0.
-        for num2 in isotopes[num]:
-            mass2 = isotopes[num][num2]["mass"]
-            frac = isotopes[num][num2]['composition']
-            g2 += frac * math.pow(1. - mass2 / mave)
-        g2_factors.append(g2)
+    
+    ### calc. g2 factor for Tamura model
+    g2 = 0.
+    for num2 in isotopes:
+        m_iso = isotopes[num2]["mass"]
+        f_iso = isotopes[num2]['composition']
+        g2 += f_iso * math.pow(1. - m_iso / mave, 2)
+    
+    return g2
+
+def get_isofact_info(elements):
+    """ Get isofact info 
+    
+    Args
+    ------
+    
+    elements : array of string
+    
+    Return
+    ------
+    
+    g2_factors : array, float
+        array for g2 factors
+
+    """
+    from auto_kappa.io.isotopes import isotopes
+    msg = "\n Get IFOFACT info."
+    g2_factors = []
+    for el in elements:
+        num = atomic_numbers[el]
+        g2_factors.append(calc_g2_factor(isotopes[num], element=el))
     
     ### output log
     msg = "\n"
     for i, el in enumerate(elements):
         msg += " %s: %.3f " % (el, g2_factors[i])
     logger.info(msg)
-
     return g2_factors
 
 def _write_kpoint(params, kpoint=None):

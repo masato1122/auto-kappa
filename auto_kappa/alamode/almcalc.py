@@ -1885,6 +1885,7 @@ class AlamodeCalc():
         for i, key in enumerate(keys):
             
             try:
+                print(dirs_kappa[key], self.prefix)
                 dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
             except Exception:
                 continue
@@ -1904,6 +1905,8 @@ class AlamodeCalc():
                     msg += " Warning: kp_xx cannot be found."
                     logger.warning(msg)
                     return -2
+        
+        exit()
         
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
