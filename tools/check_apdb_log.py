@@ -56,7 +56,18 @@ def too_many_symmetry_errors(directory, tol_number=5):
     else:
         return False
 
-def stop_with_error(directory):
+def change_symmetry(directory):
+    """ Check if the log file contains "symmetry change" or not. """
+    logfile = directory + "/ak.log"
+    if os.path.exists(logfile) == False:
+        return False
+    lines = open(logfile, 'r').readlines()
+    for line in lines:
+        if "Error: crystal symmetry was changed" in line:
+            return True 
+    return False
+
+def symmetry_error(directory):
     """ Check if the log file contains "STOP THE CALCULATION" or not. """
     logfile = directory + "/ak.log"
     if os.path.exists(logfile) == False:
@@ -128,6 +139,8 @@ def check_log_yaml(dir_name, tol_zero=-1e-3):
     
     ### Band and DOS were not calculated.
     if emin is None:
+        if change_symmetry(dir_name):
+            return 3
         if too_many_symmetry_errors(dir_name):
             return 3
         if stop_with_error(dir_name):
