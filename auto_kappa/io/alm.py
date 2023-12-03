@@ -725,7 +725,10 @@ class AnphonInput(MSONable, dict):
     def _add_isofact_info(self):
         """ Add isofact info """
         
-        out = get_isofact_info(self["kd"])
+        try:
+            out = get_isofact_info(self["kd"])
+        except Exception:
+            out = None
         
         if out is None:
             isotope_orig = self["isotope"]
