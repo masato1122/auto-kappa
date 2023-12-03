@@ -1906,10 +1906,9 @@ class AlamodeCalc():
                     logger.warning(msg)
                     return -2
         
-        exit()
-        
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
+        logger.info("")
         plot_kappa(dfs, figname=figname)
         return 0
 

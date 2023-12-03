@@ -832,7 +832,7 @@ def get_mass_info(elements):
     logger.info(msg)
     return mass_info
 
-def calc_g2_factor(isotopes, element=None, check_mass=True):
+def calc_g2_factor(isotopes, element=None):
     """ Calculate g2 factor for Tamura model
     
     Args
@@ -841,16 +841,14 @@ def calc_g2_factor(isotopes, element=None, check_mass=True):
         each element containes "mass" and "composition"
     
     element : string
-        name of element
+        Name of element. If ``element`` is given, check whether the averaged 
+        mass is realistic or not.
     
     Return
     ---------
     float
     
     """
-    num = atomic_numbers[element]
-    mass1 = atomic_masses_ase[num]
-    
     ### calc. average mass
     mave = 0.
     for num2 in isotopes:
@@ -859,10 +857,13 @@ def calc_g2_factor(isotopes, element=None, check_mass=True):
         mave += m_iso * f_iso
     
     ### check average mass
-    if check_mass:
+    if element:
+        num = atomic_numbers[element]
+        mass1 = atomic_masses_ase[num]
         if abs((mave - mass1) / mass1) > 0.1:
-            msg += "\n Could not obtain isotope info for %s." % (el)
-            logger.info(msg)
+            msg = "\n Could not obtain isotope info for %s." % (element)
+            msg += "\n averaged mass: %.2f, reference mass: %.2f" % (mave, mass1)
+            logger.warning(msg)
             return None
     
     ### calc. g2 factor for Tamura model
@@ -871,7 +872,6 @@ def calc_g2_factor(isotopes, element=None, check_mass=True):
         m_iso = isotopes[num2]["mass"]
         f_iso = isotopes[num2]['composition']
         g2 += f_iso * math.pow(1. - m_iso / mave, 2)
-    
     return g2
 
 def get_isofact_info(elements):
