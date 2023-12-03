@@ -67,7 +67,7 @@ def change_symmetry(directory):
             return True 
     return False
 
-def symmetry_error(directory):
+def stop_with_error(directory):
     """ Check if the log file contains "STOP THE CALCULATION" or not. """
     logfile = directory + "/ak.log"
     if os.path.exists(logfile) == False:
