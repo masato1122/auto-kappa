@@ -22,7 +22,6 @@ import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
-from phonopy import Phonopy
 from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
@@ -130,10 +129,8 @@ class ApdbVasp():
             unit cell structure
         """
         if standardization:
-            
             unitcell = get_standardized_structure_spglib(
-                    unitcell, to_primitive=False, format=format
-                    )
+                    unitcell, to_primitive=False, format=format)
         ##
         structures = self.get_structures(unitcell, format=format)
         self._structures = structures
@@ -143,18 +140,28 @@ class ApdbVasp():
         """ Get primitive and supercells with the stored unitcell and 
         transformation matrices.
         """
-        phonon = Phonopy(
-                change_structure_format(unitcell, format='phonopy'),
-                self._mat_u2s,
-                primitive_matrix=self._mat_u2p
-                )
+        try:
+            from phonopy import Phonopy
+            phonon = Phonopy(
+                    change_structure_format(unitcell, format='phonopy'),
+                    self._mat_u2s,
+                    primitive_matrix=self._mat_u2p
+                    )
+            unit = change_structure_format(phonon.unitcell , format=format) 
+            prim = change_structure_format(phonon.primitive , format=format) 
+            sc   = change_structure_format(phonon.supercell , format=format) 
+        except Exception:
+            from auto_kappa.structure.crystal import get_primitive_structure_spglib
+            unit = change_structure_format(unitcell , format=format) 
+            prim = get_primitive_structure_spglib(unitcell)
+            prim = change_structure_format(prim, format=format)
+            sc = get_supercell(
+                    change_structure_format(unitcell, format='phonopy'),
+                    self.scell_matrix)
+            sc = change_structure_format(sc, format=format)
         
-        unit = change_structure_format(phonon.unitcell , format=format) 
-        prim = change_structure_format(phonon.primitive , format=format) 
-        sc   = change_structure_format(phonon.supercell , format=format) 
-        
+        ###
         structures = {"unit": unit, "prim": prim, "super": sc}
-        
         return structures
     
     @property
@@ -441,7 +448,7 @@ class ApdbVasp():
             count_err = 0
             if count == num_full + 1:
                 break
-
+        
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
         

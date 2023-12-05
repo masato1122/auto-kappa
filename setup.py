@@ -31,6 +31,7 @@ def main(build_dir):
             'auto_kappa.alamode.analyzer',
             'auto_kappa.cui',
             'auto_kappa.io',
+            'auto_kappa.io.alamode',
             'auto_kappa.math',
             'auto_kappa.plot',
             'auto_kappa.plot.alamode',
@@ -46,7 +47,6 @@ def main(build_dir):
     
     version = _get_version()
 
-    
     setup(
             name='auto_kappa',
             version=version,
