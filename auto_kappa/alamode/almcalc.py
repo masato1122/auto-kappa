@@ -1541,6 +1541,9 @@ class AlamodeCalc():
             num_neg = len(np.where(frequencies < negative_freq)[0])
             num_tot = len(frequencies)
             num_tol = int(num_tot * tol_neg_frac)
+            msg = "\n Number of data : %d (total), %d (positive)" % (
+                    num_neg, num_tot)
+            logger.info(msg)
             if num_neg > num_tol:
                 ### If there exists too many negative frequencies, abort the
                 ### optimal NAC option.
