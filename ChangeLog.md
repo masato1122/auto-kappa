@@ -1,3 +1,8 @@
+## Fix
+
+- Fix the minimum number of displacement patterns for LASSO. In the modified version, the minimum number was changed to 10.
+
+
 # Ver. 0.3 (September 8, 2023)
 
 ## New

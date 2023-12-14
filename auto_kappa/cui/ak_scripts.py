@@ -141,8 +141,7 @@ def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
             msg += (" %6s :" % (cal_type) + 
                     " %d" * 3 % tuple(kpts_all[cal_type]) + 
                     "\n")
-        msg += "\n"
-    
+     
     #logger = logging.getLogger(__name__)
     logger.info(msg)
 
@@ -670,8 +669,8 @@ def _write_parameters(
     with open(outfile, "w") as f:
         yaml.dump(params, f)
     
-    msg = " Output %s" % outfile
-    logger.info(msg)
+    #msg = " Output %s" % outfile
+    #logger.info(msg)
 
 def _start_larger_supercell(almcalc):
         
@@ -1276,6 +1275,9 @@ def main():
     ### Start auto-kappa
     start_autokappa()
     
+    #msg = "\n Current directory: %s" % os.getcwd()
+    #logger.info(msg)
+
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():
@@ -1346,6 +1348,13 @@ def main():
             structures["unitcell"], 
             cell_types, trans_matrices, kpts_used, nac
             )
+    
+    try:
+        fn_print = filename.replace(os.getcwd(), ".")
+    except Exception:
+        fn_print = filename
+    msg = "\n Output %s" % fn_print
+    logger.info(msg)
     
     ### output yaml file
     yaml_outdir = base_dir + "/output_directories.yaml"
@@ -1549,7 +1558,9 @@ def main():
     
     from auto_kappa.plot.pltalm import plot_times_with_pie
     figname = base_dir + "/result/fig_times.png"
-    plot_times_with_pie(times, labels, figname=figname)
+    plot_times_with_pie(
+            times, labels, 
+            figname=almcalc.get_relative_path(figname))
     
     print_times(times, labels)
         

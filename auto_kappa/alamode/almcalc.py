@@ -1127,7 +1127,8 @@ class AlamodeCalc():
             outfile = self.out_dirs['result'] + "/" + fn0
             if os.path.exists(outfile) == False or output_dfset == 2:
                 out = get_dfset(
-                        outdir0, offset_xml=offset_xml, outfile=outfile,
+                        outdir0, offset_xml=offset_xml, 
+                        outfile=self.get_relative_path(outfile),
                         nset=nsuggest-1,
                         )
             else:
@@ -2019,7 +2020,7 @@ class AlamodeCalc():
         
         ### plot a figure
         from auto_kappa.plot.pltalm import plot_lifetime
-        out = plot_lifetime(dfs, figname=figname)
+        out = plot_lifetime(dfs, figname=self.get_relative_path(figname))
         return out
     
     def plot_scattering_rates(self, temperature=300., grain_size=1000.):
@@ -2065,9 +2066,10 @@ class AlamodeCalc():
         ## plot a figure
         figname = self.out_dirs['result'] + '/fig_scat_rates.png'
         from auto_kappa.plot.pltalm import plot_scattering_rates
-        plot_scattering_rates(frequencies, scat_rates, labels, figname=figname)
+        plot_scattering_rates(
+                frequencies, scat_rates, labels, 
+                figname=self.get_relative_path(figname))
         
-    
     def _plot_cvsets(self, order=None):
         
         from auto_kappa.plot.pltalm import plot_cvsets
@@ -2114,9 +2116,10 @@ class AlamodeCalc():
         logger.info(msg)
         
         fig = plot_bandos(
-                directory=self.out_dirs['harm']['bandos'], 
+                directory=self.get_relative_path(
+                    self.out_dirs['harm']['bandos']), 
                 prefix=self.prefix, 
-                figname=figname,
+                figname=self.get_relative_path(figname),
                 **kwargs
                 )
     
@@ -2134,7 +2137,7 @@ class AlamodeCalc():
                 label = dd.split(ll_tmp)[1]
                 dirs_done[label] = dd
         return dirs_done
-
+    
     def plot_kappa(self):
         
         dirs_kappa = self.get_kappa_directories()
@@ -2142,10 +2145,12 @@ class AlamodeCalc():
         keys = dirs_kappa.keys()
         
         dfs = {}
+        logger.info("")
         for i, key in enumerate(keys):
             
             try:
-                print(dirs_kappa[key], self.prefix)
+                msg = " Read %s" % self.get_relative_path(dirs_kappa[key])
+                logger.info(msg)
                 dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
             except Exception:
                 continue
@@ -2169,9 +2174,9 @@ class AlamodeCalc():
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
         logger.info("")
-        plot_kappa(dfs, figname=figname)
+        plot_kappa(dfs, figname=self.get_relative_path(figname))
         return 0
-
+    
     def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
             figname=None, xscale='linear', nbins=150):
         
@@ -2203,7 +2208,9 @@ class AlamodeCalc():
             figname = self.out_dirs['result'] + '/fig_cumu_%s.png' % wrt
             
         from auto_kappa.plot.pltalm import plot_cumulative_kappa
-        plot_cumulative_kappa(dfs, xlabel=xlabel, figname=figname, 
+        plot_cumulative_kappa(
+                dfs, xlabel=xlabel, 
+                figname=self.get_relative_path(figname), 
                 xscale=xscale, ylabel=ylabel1)
     
     def calculate_pes(self, negative_freq=-1e-3):
@@ -2464,137 +2471,136 @@ def _alamode_finished(logfile):
     except Exception:
         return False
     
-def run_alm(structure, order, cutoffs, nbody, mode=None,
-        displacements=None, forces=None, outfile=None,
-        fc2info=None, lasso=False, lasso_type='alm', verbosity=0
-        ):
-    """ get ALM object
-    Note : length unit is Bohr
-
-    Args
-    ==========
-    order : int
-    cutoff : float, unit=Bohr
-    ndoby : shape=(order)
+#def run_alm(structure, order, cutoffs, nbody, mode=None,
+#        displacements=None, forces=None, outfile=None,
+#        fc2info=None, lasso=False, lasso_type='alm', verbosity=0
+#        ):
+#    """ get ALM object
+#    Note : length unit is Bohr
+#
+#    Args
+#    ==========
+#    order : int
+#    cutoff : float, unit=Bohr
+#    ndoby : shape=(order)
+#    
+#    displacements : shape=(npatterns, natoms, 3)
+#    forces : shape=(npatterns, natoms, 3)
+#    outfile : string
+#    
+#    lasso : bool
+#
+#    lasso_type : string
+#        "alm" or "scikit"
+#    
+#    Return
+#    ===========
+#    If mode == 'suggest':
+#    patterns : shape=(nstruct, natoms, 3)
+#
+#    If mode == 'optimize':
+#    alm.get_fc(order), which are fc*_values, elem*_indices
+#    
+#    """
+#    if outfile is not None:
+#        if os.path.exists(outfile):
+#            msg = "\n"
+#            msg += " ALM calculation (%s) has been already done.\n" % (mode)
+#            msg += " See: %s" % (outfile)
+#            logger.info(msg)
+#            return None
+#    
+#    from alm import ALM
+#
+#    if type(structure) == "ase.atoms.Atoms":
+#        atoms = structure.copy()
+#    else:
+#        atoms = change_structure_format(structure, format='ase')
+#    
+#    lave = atoms.cell * AToBohr
+#    xcoord = atoms.get_scaled_positions()
+#    kd = atoms.get_atomic_numbers()
+#    
+#    #if lasso and lasso_type == 'scikit':
+#    #    msg = "\n"
+#    #    msg = " Perform LASSO with Scikit_learn...\n"
+#    #    msg = "\n"
+#    #    logger.info(msg)
+#    #    from .alamode_tools.lasso import (
+#    #            get_training_data,
+#    #            run_lasso_by_scikit_learn
+#    #            )
+#    #    from . import default_lassobyscikit_parameters
+#    #    X, y = get_training_data(
+#    #            [lave, xcoord, kd], 
+#    #            displacements, forces,
+#    #            maxorder=order, cutoff=cutoffs, nbody=nbody
+#    #            )
+#    #    ###
+#    #    ### Default parameters may need to be adjusted.
+#    #    ###
+#    #    fc, alphas_lasso, rmse_mean, cv_mean = run_lasso_by_scikit_learn(
+#    #            X, y, len(atoms), len(forces), forces.ravel(),
+#    #            **default_lassobyscikit_parameters,
+#    #            )
+#        
+#    ###
+#    with ALM(lave, xcoord, kd) as alm:
+#        
+#        alm.define(order, cutoff_radii=cutoffs, nbody=nbody)
+#        alm.set_verbosity(verbosity)
+#        
+#        if mode == 'suggest':
+#            info = alm.suggest()
+#            if info == 1:
+#                msg = " Error during ALM calculation"
+#                logger.error(msg)
+#                return None
+#            else:
+#                patterns = alm.get_displacement_patterns(order)
+#                return patterns
+#            
+#        elif mode == 'optimize':
+#            
+#            alm.displacements = displacements
+#            alm.forces = forces
+#            
+#            ### for lasso
+#            #if lasso:
+#            #    alm.set_constraint(translation=True)
+#            
+#            ## freeze fc2
+#            if fc2info is not None:
+#                alm.freeze_fc(fc2info[0], fc2info[1])
+#            
+#            ## lasso
+#            if lasso:
+#                
+#                ### cross-validation
+#                optcontrol = {'linear_model': 2,
+#                              'cross_validation': 5,
+#                              'num_l1_alpha': 50}
+#                alm.set_optimizer_control(optcontrol)
+#                alm.optimize()
+#                
+#                ### prepare for optimization with lasso
+#                optcontrol['cross_validation'] = 0      ## change N -> 0
+#                optcontrol['l1_alpha'] = alm.get_cv_l1_alpha()
+#                alm.set_optimizer_control(optcontrol)
+#                
+#            ### optimization!!
+#            info = alm.optimize()
+#            
+#            if outfile is not None:
+#                alm.save_fc(outfile, format='alamode')
+#                msg = "\n Output " + outfile
+#                logger.info(msg)
+#            return alm.get_fc(order)
+#        
+#        else:
+#            msg = " WARNING: mode %s is not supported" % (mode)
+#            logger.warning(msg)
     
-    displacements : shape=(npatterns, natoms, 3)
-    forces : shape=(npatterns, natoms, 3)
-    outfile : string
-    
-    lasso : bool
-
-    lasso_type : string
-        "alm" or "scikit"
-    
-    Return
-    ===========
-    If mode == 'suggest':
-    patterns : shape=(nstruct, natoms, 3)
-
-    If mode == 'optimize':
-    alm.get_fc(order), which are fc*_values, elem*_indices
-    
-    """
-    if outfile is not None:
-        if os.path.exists(outfile):
-            msg = "\n"
-            msg += " ALM calculation (%s) has been already done.\n" % (mode)
-            msg += " See: %s" % (outfile)
-            logger.info(msg)
-            return None
-    
-    from alm import ALM
-
-    if type(structure) == "ase.atoms.Atoms":
-        atoms = structure.copy()
-    else:
-        atoms = change_structure_format(structure, format='ase')
-    
-    lave = atoms.cell * AToBohr
-    xcoord = atoms.get_scaled_positions()
-    kd = atoms.get_atomic_numbers()
-    
-    #if lasso and lasso_type == 'scikit':
-    #    msg = "\n"
-    #    msg = " Perform LASSO with Scikit_learn...\n"
-    #    msg = "\n"
-    #    logger.info(msg)
-    #    from .alamode_tools.lasso import (
-    #            get_training_data,
-    #            run_lasso_by_scikit_learn
-    #            )
-    #    from . import default_lassobyscikit_parameters
-    #    X, y = get_training_data(
-    #            [lave, xcoord, kd], 
-    #            displacements, forces,
-    #            maxorder=order, cutoff=cutoffs, nbody=nbody
-    #            )
-    #    ###
-    #    ### Default parameters may need to be adjusted.
-    #    ###
-    #    fc, alphas_lasso, rmse_mean, cv_mean = run_lasso_by_scikit_learn(
-    #            X, y, len(atoms), len(forces), forces.ravel(),
-    #            **default_lassobyscikit_parameters,
-    #            )
-        
-    ###
-    with ALM(lave, xcoord, kd) as alm:
-        
-        alm.define(order, cutoff_radii=cutoffs, nbody=nbody)
-        alm.set_verbosity(verbosity)
-        
-        if mode == 'suggest':
-            info = alm.suggest()
-            if info == 1:
-                msg = " Error during ALM calculation"
-                logger.error(msg)
-                return None
-            else:
-                patterns = alm.get_displacement_patterns(order)
-                return patterns
-            
-        elif mode == 'optimize':
-            
-            alm.displacements = displacements
-            alm.forces = forces
-            
-            ### for lasso
-            #if lasso:
-            #    alm.set_constraint(translation=True)
-            
-            ## freeze fc2
-            if fc2info is not None:
-                alm.freeze_fc(fc2info[0], fc2info[1])
-            
-            ## lasso
-            if lasso:
-                
-                ### cross-validation
-                optcontrol = {'linear_model': 2,
-                              'cross_validation': 5,
-                              'num_l1_alpha': 50}
-                alm.set_optimizer_control(optcontrol)
-                alm.optimize()
-                
-                ### prepare for optimization with lasso
-                optcontrol['cross_validation'] = 0      ## change N -> 0
-                optcontrol['l1_alpha'] = alm.get_cv_l1_alpha()
-                alm.set_optimizer_control(optcontrol)
-                
-            ### optimization!!
-            info = alm.optimize()
-            
-            if outfile is not None:
-                alm.save_fc(outfile, format='alamode')
-                msg = "\n Output " + outfile
-                logger.info(msg)
-            return alm.get_fc(order)
-        
-        else:
-            msg = " WARNING: mode %s is not supported" % (mode)
-            logger.warning(msg)
-    
-
 def _read_kappa(dir_kappa, prefix):
     """ Read .kl and .kl_coherent files and return pandas.DataFrame object
     
