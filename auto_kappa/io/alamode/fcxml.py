@@ -308,7 +308,7 @@ class FCXML():
         
         return self._force_constants[order]
     
-    def get_fc_info(self, order=2, which="all"):
+    def get_fc_info(self, order=2, which="unique"):
         """ Get and return info of force constants with DataFrame. 
         If ``which`` == "all", a matrix of FCs with the shape of 
         (natoms_prim, natoms_sc, ..., 3, 3, ...) is returned. 

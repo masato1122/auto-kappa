@@ -679,7 +679,8 @@ class AnphonInput(MSONable, dict):
                 self['kpoints'] = [[0,0,0]]
         elif self['kpmode'] == 1:
             if 'kpath' not in self.keys():
-                print(" kpath is set automatically.")
+                msg = "\n kpath is set automatically."
+                logger.info(msg)
                 self['kpath'] = get_kpoint_path(
                         self.primitive, 
                         deltak=self['deltak']
@@ -739,7 +740,7 @@ class AnphonInput(MSONable, dict):
             self["isotope"] = 1
             self["isofact"] = out
         
-    def to_file(self, filename: str = None):
+    def to_file(self, filename: str = None, verbosity=0):
         """ Make ANPHON input file
         Args
         -------
@@ -747,8 +748,9 @@ class AnphonInput(MSONable, dict):
         """
         self.check_parameters()
         
-        msg = "\n Make an input script for ALAMODE : %s" % filename
-        logger.info(msg)
+        if verbosity > 0:
+            msg = "\n Make an input script for ALAMODE : %s" % filename
+            logger.info(msg)
         
         ## output file name
         if filename is None:

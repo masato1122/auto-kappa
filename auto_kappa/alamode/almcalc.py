@@ -40,6 +40,9 @@ from auto_kappa.structure.crystal import change_structure_format, get_formula
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
 from auto_kappa.calculator import run_vasp, backup_vasp
 #from auto_kappa.alamode.memory import get_used_memory
+from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
+
+from auto_kappa.cui import ak_log
 
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
@@ -261,6 +264,14 @@ class AlamodeCalc():
         self.force_calculators = {}
         
         self.nac = nac
+        nac_prev = self._get_previous_nac()
+        if nac_prev is not None:
+            if self.nac != nac_prev:
+                msg = "\n NONANALYTIC option is modified from %d to %d, " % (
+                        self.nac, nac_prev)
+                msg += "which was used for the previous calculation."
+                logger.info(msg)
+            self.nac = nac_prev
         
         self.lasso = False
         
@@ -289,6 +300,44 @@ class AlamodeCalc():
         self._fc3xml = None
         self._fcsxml = None
     
+    def _get_previous_nac(self):
+        """ Get previously used NAC option """
+        nac_propt = {}
+        count = 0
+        for propt in ["band"]:
+            ### alamode input file
+            filename = self.out_dirs["harm"]["bandos"] + "/%s.in" % propt
+            if os.path.exists(filename) == False:
+                continue
+            ### get NAC option in the input file
+            lines = open(filename, 'r').readlines()
+            for line in lines:
+                if "nonanalytic" in line.lower():
+                    data = line.split()
+                    if len(data) >= 3:
+                        nac_propt[propt] = int(data[2])
+                        count += 1
+        ###
+        if len(nac_propt) != 0:
+            return nac_propt["band"]
+        else:
+            return None
+    
+    def get_relative_path(self, abs_path):
+        """ Get relative path 
+        
+        Args
+        ------
+        abs_path : string
+            absolute path
+        """
+        try:
+            dir1 = "./" + self.base_directory.split("/")[-1]
+            relative_path = abs_path.replace(self.base_directory, dir1)
+            return relative_path
+        except Exception:
+            return abs_path
+
     @property
     def fc2xml(self):
         if self._fc2xml is None:
@@ -540,8 +589,8 @@ class AlamodeCalc():
         """ Read minimum frequencies from log files for band (band.log) and DOS
         (dos.log) calculations and return the value
         """
-        from auto_kappa.alamode.log_parser import (
-                get_minimum_frequency_from_logfile)
+        #from auto_kappa.alamode.log_parser import (
+        #        get_minimum_frequency_from_logfile)
         
         if which == "both":
             properties = ["band", "dos"]
@@ -551,8 +600,8 @@ class AlamodeCalc():
         fmin = 1e9
         for propt in properties:
             
-            logfile = self.out_dirs['harm']['bandos'] + "/%s.log" % propt
-             
+            logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+            
             try:
                 out = get_minimum_frequency_from_logfile(logfile)
                 fmin = min(fmin, out["minimum_frequency"])
@@ -999,7 +1048,7 @@ class AlamodeCalc():
             filename = outdir + "/vasprun.xml"
             if wasfinished(outdir):
                 if are_forces_available(filename):
-                    msg = " %s: skipped" % outdir
+                    msg = " %s: skipped" % self.get_relative_path(outdir)
                     logger.info(msg)
                     num_done += 1
                     continue
@@ -1082,7 +1131,7 @@ class AlamodeCalc():
                         nset=nsuggest-1,
                         )
             else:
-                msg = "\n %s already exists" % (outfile)
+                msg = "\n %s already exists" % (self.get_relative_path(outfile))
                 logger.info(msg)
         
         logger.info("")
@@ -1109,6 +1158,10 @@ class AlamodeCalc():
         
         deltak : float
             resolution of phonon dispersion [0.01]
+        
+        kwargs : 
+            Any Alamode parameters can be given. The given parameters will be
+            updated just before making the input file.
         
         """
         ### get alamode_type and mode
@@ -1219,7 +1272,7 @@ class AlamodeCalc():
             logger.error(msg)
             sys.exit()
         
-        ##
+        ###
         born_xml = self.out_dirs['nac'] + '/vasprun.xml'
         
         ## output directory
@@ -1293,7 +1346,8 @@ class AlamodeCalc():
                     dfset=dfset,
                     fc2xml=fc2xml,
                     fc3xml=fc3xml,
-                    nonanalytic=self.nac, borninfo=borninfo
+                    nonanalytic=self.nac, 
+                    borninfo=borninfo
                 )
         
         ###
@@ -1424,6 +1478,9 @@ class AlamodeCalc():
         
         inp.update(kwargs)
         inp.to_file(filename=filename)
+        
+        msg = "\n Make a ninput script for ALAMODE : %s." % (
+                self.get_relative_path(filename))
     
     def get_suggested_l1alpha(self, order=None):
         
@@ -1454,9 +1511,210 @@ class AlamodeCalc():
                     return k1, k2
         if flag == False:
             return None
-     
-    def run_alamode(self, propt=None, order=None, neglect_log=0, 
-            outdir=None, **args):
+    
+    def get_optimal_nac(
+            self, tol_neg_frac=0.03,
+            deltak=None, max_num_corrections=None, 
+            reciprocal_density=None, negative_freq=None):
+        """ Analyze harmonic properties with different methods for NAC when
+        negative frequencies were obtained. Parameters are required for
+        ``analyze_harmonic_property``.
+        
+        Args
+        -----
+        tol_neg_frac : float
+            Tolerance of the fractional number of negative frequencies w.r.t the
+            total k-points (num_kpt). If the number of negative frequencies
+            (num_neg) is less than ``tol_neg_frqc * num_kpt``, the optimal NAC
+            option will be searched. 
+        """
+        
+        nac_orig = self.nac
+        
+        ###
+        try:
+            file_band_orig = (
+                    self.out_dirs["harm"]["bandos"] + "/" +
+                    self.prefix + ".bands")
+            dump = np.genfromtxt(file_band_orig)
+            frequencies = dump[:,1]
+            num_neg = len(np.where(frequencies < negative_freq)[0])
+            num_tot = len(frequencies)
+            num_tol = int(num_tot * tol_neg_frac)
+            if num_neg > num_tol:
+                ### If there exists too many negative frequencies, abort the
+                ### optimal NAC option.
+                return None
+        except Exception:
+            pass
+        
+        ### Store old results
+        dir1 = self.out_dirs["harm"]["bandos"]
+        outdir = dir1 + "/nac_%d" % nac_orig
+        if os.path.exists(outdir) == False:
+            os.makedirs(outdir, exist_ok=True)
+            for ff in glob.glob(dir1+"/*"):
+                if os.path.isfile(ff):
+                    shutil.move(ff, outdir)
+            ###
+            msg = "\n >>> Move files in %s to %s." % (
+                    self.get_relative_path(dir1),
+                    self.get_relative_path(outdir))
+            logger.info(msg)
+         
+        ### Analyze with different NAC options
+        for nac in [2, 1, 3]:
+            
+            if nac == nac_orig:
+                continue
+            
+            self.nac = nac
+            outdir = self.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
+            for propt in ["band", "dos"]:
+                
+                fcsxml = "../../../result/" + self.outfiles["harm_xml"]
+                
+                self.analyze_harmonic_property(
+                        propt, 
+                        outdir=outdir, 
+                        max_num_corrections=max_num_corrections,
+                        deltak=deltak,
+                        reciprocal_density=reciprocal_density,
+                        fcsxml=fcsxml,
+                        )
+            
+            ### log file names
+            log_band = outdir + "/band.log"
+            log_dos = outdir + "/dos.log"
+            
+            ### get the minimum frequency
+            try:
+                out_band = get_minimum_frequency_from_logfile(log_band)
+                out_dos = get_minimum_frequency_from_logfile(log_dos)
+                fmin = min(
+                        out_band["minimum_frequency"],
+                        out_dos["minimum_frequency"]
+                        )
+            except Exception:
+                fmin = -1e5
+             
+            if fmin > negative_freq:
+                self.nac = nac_orig
+                return nac
+        
+        self.nac = nac_orig
+        return None
+    
+    def analyze_harmonic_property(
+            self, propt,
+            outdir=None, max_num_corrections=None, neglect_log=None,
+            deltak=None, reciprocal_density=None, **kwargs):
+        """ Analyze each harmonic property (why not anharmonic?) 
+        
+        Args
+        -----
+        propt : string
+            "fc2", "band", or "dos"
+
+        kwargs : 
+            Any ALAMODE parameters, including "fcsxml".
+        """
+        from auto_kappa.structure.crystal import get_automatic_kmesh
+        
+        ### make an input script for the ALAMODE job
+        if propt == "band":
+            self.write_alamode_input(
+                    propt=propt, deltak=deltak, outdir=outdir, **kwargs)
+        
+        elif propt == "dos":
+            nkts = get_automatic_kmesh(
+                    self.primitive,
+                    reciprocal_density=reciprocal_density)
+            self.write_alamode_input(
+                    propt=propt, nkts=nkts, outdir=outdir, **kwargs)
+        
+        elif propt == "fc2":
+            self.write_alamode_input(
+                    propt=propt, outdir=outdir, **kwargs)
+        
+        else:
+            msg = "\n Error: %s is not supported." % propt
+            logger.error(msg)
+        
+        ### get log file name
+        if propt == "fc2":
+            logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
+        else:
+            logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+        
+        count = 0
+        ncores = self.commands["alamode"]["ncores"]
+        has_error = False
+        while True:
+            
+            if count == 0:
+                if neglect_log is None:
+                    neg_log = 0
+                else:
+                    neg_log = neglect_log
+            else:
+                neg_log = 1
+            
+            ### calculate phonon property
+            self.run_alamode(
+                    propt=propt, neglect_log=neg_log, outdir=outdir)
+            count += 1
+            
+            ### check log file
+            flag = should_rerun_alamode(logfile)
+            
+            ### Check phonon band
+            ## This part solves a bug in the old calculation.
+            ## In old version, eigenvalues has sometimes contained ``nan`` values.
+            if flag and propt == "band":
+                file_band = outdir + "/%s.bands" % self.prefix
+                flag = _should_rerun_band(file_band)
+            
+            ### the property has been calculated properly
+            if flag == False:
+                break
+            
+            ### modify the MPI and OpenMP conditions or finish the job
+            ### Note: ALAMODE job sometimes exceeds the memory
+            has_error = False
+            if count == 1:
+                
+                ### Change to OpenMP parallelization
+                ak_log.rerun_with_omp()
+                self.commands['alamode']['anphon_para'] == "omp"
+
+            elif count > 1 and count < max_num_corrections:
+
+                ### modify the number of threads (even number may be better)
+                ncores /= 2
+                if ncores > 1:
+                    ncores += int(ncores % 2)
+
+                self.commands['alamode']['ncores'] = ncores
+                msg = "\n Rerun the ALAMODE job with "\
+                        "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % ncores
+                logger.error(msg)
+
+                if ncores == 1:
+                    count = max_num_corrections
+
+            else:
+                has_error = True
+                break
+        
+        if has_error:
+            msg = "\n Error: ALAMODE job for %s "\
+                    "has not been finished properly." % propt
+            msg += "\n Abort the job."
+            logger.error(msg)
+            sys.exit()
+    
+    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None):
         """ Run anphon
         
         Args
@@ -1492,10 +1750,7 @@ class AlamodeCalc():
         
         elif propt == 'kappa':
             
-            if outdir is None:
-                workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-            else:
-                workdir = outdir
+            workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
         
         elif propt == 'evec_commensurate':
             
@@ -1550,9 +1805,9 @@ class AlamodeCalc():
         line = "Run %s for %s:" % (alamode_type, propt)
         msg += " " + line + "\n"
         msg += " " + "-" * (len(line)) + "\n\n"
-        msg += " Working directory : " + workdir
+        msg += " Working directory : " + self.get_relative_path(workdir)
         logger.info(msg)
-         
+        
         filename = "%s.in" % propt
         logfile = propt + '.log'
         
@@ -1635,16 +1890,16 @@ class AlamodeCalc():
         ##
         if os.path.exists(fn1) == False:
             
-            msg = ' %s does not exist.' % fn1
+            msg = ' %s does not exist.' % self.get_relative_path(fn1)
             logger.info(msg)
         
         else:
             if os.path.exists(fn2):
                 msg = "\n"
-                msg += " %s was overwritten." % (fn2)
+                msg += " %s was overwritten." % (self.get_relative_path(fn2))
             else:
                 msg = "\n"
-                msg += " %s was created." % fn2
+                msg += " %s was created." % self.get_relative_path(fn2)
             logger.info(msg)
             shutil.copy(fn1, fn2)
     
@@ -1720,11 +1975,13 @@ class AlamodeCalc():
         self._file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
         
         if os.path.exists(self.file_result) == False:
-            msg = " Error: %s does not exist." % self.file_result
+            msg = " Error: %s does not exist." % (
+                    self.get_relative_path(self.file_result))
             logger.error(msg)
         
         if os.path.exists(self.file_isotope) == False:
-            msg = " Error: %s does not exist." % self.file_isotope
+            msg = " Error: %s does not exist." % (
+                    self.get_relative_path(self.file_isotope))
             logger.error(msg)
             self._file_isotope = None
         
@@ -1837,13 +2094,13 @@ class AlamodeCalc():
         
         logger.info("")
     
-    def plot_bandos(self, **args):
+    def plot_bandos(self, **kwargs):
         
         ### set figure name
-        if 'figname' not in args.keys():
+        if 'figname' not in kwargs.keys():
             figname = self.out_dirs['result'] + '/fig_bandos.png'
         else:
-            figname = args['figname']
+            figname = kwargs['figname']
         
         from auto_kappa.plot.bandos import plot_bandos
 
@@ -1857,7 +2114,7 @@ class AlamodeCalc():
                 directory=self.out_dirs['harm']['bandos'], 
                 prefix=self.prefix, 
                 figname=figname,
-                **args
+                **kwargs
                 )
     
     def get_kappa_directories(self):
@@ -1975,7 +2232,7 @@ class AlamodeCalc():
         ### harmonic FCs
         fc2xml = self.out_dirs['result'] + "/" + self.outfiles['harm_xml']
         if os.path.exists(fc2xml) == False:
-            msg = "\n Error: cannot find %s" % fc2xml
+            msg = "\n Error: cannot find %s" % self.get_relative_path(fc2xml)
             logger.error(msg)
             return None
         
@@ -2145,6 +2402,41 @@ def _read_frequency_range(filename, format='anphon'):
         logger.error(msg)
         sys.exit()
 
+def should_rerun_alamode(logfile):
+    """
+    Args
+    ======
+
+    logfile : string
+        alamode log file
+
+    """
+    if os.path.exists(logfile) == False:
+        return True
+    else:
+        if _alamode_finished(logfile) == False:
+            return True
+    return False
+
+def _should_rerun_band(filename):
+    """ Check phonon dispersion calculated with ALAMODE
+    Args
+    ======
+
+    filename : string
+        alamode band file (***.bands)
+
+    """
+    data = np.genfromtxt(filename)
+    data = data[:,1:]
+    n1 = len(data)
+    n2 = len(data[0])
+    eigenvalues = data.reshape(n1*n2)
+    nan_data = eigenvalues[np.isnan(eigenvalues)]
+    if len(nan_data) == 0:
+        return False
+    else:
+        return True
 
 def _alamode_finished(logfile):
     """ Check the ALAMODE job has been finished or not with the log file.

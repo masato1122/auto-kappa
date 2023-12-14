@@ -16,12 +16,14 @@ import numpy as np
 import datetime
 import yaml
 import time
+import glob
+import shutil
 
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
 from auto_kappa.cui.ak_parser import get_parser
-from auto_kappa.alamode.almcalc import AlamodeCalc
+from auto_kappa.alamode.almcalc import AlamodeCalc, should_rerun_alamode
 from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.structure.crystal import get_automatic_kmesh
@@ -33,6 +35,7 @@ from auto_kappa.cui import ak_log
 import logging
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 logging.getLogger('custodian').setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -51,12 +54,12 @@ def start_autokappa():
     time = datetime.datetime.now()
     msg += " Start at " + time.strftime("%m/%d/%Y %H:%M:%S") + "\n"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
 
 def print_times(times, labels):
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
 
     msg = "\n"
     msg += " Calculation times:\n"
@@ -89,7 +92,7 @@ def end_autokappa():
     msg += "    \n"
     msg += " at " + time.strftime("%m/%d/%Y %H:%M:%S") + " \n"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
 
 def print_options(params):
@@ -102,7 +105,7 @@ def print_options(params):
             msg += " " + key.ljust(25) + " : " + str(params[key]) + "\n"
     msg += "\n"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
 
 def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
@@ -140,7 +143,7 @@ def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
                     "\n")
         msg += "\n"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
 
 def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
@@ -176,7 +179,7 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     #from auto_kappa.io.vasp import wasfinished
     from auto_kappa.structure.crystal import get_standardized_structure_spglib
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
 
     cell_type = None
     
@@ -256,25 +259,18 @@ def _get_base_directory_name(label, restart=True):
     """ Return the base directory name with an absolute path
     """
     outdir = os.getcwd() + "/"
-    
     if restart:
-        """ Case 1: when the job can be restarted
-        """
+        """ Case 1: when the job can be restarted """
         outdir += label
-    
     else:
-        """ Case 2: when the job cannot be restarted
-        """
+        """ Case 2: when the job cannot be restarted """
         if os.path.exists(label) == False:
-            
             outdir += label
-        
         else:
             for i in range(2, 100):
                 outdir = label + "-%d" % i
                 if os.path.exists(outdir) == False:
                     break
-    
     return outdir
 
 def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
@@ -467,8 +463,8 @@ def _determine_kpoints_for_all(
         
         ### check
         if kpts_all[cal_type] is None:
-            msg = " Error: cannot obtain k-mesh info properly.\n"
-            msg += " k-mesh for %s is None.\n" % cal_type
+            msg = "\n Error: cannot obtain k-mesh info properly."
+            msg += "\n k-mesh for %s is None." % cal_type
             logger.error(msg)
             sys.exit()
     
@@ -596,14 +592,14 @@ def _get_required_parameters(
                         )
                     )
         
-        ### This part can be modified. So far, NAC is performed for materials
+        ### This part can be modified. So far, NAC is considered for materials
         ### which is not included in Phonondb.
-        nac = 1
+        nac = 2
     
     else:
         """ Case 3: error
         """
-        msg = " Error: --directory or --file_structure must be given."
+        msg = "\n Error: --directory or --file_structure must be given."
         logger.error(msg)
         sys.exit()
     
@@ -648,7 +644,7 @@ def _write_parameters(
         outfile, unitcell, cell_types, trans_matrices, kpts_used, nac):
     """ Output parameters.yaml
     """
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     
     params = {}
     
@@ -691,7 +687,7 @@ def _start_larger_supercell(almcalc):
     msg += " ## " + " " * (len(line)) + " ##\n"
     msg += " ###" + "#" * (len(line)) + "###"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
     
     msg = "\n"
@@ -783,15 +779,7 @@ def analyze_harmonic_with_larger_supercells(
         
         ### Finish
         if almcalc_new.minimum_frequency > negative_freq:
-            
-            #line = "Negative frequencies have been removed with %s "\
-            #        "supercell!!" % (sc_label)
-            #msg += "\n"
-            #msg += " " + line + "\n"
-            #print(msg)
-            
             ak_log.negative_frequency(almcalc_new.minimum_frequency)
-            
             return almcalc_new
         
         isc += 1
@@ -802,111 +790,126 @@ def analyze_harmonic_with_larger_supercells(
         sc_mat_prev = almcalc_new.scell_matrix
     
     return almcalc_new
+    
+#def _get_optimal_nac(almcalc, neclect_log=None, **args):
+#    """ Analyze harmonic properties with diffrent methods for NAC when negative 
+#    frequencies were obtained. """
+#    
+#    nac_orig = almcalc.nac
+#    for nac in [2, 1, 3]:
+#        if nac == nac_orig:
+#            continue
+#        almcalc.nac = nac
+#        for propt in ["band", "dos"]:
+#            
+#            outdir = almcalc.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
+#            fcsxml = "../../../result" + almcalc.outfiles["harm_xml"]
+#            
+#            _analyze_each_harm_propt(
+#                    propt, almcalc, outdir=outdir, fcsxml=fcsxml, **args)
+#            
+#            print(nac)
+#            exit()
+#    print(" HEEEEEEEEEEEEEEEEEEEEEERE")
 
-def _analyze_each_harm_propt(
-        propt, almcalc, 
-        neglect_log=False, max_num_corrections=None,
-        deltak=None, reciprocal_density=None):
-    """ Analyze each harmonic property 
-    
-    Args
-    ------
-    propt : string
-        "fc2", "band", or "dos"
-    
-    """
-    #_ncores_tmp = almcalc.commands['alamode']['ncores']
-    #_para_tmp = almcalc.commands['alamode']['anphon_para']
-    
-    ### make an input script for the ALAMODE job
-    if propt == "band":
-        almcalc.write_alamode_input(propt=propt, deltak=deltak)
-    
-    elif propt == "dos":
-        nkts = get_automatic_kmesh(
-                almcalc.primitive, 
-                reciprocal_density=reciprocal_density)
-        almcalc.write_alamode_input(propt=propt, nkts=nkts)
-    
-    elif propt == "fc2":
-        almcalc.write_alamode_input(propt=propt)
-    
-    else:
-        msg = "\n Error: %s is not supported." % propt
-        logger.error(msg)
-    
-    ### get log file name
-    if propt == "fc2":
-        logfile = almcalc.out_dirs['harm']['force'] + "/%s.log" % propt
-    else:
-        logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % propt
-    
-    count = 0
-    ncores = almcalc.commands['alamode']['ncores']
-    has_error = False
-    while True:
-    
-        if count == 0:
-            neglect_log = 0
-        else:
-            neglect_log = 1
-        
-        ### calculate phonon property
-        almcalc.run_alamode(propt=propt, neglect_log=neglect_log)
-        count += 1 
-        
-        ### check log file
-        flag = _should_rerun_alamode(logfile) 
-        
-        ### Check phonon band
-        ## This part solves a bug in the old calculation.
-        ## In old version, eigenvalues has sometimes contained ``nan`` values.
-        if propt == "band":
-            file_band = (
-                    almcalc.out_dirs['harm']['bandos'] + 
-                    "/%s.bands" % almcalc.prefix)
-            flag = _should_rerun_band(file_band)
-        
-        ### the property has been calculated properly.
-        if flag == False:
-            break
-        
-        ### modify the MPI and OpenMPI conditions or finish the job
-        ### Note: ALAMODE job sometimes exceeds the memory.
-        has_error = False
-        if count == 1:
-            
-            ### Change to OpenMP parallelization
-            ak_log.rerun_with_omp()
-            almcalc.commands['alamode']['anphon_para'] == "omp"
-        
-        elif count > 1 and count < max_num_corrections:
-            
-            ### modify the number of threads (even number may be better?)
-            ncores /= 2
-            if ncores > 1:
-                ncores += int(ncores % 2)
-            
-            almcalc.commands['alamode']['ncores'] = ncores
-            msg = "\n Rerun the ALAMODE job with "\
-                    "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % ncores
-            logger.error(msg)
-            
-            if ncores == 1:
-                count = max_num_corrections
-        
-        else:
-            has_error = True
-            break
-    
-    if has_error:
-        msg = "\n Error: ALAMODE job for %s has not been finished properly." % propt
-        msg += "\n Abort the job."
-        logger.error(msg)
-        sys.exit()
-    
-    #almcalc.commands['alamode']['ncores'] = _ncores_tmp
-    #almcalc.commands['alamode']['anphon_para'] = _para_tmp
+#def _analyze_each_harm_propt(
+#        propt, almcalc, outdir=None, fcsxml=None,
+#        neglect_log=False, max_num_corrections=None,
+#        deltak=None, reciprocal_density=None):
+#    """ Analyze each harmonic property 
+#    
+#    Args
+#    ------
+#    propt : string
+#        "fc2", "band", or "dos"
+#    
+#    """
+#    ### make an input script for the ALAMODE job
+#    if propt == "band":
+#        almcalc.write_alamode_input(propt=propt, deltak=deltak, outdir=outdir)
+#    
+#    elif propt == "dos":
+#        nkts = get_automatic_kmesh(
+#                almcalc.primitive, 
+#                reciprocal_density=reciprocal_density)
+#        almcalc.write_alamode_input(propt=propt, nkts=nkts, outdir=outdir)
+#    
+#    elif propt == "fc2":
+#        almcalc.write_alamode_input(propt=propt, outdir=outdir)
+#    
+#    else:
+#        msg = "\n Error: %s is not supported." % propt
+#        logger.error(msg)
+#    
+#    ### get log file name
+#    if propt == "fc2":
+#        logfile = almcalc.out_dirs['harm']['force'] + "/%s.log" % propt
+#    else:
+#        logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % propt
+#    
+#    count = 0
+#    ncores = almcalc.commands['alamode']['ncores']
+#    has_error = False
+#    while True:
+#    
+#        if count == 0:
+#            neglect_log = 0
+#        else:
+#            neglect_log = 1
+#        
+#        ### calculate phonon property
+#        almcalc.run_alamode(propt=propt, neglect_log=neglect_log, outdir=outdir)
+#        count += 1 
+#        
+#        ### check log file
+#        flag = should_rerun_alamode(logfile) 
+#        
+#        ### Check phonon band
+#        ## This part solves a bug in the old calculation.
+#        ## In old version, eigenvalues has sometimes contained ``nan`` values.
+#        if propt == "band":
+#            file_band = (
+#                    almcalc.out_dirs['harm']['bandos'] + 
+#                    "/%s.bands" % almcalc.prefix)
+#            flag = _should_rerun_band(file_band)
+#        
+#        ### the property has been calculated properly.
+#        if flag == False:
+#            break
+#        
+#        ### modify the MPI and OpenMPI conditions or finish the job
+#        ### Note: ALAMODE job sometimes exceeds the memory.
+#        has_error = False
+#        if count == 1:
+#            
+#            ### Change to OpenMP parallelization
+#            ak_log.rerun_with_omp()
+#            almcalc.commands['alamode']['anphon_para'] == "omp"
+#        
+#        elif count > 1 and count < max_num_corrections:
+#            
+#            ### modify the number of threads (even number may be better?)
+#            ncores /= 2
+#            if ncores > 1:
+#                ncores += int(ncores % 2)
+#            
+#            almcalc.commands['alamode']['ncores'] = ncores
+#            msg = "\n Rerun the ALAMODE job with "\
+#                    "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % ncores
+#            logger.error(msg)
+#            
+#            if ncores == 1:
+#                count = max_num_corrections
+#        
+#        else:
+#            has_error = True
+#            break
+#    
+#    if has_error:
+#        msg = "\n Error: ALAMODE job for %s has not been finished properly." % propt
+#        msg += "\n Abort the job."
+#        logger.error(msg)
+#        sys.exit()
 
 def analyze_harmonic_properties(
         almcalc, calculator, 
@@ -931,7 +934,7 @@ def analyze_harmonic_properties(
     """
     from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     
     ##### suggest and creat structures for harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
@@ -946,32 +949,75 @@ def analyze_harmonic_properties(
     nac_orig = almcalc.nac
     for propt in ["fc2", "band", "dos"]:
         
-        _analyze_each_harm_propt(
-                propt, almcalc, neglect_log=neglect_log,
-                max_num_corrections=max_num_corrections,
-                deltak=deltak, reciprocal_density=reciprocal_density)
+        ### ver.1
+        #_analyze_each_harm_propt(
+        #        propt, almcalc, 
+        #        neglect_log=neglect_log,
+        #        max_num_corrections=max_num_corrections,
+        #        deltak=deltak, reciprocal_density=reciprocal_density)
         
-        ###### select a proper nac : 1  or 2
-        #if (propt != "fc2" and 
-        #        almcalc.nac != 0 and
-        #        almcalc.get_minimum_frequency(which=propt) < negative_freq
-        #        ):
-        #    
-        #    if almcalc.nac == 1:
-        #        nac_new = 2
-        #    else:
-        #        nac_new = 1
-        #    
-        #    #almcalc.nac = nac_new
-        #
-        #if propt != "fc2":
-        #    print(almcalc.get_minimum_frequency(which=propt))
-        #    #exit()
-        #    #_analyze_each_harm_propt(
-        #    #        propt, almcalc, neglect_log=neglect_log,
-        #    #        max_num_corrections=max_num_corrections,
-        #    #        deltak=deltak, reciprocal_density=reciprocal_density)
-
+        ### ver.2: modified
+        almcalc.analyze_harmonic_property(
+                propt, 
+                max_num_corrections=max_num_corrections,
+                deltak=deltak, 
+                reciprocal_density=reciprocal_density
+                )
+        
+    ### optimize NAC option
+    fmin = almcalc.get_minimum_frequency(which="both")
+    
+    ### get optimal NONANALYTICAL option for Alamode
+    if fmin < negative_freq and almcalc.nac != 0:
+        
+        nac_new = almcalc.get_optimal_nac(
+                tol_neg_frac=0.03,
+                max_num_corrections=max_num_corrections,
+                deltak=deltak,
+                reciprocal_density=reciprocal_density,
+                negative_freq=negative_freq,
+                )
+        
+        ### If a different NAC can remove negative frequencies,
+        ### harmonic properties are calculated again.
+        if nac_new is not None:
+            
+            ### message
+            nac_orig = almcalc.nac
+            msg = "\n Modify NONANALYTIC option from %d to %d, " % (
+                    nac_orig, nac_new)
+            msg += "which can remove negative frequencies."
+            logger.info(msg)
+            
+            ### update NAC
+            almcalc.nac = nac_new
+            
+            ### copy the calculated results with the optimal NAC option
+            try:
+                dir_bandos = almcalc.out_dirs["harm"]["bandos"]
+                dir_nac = dir_bandos + "/nac_%d" % almcalc.nac
+                msg = "\n >>> Move files in %s to %s." % (
+                        almcalc.get_relative_path(dir_nac),
+                        almcalc.get_relative_path(dir_bandos))
+                logger.info(msg)
+                if os.path.exists(dir_nac):
+                    fns = glob.glob(dir_nac + "/*")
+                    for ff in fns:
+                        shutil.copy(ff, dir_bandos)
+                neg_log = 0
+            except Exception:
+                neg_log = 1
+            
+            ### overwrite harmonic properties
+            for propt in ["band", "dos"]:
+                almcalc.analyze_harmonic_property(
+                        propt,
+                        max_num_corrections=max_num_corrections,
+                        deltak=deltak, 
+                        reciprocal_density=reciprocal_density,
+                        neglect_log=neg_log,
+                        )
+    
     ###
     almcalc.commands['alamode']['ncores'] = _ncores_orig
     almcalc.commands['alamode']['anphon_para'] = _para_orig
@@ -989,7 +1035,7 @@ def calculate_cubic_force_constants(
         ):
     """ Calculate cubic force constants
     """
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     
     ### calculate forces for cubic FCs
     almcalc.write_alamode_input(propt='suggest', order=2)
@@ -1013,44 +1059,6 @@ def calculate_cubic_force_constants(
         ## ver.2: with alm command
         almcalc.write_alamode_input(propt='fc3')
         almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
-
-def _should_rerun_alamode(logfile):
-    """
-    Args
-    ======
-
-    logfile : string
-        alamode log file
-    
-    """
-    from auto_kappa.alamode.almcalc import _alamode_finished
-    if os.path.exists(logfile) == False:
-        return True
-    else:
-        if _alamode_finished(logfile) == False:
-            return True
-    return False
-
-def _should_rerun_band(filename):
-    """ Check phonon dispersion calculated with ALAMODE
-    Args
-    ======
-
-    filename : string
-        alamode band file (***.bands)
-    
-    """
-    data = np.genfromtxt(filename)
-    data = data[:,1:]
-    n1 = len(data)
-    n2 = len(data[0])
-    eigenvalues = data.reshape(n1*n2)
-    nan_data = eigenvalues[np.isnan(eigenvalues)]
-    if len(nan_data) == 0:
-        return False
-    else:
-        return True
-
 
 def calculate_thermal_conductivities(
         almcalc, 
@@ -1092,7 +1100,7 @@ def calculate_thermal_conductivities(
         
         ### check output file for kappa
         kappa_log = outdir + "/kappa.log"
-        flag = _should_rerun_alamode(kappa_log) 
+        flag = should_rerun_alamode(kappa_log) 
         
         if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
             ##
@@ -1110,7 +1118,7 @@ def calculate_thermal_conductivities(
     msg += " Plot anharmonic properties:\n"
     msg += " ---------------------------"
     
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     logger.info(msg)
     
     out = almcalc.plot_kappa()
@@ -1164,7 +1172,7 @@ def analyze_phonon_properties(
         ):
     """ Analyze phonon properties
     """
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
@@ -1237,7 +1245,6 @@ def _plot_bandos_for_different_sizes(
             )
 
 def _use_omp_for_anphon(base_dir):
-    import glob
     from auto_kappa.alamode.log_parser import exceed_memory
     line1 = base_dir + "/harm/bandos/dos.log"
     line2 = base_dir + "/*/harm/bandos/dos.log"
@@ -1250,42 +1257,6 @@ def _use_omp_for_anphon(base_dir):
                     return True
     return False
     
-#def _compress_directory(dir_orig):
-#    
-#    import tarfile
-#    import shutil
-#    
-#    logger = logging.getLogger(__name__)
-#    
-#    data = dir_orig.split("/")
-#    dir_base = ""
-#    for i in range(len(data)-1):
-#        dir_base += data[i]
-#        if i < len(data)-2:
-#            dir_base += "/"
-#    
-#    ###
-#    cwd = os.getcwd()
-#    os.chdir(dir_base)
-#
-#    ### compress
-#    dir0 = data[-1]
-#    for j in range(1, 1000):
-#        tar_dir = dir0 + "_error%d.tar.gz" % j
-#        if os.path.exists(tar_dir) == False:
-#            with tarfile.open(tar_dir, 'w:gz') as tar:
-#                tar.add(dir0)
-#            break
-#    
-#    ### delete the original directory
-#    shutil.rmtree(dir0)
-#    os.chdir(cwd)
-#
-#    ###
-#    msg = "\n Compress and delete %s.\n" % dir_orig
-#    msg += " Create %s." % (tar_dir)
-#    logger.info(msg)
-
 def main():
     
     options = get_parser()
@@ -1300,7 +1271,7 @@ def main():
     ### set logger
     logfile = base_dir + "/ak.log"
     ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
-    logger = logging.getLogger(__name__)
+    #logger = logging.getLogger(__name__)
     
     ### Start auto-kappa
     start_autokappa()
@@ -1445,7 +1416,7 @@ def main():
     ### Get relaxed structures
     ### This part was omitted in the beggining of ver.0.2.
     structures_relax = apdb.structures.copy()
-    
+
     ### Born effective charge
     if nac:
         mode = 'nac'
