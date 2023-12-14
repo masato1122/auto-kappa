@@ -1100,7 +1100,7 @@ class AlamodeCalc():
                 
                 num_done += 1
             
-            logger.info(" %s" % calculator.directory)
+            logger.info(" %s" % self.get_relative_path(calculator.directory))
             
         ### output DFSET
         if num_done == len(structures) and output_dfset:
