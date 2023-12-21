@@ -1255,7 +1255,25 @@ def _use_omp_for_anphon(base_dir):
                 if exceed_memory(fn):
                     return True
     return False
+
+def _print_machine_info():
+    """ """
+    msg = "\n"
     
+    ### host name
+    try:
+        import socket
+        msg += "\n Hostname: %s" % socket.gethostname()
+    except Exception:
+        try:
+            msg += "\n Hostname: %s" % os.uname()[1]
+        except Exception:
+            pass
+    
+    ### number of cores
+
+
+
 def main():
     
     options = get_parser()
@@ -1275,9 +1293,8 @@ def main():
     ### Start auto-kappa
     start_autokappa()
     
-    #msg = "\n Current directory: %s" % os.getcwd()
-    #logger.info(msg)
-
+    #_print_machine_info()
+    
     ### Set output directories
     out_dirs = {}
     for k1 in output_directories.keys():

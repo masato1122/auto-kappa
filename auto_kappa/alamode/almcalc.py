@@ -1542,7 +1542,7 @@ class AlamodeCalc():
             num_neg = len(np.where(frequencies < negative_freq)[0])
             num_tot = len(frequencies)
             num_tol = int(num_tot * tol_neg_frac)
-            msg = "\n Number of data : %d (total), %d (positive)" % (
+            msg = "\n Number of data : %d (negative), %d (total)" % (
                     num_neg, num_tot)
             logger.info(msg)
             if num_neg > num_tol:
@@ -1567,7 +1567,7 @@ class AlamodeCalc():
             logger.info(msg)
          
         ### Analyze with different NAC options
-        for nac in [2, 1, 3]:
+        for nac in [2, 1, 3, 0]:
             
             if nac == nac_orig:
                 continue
