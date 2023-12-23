@@ -55,7 +55,7 @@ default_vasp_parameters = {
         'relax':{
             'prec': 'Accurate',
             'ibrion': 2,
-            'nsw': 500,
+            #'nsw': 500,
             'ediffg': -1e-6,
             'addgrid': True,
             },

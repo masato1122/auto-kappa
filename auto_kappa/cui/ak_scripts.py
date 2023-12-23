@@ -790,126 +790,6 @@ def analyze_harmonic_with_larger_supercells(
     
     return almcalc_new
     
-#def _get_optimal_nac(almcalc, neclect_log=None, **args):
-#    """ Analyze harmonic properties with diffrent methods for NAC when negative 
-#    frequencies were obtained. """
-#    
-#    nac_orig = almcalc.nac
-#    for nac in [2, 1, 3]:
-#        if nac == nac_orig:
-#            continue
-#        almcalc.nac = nac
-#        for propt in ["band", "dos"]:
-#            
-#            outdir = almcalc.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
-#            fcsxml = "../../../result" + almcalc.outfiles["harm_xml"]
-#            
-#            _analyze_each_harm_propt(
-#                    propt, almcalc, outdir=outdir, fcsxml=fcsxml, **args)
-#            
-#            print(nac)
-#            exit()
-#    print(" HEEEEEEEEEEEEEEEEEEEEEERE")
-
-#def _analyze_each_harm_propt(
-#        propt, almcalc, outdir=None, fcsxml=None,
-#        neglect_log=False, max_num_corrections=None,
-#        deltak=None, reciprocal_density=None):
-#    """ Analyze each harmonic property 
-#    
-#    Args
-#    ------
-#    propt : string
-#        "fc2", "band", or "dos"
-#    
-#    """
-#    ### make an input script for the ALAMODE job
-#    if propt == "band":
-#        almcalc.write_alamode_input(propt=propt, deltak=deltak, outdir=outdir)
-#    
-#    elif propt == "dos":
-#        nkts = get_automatic_kmesh(
-#                almcalc.primitive, 
-#                reciprocal_density=reciprocal_density)
-#        almcalc.write_alamode_input(propt=propt, nkts=nkts, outdir=outdir)
-#    
-#    elif propt == "fc2":
-#        almcalc.write_alamode_input(propt=propt, outdir=outdir)
-#    
-#    else:
-#        msg = "\n Error: %s is not supported." % propt
-#        logger.error(msg)
-#    
-#    ### get log file name
-#    if propt == "fc2":
-#        logfile = almcalc.out_dirs['harm']['force'] + "/%s.log" % propt
-#    else:
-#        logfile = almcalc.out_dirs['harm']['bandos'] + "/%s.log" % propt
-#    
-#    count = 0
-#    ncores = almcalc.commands['alamode']['ncores']
-#    has_error = False
-#    while True:
-#    
-#        if count == 0:
-#            neglect_log = 0
-#        else:
-#            neglect_log = 1
-#        
-#        ### calculate phonon property
-#        almcalc.run_alamode(propt=propt, neglect_log=neglect_log, outdir=outdir)
-#        count += 1 
-#        
-#        ### check log file
-#        flag = should_rerun_alamode(logfile) 
-#        
-#        ### Check phonon band
-#        ## This part solves a bug in the old calculation.
-#        ## In old version, eigenvalues has sometimes contained ``nan`` values.
-#        if propt == "band":
-#            file_band = (
-#                    almcalc.out_dirs['harm']['bandos'] + 
-#                    "/%s.bands" % almcalc.prefix)
-#            flag = _should_rerun_band(file_band)
-#        
-#        ### the property has been calculated properly.
-#        if flag == False:
-#            break
-#        
-#        ### modify the MPI and OpenMPI conditions or finish the job
-#        ### Note: ALAMODE job sometimes exceeds the memory.
-#        has_error = False
-#        if count == 1:
-#            
-#            ### Change to OpenMP parallelization
-#            ak_log.rerun_with_omp()
-#            almcalc.commands['alamode']['anphon_para'] == "omp"
-#        
-#        elif count > 1 and count < max_num_corrections:
-#            
-#            ### modify the number of threads (even number may be better?)
-#            ncores /= 2
-#            if ncores > 1:
-#                ncores += int(ncores % 2)
-#            
-#            almcalc.commands['alamode']['ncores'] = ncores
-#            msg = "\n Rerun the ALAMODE job with "\
-#                    "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % ncores
-#            logger.error(msg)
-#            
-#            if ncores == 1:
-#                count = max_num_corrections
-#        
-#        else:
-#            has_error = True
-#            break
-#    
-#    if has_error:
-#        msg = "\n Error: ALAMODE job for %s has not been finished properly." % propt
-#        msg += "\n Abort the job."
-#        logger.error(msg)
-#        sys.exit()
-
 def analyze_harmonic_properties(
         almcalc, calculator, 
         neglect_log=False, max_num_corrections=5,
@@ -1419,8 +1299,7 @@ def main():
             msg = "\n Error: crystal symmetry was changed during the "\
                     "relaxation calculation."
         elif out == -2:
-            msg = "\n Error: too many number of errors for the relaxation "\
-                    "calculation."
+            msg = "\n Error: too many errors for the relaxation calculation."
         ##
         msg += "\n"
         msg += "\n STOP THE CALCULATION"

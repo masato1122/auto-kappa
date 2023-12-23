@@ -1714,6 +1714,7 @@ class AlamodeCalc():
         if has_error:
             msg = "\n Error: ALAMODE job for %s "\
                     "has not been finished properly." % propt
+            msg += "\n A possible solution is to use a large memory node."
             msg += "\n Abort the job."
             logger.error(msg)
             sys.exit()

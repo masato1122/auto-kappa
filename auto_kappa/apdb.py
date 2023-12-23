@@ -381,11 +381,15 @@ class ApdbVasp():
                 dir_cur = directory + "/freeze-%d" % num
                 mode = 'relax-freeze'
             
-            ### check the number of errors
-            if max_error is not None:
-                if too_many_errors(dir_cur, max_error=max_error):
-                    return -2
+            #### check the number of errors
+            #if max_error is not None:
+            #    if too_many_errors(dir_cur, max_error=max_error):
+            #        return -2
             
+            #### determine NSW parameter based on the number of errors
+            args['nsw'] = _get_nsw_parameter(dir_cur)
+            
+            ### print message
             if verbosity != 0:
                 line = "%s (%d)" % (mode, num)
                 msg = "\n " + line
@@ -411,6 +415,11 @@ class ApdbVasp():
             else:
                 structure = self.unitcell
             
+            ### get AMIN
+            amin = _get_amin_parameter(dir_cur, structure.cell.array)
+            if amin is not None:
+                args["amin"] = amin
+            
             ### run a relaxation calculation
             ### out == -1 : symmetry was changed
             out = self.run_vasp(
@@ -429,7 +438,7 @@ class ApdbVasp():
                 backup_vasp(dir_cur, delete_files=True)
                 
                 ### set ISYM = 2 explicitly
-                args["isym"] = 2
+                #args["isym"] = 2
                 
                 count_err += 1
                 if max_sym_err == count_err:
@@ -658,4 +667,42 @@ def too_many_errors(directory, max_error=100):
             return True
     return False
 
+def _get_number_of_errors(directory):
+    """ Get and return the number of errors in the given directory. """
+    
+    num_errors = 0
+    
+    ### number of errors
+    for suffix in ["tar", "tar.gz"]:
+        line = directory + "/error.*." + suffix
+        fns = glob.glob(line)
+        num_errors += len(fns)
+    
+    ####
+    #line = directory + "/INCAR"
+    #fns = glob.glob(line)
+    #num_errors += len(fns)
+    
+    return num_errors
+
+def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
+    """ Determine the number of NSW based on the number of errors """
+    num_errors = _get_number_of_errors(directory)
+    nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
+    return nsw
+
+def _get_amin_parameter(directory, lattice, len_tol=50, amin_set=0.01):
+    """ Get and return AMIN """
+    
+    num_errors = _get_number_of_errors(directory)
+    if num_errors == 0:
+        return None
+    
+    ### if error exists,
+    amin = None
+    for j in range(3):
+        length = np.linalg.norm(lattice[j])
+        if length > len_tol:
+            return amin_set
+    return None
 
