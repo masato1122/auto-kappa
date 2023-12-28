@@ -280,7 +280,8 @@ class ApdbVasp():
             volume_relaxation=0,
             cell_type='p',
             force=False, num_full=2, verbosity=1,
-            max_error=None, **args
+            max_error=None, nsw_params=None, 
+            **args
             ):
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
@@ -360,6 +361,13 @@ class ApdbVasp():
             msg = "\n Already finised with the old version (single full relaxation)"
             return 0
         
+        ### NSW parameters
+        out = _parse_nsw_params(nsw_params)
+        nsw_init = out[0]
+        nsw_diff = out[1]
+        nsw_min = out[2]
+        
+        ### symmetry
         spg_before = get_spg_number(self.unitcell)
         
         ### perform relaxation calculations
@@ -387,7 +395,9 @@ class ApdbVasp():
             #        return -2
             
             #### determine NSW parameter based on the number of errors
-            args['nsw'] = _get_nsw_parameter(dir_cur)
+            args['nsw'] = _get_nsw_parameter(
+                    dir_cur, nsw_init=nsw_init, 
+                    nsw_diff=nsw_diff, nsw_min=nsw_min)
             
             ### print message
             if verbosity != 0:
@@ -684,6 +694,28 @@ def _get_number_of_errors(directory):
     #num_errors += len(fns)
     
     return num_errors
+
+def _parse_nsw_params(line, params_default=[200, 10, 20]):
+    """ Return NSW params with an array 
+    Args
+    ======
+    
+    line : string, "**:**:**"
+
+    Return
+    =======
+    
+    array, shape=(3)
+        initial, interval, and minimum NSW
+    """
+    data = line.split(":")
+    params = []
+    for j in range(3):
+        try:
+            params.append(int(data[j]))
+        except Exception:
+            params.append(int(params_default[j]))
+    return params
 
 def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
     """ Determine the number of NSW based on the number of errors """

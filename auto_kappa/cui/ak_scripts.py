@@ -1291,6 +1291,7 @@ def main():
             volume_relaxation=ak_params['volume_relaxation'],
             cell_type=cell_types["relax"],
             max_error=ak_params["max_relax_error"],
+            nsw_params=ak_params["nsw_params"],
             )
     
     ### Stop because of the change of symmetry during the structure opt.

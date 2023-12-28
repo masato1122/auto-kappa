@@ -153,6 +153,16 @@ def get_parser():
             help="Number of the maximum loop for larger supercell [1]."
             "This options is used only when ``--analyze_with_largersc`` == 1.")
     
+    ### parameters for NSW
+    parser.add_option("--nsw_params", dest="nsw_params", 
+            type="string", default="200:10:20", 
+            help="Parameters which determine NSW for relaxation calculations "\
+                    "[200:10:20]. "\
+                    "\"{nsw_init}:{nsw_diff}:{nsw_min}\": " \
+                    "NSW = min(``nsw_min``, "\
+                    "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "\
+                    "``num_errors`` is the number of errors.")
+    
     ### calculate potential energy sruface
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 
