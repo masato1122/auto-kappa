@@ -230,9 +230,11 @@ class AlamodeCalc():
         #self._scell_matrix3 = scell_matrix3
         
         ### make the unitcell with ``get_supercell`` in Phonopy
+        mat_p2u = np.linalg.inv(primitive_matrix)
+        mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
         unit_pp = get_supercell(
-                change_structure_format(prim_given, format='phonopy'),
-                np.linalg.inv(primitive_matrix)
+                change_structure_format(prim_given, format='phonopy'), 
+                mat_p2u
                 )
         
         ### set unitcell, primitive cell, and two kinds of supercells
@@ -370,7 +372,30 @@ class AlamodeCalc():
         self._unitcell = change_structure_format(unit_pp, format=format)
         
         ### primitive cell
+        #
+        ### ver.1
         prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        #
+        ### ver.2
+        #try:
+        #    
+        #    prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        #
+        #except Exception:
+        #    
+        #    ### AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        #    from auto_kappa.structure.crystal import (
+        #            get_standardized_structure_spglib)
+        #    unit_pp = get_standardized_structure_spglib(
+        #            unit_given, to_primitive=False, format='phonopy')
+        #    self._unitcell = change_structure_format(unit_pp, format=format)
+        #    prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        #    
+        #    #msg = "\n Error: Cannot find the primitive cell with Phonopy."
+        #    #msg += "\n Abort the job."
+        #    #logger.error(msg)
+        #    #sys.exit()
+        
         self._primitive = change_structure_format(prim_pp, format=format)
         
         ### supercell for harmonic FCs

@@ -560,7 +560,6 @@ def _get_required_parameters(
                 unitcell,
                 primitive_matrix=trans_matrices['primitive'],
                 supercell_matrix=trans_matrices['supercell'],
-                #supercell_matrix3=trans_matrices['supercell3'],
                 )
         
         ### get suggested k-mesh
@@ -571,8 +570,6 @@ def _get_required_parameters(
                     k_length, structures["unitcell"].cell.array),
                 "supercell": klength2mesh(
                     k_length, structures["supercell"].cell.array),
-                #"supercell3": klength2mesh(
-                #    k_length, structures["supercell3"].cell.array),
                 }
     
     elif file_structure is not None:
@@ -586,11 +583,10 @@ def _get_required_parameters(
                 suggest_structures_and_kmeshes(
                         filename=file_structure,
                         max_natoms=max_natoms,
-                        #max_natoms3=max_natoms3,
                         k_length=k_length,
                         )
                     )
-        
+
         ### This part can be modified. So far, NAC is considered for materials
         ### which is not included in Phonondb.
         nac = 2
@@ -1322,7 +1318,7 @@ def main():
     ### Get relaxed structures
     ### This part was omitted in the beggining of ver.0.2.
     structures_relax = apdb.structures.copy()
-
+    
     ### Born effective charge
     if nac:
         mode = 'nac'

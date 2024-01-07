@@ -291,7 +291,7 @@ def get_formula(str_orig):
     return structure.composition.reduced_formula
     
 def get_spg_number(str_orig):
-    """ Regurn the international space group number
+    """ Return the international space group number
     """
     atoms = change_structure_format(str_orig, format='ase')
     cell = (

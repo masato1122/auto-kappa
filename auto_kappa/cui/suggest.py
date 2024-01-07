@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 def suggest_structures_and_kmeshes(
         filename=None, structure=None,
         max_natoms=150, 
-        #max_natoms3=None, 
         k_length=20,
         ):
     """ Return the required parameters
@@ -48,18 +47,14 @@ def suggest_structures_and_kmeshes(
         logger.info(msg)
         sys.exit()
     
-    ## max natoms for FC3
-    #if max_natoms3 is None:
-    #    max_natoms3 = max_natoms
-    
     ### prepare the structure obj.
     if filename is not None:
-        structure = change_structure_format(
+        struct_ase = change_structure_format(
                 Structure.from_file(filename=filename),
                 format='ase')
-
-    struct_ase = change_structure_format(structure, format='ase')
-
+    else:
+        struct_ase = change_structure_format(structure, format='ase')
+    
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
     
@@ -71,15 +66,6 @@ def suggest_structures_and_kmeshes(
                 change_structure_format(unitcell, format='phonopy'), 
                 sc_mat), 
             format='ase')
-    
-    ### get the supercell matrix and supercell for FC3
-    #sc_mat3 = estimate_supercell_matrix(unitcell, max_num_atoms=max_natoms3)
-    #
-    #supercell3 = change_structure_format(
-    #        get_supercell(
-    #            change_structure_format(unitcell, format='phonopy'), 
-    #            sc_mat3), 
-    #        format='ase')
     
     ### get the primitive cell
     try:
@@ -101,14 +87,12 @@ def suggest_structures_and_kmeshes(
             "primitive": primitive, 
             "unitcell": unitcell, 
             "supercell": supercell,
-            #"supercell3": supercell3,
             }
     
     matrices = {
             "primitive": prim_mat, 
             "unitcell": np.identity(3).astype(int),
             "supercell": sc_mat,
-            #"supercell3": sc_mat3
             }
     
     ### k-mesh
@@ -116,7 +100,6 @@ def suggest_structures_and_kmeshes(
             "primitive": klength2mesh(k_length, primitive.cell.array),
             "unitcell": klength2mesh(k_length, unitcell.cell.array),
             "supercell": klength2mesh(k_length, supercell.cell.array),
-            #"supercell3": klength2mesh(k_length, supercell3.cell.array),
             }
 
     return structures, matrices, kpts
@@ -161,7 +144,7 @@ def get_unitcell_and_primitive_matrix(structure):
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
     
     primitive_matrix = np.dot(cell_prim[0], np.linalg.inv(cell_std[0])).T
-
+    
     return unitcell, primitive_matrix
     
 

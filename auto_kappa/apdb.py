@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 #
 # apdb.py
 #
@@ -149,7 +149,7 @@ class ApdbVasp():
                     )
             unit = change_structure_format(phonon.unitcell , format=format) 
             prim = change_structure_format(phonon.primitive , format=format) 
-            sc   = change_structure_format(phonon.supercell , format=format) 
+            sc   = change_structure_format(phonon.supercell , format=format)
         except Exception:
             from auto_kappa.structure.crystal import get_primitive_structure_spglib
             unit = change_structure_format(unitcell , format=format) 
@@ -353,6 +353,7 @@ class ApdbVasp():
             prim = ase.io.read(filename, format='vasp-xml')
             
             mat_p2u = np.linalg.inv(self.primitive_matrix)
+            mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
             unitcell = get_supercell(
                     change_structure_format(prim, format='phonopy'),
                     mat_p2u)
@@ -497,10 +498,9 @@ class ApdbVasp():
             
             ###
             if to_primitive:
-                unitcell = get_supercell(
-                        struct_ase, 
-                        np.linalg.inv(self.primitive_matrix)
-                        )
+                _mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
+                unitcell = get_supercell(struct_ase, _mat_p2u)
             else:
                 unitcell = struct_ase.copy()
             
@@ -650,10 +650,11 @@ class ApdbVasp():
                 
                 ### read primitive and transform it to the unit cell
                 new_prim = ase.io.read(vasprun, format='vasp-xml')
-                mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
                 new_unitcell = get_supercell(
                         change_structure_format(new_prim, format='phonopy'),
-                        mat_p2u)
+                        _mat_p2u)
             
             ##
             num_init = get_spg_number(structure)
