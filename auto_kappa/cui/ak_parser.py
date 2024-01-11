@@ -155,9 +155,9 @@ def get_parser():
     
     ### parameters for NSW
     parser.add_option("--nsw_params", dest="nsw_params", 
-            type="string", default="200:10:20", 
+            type="string", default="100:10:20", 
             help="Parameters which determine NSW for relaxation calculations "\
-                    "[200:10:20]. "\
+                    "[100:10:20]. "\
                     "\"{nsw_init}:{nsw_diff}:{nsw_min}\": " \
                     "NSW = min(``nsw_min``, "\
                     "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "\

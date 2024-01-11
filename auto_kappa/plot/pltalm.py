@@ -23,9 +23,67 @@ import glob
 import logging
 logger = logging.getLogger(__name__)
 
-def plot_kappa(dfs, figname='fig_kappa.png',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9):
+def _plot_kappa_each(
+        ax, df, col='black', kappa_label=None, kappa_min=None, 
+        show_label=False):
+    """ plot kappa for each condition (k-mesh) """
+    markers = ['+', 'x', '_', 'o']
+    
+    ### kp for different directions
+    cont = 'kp'
+    show_total = True
+    for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
 
+        lab = "%s_%s" % (cont, direct)
+        xdat = df['temperature'].values
+        ydat = df[lab].values
+        
+        ### check the magnitude of kappa
+        if np.max(ydat) < kappa_min:
+            show_total = False
+            msg = (" Warning: %s component of Peierls contribution for "
+                    "%s is too small." % (direct, kappa_label))
+            logger.warning(msg)
+            continue
+
+        if direct == "ave" and show_total == False:
+            continue
+        
+        if show_label:
+            label = "${\\rm \\kappa_p^{%s}}$" % direct
+        else:
+            label = None
+        
+        ### marker width and size
+        if direct == "ave":
+            alpha = 1.0
+            ms = 2.3
+            lw = 0.5
+        else:
+            alpha = 0.5
+            ms = 2.0
+            lw = 0.3
+        
+        ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                marker=markers[jj], markersize=ms,
+                mfc='none', mew=lw, mec=col, label=label,
+                alpha=alpha)
+    
+    if show_total:
+        ### kp+kc(ave)
+        xdat = df['temperature'].values
+        ydat = df['ksum_ave'].values
+        
+        lw = 0.5
+        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % kappa_label
+        if np.max(ydat) > kappa_min:
+            ax.plot(xdat, ydat, linestyle='-', lw=lw, 
+                    marker=None, c=col, label=label)
+    
+def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
+        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9):
+    """ plot thermal conductivity """
+    
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
@@ -36,49 +94,21 @@ def plot_kappa(dfs, figname='fig_kappa.png',
     #ax.set_xlabel('Temperature (K)')
     #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
     
-    markers = ['+', 'x', '_', 'o']
     for ik, klab in enumerate(dfs):
-        
-        col = cmap(ik)
-        
-        ### kp for different directions
-        cont = 'kp'
-        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
 
-            lab = "%s_%s" % (cont, direct)
-            xdat = dfs[klab]['temperature'].values
-            ydat = dfs[klab][lab].values
-
-            if ik == 0:
-                label = "${\\rm \\kappa_p^{%s}}$" % direct
-            else:
-                label = None
-            
-            ### marker width and size
-            if direct == "ave":
-                alpha = 1.0
-                ms = 2.3
-                lw = 0.5
-            else:
-                alpha = 0.5
-                ms = 2.0
-                lw = 0.3
-            
-            ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                    marker=markers[jj], markersize=ms,
-                    mfc='none', mew=lw, mec=col, label=label,
-                    alpha=alpha)
-         
-        ### kp+kc(ave)
-        xdat = dfs[klab]['temperature'].values
-        ydat = dfs[klab]['ksum_ave'].values
+        if ik == 0:
+            show_label = True
+        else:
+            show_label = False
         
-        lw = 0.5
-        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
-        ax.plot(xdat, ydat, linestyle='-', lw=lw,
-                marker=None, c=col,
-                label=label
-                )
+        try:
+            _plot_kappa_each(
+                    ax, dfs[klab], col=cmap(ik), kappa_label=klab,
+                    kappa_min=kappa_min, show_label=show_label)
+        except Exception:
+            msg = "\n Error while kappa is plotted."
+            logger.error(msg)
+            pass
     
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=5, alpha=0.5)

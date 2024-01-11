@@ -2181,21 +2181,20 @@ class AlamodeCalc():
             except Exception:
                 continue
             
-            if i == 0:
-                
-                if "kp_xx" in dfs[key].columns:
-                    kxx_max = np.max(dfs[key]["kp_xx"].values)
-                    if kxx_max < 1e-7:
-                        msg = "\n"
-                        msg += " Warning : Minimum thermal conductivity is "\
-                                "too small (%.3e cm^-1)." % (kxx_max)
-                        logger.warning(msg)
-                        return -1
-                else:
-                    msg = "\n"
-                    msg += " Warning: kp_xx cannot be found."
-                    logger.warning(msg)
-                    return -2
+            #if i == 0:
+            #    if "kp_xx" in dfs[key].columns:
+            #        kxx_max = np.max(dfs[key]["kp_xx"].values)
+            #        if kxx_max < 1e-7:
+            #            msg = "\n"
+            #            msg += " Warning : Maximum thermal conductivity is "\
+            #                    "too small (%.3e cm^-1)." % (kxx_max)
+            #            logger.warning(msg)
+            #            return -1
+            #    else:
+            #        msg = "\n"
+            #        msg += " Warning: kp_xx cannot be found."
+            #        logger.warning(msg)
+            #        return -2
         
         from auto_kappa.plot.pltalm import plot_kappa
         figname = self.out_dirs['result'] + '/fig_kappa.png'
