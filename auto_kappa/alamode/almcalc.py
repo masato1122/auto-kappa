@@ -887,6 +887,7 @@ class AlamodeCalc():
             nmax_suggest=100, frac_nrandom=10., 
             temperature=500., classical=False,
             calculate_forces=True, output_dfset=1,
+            amin_params={},
             ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
@@ -933,7 +934,7 @@ class AlamodeCalc():
         msg = "\n\n " + line
         msg += "\n " + "=" * (len(line))
         logger.info(msg)
-         
+        
         self._nmax_suggest = nmax_suggest
         
         ### get suggsted structures with ALM
@@ -1052,6 +1053,17 @@ class AlamodeCalc():
              
             structures = self.get_suggested_structures(order, disp_mode='fd')
         
+        ### get AMIN parameters
+        from auto_kappa import default_amin_parameters
+        from auto_kappa.vasp.params import get_amin_parameter
+        pp = default_amin_parameters.copy() 
+        for key in pp.keys():
+            if key in amin_params.keys():
+                if amin_params[key] is not None:
+                    pp[key] = amin_params[key]
+        amin_params = pp
+        
+        ###
         num_done = 0
         nsuggest =  len(structures)
         for ii, key in enumerate(list(structures.keys())):
@@ -1088,6 +1100,14 @@ class AlamodeCalc():
                 logger.info("")
             
             structure = structures[key].copy()
+            
+            ### set AMIN
+            amin = get_amin_parameter(
+                    calculator.directory, 
+                    structure.cell.array, 
+                    **amin_params,)
+            if amin is not None:
+                calculator.set(amin=amin)
             
             ### ver.1: with ASE
             #structure.calc = calculator

@@ -95,6 +95,8 @@ default_vasp_parameters = {
             }
         }
 
+default_amin_parameters = {"value": 0.01, "tol_length": 50, "num_of_errors": 1}
+
 #default_lasso_parameters = {
 #        'lmodel': 'enet',
 #        'cv': 5,

@@ -163,6 +163,14 @@ def get_parser():
                     "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "\
                     "``num_errors`` is the number of errors.")
     
+    #### parameters for amin
+    #parser.add_option("--amin", dest="amin", 
+    #        type="float", default=None, 
+    #        help=("AMIN parameter for VASP [None]: If the length of a lattice "
+    #            "vector exceeds 5 nm, AMIN of the given value is set for the "
+    #            "VASP job.")
+    #        )
+    
     ### calculate potential energy sruface
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 

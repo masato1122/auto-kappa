@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 #
 # apdb.py
 #
@@ -33,6 +33,7 @@ from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.cui import ak_log
 #from auto_kappa.io.files import write_output_yaml
+from auto_kappa.vasp.params import get_amin_parameter
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class ApdbVasp():
             scell_matrix=None,
             encut_scale_factor=1.3,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
+            amin_params = {},
             #yamlfile_for_outdir=None,
             ):
         """
@@ -101,7 +103,17 @@ class ApdbVasp():
         self.encut_factor = encut_scale_factor
 
         #self._yamlfile_for_outdir = yamlfile_for_outdir
-    
+        
+        ### AMIN parameters
+        from auto_kappa import default_amin_parameters
+        self.amin_params = {}
+        for key in default_amin_parameters:
+            if key in amin_params.keys():
+                if amin_params[key] is not None:
+                    self.amin_params[key] = amin_params[key]
+            if key not in self.amin_params.keys():
+                self.amin_params[key] = default_amin_parameters[key]
+        
     @property
     def primitive_matrix(self):
         return self._mat_u2p
@@ -426,11 +438,6 @@ class ApdbVasp():
             else:
                 structure = self.unitcell
             
-            ### get AMIN
-            amin = _get_amin_parameter(dir_cur, structure.cell.array)
-            if amin is not None:
-                args["amin"] = amin
-            
             ### run a relaxation calculation
             ### out == -1 : symmetry was changed
             out = self.run_vasp(
@@ -629,6 +636,13 @@ class ApdbVasp():
             if structure is None:
                 structure = self.primitive
             
+            ### get AMIN
+            amin = get_amin_parameter(
+                    calc.directory, structure.cell.array, **self.amin_params)
+            if amin is not None:
+                calc.set(amin=amin)
+
+            ### run a VASP job
             run_vasp(calc, structure, method=method)
         
         ### set back OpenMP 
@@ -678,23 +692,19 @@ def too_many_errors(directory, max_error=100):
             return True
     return False
 
-def _get_number_of_errors(directory):
-    """ Get and return the number of errors in the given directory. """
-    
-    num_errors = 0
-    
-    ### number of errors
-    for suffix in ["tar", "tar.gz"]:
-        line = directory + "/error.*." + suffix
-        fns = glob.glob(line)
-        num_errors += len(fns)
-    
-    ####
-    #line = directory + "/INCAR"
-    #fns = glob.glob(line)
-    #num_errors += len(fns)
-    
-    return num_errors
+#def _get_number_of_errors(directory):
+#    """ Get and return the number of errors in the given directory. """
+#    num_errors = 0
+#    ### number of errors
+#    for suffix in ["tar", "tar.gz"]:
+#        line = directory + "/error.*." + suffix
+#        fns = glob.glob(line)
+#        num_errors += len(fns)
+#    ####
+#    #line = directory + "/INCAR"
+#    #fns = glob.glob(line)
+#    #num_errors += len(fns)
+#    return num_errors
 
 def _parse_nsw_params(line, params_default=[200, 10, 20]):
     """ Return NSW params with an array 
@@ -720,22 +730,23 @@ def _parse_nsw_params(line, params_default=[200, 10, 20]):
 
 def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
     """ Determine the number of NSW based on the number of errors """
-    num_errors = _get_number_of_errors(directory)
+    from auto_kappa.vasp.params import get_number_of_errors
+    num_errors = get_number_of_errors(directory)
     nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
     return nsw
 
-def _get_amin_parameter(directory, lattice, len_tol=50, amin_set=0.01):
-    """ Get and return AMIN """
-    
-    num_errors = _get_number_of_errors(directory)
-    if num_errors == 0:
-        return None
-    
-    ### if error exists,
-    amin = None
-    for j in range(3):
-        length = np.linalg.norm(lattice[j])
-        if length > len_tol:
-            return amin_set
-    return None
+#def _get_amin_parameter(directory, lattice, len_tol=50, amin_set=0.01):
+#    """ Get and return AMIN """
+#    
+#    num_errors = _get_number_of_errors(directory)
+#    if num_errors == 0:
+#        return None
+#    
+#    ### if error exists,
+#    amin = None
+#    for j in range(3):
+#        length = np.linalg.norm(lattice[j])
+#        if length > len_tol:
+#            return amin_set
+#    return None
 
