@@ -678,10 +678,10 @@ class AlamodeDisplace(object):
                         ## error while the modification may not affect the
                         ## result.
                         ##
-                        msg = " get_commensurate_points was used to obtain "\
-                                "commensurate points, which may not affect the "\
-                                "result."
-                        print(msg)
+                        msg = ("\n \"get_commensurate_points\" was used to "
+                                "obtain commensurate points, which may not "
+                                "affect the result.")
+                        logger.info(msg)
                         
                         from auto_kappa.structure.crystal import get_commensurate_points
                         Mps_tmp = np.linalg.inv(convertor)
@@ -700,9 +700,9 @@ class AlamodeDisplace(object):
                                 )
                         dmax = np.amax(abs(Mps - Mps_tmp))
                         if dmax > tol_zero:
-                            print("")
-                            print(" WARRNING: please check the cell size of "\
-                                    "primitive and supercell")
+                            msg = ("\n Warning: please check the sizes of "
+                                    "the primitive and super cell")
+                            logger.warning(msg)
                         
                         self._commensurate_qpoints = get_commensurate_points(Mps)
                         return 0
