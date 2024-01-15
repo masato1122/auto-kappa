@@ -171,18 +171,18 @@ def get_parser():
     #            "VASP job.")
     #        )
     
-    ### calculate potential energy sruface
-    parser.add_option("--pes", dest="pes",
-            type="int", default=0, 
-            help="Calculate potential energy surface (PES) "
-            "with respect to a phonon mode with a negative frequency. [0] "
-            "PES is "
-            "0. not calculated, "
-            "1. calculated only for larger supercells, or "
-            "2. calculated for both of small and larger supercells. "
-            "A representative k-point is chosen to calculate the PES: "
-            "Gamma point, commensurate point, or grid-point for DOS."
-            )
+    #### calculate potential energy sruface
+    #parser.add_option("--pes", dest="pes",
+    #        type="int", default=0, 
+    #        help="Calculate potential energy surface (PES) "
+    #        "with respect to a phonon mode with a negative frequency. [0] "
+    #        "PES is "
+    #        "0. not calculated, "
+    #        "1. calculated only for larger supercells, or "
+    #        "2. calculated for both of small and larger supercells. "
+    #        "A representative k-point is chosen to calculate the PES: "
+    #        "Gamma point, commensurate point, or grid-point for DOS."
+    #        )
     
     #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
     #        default=None, 

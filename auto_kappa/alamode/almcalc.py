@@ -1061,7 +1061,7 @@ class AlamodeCalc():
             if key in amin_params.keys():
                 if amin_params[key] is not None:
                     pp[key] = amin_params[key]
-        amin_params = pp
+        amin_params_set = pp.copy()
         
         ###
         num_done = 0
@@ -1105,9 +1105,13 @@ class AlamodeCalc():
             amin = get_amin_parameter(
                     calculator.directory, 
                     structure.cell.array, 
-                    **amin_params,)
+                    **amin_params_set)
+            
             if amin is not None:
                 calculator.set(amin=amin)
+                
+                ### once AMIN is used, AMIN is set for calculations afterward.
+                amin_params_set["num_of_errors"] = 0
             
             ### ver.1: with ASE
             #structure.calc = calculator
