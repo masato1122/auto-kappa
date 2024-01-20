@@ -647,7 +647,7 @@ def _get_previous_nac(base_dir):
         lines = open(file_err, 'r').readlines()
         for line in lines:
             ### If the previous VASP job was stopped due to a bug,
-            if line.find("Please submit a bug report."):
+            if "Please submit a bug report." in line:
                 msg = ("\n The previous VASP calculation in %s was aborted "
                         "due to a bug." % (dir_nac))
                 logger.info(msg)
@@ -662,7 +662,7 @@ def _get_previous_nac(base_dir):
         try:
             lines = open(logfile, 'r').readlines()
             for line in lines:
-                if line.find("NONANALYTIC ="):
+                if "NONANALYTIC =" in line:
                     data = line.split()
                     prev_nac = int(data[2])
                     return prev_nac
