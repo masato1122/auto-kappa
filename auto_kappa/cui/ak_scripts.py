@@ -634,7 +634,43 @@ def _get_required_parameters(
             )
     
     return cell_types, structures, trans_matrices, kpts_all, nac
+
+def _get_previous_nac(base_dir):
+    """ Get previously-used NAC parameter. If it cannot be found, return None.
+    """
+    from auto_kappa import output_directories
     
+    ### Check bug during the VASP job for NAC
+    dir_nac = base_dir + "/" + output_directories["nac"]
+    file_err = dir_nac + "/std_err.txt"
+    if os.path.exists(file_err):
+        lines = open(file_err, 'r').readlines()
+        for line in lines:
+            ### If the previous VASP job was stopped due to a bug,
+            if line.find("Please submit a bug report."):
+                msg = ("\n The previous VASP calculation in %s was aborted "
+                        "due to a bug." % (dir_nac))
+                logger.info(msg)
+                return 0
+    
+    ### Check the optimal NAC in previous calculations.
+    dir_bandos = base_dir + "/" + output_directories["harm"]["bandos"]
+    for mode in ["band", "dos"]:
+        logfile = dir_bandos + "/%s.log" % mode
+        if os.path.exists(logfile) == False:
+            continue
+        try:
+            lines = open(logfile, 'r').readlines()
+            for line in lines:
+                if line.find("NONANALYTIC ="):
+                    data = line.split()
+                    prev_nac = int(data[2])
+                    return prev_nac
+        except Exception:
+            pass
+    ###
+    return None
+     
 def _write_parameters(
         outfile, unitcell, cell_types, trans_matrices, kpts_used, nac):
     """ Output parameters.yaml
@@ -1223,7 +1259,19 @@ def main():
     if nac != 0:
         if ak_params['nonanalytic'] is not None:
             nac = ak_params['nonanalytic']
-    
+        
+        ### check previously-used NONANALYTIC parameter
+        try:
+            dir0 = base_dir.replace(os.getcwd(), ".")
+        except Exception:
+            dir0 = base_dir
+        
+        prev_nac = _get_previous_nac(dir0)
+        if prev_nac is not None and nac != prev_nac:
+            msg = "\n NONANALYTIC was modified to %s" % prev_nac
+            logger.info(msg)
+            nac = ak_params["nonanalytic"] = prev_nac
+        
     ### print parameters
     print_options(ak_params)
     
