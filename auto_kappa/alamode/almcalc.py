@@ -1112,7 +1112,11 @@ class AlamodeCalc():
                 
                 ### once AMIN is used, AMIN is set for calculations afterward.
                 amin_params_set["num_of_errors"] = 0
-            
+
+                msg = " num_of_errors is set to be 0"
+                logger.info(msg)
+
+
             ### ver.1: with ASE
             #structure.calc = calculator
             #ene = structure.get_potential_energy()
