@@ -1055,7 +1055,8 @@ class AlamodeCalc():
         
         ### get AMIN parameters
         from auto_kappa import default_amin_parameters
-        from auto_kappa.vasp.params import get_amin_parameter
+        from auto_kappa.vasp.params import (
+                get_previous_parameters, get_amin_parameter)
         pp = default_amin_parameters.copy() 
         for key in pp.keys():
             if key in amin_params.keys():
@@ -1066,11 +1067,19 @@ class AlamodeCalc():
         ###
         num_done = 0
         nsuggest =  len(structures)
-        for ii, key in enumerate(list(structures.keys())):
+        struct_keys = list(structures.keys())
+        for ii, key in enumerate(struct_keys):
             
             ### output directory
             outdir = outdir0 + '/' + str(key)
-            
+
+            ### get previous parameters
+            if ii == 0:
+                prev_params = None
+            else:
+                dir_prev = (outdir0 + "/" + str(struct_keys[ii-1]))
+                prev_params = get_previous_parameters(dir_prev)
+
             ###### output yaml file
             #name = "force-%d_order-%d" % (ii, order)
             #if self.additional_directory is not None:
@@ -1102,10 +1111,13 @@ class AlamodeCalc():
             structure = structures[key].copy()
             
             ### set AMIN
-            amin = get_amin_parameter(
-                    calculator.directory, 
-                    structure.cell.array, 
-                    **amin_params_set)
+            if "AMIN" in prev_params.keys():
+                amin = prev_params["AMIN"]
+            else:
+                amin = get_amin_parameter(
+                        calculator.directory, 
+                        structure.cell.array, 
+                        **amin_params_set)
             
             if amin is not None:
                 calculator.set(amin=amin)

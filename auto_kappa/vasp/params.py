@@ -9,6 +9,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 #
+import os.path
 import sys
 import math
 import numpy as np
@@ -16,6 +17,17 @@ import glob
 
 import logging
 logger = logging.getLogger(__name__)
+
+def get_previous_parameters(directory):
+    """ Get VASP parameters written in INCAR file in the given directory """
+    filename = directory + "/INCAR"
+    if os.path.exists(filename) == False:
+        return None
+    
+    ###
+    from pymatgen.io.vasp.inputs import Incar
+    incar = Incar.from_file(filename)
+    return incar
 
 def get_amin_parameter(directory, lattice, **args):
     """ Get and return AMIN """
