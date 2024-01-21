@@ -1111,9 +1111,9 @@ class AlamodeCalc():
             structure = structures[key].copy()
             
             ### set AMIN
-            if "AMIN" in prev_params.keys():
+            try:
                 amin = prev_params["AMIN"]
-            else:
+            except Exception:
                 amin = get_amin_parameter(
                         calculator.directory, 
                         structure.cell.array, 
