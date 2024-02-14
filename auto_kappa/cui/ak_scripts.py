@@ -826,7 +826,8 @@ def analyze_harmonic_properties(
         almcalc, calculator, 
         neglect_log=False, max_num_corrections=5,
         deltak=0.01, reciprocal_density=1500,
-        negative_freq=-1e-3
+        negative_freq=-1e-3,
+        params_nac={'apdb': None, 'kpts': None}
         ):
     """ Analyze harmonic FCs and phonon properties.
 
@@ -878,6 +879,23 @@ def analyze_harmonic_properties(
     ### optimize NAC option
     fmin = almcalc.get_minimum_frequency(which="both")
     
+    ### calculate Born effective charge
+    if fmin < negative_freq and almcalc.nac == 0:
+        
+        try:
+            ## set NONANALYTICAL option for Alamode
+            almcalc.nac = 2
+            mode = 'nac'
+            params_nac["apdb"].run_vasp(
+                    mode,
+                    almcalc.out_dirs[mode],
+                    params_nac["kpts"],
+                    print_params=True
+                    )
+        except Exception:
+            msg = "\n Warning: cannot get parameters for NAC."
+            logger.warning(msg)
+         
     ### get optimal NONANALYTICAL option for Alamode
     if fmin < negative_freq and almcalc.nac != 0:
         
@@ -1080,6 +1098,8 @@ def analyze_phonon_properties(
         #
         nmax_suggest=None,
         frac_nrandom=None,
+        #
+        params_nac={'apdb': None, 'kpts': None},
         ):
     """ Analyze phonon properties
     """
@@ -1088,7 +1108,9 @@ def analyze_phonon_properties(
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
     ###
-    analyze_harmonic_properties(almcalc, calc_force, negative_freq=negative_freq)
+    analyze_harmonic_properties(
+            almcalc, calc_force, negative_freq=negative_freq, 
+            params_nac=params_nac)
     
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq:
@@ -1425,6 +1447,8 @@ def main():
             #
             nmax_suggest=ak_params['nmax_suggest'],
             frac_nrandom=ak_params['frac_nrandom'],
+            #
+            params_nac={'apdb': apdb, 'kpts': kpts_used['nac']},
             )
     
     ### Calculate PES

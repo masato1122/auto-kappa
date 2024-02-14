@@ -243,7 +243,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         lattice = structure.cell
         all_symbols = structure.get_chemical_symbols()
         coords = structure.get_scaled_positions()
-    
+        
     else:
         logger.error(" Structure type {} is not supported".format(
             type(structure)))
