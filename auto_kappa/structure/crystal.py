@@ -126,8 +126,14 @@ def get_standardized_structure_spglib(
     """
     structure = change_structure_format(struct_orig, format='phonopy')
     
+    ### PhonopyAtom => tuple
+    lattice = np.array(structure.get_cell().T, dtype="double", order="C")
+    positions = np.array(structure.get_scaled_positions(), dtype="double", order="C")
+    numbers = np.array(structure.get_atomic_numbers(), dtype="intc")
+    cell = (lattice, positions, numbers)
+    
     ### Get the standardized structure
-    out = spglib.standardize_cell(structure, to_primitive=to_primitive)
+    out = spglib.standardize_cell(cell, to_primitive=to_primitive)
     
     ### make the structure with the given format
     atoms = ase.Atoms(
