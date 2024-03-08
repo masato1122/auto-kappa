@@ -25,7 +25,7 @@ Requirements
 References
 -----------
 
-- [_ALAMODE_] T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- [**ALAMODE**] T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
 - [_Phonopy_] A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
