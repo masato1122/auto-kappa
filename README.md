@@ -25,12 +25,11 @@ Requirements
 References
 -----------
 
-ALAMODE:
+- [ALAMODE] T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-- T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- [Phonopy] A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-Phonopy:
+- [Spglib] A. Togo and I. Tanaka, arXiv:1808.01590 (2018).
 
-- Atsushi Togo and Isao Tanaka, Scr. Mater., 108, 1-5 (2015).
-
+- [Pymatgen, Custodian] S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
