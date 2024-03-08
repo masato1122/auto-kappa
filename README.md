@@ -1,14 +1,13 @@
-Auto-KAPPA
+Auto-kappa
 ============
 
 Version 0.3
 ---------------
 
-Auto-kappa is a software for automated calculations of thermal conductivity.
+Auto-kappa is a software for automated calculations of anharmonic phonon properties, 
+including thermal conductivity.
 The first version works with VASP and ALAMODE while, in furture versions,
-other software such as QuantumEspress, Phono3py, and ShenBTE, are available,
-which enables an easy comparison of results obtained with different software and
-use of different methods such as SCPH method, 4-phonon scattering, iterative or direct solution of BTE, etc.
+other softwares, such as QuantumEspress, Phono3py, and ShenBTE, may be available.
 
 Requirements
 -------------
