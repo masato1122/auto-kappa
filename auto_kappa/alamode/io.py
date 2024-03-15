@@ -79,3 +79,27 @@ def read_fcs(filename):
     
     return dfs
 
+def wasfinished_alamode(logfile):
+    """ Check the ALAMODE job has been finished or not with the log file.
+    """
+    try:
+        lines = open(logfile, 'r').readlines()
+        n = len(lines)
+        num_fin = 0
+        for line in lines:
+            data = line.split()
+            if len(data) != 0:
+                if "Job finished" in line:
+                    num_fin += 1
+        ###
+        if num_fin > 1:
+            msg = "\n Warning: ALAMODE was not compiled properly."
+            msg += "\n Please check %s " % logfile
+            msg += "and compile ALAMODE again."
+            logger.error(msg)
+            sys.exit()
+        return num_fin
+
+    except Exception:
+        return False
+

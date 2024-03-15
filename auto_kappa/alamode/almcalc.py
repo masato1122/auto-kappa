@@ -41,6 +41,7 @@ from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_pa
 from auto_kappa.calculator import run_vasp, backup_vasp
 #from auto_kappa.alamode.memory import get_used_memory
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
+from auto_kappa.alamode.io import wasfinished_alamode
 
 from auto_kappa.cui import ak_log
 
@@ -755,7 +756,7 @@ class AlamodeCalc():
             
             ### 
             logfile = self.out_dirs['harm']['evec'] + '/evec_commensurate.log'
-            if _alamode_finished(logfile) == False:
+            if wasfinished_alamode(logfile) == False:
                 propt = 'evec_commensurate'
                 self.write_alamode_input(propt=propt)
                 self.run_alamode(propt=propt)
@@ -2195,7 +2196,7 @@ class AlamodeCalc():
             fn_log = dd + "/kappa.log"
             if os.path.exists(fn_log) == False:
                 continue
-            if _alamode_finished(fn_log):
+            if wasfinished_alamode(fn_log):
                 label = dd.split(ll_tmp)[1]
                 dirs_done[label] = dd
         return dirs_done
@@ -2362,7 +2363,7 @@ def run_alamode(
     
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
-    if _alamode_finished(logfile) == False or neglect_log:
+    if wasfinished_alamode(logfile) == False or neglect_log:
         
         ## run the job!!
         status = None
@@ -2485,7 +2486,7 @@ def should_rerun_alamode(logfile):
     if os.path.exists(logfile) == False:
         return True
     else:
-        if _alamode_finished(logfile) == False:
+        if wasfinished_alamode(logfile) == False:
             return True
     return False
 
@@ -2509,29 +2510,29 @@ def _should_rerun_band(filename):
     else:
         return True
 
-def _alamode_finished(logfile):
-    """ Check the ALAMODE job has been finished or not with the log file.
-    """
-    try:
-        lines = open(logfile, 'r').readlines()
-        n = len(lines)
-        num_fin = 0
-        for line in lines:
-            data = line.split()
-            if len(data) != 0:
-                if "Job finished" in line:
-                    num_fin += 1
-        ###
-        if num_fin > 1:
-            msg = "\n Warning: ALAMODE was not compiled properly."
-            msg += "\n Please check %s " % logfile
-            msg += "and compile ALAMODE again."
-            logger.error(msg)
-            sys.exit()
-        return num_fin
-    
-    except Exception:
-        return False
+#def wasfinished_alamode(logfile):
+#    """ Check the ALAMODE job has been finished or not with the log file.
+#    """
+#    try:
+#        lines = open(logfile, 'r').readlines()
+#        n = len(lines)
+#        num_fin = 0
+#        for line in lines:
+#            data = line.split()
+#            if len(data) != 0:
+#                if "Job finished" in line:
+#                    num_fin += 1
+#        ###
+#        if num_fin > 1:
+#            msg = "\n Warning: ALAMODE was not compiled properly."
+#            msg += "\n Please check %s " % logfile
+#            msg += "and compile ALAMODE again."
+#            logger.error(msg)
+#            sys.exit()
+#        return num_fin
+#    
+#    except Exception:
+#        return False
     
 #def run_alm(structure, order, cutoffs, nbody, mode=None,
 #        displacements=None, forces=None, outfile=None,
