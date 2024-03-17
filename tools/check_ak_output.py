@@ -323,6 +323,12 @@ if __name__ == '__main__':
     parser.add_option("--neg_freq", dest="neg_freq", type="float",
                 default=-0.001, help="negtive frequency [-0.001]")
     
+    parser.add_option("--vol_relax", dest="vol_relax", type="int",
+                default=0, help="check volume relaxation (0.No, 1.Yes) [0]")
+    
+    parser.add_option("--lsc", dest="lsc", type="int",
+                default=0, help="check larger supercell (0.No, 1.Yes) [0]")
+    
     (options, args) = parser.parse_args()
     main(options)
 
