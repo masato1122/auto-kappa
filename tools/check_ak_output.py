@@ -260,7 +260,7 @@ def check_result(directory):
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
             if os.path.exists(figname) == False:
-                print(" Error : %s" % (dir_result))
+                print(" %s : %s" % (POSSIBLE_STATUSES[4], dir_result))
                 sys.exit()
     return True
 
