@@ -41,7 +41,7 @@ def main(build_dir):
 
     scripts_autokappa = [
             'scripts/akrun',
-            'scripts/ak-logger',
+            #'scripts/ak-logger',
             'scripts/ak-plotter',
             ]
     
