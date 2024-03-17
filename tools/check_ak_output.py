@@ -1,5 +1,5 @@
 #
-# check_apdb_log_ver2.py
+# check_ak_output.py
 #
 # This script helps to check if the automation calculation was finished or not.
 #
@@ -312,7 +312,7 @@ def main(options):
             neg_freq=options.neg_freq)
 
     if flag:
-        print(" DONE")
+        print(" %s" % (POSSIBLE_STATUSES[2]))
 
 if __name__ == '__main__':
     parser = OptionParser()
