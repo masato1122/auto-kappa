@@ -349,8 +349,9 @@ def main(options):
             larger_sc=options.larger_sc)
     
     if flag[0]:
-        msg = " %s" % (POSSIBLE_STATUSES[2])
-        logger.info(msg)
+        if flag[1].lower() == "cube":
+            msg = " %s" % (POSSIBLE_STATUSES[2])
+            logger.info(msg)
 
 if __name__ == '__main__':
     parser = OptionParser()
