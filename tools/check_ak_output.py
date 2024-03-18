@@ -19,6 +19,9 @@ Hot to use
         --vol_relax 0 \
         --larger_sc 0
 
+Note
+=====
+
 ``dir_apdb`` is the directory name of the automation calculation to check.
 If the calculation has not yet been finished, the return value is ``NotYet``.
 
