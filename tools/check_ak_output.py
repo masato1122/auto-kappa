@@ -182,7 +182,7 @@ def _read_poscar(filename, tar=None, file_tmp=TEMP_FILENAME):
         except Exception:
             print(" Error: %s" % filename)
             return None
-    return ase.io.read(file_tmp, format='vasp')
+    return ase.io.read(file_pos, format='vasp')
 
 def finish_relaxation(dir_base, tar=None):
     """ 
