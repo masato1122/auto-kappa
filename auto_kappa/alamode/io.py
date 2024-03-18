@@ -79,11 +79,17 @@ def read_fcs(filename):
     
     return dfs
 
-def wasfinished_alamode(logfile):
+def wasfinished_alamode(logfile, tar=None):
     """ Check the ALAMODE job has been finished or not with the log file.
     """
     try:
-        lines = open(logfile, 'r').readlines()
+        if tar is None:
+            lines = open(logfile, 'r').readlines()
+        else:
+            lines_tmp = tar.extractfile(logfile).readlines()
+            lines = [ll.decode('utf-8') for ll in lines_tmp]
+        
+        ###
         n = len(lines)
         num_fin = 0
         for line in lines:

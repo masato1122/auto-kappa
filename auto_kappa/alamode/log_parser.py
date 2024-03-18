@@ -660,9 +660,21 @@ def _get_cellsize_from_log(filename, type=None):
     
     return cell
     
-def get_minimum_frequency_from_logfile(filename):
+def get_minimum_frequency_from_logfile(filename, tar=None):
+    """ Get minimum frequency among those written in ``filename``
     
-    lines = open(filename, 'r').readlines()
+    Args
+    -----
+    filename : string
+    
+    tar : tarfile.TarFile
+        
+    """
+    if tar is None:
+        lines = open(filename, 'r').readlines()
+    else:
+        lines_tmp = tar.extractfile(filename).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
     
     out = {}
     istart = None
@@ -690,7 +702,7 @@ def get_minimum_frequency_from_logfile(filename):
             istart_freq = il
     
     ### get frequencies
-    eigen = get_eigenvalues_from_logfile(filename)
+    eigen = get_eigenvalues_from_logfile(filename, tar=tar)
     if eigen is None:
         msg = "\n WARNING: cannot read %s properly." % filename
         logger.warning(msg)
@@ -702,9 +714,21 @@ def get_minimum_frequency_from_logfile(filename):
     out['minimum_frequency'] = float(np.amin(frequencies))
     return out
 
-def get_eigenvalues_from_logfile(filename):
+def get_eigenvalues_from_logfile(filename, tar=None):
+    """
+    Args
+    ------
+    filename : string
+        .log file name made by ALAMODE
 
-    lines = open(filename, 'r').readlines()
+    tar : tarfile.TarFile
+    """
+    if tar is None:
+        lines = open(filename, 'r').readlines()
+    else:
+        lines_tmp = tar.extractfile(filename).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
+        
     nks = None
     nk_irred = None
     natoms_prim = None

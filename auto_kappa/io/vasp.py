@@ -9,6 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import os
 import glob
 import numpy as np
 import xmltodict
@@ -160,13 +161,24 @@ def read_dfset(filename, natoms=None, nstructures=None):
     
     return disps, forces
 
-def wasfinished(directory, filename='vasprun.xml'):
-    try:
-        fn = directory + '/' + filename
-        lines = open(fn, 'r').readlines()
-    except Exception:
-        return False
-
+def wasfinished(directory, filename='vasprun.xml', tar=None):
+    """ 
+    Args
+    ------
+    directory : string
+        Path for the directory to be checked. Note that the path should be that
+        inside the tar.gz file when tar is not None.
+    """
+    fn_target = directory + '/' + filename
+    if tar is None:
+        try:
+            lines = open(fn_target, 'r').readlines()
+        except Exception:
+            return False
+    else:
+        lines_tmp = tar.extractfile(fn_target).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
+     
     n = len(lines)
     for i in range(n):
         num = n - 1 - i

@@ -12,9 +12,14 @@
 """
 Hot to use
 ==========
->>> python check_ak_output.py --dir_apdb ${directory name}
+>>> dir_apdb = "mp-149"
+>>> dir_apdb = "mp-149.tar.gz"
+>>> python check_ak_output.py \
+        --dir_apdb dir_apdb \
+        --vol_relax 0 \
+        --larger_sc 0
 
-``directory name`` is the directory name of the automation calculation to check.
+``dir_apdb`` is the directory name of the automation calculation to check.
 If the calculation has not yet been finished, the return value is ``NotYet``.
 
 """
@@ -25,6 +30,7 @@ from optparse import OptionParser
 import yaml
 import glob
 import ase.io
+import tarfile
 
 from auto_kappa import output_directories
 from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
@@ -46,6 +52,8 @@ POSSIBLE_STATUSES = {
         3: "Symmetry_error",
         4: "Stop_with_error",
         }
+
+TEMP_FILENAME = "_tmp.txt"
 
 #def too_many_symmetry_errors(directory, tol_number=5):
 #    """ check symmetry error during energy minimization """
@@ -149,27 +157,63 @@ POSSIBLE_STATUSES = {
 
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def _read_poscar(filename, tar=None, file_tmp=TEMP_FILENAME):
+    """ Read POSCAR file to get a structure object
+    
+    Args
+    -----
+    filename : string
+    
+    tar : tarfile.TarFile
+    
+    """
+    if tar is None:
+        file_pos = filename
+    else:
+        try:
+            content = tar.extractfile(filename).read().decode('utf-8')
+            with open(file_tmp, "a") as f:
+                f.write(content)
+            file_pos = file_tmp
+        except Exception:
+            print(" Error: %s" % filename)
+            return None
+    return ase.io.read(file_tmp, format='vasp')
 
-def finish_relaxation(dir_base):
-    """ """
+def finish_relaxation(dir_base, tar=None):
+    """ 
+    Args
+    -----
+    dir_base : string
+        Name of a directory or .tar.gz file
+    
+    tar : tarfile.TarFile
+    """
     outdir = dir_base + "/" + output_directories["relax"]
-    
-    #### ver.1
-    #xmlfile = outdir + "/vasprun.xml"
-    #if os.path.exists(xmlfile):
-    #    if wasfinished_vasp(outdir, filename='vasprun.xml'):
-    #        return True
-    
+
     ### get initial structure
     filename = outdir + "/full-1/POSCAR.orig"
-    struct_orig = ase.io.read(filename, format='vasp')
+    
+    ### for tar.gz
+    struct_orig = _read_poscar(filename, tar=tar)
+    
+    ### get structure
     num_orig = get_spg_number(struct_orig)
+    
+    ### list of filenames
+    if tar:
+        all_files = tar.getnames()
+    else:
+        all_files = []
     
     ### ver.2
     for dd in ["full-1", "full-2", "freeze-1"]:
+        
         dir1 = outdir + "/" + dd
-        if os.path.exists(dir1):
-            if wasfinished_vasp(dir1) == False:
+
+        if os.path.exists(dir1) or dir1 in all_files:
+            
+            if wasfinished_vasp(dir1, tar=tar) == False:
                 msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
                 logger.info(msg)
                 return False
@@ -180,86 +224,94 @@ def finish_relaxation(dir_base):
         
         ### symmetry check
         filename = dir1 + "/CONTCAR"
-        struct = ase.io.read(filename, format='vasp')
+        struct = _read_poscar(filename, tar=tar)
         num_i = get_spg_number(struct)
         if num_orig != num_i:
             msg = " %s : %s" % (POSSIBLE_STATUSES[3], dir1)
             logger.info(msg)
             return False
-    ###
+    
     return True
 
-def get_minimum_energy(dir_name):
+def get_minimum_energy(dir_name, tar=None):
     """ Check minimum frequency """ 
     from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
-    
     fmin = 1000
     for kind in ["band", "dos"]:
         logfile = dir_name + "/harm/bandos/%s.log" % kind
-        if os.path.exists(logfile) == False:
-            return None
         try:
-            fmin_each = get_minimum_frequency_from_logfile(logfile)
+            fmin_each = get_minimum_frequency_from_logfile(logfile, tar=tar)
             fmin = min(fmin, fmin_each["minimum_frequency"])
         except Exception:
             return None
+    
     return fmin
     
-def finish_harmonic(directory):
+def finish_harmonic(dir_base, tar=None):
     """ Check calculations for harmonic properties """
     
     ### check log files
-    dir_bandos = directory + "/" + output_directories['harm']['bandos']
+    dir_bandos = dir_base + "/" + output_directories['harm']['bandos']
     for propt in ["band", "dos"]:
         logfile = dir_bandos + "/" + propt + ".log"
-        if os.path.exists(logfile) == False:
+        if _exists(logfile, tar=tar) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
             logger.info(msg)
             return False
         ##
-        if wasfinished_alamode(logfile) == False:
+        if wasfinished_alamode(logfile, tar=tar) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
             logger.info(msg)
             return False
     
     return True
 
-def finish_cubic(directory):
+def finish_cubic(dir_base, tar=None):
     """ Check calculations for cubic properties """
     
-    dir_cube = directory + "/cube"
+    dir_cube = dir_base + "/cube"
     
     ### check
-    if os.path.exists(dir_cube) == False:
+    if _exists(dir_cube, tar=tar) == False:
         msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_cube)
         logger.info(msg)
         return False
     
     ### kappa
-    line = dir_cube + "/kappa_*"
-    dirs = glob.glob(line)
+    if tar is None:
+        line = dir_cube + "/kappa_*"
+        dirs = glob.glob(line)
+    else:
+        line = dir_cube + "/kappa_"
+        dirs = []
+        for name in tar.getnames():
+            if (name.startswith(line) and 
+                    len(line.split("/")) == len(name.split("/"))):
+                dirs.append(name)
+    
+    ###
     for dd in dirs:
         
         logfile = dd + "/kappa.log"
         
         ### check presence
-        if os.path.exists(logfile) == False:
+        if _exists(logfile, tar=tar) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
             logger.info(msg)
             return False
         
         ### check if finished or not
-        if wasfinished_alamode(logfile) == False:
+        if wasfinished_alamode(logfile, tar=tar) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
             logger.info(msg)
             return False
     
     return True
 
-def check_result(directory):
+def check_result(dir_base, tar=None):
     """ Check output figures"""
     
-    dir_result = directory + "/" + output_directories["result"]
+    dir_result = dir_base + "/" + output_directories["result"]
     
     names = {
             "harm": ["bandos"],
@@ -269,24 +321,60 @@ def check_result(directory):
     for order in ["harm", "cube", "time"]:
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
-            if os.path.exists(figname) == False:
+            if _exists(figname, tar=tar) == False:
                 msg = " %s : %s" % (POSSIBLE_STATUSES[4], dir_result)
                 logger.info(msg)
                 return False
     return True
 
-def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=None):
+def _get_tar_prefix(tar):
+    """ """
+    data = tar.name.replace(os.getcwd() + "/", "").split("/")
+    prefix = ""
+    for i in range(len(data)-1):
+        prefix += data[i] + "/"
+    return prefix
+
+def _get_tar_relative_names(tar):
+    """ """
+    prefix = _get_tar_prefix(tar)
+    all_files = [prefix + name for name in tar.getnames()]
+    return all_files
+
+def _exists(filename, tar=None):
+    """ """
+    if tar is None:
+        if os.path.exists(filename) == False:
+            return False
+    else:
+        if filename not in tar.getnames():
+            return False
+    return True 
+
+def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=None):
     """ Check output directory generated by auto-kappa """
     
+    suffix = ".tar.gz"
+    if dir_tmp.endswith(suffix):
+        
+        ### for .tar.gz file
+        tar = tarfile.open(dir_tmp, 'r')
+        dir_type = "tar.gz"
+        dir_base = dir_tmp.split("/")[-1].replace(suffix, "")
+    else:
+        tar = None
+        dir_type = "directory"
+        dir_base = dir_tmp
+    
     ### log file
-    logfile = directory + "/ak.log"
-    if os.path.exists(logfile) == False:
+    logfile = dir_base + "/ak.log"
+    if _exists(logfile, tar=tar) == False:
         msg = " %s : %s" % (POSSIBLE_STATUSES[0], directory)
         logger.info(msg)
         return [False, "ak.log"]
-                
+    
     ### check structure optimization
-    flag_relax = finish_relaxation(directory)
+    flag_relax = finish_relaxation(dir_base, tar=tar)
     if flag_relax == False:
         return [False, "relax"]
     
@@ -295,23 +383,25 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
         msg = " Error : checking strict optimization is not supported."
         logger.info(msg)
         return [-1, "error"]
-     
+    
     ### check NAC
-    dir_nac = directory + "/" + output_directories["nac"]
-    if os.path.exists(dir_nac):
-        if wasfinished_vasp(dir_nac) == False:
+    dir_nac = dir_base + "/" + output_directories["nac"]
+    if _exists(dir_nac, tar=tar):
+        if wasfinished_vasp(dir_nac, tar=tar) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_nac)
             logger.info(msg)
             return [False, "dir_nac"]
     
     ### check harmonic
-    flag_harm = finish_harmonic(directory)
+    flag_harm = finish_harmonic(dir_base, tar=tar)
+    
     if flag_harm == False:
         return [False, "harm"]
-    
     else:
+        
         ### check minimum frequency
-        fmin = get_minimum_energy(directory)
+        fmin = get_minimum_energy(dir_base, tar=tar)
+        
         if fmin < neg_freq:
 
             ### If negative frequencies were round,
@@ -329,12 +419,12 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
                 return [-1, "Error"]
     
     ### check cubic
-    flag_cube = finish_cubic(directory)
+    flag_cube = finish_cubic(dir_base, tar=tar)
     if flag_cube == False:
         return [False, "cube"]
     
     ### check result
-    flag = check_result(directory)
+    flag = check_result(dir_base, tar=tar)
     if flag == False:
         return [False, "result"]
 
@@ -369,5 +459,9 @@ if __name__ == '__main__':
                 default=0, help="check larger supercell (0.No, 1.Yes) [0]")
     
     (options, args) = parser.parse_args()
+    
+    if options.directory.startswith("./"):
+        options.directory = options.directory.replace("./", "")
+    
     main(options)
 
