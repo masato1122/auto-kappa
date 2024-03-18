@@ -1233,6 +1233,7 @@ class AlamodeCalc():
             msg = "\n Error: %s is not supported yet.\n" % propt
             logger.error(msg)
             sys.exit()
+        
         alamode_type = out[0]
         mode = out[1]
         
@@ -1240,15 +1241,19 @@ class AlamodeCalc():
         fc3xml = None
         
         ### prepare filenames
+        dir_result = self.out_dirs["result"]
+        
         if propt in ['band', 'dos']:
             
             dir_work = self.out_dirs['harm']['bandos']
-            fcsxml = '../../result/' + self.outfiles['harm_xml']
+            relpath =  os.path.relpath(dir_result, dir_work)
+            fcsxml = relpath + '/' + self.outfiles['harm_xml']
             
         elif propt == 'evec_commensurate':
             
             dir_work = self.out_dirs['harm']['evec']
-            fcsxml = '../../result/' + self.outfiles['harm_xml']
+            relpath = os.path.relpath(dir_result, dir_work)
+            fcsxml = relpath + '/' + self.outfiles['harm_xml']
             
         elif propt == 'kappa':
             
@@ -1261,22 +1266,25 @@ class AlamodeCalc():
             
             else:
                 dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-                fcsxml = ('../../result/' + 
+                relpath = os.path.relpath(dir_result, dir_work)
+                fcsxml = (relpath + '/' + 
                         self.outfiles['cube_%s_xml' % self.fc3_type])
         
         elif propt == 'lasso' or propt == 'cv':
             
             if order == 2:
                 dir_work = self.out_dirs['cube'][propt]
-                dfset = ('../../result/' + 
+                relpath = os.path.relpath(dir_result, dir_work)
+                dfset = (relpath + '/' + 
                         self.outfiles['cube_%s_dfset' % self.fc3_type])
             
             else:
                 dir_work = self.out_dirs['higher'][propt]
-                dfset = '../../result/' + self.outfiles['lasso_dfset']
+                relpath = os.path.relpath(dir_result, dir_work)
+                dfset = relpath + '/' + self.outfiles['lasso_dfset']
                 
                 ## get file name of FC3 (fc3xml)
-                fc3xml = ('../../result/' + 
+                fc3xml = (relpath + '/' + 
                         self.outfiles['cube_%s_xml' % self.fc3_type])
                 fn_check = (
                         self.out_dirs['result'] + '/' + 
@@ -1288,7 +1296,7 @@ class AlamodeCalc():
                     sys.exit()
             
             ## get fc2xml
-            fc2xml = '../../result/' + self.outfiles['harm_xml']
+            fc2xml = relpath + '/' + self.outfiles['harm_xml']
             fn_check = (
                     self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
                     )
@@ -1300,15 +1308,17 @@ class AlamodeCalc():
         elif propt == 'fc2':
             
             dir_work = self.out_dirs['harm']['force']
-            dfset = '../../result/' + self.outfiles['harm_dfset']
+            relpath = os.path.relpath(dir_result, dir_work)
+            dfset = relpath + '/' + self.outfiles['harm_dfset']
             fc2xml = None
         
         elif propt == 'fc3':
             
             dir_work = self.out_dirs['cube']['force_%s' % self.fc3_type]
-            dfset = ('../../result/' + 
+            relpath = os.path.relpath(dir_result, dir_work)
+            dfset = (relpath + '/' + 
                     self.outfiles['cube_%s_dfset' % self.fc3_type])
-            fc2xml = '../../result/' + self.outfiles['harm_xml']
+            fc2xml = relpath + '/' + self.outfiles['harm_xml']
             
         elif propt == 'suggest':
             
@@ -1539,7 +1549,16 @@ class AlamodeCalc():
             logger.error(msg)
             sys.exit()
         
-        inp.update(kwargs)
+        ### modify path of filenames
+        filename_keys = ["fc2xml", "fc3xml", "fcsxml"]
+        given_params = kwargs.copy()
+        for key in given_params:
+            if key in filename_keys:
+                given_params[key] = os.path.relpath(
+                        given_params[key], dir_work)
+        
+        ### make input script for ALAMODE
+        inp.update(given_params)
         inp.to_file(filename=filename)
         
         msg = "\n Make a ninput script for ALAMODE : %s." % (
@@ -2140,14 +2159,6 @@ class AlamodeCalc():
         msg = "\n ### Plot CV results ###"
         logger.info(msg)
         
-        #if newversion == False:
-        #    figname = self.out_dirs['result'] + '/fig_cvsets.png'
-        #    plot_cvsets(
-        #            directory=self.out_dirs['lasso']['cv'], 
-        #            figname=figname
-        #            )
-        #else:
-        ##
         if order == 2:
             figname = self.out_dirs['result'] + '/fig_cvsets_cube.png'
             plot_cvsets(
@@ -2157,9 +2168,8 @@ class AlamodeCalc():
             figname = self.out_dirs['result'] + '/fig_cvsets.png'
             plot_cvsets(
                     directory=self.out_dirs['higher']['cv'], 
-                    figname=figname
-                    )
-        
+                    figname=figname)
+         
         logger.info("")
     
     def plot_bandos(self, **kwargs):
@@ -2212,7 +2222,8 @@ class AlamodeCalc():
         for i, key in enumerate(keys):
             
             try:
-                msg = " Read %s" % self.get_relative_path(dirs_kappa[key])
+                dir1 = self.get_relative_path(dirs_kappa[key])
+                msg = " Read %s" % (dir1)
                 logger.info(msg)
                 dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
             except Exception:

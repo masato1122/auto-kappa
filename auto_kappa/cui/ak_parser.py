@@ -175,7 +175,7 @@ def get_parser():
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 
             help="Calculate potential energy surface (PES) "
-            "with respect to a phonon mode with a negative frequency. [0] "
+            "with respect to a phonon mode with negative frequency. [0] "
             "PES is "
             "0. not calculated, "
             "1. calculated only for larger supercells, or "

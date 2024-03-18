@@ -80,10 +80,9 @@ class StrictRelaxation():
             encut_factor=1.3, 
             verbosity=1,
             ):
-        """ Run VASP jobs with different volumes
         
-        """
-        line = " Relaxation with different volumes"
+        ### Run VASP jobs for different volumes
+        line = " Strict structure optimization"
         msg = "\n" + line
         msg += "\n " + "=" * len(line)
         if verbosity > 0:
@@ -169,12 +168,12 @@ class StrictRelaxation():
 
         outfile = self.outdir + "/POSCAR.init"
         self.initial_structure.to(filename=outfile)
-        msg = " Output %s" % outfile
+        msg = " Output %s" % outfile.replace(os.getcwd(), ".")
         logger.info(msg)
 
         outfile = self.outdir + "/POSCAR.opt"
         self.get_optimal_structure().to(filename=outfile)
-        msg = " Output %s" % outfile
+        msg = " Output %s" % outfile.replace(os.getcwd(), ".")
         logger.info(msg)
     
     def get_calculated_volumes_and_energies(self):
@@ -243,7 +242,7 @@ class StrictRelaxation():
         msg += " Optimal volume : %8.3f A^3\n" % self.optimal_volume
         msg += " Initial volume : %8.3f A^3\n" % vinit
         msg += " Initial strain : %8.3f\n" % (s_len)
-        msg += " Error (MAE)    : %8.5f eV\n" % (mae)
+        msg += " Error (MAE)    : %8.5f eV" % (mae)
         logger.info(msg)
         
         out = {}
@@ -253,10 +252,10 @@ class StrictRelaxation():
         out['initial_volume'] = [float(vinit), 'A^3']
         out['initial_strain'] = [float(s_len), '-']
         out['mae'] = [float(mae), 'eV']
-        
+         
         with open(self.outfile_yaml, 'w') as f:
             yaml.dump(out, f)
-            msg = "\n Output %s" % self.outfile_yaml
+            msg = "\n Output %s" % self.outfile_yaml.replace(os.getcwd(), ".")
             logger.info(msg)
     
 def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
@@ -506,7 +505,8 @@ def relaxation_with_different_volumes(
             count += 1
         
         if verbosity > 0:
-            logger.info("\n Output directory: %s" % outdir)
+            logger.info("\n Output directory: %s" % (
+                outdir.replace(os.getcwd(), ".")))
         
         #### prepare a strained structure
         #structure = get_strained_structure(struct_init, strain, format='pmg')
@@ -549,7 +549,7 @@ def relaxation_with_different_volumes(
                     strain, volume, energy)
             logger.info(msg)
     
-    ##
+    ###
     Vs, Es = _get_calculated_volumes_and_energies(base_directory)
     return Vs, Es
 

@@ -317,7 +317,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
             set_colorbar(sc, ax=ax1)
     
     ## zero-line
-    ax1.axhline(0, ls='-', lw=0.2, c='grey')
+    #ax1.axhline(0, ls='-', lw=0.2, c='grey')
     
     ### plot DOS
     if dos is not None:

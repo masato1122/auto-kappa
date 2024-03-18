@@ -744,7 +744,7 @@ def analyze_harmonic_with_larger_supercells(
         #
         restart=1,
         ):
-
+    """ Analyze harmonic properties with larger supercell(s) """
     from auto_kappa.structure.supercell import estimate_supercell_matrix
     
     count = 0
@@ -809,7 +809,7 @@ def analyze_harmonic_with_larger_supercells(
                 negative_freq=negative_freq)
         
         ### Finish
-        if almcalc_new.minimum_frequency > negative_freq:
+        if almcalc_new.minimum_frequency < negative_freq:
             ak_log.negative_frequency(almcalc_new.minimum_frequency)
             return almcalc_new
         
@@ -964,8 +964,6 @@ def calculate_cubic_force_constants(
         ):
     """ Calculate cubic force constants
     """
-    #logger = logging.getLogger(__name__)
-    
     ### calculate forces for cubic FCs
     almcalc.write_alamode_input(propt='suggest', order=2)
     almcalc.run_alamode(propt='suggest', order=2)
@@ -1025,7 +1023,7 @@ def calculate_thermal_conductivities(
                 propt='kappa', order=2, kpts=kpts, outdir=outdir, **kwargs)
         
         almcalc.run_alamode(
-                propt='kappa', neglect_log=neglect_log, outdir=outdir, **kwargs)
+                propt='kappa', neglect_log=neglect_log, outdir=outdir)
         
         ### check output file for kappa
         kappa_log = outdir + "/kappa.log"
@@ -1041,13 +1039,11 @@ def calculate_thermal_conductivities(
             almcalc.run_alamode(
                     propt='kappa', neglect_log=neglect_log, 
                     outdir=outdir, **kwargs)
-    
+        
     ### analyze phonons
     msg = "\n"
     msg += " Plot anharmonic properties:\n"
     msg += " ---------------------------"
-    
-    #logger = logging.getLogger(__name__)
     logger.info(msg)
     
     out = almcalc.plot_kappa()
@@ -1103,8 +1099,6 @@ def analyze_phonon_properties(
         ):
     """ Analyze phonon properties
     """
-    #logger = logging.getLogger(__name__)
-    
     ###
     ### 1. Calculate harmonic FCs and harmonic phonon properties
     ###
@@ -1174,7 +1168,7 @@ def _plot_bandos_for_different_sizes(
             directory2=almcalc2.out_dirs["harm"]["bandos"], 
             prefix2=almcalc2.prefix,
             fig_labels=[lab1, lab2],
-            figname=figname,
+            figname=figname.replace(os.getcwd(), "."),
             )
 
 def _use_omp_for_anphon(base_dir):
@@ -1222,7 +1216,6 @@ def main():
     ### set logger
     logfile = base_dir + "/ak.log"
     ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
-    #logger = logging.getLogger(__name__)
     
     ### Start auto-kappa
     start_autokappa()
@@ -1360,7 +1353,7 @@ def main():
             nsw_params=ak_params["nsw_params"],
             )
     
-    ### Stop because of the change of symmetry during the structure opt.
+    ### Stop because of change in crystal symmetry during the structure opt.
     if out < 0:
         if out == -1:
             msg = "\n Error: crystal symmetry was changed during the "\
@@ -1452,9 +1445,8 @@ def main():
             )
     
     ### Calculate PES
-    #if (almcalc.minimum_frequency < ak_params['negative_freq'] 
-    #        and ak_params['pes'] == 2):
-    if (almcalc.minimum_frequency < 10 and ak_params['pes'] == 2):
+    if (almcalc.minimum_frequency < ak_params['negative_freq'] and 
+            ak_params['pes'] == 2):
         almcalc.calculate_pes(negative_freq=ak_params['negative_freq'])
     
     ########################
@@ -1478,7 +1470,7 @@ def main():
                 #
                 restart=ak_params['restart'],
                 )
-        
+
         ### plot band and DOS
         figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
         _plot_bandos_for_different_sizes(

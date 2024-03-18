@@ -495,15 +495,21 @@ class ApdbVasp():
                     kpts=kpts, 
                     command=self.command,
                     )
+            
+            ### output figure
             figname = outdir + '/fig_bm.png'
-            relax.plot_bm(figname=figname)
+            relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+            
+            ### print results
             relax.print_results()
+            
+            ### output structure file
             struct_opt = relax.get_optimal_structure()
             outfile = outdir + "/POSCAR.opt"
-            struct_opt.to(filename=outfile)
+            struct_opt.to(filename=outfile.replace(os.getcwd(), "."))
             struct_ase = change_structure_format(struct_opt, format='ase') 
             
-            ###
+            ### update structures
             if to_primitive:
                 _mat_p2u = np.linalg.inv(self.primitive_matrix)
                 _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
@@ -527,7 +533,7 @@ class ApdbVasp():
         if spg_before != spg_after:
             ak_log.symmetry_error(spg_before, spg_after)
             return -1
-         
+        
         return 0
     
     def _write_relax_yaml(self, params):

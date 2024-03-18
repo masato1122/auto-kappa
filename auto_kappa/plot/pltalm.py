@@ -359,7 +359,7 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
             msg = "\n"
         else:
             msg = ""
-        msg += " Read " + fn
+        msg += " Read " + fn.replace(os.getcwd(), ".")
         logger.info(msg)
         
         data = np.genfromtxt(fn)
@@ -420,7 +420,9 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
     set_axis(ax, xscale='log')
     set_legend(ax, fs=6, alpha=0.5)
     
-    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
+    savefigure(fig, 
+            figname.replace(os.getcwd(), "."), 
+            dpi=dpi, bbox_inches='tight')
     return fig
 
 def _get_recommended_alpha(filename):

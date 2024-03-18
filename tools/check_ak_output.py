@@ -51,6 +51,7 @@ POSSIBLE_STATUSES = {
         2: "Finished_cubic",
         3: "Symmetry_error",
         4: "Stop_with_error",
+        "sc": "Finished_sc",
         }
 
 TEMP_FILENAME = "_tmp.txt"
@@ -316,9 +317,9 @@ def check_result(dir_base, tar=None):
     names = {
             "harm": ["bandos"],
             "cube": ["cumu_frequency", "cumu_mfp", "kappa", "lifetime", "scat_rates"],
-            "time": ["times"]}
+            }
     
-    for order in ["harm", "cube", "time"]:
+    for order in ["harm", "cube"]:
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
             if _exists(figname, tar=tar) == False:
@@ -326,6 +327,73 @@ def check_result(dir_base, tar=None):
                 logger.info(msg)
                 return False
     return True
+
+def finish_strict_optimization(dir_base, tar=None):
+    """ """
+    dir_vol = dir_base + "/" + output_directories["relax"] + "/volume"
+    for ff in ["POSCAR.init", "POSCAR.opt", "fig_bm.png"]:
+        filename = dir_vol + "/" + ff
+        if _exists(filename, tar=tar) == False:
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_vol)
+            logger.info(msg)
+            return False
+    return True
+
+def finish_larger_sc(dir_base, tar=None, neg_freq=None):
+    """ """
+    ### harmonic for the supercell
+    flag_harm = finish_harmonic(dir_base, tar=tar)
+    if flag_harm == False:
+        return [False, "sc_harm"]
+    else:
+        
+        ### check minimum frequency
+        fmin = get_minimum_energy(dir_base, tar=tar)
+        
+        if fmin < neg_freq:
+            msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
+            logger.info(msg)
+            return [True, "sc_harm"]
+    
+    ### cubic for the supercell
+    flag_cube = finish_cubic(dir_base, tar=tar)
+    if flag_cube == False:
+        return [False, "sc_cube"]
+    
+    ### check result
+    flag = check_result(dir_base, tar=tar)
+    if flag == False:
+        return [False, "sc_result"]
+    
+    return [True, "sc_cube"]
+
+def finish_larger_supercells(dir_base, tar=None, neg_freq=None):
+    """ check analysis with larger supercell(s) """    
+    
+    ### get names of supercells
+    if tar is None:
+        line = dir_base + "/sc-*"
+        dirs = glob.glob(line)
+    else:
+        line = dir_base + "/sc-"
+        dirs = []
+        for name in tar.getnames():
+            if (name.startswith(line) and 
+                    len(line.split("/")) == len(name.split("/"))):
+                dirs.append(name)
+    
+    ### check for each supercell
+    for dir_sc in dirs:
+        out = finish_larger_sc(dir_sc, tar=tar, neg_freq=neg_freq)
+        if out[0] == False:
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_sc)
+            logger.info(msg)
+            return out
+        else:
+            if out[1] == "sc_harm":
+                return out
+    
+    return [True, "sc"]
 
 def _get_tar_prefix(tar):
     """ """
@@ -380,9 +448,9 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     
     ### check strict optimization
     if vol_relax == 1:
-        msg = " Error : checking strict optimization is not supported."
-        logger.info(msg)
-        return [-1, "error"]
+        flag_vol = finish_strict_optimization(dir_base, tar=tar)
+        if flag_vol == False:
+            return [False, "strict"]
     
     ### check NAC
     dir_nac = dir_base + "/" + output_directories["nac"]
@@ -403,21 +471,18 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
         fmin = get_minimum_energy(dir_base, tar=tar)
         
         if fmin < neg_freq:
-
+            
             ### If negative frequencies were round,
             if larger_sc == 0:
                 msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
                 logger.info(msg)
                 return [True, "harm"]
             else:
-                ### Check analysis with a larger SC.
-                msg = " Error : larger_sc is not supported yet."
-                logger.warning(msg)
-                
                 ### calculation with supercell
-                #finish_sc(directory)
-                return [-1, "Error"]
-    
+                flag = finish_larger_supercells(
+                        dir_base, tar=tar, neg_freq=neg_freq)
+                return flag
+     
     ### check cubic
     flag_cube = finish_cubic(dir_base, tar=tar)
     if flag_cube == False:
@@ -439,10 +504,13 @@ def main(options):
             larger_sc=options.larger_sc)
     
     if flag[0]:
-        if flag[1].lower() == "cube":
+        if "cube" in flag[1].lower():
             msg = " %s" % (POSSIBLE_STATUSES[2])
             logger.info(msg)
-
+        elif flag[1].lower() in ["sc"]:
+            msg = " %s" % (POSSIBLE_STATUSES["sc"])
+            logger.info(msg)
+    
 if __name__ == '__main__':
     parser = OptionParser()
     
