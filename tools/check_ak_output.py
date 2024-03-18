@@ -57,8 +57,6 @@ POSSIBLE_STATUSES = {
         "sc": "Finished_sc",
         }
 
-TEMP_FILENAME = "_tmp.txt"
-
 #def too_many_symmetry_errors(directory, tol_number=5):
 #    """ check symmetry error during energy minimization """
 #    for ext in ["tar", "tar.gz"]:
@@ -161,7 +159,7 @@ TEMP_FILENAME = "_tmp.txt"
 
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def _read_poscar(filename, tar=None, file_tmp=TEMP_FILENAME):
+def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
     """ Read POSCAR file to get a structure object
     
     Args
@@ -176,7 +174,7 @@ def _read_poscar(filename, tar=None, file_tmp=TEMP_FILENAME):
     else:
         try:
             content = tar.extractfile(filename).read().decode('utf-8')
-            with open(file_tmp, "a") as f:
+            with open(file_tmp, "w") as f:
                 f.write(content)
             file_pos = file_tmp
         except Exception:
