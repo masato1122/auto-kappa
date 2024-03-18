@@ -283,18 +283,18 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
     if os.path.exists(logfile) == False:
         msg = " %s : %s" % (POSSIBLE_STATUSES[0], directory)
         logger.info(msg)
-        return False
-    
+        return [False, "ak.log"]
+                
     ### check structure optimization
     flag_relax = finish_relaxation(directory)
     if flag_relax == False:
-        return False
+        return [False, "relax"]
     
     ### check strict optimization
     if vol_relax == 1:
         msg = " Error : checking strict optimization is not supported."
         logger.info(msg)
-        return -1
+        return [-1, "error"]
      
     ### check NAC
     dir_nac = directory + "/" + output_directories["nac"]
@@ -302,15 +302,15 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
         if wasfinished_vasp(dir_nac) == False:
             msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_nac)
             logger.info(msg)
-            return False
+            return [False, "dir_nac"]
     
     ### check harmonic
     flag_harm = finish_harmonic(directory)
     if flag_harm == False:
-        return False
+        return [False, "harm"]
     
-    ### check minimum frequency
-    if flag_harm:
+    else:
+        ### check minimum frequency
         fmin = get_minimum_energy(directory)
         if fmin < neg_freq:
 
@@ -318,7 +318,7 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
             if larger_sc == 0:
                 msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
                 logger.info(msg)
-                return True
+                return [True, "harm"]
             else:
                 ### Check analysis with a larger SC.
                 msg = " Error : larger_sc is not supported yet."
@@ -326,21 +326,19 @@ def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=
                 
                 ### calculation with supercell
                 #finish_sc(directory)
-                return -1
-    else:
-        return False
+                return [-1, "Error"]
     
     ### check cubic
     flag_cube = finish_cubic(directory)
     if flag_cube == False:
-        return False
+        return [False, "cube"]
     
     ### check result
     flag = check_result(directory)
     if flag == False:
-        return False
+        return [False, "result"]
 
-    return True
+    return [True, "cube"]
 
 def main(options):
     
@@ -350,7 +348,7 @@ def main(options):
             vol_relax=options.vol_relax,
             larger_sc=options.larger_sc)
     
-    if flag:
+    if flag[0]:
         msg = " %s" % (POSSIBLE_STATUSES[2])
         logger.info(msg)
 
