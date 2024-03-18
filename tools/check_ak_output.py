@@ -31,6 +31,14 @@ from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
 from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.alamode.io import wasfinished_alamode
 
+### log definition
+import logging
+logger = logging.getLogger(__name__)
+sh = logging.StreamHandler()
+sh.setFormatter(logging.Formatter("%(message)s"))
+logging.basicConfig(level=logging.DEBUG, handlers=[sh])
+
+###
 POSSIBLE_STATUSES = {
         0: "NotYet",
         1: "Finished_harmonic",
@@ -39,25 +47,25 @@ POSSIBLE_STATUSES = {
         4: "Stop_with_error",
         }
 
-def too_many_symmetry_errors(directory, tol_number=5):
-    """ check symmetry error during energy minimization """
-    for ext in ["tar", "tar.gz"]:
-        dir_error = "%s/relax_error%d.%s" % (directory, tol_number, ext)
-        if os.path.exists(dir_error):
-            return True
-    return False
-
-def change_symmetry(directory):
-    """ Check if the log file contains "symmetry change" or not. """
-    logfile = directory + "/ak.log"
-    if os.path.exists(logfile) == False:
-        return False
-    lines = open(logfile, 'r').readlines()
-    for line in lines:
-        if "Error: crystal symmetry was changed" in line:
-            return True 
-    return False
-
+#def too_many_symmetry_errors(directory, tol_number=5):
+#    """ check symmetry error during energy minimization """
+#    for ext in ["tar", "tar.gz"]:
+#        dir_error = "%s/relax_error%d.%s" % (directory, tol_number, ext)
+#        if os.path.exists(dir_error):
+#            return True
+#    return False
+#
+#def change_symmetry(directory):
+#    """ Check if the log file contains "symmetry change" or not. """
+#    logfile = directory + "/ak.log"
+#    if os.path.exists(logfile) == False:
+#        return False
+#    lines = open(logfile, 'r').readlines()
+#    for line in lines:
+#        if "Error: crystal symmetry was changed" in line:
+#            return True 
+#    return False
+#
 #def stop_with_error(directory):
 #    """ Check if the log file contains "STOP THE CALCULATION" or not. """
 #    logfile = directory + "/ak.log"
@@ -69,42 +77,42 @@ def change_symmetry(directory):
 #        if "STOP THE CALCULATION" in line:
 #            return True
 #    return False
-
-def _get_directory_name_for_largesc(dir_orig):
-    """ get a directory name for larger SC """
-    
-    line = dir_orig + "/sc-*"
-    dirs = glob.glob(line)
-    if len(dirs) == 0:
-        return None
-    
-    ### get the largest SC
-    nsc_max = 0
-    dir_tmp = None
-    for dd in dirs:
-        data = dd.split("/")[-1].replace("sc-", "").split("x")
-        nsc_i = 0
-        for j in range(3):
-            nsc_i += int(data[j])
-        if nsc_i > nsc_max:
-            nsc_max = nsc_i
-            dir_tmp = dd
-    return dir_tmp
-
-def check_results_with_larger_sc(dir_orig):
-    """ check results for larger supercell """
-    dir_sc = _get_directory_name_for_largesc(dir_orig)
-    if dir_sc is None:
-        return None
-    else:
-        num = check_log_yaml(dir_sc)
-        
-        statuses = POSSIBLE_STATUSES
-        if num in list(statuses.keys()):
-            return statuses[num]
-        else:
-            return "Error"
-
+#
+#def _get_directory_name_for_largesc(dir_orig):
+#    """ get a directory name for larger SC """
+#    
+#    line = dir_orig + "/sc-*"
+#    dirs = glob.glob(line)
+#    if len(dirs) == 0:
+#        return None
+#    
+#    ### get the largest SC
+#    nsc_max = 0
+#    dir_tmp = None
+#    for dd in dirs:
+#        data = dd.split("/")[-1].replace("sc-", "").split("x")
+#        nsc_i = 0
+#        for j in range(3):
+#            nsc_i += int(data[j])
+#        if nsc_i > nsc_max:
+#            nsc_max = nsc_i
+#            dir_tmp = dd
+#    return dir_tmp
+#
+#def check_results_with_larger_sc(dir_orig):
+#    """ check results for larger supercell """
+#    dir_sc = _get_directory_name_for_largesc(dir_orig)
+#    if dir_sc is None:
+#        return None
+#    else:
+#        num = check_log_yaml(dir_sc)
+#        
+#        statuses = POSSIBLE_STATUSES
+#        if num in list(statuses.keys()):
+#            return statuses[num]
+#        else:
+#            return "Error"
+#
 #def check_log_yaml(dir_name, tol_zero=-1e-3):
 #    """
 #    Return
@@ -156,16 +164,18 @@ def finish_relaxation(dir_base):
     filename = outdir + "/full-1/POSCAR.orig"
     struct_orig = ase.io.read(filename, format='vasp')
     num_orig = get_spg_number(struct_orig)
-
+    
     ### ver.2
     for dd in ["full-1", "full-2", "freeze-1"]:
         dir1 = outdir + "/" + dd
         if os.path.exists(dir1):
             if wasfinished_vasp(dir1) == False:
-                print(" %s : %s" % (POSSIBLE_STATUSES[0], dd))
+                msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+                logger.info(msg)
                 return False
         else:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dd))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+            logger.info(msg)
             return False
         
         ### symmetry check
@@ -173,7 +183,8 @@ def finish_relaxation(dir_base):
         struct = ase.io.read(filename, format='vasp')
         num_i = get_spg_number(struct)
         if num_orig != num_i:
-            print(" %s : %s" % (POSSIBLE_STATUSES[3], dir1))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[3], dir1)
+            logger.info(msg)
             return False
     ###
     return True
@@ -194,7 +205,7 @@ def get_minimum_energy(dir_name):
             return None
     return fmin
     
-def finish_harmonic(directory, neg_freq=-0.001):
+def finish_harmonic(directory):
     """ Check calculations for harmonic properties """
     
     ### check log files
@@ -202,18 +213,14 @@ def finish_harmonic(directory, neg_freq=-0.001):
     for propt in ["band", "dos"]:
         logfile = dir_bandos + "/" + propt + ".log"
         if os.path.exists(logfile) == False:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
+            logger.info(msg)
             return False
         ##
         if wasfinished_alamode(logfile) == False:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
+            logger.info(msg)
             return False
-    
-    ###
-    fmin = get_minimum_energy(directory)
-    if fmin < neg_freq:
-        print(" %s : %.3f" % (POSSIBLE_STATUSES[1], fmin))
-        return False
     
     return True
 
@@ -224,7 +231,8 @@ def finish_cubic(directory):
     
     ### check
     if os.path.exists(dir_cube) == False:
-        print(" %s : %s" % (POSSIBLE_STATUSES[0], dir_cube))
+        msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_cube)
+        logger.info(msg)
         return False
     
     ### kappa
@@ -236,12 +244,14 @@ def finish_cubic(directory):
         
         ### check presence
         if os.path.exists(logfile) == False:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dd))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+            logger.info(msg)
             return False
         
         ### check if finished or not
         if wasfinished_alamode(logfile) == False:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dd))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+            logger.info(msg)
             return False
     
     return True
@@ -260,34 +270,64 @@ def check_result(directory):
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
             if os.path.exists(figname) == False:
-                print(" %s : %s" % (POSSIBLE_STATUSES[4], dir_result))
-                sys.exit()
+                msg = " %s : %s" % (POSSIBLE_STATUSES[4], dir_result)
+                logger.info(msg)
+                return False
     return True
 
-def finish_ak_calculation(directory, neg_freq=-0.001):
+def finish_ak_calculation(directory, neg_freq=-0.001, vol_relax=None, larger_sc=None):
     """ Check output directory generated by auto-kappa """
     
     ### log file
     logfile = directory + "/ak.log"
     if os.path.exists(logfile) == False:
-        print(" %s : %s" % (POSSIBLE_STATUSES[0], directory))
-        sys.exit()
+        msg = " %s : %s" % (POSSIBLE_STATUSES[0], directory)
+        logger.info(msg)
+        return False
     
     ### check structure optimization
     flag_relax = finish_relaxation(directory)
     if flag_relax == False:
         return False
     
+    ### check strict optimization
+    if vol_relax == 1:
+        msg = " Error : checking strict optimization is not supported."
+        logger.info(msg)
+        return -1
+     
     ### check NAC
     dir_nac = directory + "/" + output_directories["nac"]
     if os.path.exists(dir_nac):
         if wasfinished_vasp(dir_nac) == False:
-            print(" %s : %s" % (POSSIBLE_STATUSES[0], dir_nac))
+            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_nac)
+            logger.info(msg)
             return False
     
     ### check harmonic
-    flag_harm = finish_harmonic(directory, neg_freq=neg_freq)
+    flag_harm = finish_harmonic(directory)
     if flag_harm == False:
+        return False
+    
+    ### check minimum frequency
+    if flag_harm:
+        fmin = get_minimum_energy(directory)
+        if fmin < neg_freq:
+
+            ### If negative frequencies were round,
+            if larger_sc == 0:
+                msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
+                logger.info(msg)
+                return True
+            else:
+                ### Check analysis with a larger SC.
+                msg = " Error : larger_sc is not supported yet."
+                logger.warning(msg)
+                
+                ### calculation with supercell
+                #finish_sc(directory)
+                return -1
+    else:
         return False
     
     ### check cubic
@@ -295,9 +335,6 @@ def finish_ak_calculation(directory, neg_freq=-0.001):
     if flag_cube == False:
         return False
     
-    ### calculation with supercell
-    #finish_sc(directory)
-
     ### check result
     flag = check_result(directory)
     if flag == False:
@@ -309,10 +346,13 @@ def main(options):
     
     flag = finish_ak_calculation(
             options.directory, 
-            neg_freq=options.neg_freq)
-
+            neg_freq=options.neg_freq,
+            vol_relax=options.vol_relax,
+            larger_sc=options.larger_sc)
+    
     if flag:
-        print(" %s" % (POSSIBLE_STATUSES[2]))
+        msg = " %s" % (POSSIBLE_STATUSES[2])
+        logger.info(msg)
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -326,7 +366,7 @@ if __name__ == '__main__':
     parser.add_option("--vol_relax", dest="vol_relax", type="int",
                 default=0, help="check volume relaxation (0.No, 1.Yes) [0]")
     
-    parser.add_option("--lsc", dest="lsc", type="int",
+    parser.add_option("--larger_sc", dest="larger_sc", type="int",
                 default=0, help="check larger supercell (0.No, 1.Yes) [0]")
     
     (options, args) = parser.parse_args()
