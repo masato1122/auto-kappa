@@ -42,6 +42,7 @@ from auto_kappa.calculator import run_vasp, backup_vasp
 #from auto_kappa.alamode.memory import get_used_memory
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
 from auto_kappa.alamode.io import wasfinished_alamode
+from auto_kappa.alamode.errors import check_unexpected_errors
 
 from auto_kappa.cui import ak_log
 
@@ -2361,7 +2362,6 @@ def run_alamode(
     """
     ### set number of parallelization
     cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
-    ##cmd = "%s -n %d -c %d %s %s" %(mpirun, nprocs, nthreads, command, filename)
     
     ### set OpenMP
     omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
@@ -2371,6 +2371,10 @@ def run_alamode(
     ### change directory
     dir_init = os.getcwd()
     os.chdir(workdir)
+    
+    ### check logfile
+    dir_base = dir_init + "/" + workdir.replace(dir_init, ".").split("/")[1]
+    check_unexpected_errors(logfile, dir_base=dir_base)
     
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
