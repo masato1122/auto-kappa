@@ -195,7 +195,7 @@ def finish_relaxation(dir_base, tar=None):
     tar : tarfile.TarFile
     """
     dir_harm = dir_base + "/harm"
-    if _exists(dir_harm):
+    if _exists(dir_harm, tar=tar):
         return True
     else:
         msg = " %s : relax" % (POSSIBLE_STATUSES[0])
