@@ -438,7 +438,7 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     ### log file
     logfile = dir_base + "/ak.log"
     if _exists(logfile, tar=tar) == False:
-        msg = " %s : %s" % (POSSIBLE_STATUSES[0], directory)
+        msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_base)
         logger.info(msg)
         return [False, "ak.log"]
     
