@@ -1918,12 +1918,12 @@ class AlamodeCalc():
         if val == -1:
             msg = " %s has been already calculated." % propt
             logger.info(msg)
-            
-        #elif val == 1:
-        #    msg = "\n Error: %s might not have been claculated properly." % propt
-        #    msg += "\n Stop the calculation."
-        #    logger.error(msg)
-        #    sys.exit()
+        
+        elif val == 1:
+            msg = "\n Error : ALAMODE job was not finished properly."
+            msg += "\n Stop the calculation."
+            logger.error(msg)
+            sys.exit()
         
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
@@ -2359,6 +2359,13 @@ def run_alamode(
     workdir : string
         work directory
     
+    Return
+    =======
+    int : 
+        ``-1`` when the job had been finished.
+        ``0`` when the job was conducted.
+        ``1`` when the job was not finished.
+    
     """
     ### set number of parallelization
     cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
@@ -2434,14 +2441,26 @@ def run_alamode(
             status = proc.poll()
     
     else:
+        ### The job has been already conducted.
         status = -1
     
     ### set back OpenMP
     for key in omp_keys:
         os.environ[key] = "1"
+    
+    ###
+    flag = wasfinished_alamode(logfile)
      
     #### Return to the original directory
     os.chdir(dir_init)
+    
+    if flag:
+        ### finished
+        status = 0
+    else:
+        ### something wrong
+        status = 1
+    
     return status
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
@@ -2525,30 +2544,7 @@ def _should_rerun_band(filename):
     else:
         return True
 
-#def wasfinished_alamode(logfile):
-#    """ Check the ALAMODE job has been finished or not with the log file.
-#    """
-#    try:
-#        lines = open(logfile, 'r').readlines()
-#        n = len(lines)
-#        num_fin = 0
-#        for line in lines:
-#            data = line.split()
-#            if len(data) != 0:
-#                if "Job finished" in line:
-#                    num_fin += 1
-#        ###
-#        if num_fin > 1:
-#            msg = "\n Warning: ALAMODE was not compiled properly."
-#            msg += "\n Please check %s " % logfile
-#            msg += "and compile ALAMODE again."
-#            logger.error(msg)
-#            sys.exit()
-#        return num_fin
-#    
-#    except Exception:
-#        return False
-    
+
 #def run_alm(structure, order, cutoffs, nbody, mode=None,
 #        displacements=None, forces=None, outfile=None,
 #        fc2info=None, lasso=False, lasso_type='alm', verbosity=0
