@@ -182,7 +182,7 @@ def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
             return None
     try:
         return se.io.read(file_pos, format='vasp')
-    else:
+    except Exception:
         return None
 
 def finish_relaxation(dir_base, tar=None):
