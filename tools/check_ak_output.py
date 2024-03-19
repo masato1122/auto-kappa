@@ -181,7 +181,7 @@ def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
             print(" Error: %s" % filename)
             return None
     try:
-        return se.io.read(file_pos, format='vasp')
+        return ase.io.read(file_pos, format='vasp')
     except Exception:
         return None
 
