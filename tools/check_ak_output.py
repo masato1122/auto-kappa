@@ -180,7 +180,10 @@ def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
         except Exception:
             print(" Error: %s" % filename)
             return None
-    return ase.io.read(file_pos, format='vasp')
+    try:
+        return se.io.read(file_pos, format='vasp')
+    else:
+        return None
 
 def finish_relaxation(dir_base, tar=None):
     """ 
@@ -198,7 +201,11 @@ def finish_relaxation(dir_base, tar=None):
     
     ### for tar.gz
     struct_orig = _read_poscar(filename, tar=tar)
-    
+    if struct_orig is None:
+        msg = " %s : full-1" % (POSSIBLE_STATUSES[0])
+        logger.info(msg)
+        return False
+
     ### get structure
     num_orig = get_spg_number(struct_orig)
     

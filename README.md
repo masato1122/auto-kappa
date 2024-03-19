@@ -24,13 +24,13 @@ Requirements
 References
 -----------
 
-- [**ALAMODE**] T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-- [**Phonopy**] A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
+- **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-- [**Spglib**] A. Togo and I. Tanaka, arXiv:1808.01590 (2018).
+- **Spglib:** A. Togo and I. Tanaka, arXiv:1808.01590 (2018).
 
-- [**Pymatgen**, **Custodian**] S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- **Pymatgen**, **Custodian:** S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
-- [**ASE**] A. H. Larsen, et al., J. Phys.: Cond. Matter 29, 273002 (2017).
+- **ASE:** A. H. Larsen, et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
