@@ -194,6 +194,15 @@ def finish_relaxation(dir_base, tar=None):
     
     tar : tarfile.TarFile
     """
+    dir_harm = dir_base + "/harm"
+    if _exists(dir_harm):
+        return True
+    else:
+        msg = " %s : relax" % (POSSIBLE_STATUESES[0])
+        logger.info(msg)
+        return False
+    
+    ###########################################################
     outdir = dir_base + "/" + output_directories["relax"]
 
     ### get initial structure
