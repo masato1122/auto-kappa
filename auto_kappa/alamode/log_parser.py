@@ -988,6 +988,15 @@ def exceed_memory(filename):
             return False
     return False
 
+def get_version(filename):
+    """ Get version of ALAMODE from log file """
+    lines = open(filename, 'r').readlines()
+    for i in range(10):
+        if "ver." in lines[i].lower():
+            data = lines[i].split()
+            return data[1]
+    return None
+
 def get_parser():
 
     parser = OptionParser()

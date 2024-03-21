@@ -28,7 +28,7 @@ from auto_kappa.structure.crystal import (
         get_standardized_structure_spglib,
         change_structure_format,
         )
-from auto_kappa.calculator import run_vasp, backup_vasp
+from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.cui import ak_log
@@ -265,7 +265,7 @@ class ApdbVasp():
         kpts : list of float, shpae=(3,)
         
         """
-        from auto_kappa.calculator import get_vasp_calculator
+        from auto_kappa.calculators.vasp import get_vasp_calculator
         
         ### get structure (Atoms obj)
         if 'relax' in mode.lower() or mode.lower() == 'nac':
@@ -351,13 +351,12 @@ class ApdbVasp():
         
         ### message
         if verbosity != 0:
-            #line = "Cell type for structure optimization: %s" % cell_type
             line = "Structure optimization"
             msg = "\n\n " + line
             msg += "\n " + "=" * (len(line))
             msg += "\n\n Cell type : %s" % cell_type
             logger.info(msg)
-         
+        
         ### Get the relaxed structure obtained with the old version
         ### For the old version, the xml file is located under ``directory``.
         if wasfinished(directory, filename='vasprun.xml'):
@@ -513,7 +512,9 @@ class ApdbVasp():
             if to_primitive:
                 _mat_p2u = np.linalg.inv(self.primitive_matrix)
                 _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
-                unitcell = get_supercell(struct_ase, _mat_p2u)
+                unitcell = get_supercell(
+                        change_structure_format(struct_ase, format='phonopy'),
+                        _mat_p2u)
             else:
                 unitcell = struct_ase.copy()
             

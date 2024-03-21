@@ -25,7 +25,7 @@ from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
 from auto_kappa.io.vasp import wasfinished
-from auto_kappa.calculator import get_vasp_calculator, run_vasp
+from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan

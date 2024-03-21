@@ -3,31 +3,32 @@
 output_directories = {
         'relax': 'relax',
         'nac': 'nac',
+        ### Harmonic FCs with finite displacement method
         'harm':{
             'suggest': 'harm/suggest',
-            'force': 'harm/force',               ## FC2 with finite displacement
-            'bandos': 'harm/bandos',
-            'evec' : 'harm/evec',
-            'pes'  : 'harm/pes',
+            'force':   'harm/force',     ## FC2 with finite displacement
+            'bandos':  'harm/bandos',
+            'evec' :   'harm/evec',
+            'pes'  :   'harm/pes',
             },
-        ## cubic FCs
+        ### cubic FCs
         'cube':{
             'suggest':  'cube/suggest',
             'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
             'kappa_fd': 'cube/kappa_fd',
             'force_lasso': 'cube/force_lasso',   ## FC3 with random displacement
-            'cv'   :        'cube/lasso',
-            'lasso':        'cube/lasso',
-            'kappa_lasso':  'cube/kappa_lasso',
-            'kappa_': 'cube/kappa',
+            'cv'   :       'cube/lasso',
+            'lasso':       'cube/lasso',
+            'kappa_lasso': 'cube/kappa_lasso',
+            #'kappa':       'cube/kappa',
             },
-        ## high-order FCs
+        ### high-order FCs using LASSO and fixed harmonic and cubic FCs
         'higher':{
-            'suggest': 'lasso/suggest',
-            'force': 'lasso/force',
-            'cv'   : 'lasso/lasso',
-            'lasso': 'lasso/lasso',
-            'kappa': 'lasso/kappa',
+            'suggest': 'higher/suggest',
+            'force'  : 'higher/force',
+            'cv'     : 'higher/lasso',
+            'lasso'  : 'higher/lasso',
+            'kappa'  : 'higher/kappa',
             },
         'result': 'result'
         }
@@ -46,8 +47,10 @@ output_files = {
         'cube_lasso_dfset': 'DFSET.cube_lasso',
         'cube_lasso_xml'  : "FC3_lasso.xml",
         #
-        'lasso_dfset': 'DFSET.lasso',
-        'lasso_xml'  : "FCs_lasso.xml",
+        'higher_dfset': 'DFSET_high.lasso',
+        'higher_xml'  : "FCs_high.xml",
+        ##'lasso_dfset': 'DFSET.lasso',
+        ##'lasso_xml'  : "FCs_lasso.xml",
         }
 
 default_vasp_parameters = {

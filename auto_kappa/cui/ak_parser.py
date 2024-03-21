@@ -42,13 +42,15 @@ def get_parser():
     
     parser.add_option("--anphon_para", 
             dest="anphon_para", type="string", default="mpi", 
-            help="Parallel mode for \"anphon\". "
-            "Input value should be \"mpi\" for MPI and "
-            "\"omp\" for OpenMP [mpi]. "
-            "While \"mpi\", which is the default value, is "
-            "faster for most cases, "
-            "if the system is complex and requires a large memory, "
-            "it is recommended to use \"omp\". ")
+            help=(
+                "[This option may not be supported in future.] "
+                "Parallel mode for \"anphon\". "
+                "Input value should be \"mpi\" for MPI and "
+                "\"omp\" for OpenMP [mpi]. "
+                "While \"mpi\", which is the default value, is "
+                "faster for most cases, "
+                "if the system is complex and requires a large memory, "
+                "it is recommended to use \"omp\". "))
      
     parser.add_option("--mpirun", dest="mpirun", type="string",
             default="mpirun", help="MPI command [mpirun]")
@@ -72,7 +74,7 @@ def get_parser():
             "modified to 0 when NAC is not considered.")
     
     ### Parameters for the calculation condictions
-    parser.add_option("--cutoff3", dest="cutoff3", type="float",
+    parser.add_option("--cutoff_cubic", dest="cutoff_cubic", type="float",
             default=4.3, 
             help="Cutoff length for cubic force constants with the unit of "
             "angstrom [4.3]")
@@ -85,17 +87,18 @@ def get_parser():
             dest="frac_nrandom", type="float", default=1.,
             help="``Npattern * Natom / Nfc3``, where Npattern is the number "
             "of generated random displacement patterns, Natom is the number "
-            "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
+            "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]. "
+            "It should be larger than 1/3."
             )
     
-    parser.add_option("--random_disp_temperature", 
-            dest="random_disp_temperature", type="float",
-            default=500., 
-            help="temperature for random displacement [500]")
+    parser.add_option("--mag_harm", 
+            dest="mag_harm", type="float", default=0.01, 
+            help="magnitude of displacements for harmonic FCs "
+            "with the unit of angstrom [0.01]")
     
-    parser.add_option("--magnitude2", 
-            dest="magnitude2", type="float", default=0.03, 
-            help="magnitude of random displacement for cubic FCs [0.03]")
+    parser.add_option("--mag_cubic", 
+            dest="mag_cubic", type="float", default=0.03, 
+            help="magnitude of displacements for cubic FCs [0.03]")
     
     parser.add_option("--negative_freq", dest="negative_freq", type="float",
             default=-0.001, help="threshold of negative frequency [-0.001]")
@@ -110,8 +113,7 @@ def get_parser():
             help="Cell type used for the relaxation calculation [None]. "
             "For the restarted calculation, the same type "
             "as that for the previous calculation is used "
-            "while the conventional cell "
-            "is used for the new calculation. "
+            "while the conventional cell is used for the new calculation. "
             "The value should be primitive (p), conventional (c), "
             "or unitcell (u), where \"c\" and \"u\" are the same."
             )
@@ -119,7 +121,7 @@ def get_parser():
     ### Parameters to determine k-mesh densities and size of supercells
     parser.add_option("--k_length", dest="k_length", type="float", 
             default=20, help=
-            "Length to determine k-mesh [20]. "
+            "Length to determine k-mesh for first-principles calculations [20]. "
             "The following equation is used to determine the k-mesh; "
             "N = max(1, int(k_length * |a|^* + 0.5))."
             )
@@ -127,7 +129,8 @@ def get_parser():
     ### options for supercell
     parser.add_option("--max_natoms", dest="max_natoms", type="int", 
             default=150, 
-            help="Initial maximum limit of the number of atoms in the "
+            help=
+            "Initial maximum limit of the number of atoms in the "
             "supercells [150]. When negative frequencies exist "
             "at kpoints except for the commensurate points, "
             "the maximum limit for harmonic FCs "
@@ -156,12 +159,13 @@ def get_parser():
     ### parameters for NSW
     parser.add_option("--nsw_params", dest="nsw_params", 
             type="string", default="100:10:20", 
-            help="Parameters which determine NSW for relaxation calculations "\
-                    "[100:10:20]. "\
-                    "\"{nsw_init}:{nsw_diff}:{nsw_min}\": " \
-                    "NSW = min(``nsw_min``, "\
-                    "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "\
-                    "``num_errors`` is the number of errors.")
+            help=(
+                "[This option is not supported yet.] "
+                "Parameters which determine NSW for relaxation calculations "
+                "[100:10:20]. "
+                "\"{nsw_init}:{nsw_diff}:{nsw_min}\": NSW = min(``nsw_min``, "
+                "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "
+                "``num_errors`` is the number of errors."))
     
     #### parameters for amin
     #parser.add_option("--amin", dest="amin", 
@@ -174,14 +178,45 @@ def get_parser():
     #### calculate potential energy sruface
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 
-            help="Calculate potential energy surface (PES) "
-            "with respect to a phonon mode with negative frequency. [0] "
-            "PES is "
-            "0. not calculated, "
-            "1. calculated only for larger supercells, or "
-            "2. calculated for both of small and larger supercells. "
-            "A representative k-point is chosen to calculate the PES: "
-            "Gamma point, commensurate point, or grid-point for DOS."
+            help=(
+                "Calculate potential energy surface (PES) "
+                "with respect to a phonon mode with negative frequency. [0] "
+                "PES is "
+                "0. not calculated, "
+                "1. calculated only for larger supercells, or "
+                "2. calculated for both of small and larger supercells. "
+                "A representative k-point is chosen to calculate the PES: "
+                "Gamma point, commensurate point, or grid-point for DOS."
+                ))
+    
+    ##############################################
+    ### parameters for high-order (>= 4th) FCs ###
+    ##############################################
+    ### on/off SCPH
+    parser.add_option("--scph", dest="scph", type="int", default=0,
+            help=("[This option is not supported yet.] "
+                "Consider phonon renormalization using "
+                "self-consistent phonon (SCP) theory [0]. "
+                "0.No or 1.Yest."))
+    
+    ### temperature for random displacements
+    parser.add_option("--random_disp_temperature", 
+            dest="random_disp_temperature", type="float",
+            default=500., 
+            help=
+            "temperature for random displacements "
+            "for high-order FCs [500]")
+    
+    #### displacement magnitude for high-order FCs
+    #parser.add_option("--mag_high", 
+    #        dest="mag_high", type="float", default=0.03, 
+    #        help="magnitude of displacements for cubic FCs [0.03]")
+    
+    parser.add_option("--frac_nrandom_higher", 
+            dest="frac_nrandom_higher", type="float", default=0.34,
+            help="``Npattern * Natom / Nfc4``, where Npattern is the number "
+            "of generated random displacement patterns, Natom is the number "
+            "of atoms in a supercell, and Nfc4 is the number of FC4 [0.34]. "
             )
     
     #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 

@@ -445,4 +445,33 @@ def conv_unit(unit, band, dos):
         dos.frequencies *= unit_conv
     return unit_conv, ylabel
 
+def plot_bandos_for_different_sizes(
+        almcalc1, almcalc2, figname="fig_bandos.png"
+        ):
+    """ Plot band dispersions and DOS for different supercell sizes
 
+    Args
+    =====
+
+    almcalc : auto_kappa.alamode.AlmCalc
+    
+    """
+    ### Plot band and DOS
+    lab1 = ""
+    lab2 = ""
+    for j in range(3):
+        lab1 += "%d" % (almcalc1.scell_matrix[j][j])
+        lab2 += "%d" % (almcalc2.scell_matrix[j][j])
+        if j != 2:
+            lab1 += "x"
+            lab2 += "x"
+
+    plot_bandos(
+            directory=almcalc1.out_dirs["harm"]["bandos"],
+            prefix=almcalc1.prefix,
+            directory2=almcalc2.out_dirs["harm"]["bandos"],
+            prefix2=almcalc2.prefix,
+            fig_labels=[lab1, lab2],
+            figname=figname.replace(os.getcwd(), "."),
+            )
+    

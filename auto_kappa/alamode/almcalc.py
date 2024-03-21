@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # almcalc.py
 #
@@ -9,13 +10,6 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-"""
-To Do
-=============
-2. Use different (larger) supercell size for 3rd-order force constants
-
-"""
-# -*- coding: utf-8 -*-
 import sys
 import os
 import os.path
@@ -27,7 +21,6 @@ import ase
 import subprocess
 import shutil
 import pandas as pd
-import f90nml
 import glob
 
 from phonopy import Phonopy
@@ -38,17 +31,13 @@ from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
-from auto_kappa.calculator import run_vasp, backup_vasp
-#from auto_kappa.alamode.memory import get_used_memory
+from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
 from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.errors import check_unexpected_errors
-
 from auto_kappa.cui import ak_log
-
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
-
 from auto_kappa.io.files import write_output_yaml
 
 logger = logging.getLogger(__name__)
@@ -81,9 +70,11 @@ class AlamodeCalc():
             scell_matrix=None, 
             #scell_matrix3=None,
             restart=1,
-            cutoffs=None, nbody=[2,3,3,2,2], magnitude=0.01, magnitude2=0.03,
+            cutoffs=None, nbody=[2,3,3,2,2], 
+            magnitude=0.01, magnitude2=0.03, 
+            ##mag_high=0.03,
             cutoff2=-1, cutoff3=4.3, 
-            order_lasso=5,
+            #order_lasso=5,
             nac=None,
             commands=None,
             verbosity=0,
@@ -385,7 +376,6 @@ class AlamodeCalc():
         #
         #except Exception:
         #    
-        #    ### AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         #    from auto_kappa.structure.crystal import (
         #            get_standardized_structure_spglib)
         #    unit_pp = get_standardized_structure_spglib(
@@ -523,7 +513,7 @@ class AlamodeCalc():
         if self._cutoffs is not None:
             return self._cutoffs
         else:
-            ### Bohr => Angstrom
+            ### Angstrom => Bohr
             self._cutoffs = get_cutoffs_automatically(
                     cutoff2=self.cutoff2,
                     cutoff3=self.cutoff3,
@@ -664,9 +654,7 @@ class AlamodeCalc():
         elif order == 2:
             filename = self.out_dirs['cube']['suggest'] + '/suggest.log'
         else:
-            msg = " Error: order %d is not supported." % order
-            logger.error(msg)
-            sys.exit()
+            filename = self.out_dirs['higher']['suggest'] + "/suggest.log"
         return filename
     
     def _get_number_of_suggested_structures(self, order: None):
@@ -684,8 +672,8 @@ class AlamodeCalc():
             if ':' in ll and len(data) == 2:
                 count += 1
         return count
-
-    def _get_number_of_free_fcs(self, order: None):
+    
+    def _get_number_of_free_fcs(self, order: None, verbosity=False):
         """ Return the number of the FCs for FD method """
         
         file_log = self._get_logfile_suggest(order)
@@ -702,8 +690,22 @@ class AlamodeCalc():
                 if "HARMONIC" in ll:
                     nfc_free[1] = int(data[-1])
                 elif "ANHARM" in ll:
-                    order = int(data[3][-1]) - 1
-                    nfc_free[order] = int(data[-1])
+                    ith = int(data[3][-1]) - 1
+                    nfc_free[ith] = int(data[-1])
+        
+        ### print
+        if verbosity:
+            msg = "\n Number of free FCs :"
+            names = {1: "harmonic", 2: "cubic"}
+            for ii in nfc_free:
+                if ii in names:
+                    name = names[ii]
+                else:
+                    name = "%dth-order" % (ii+1)
+                msg += "\n - %s : %s " % (
+                        name.ljust(10), str(nfc_free[ii]).rjust(6))
+            logger.info(msg)
+        
         return nfc_free
     
     def get_suggested_structures(self, order: None, nrandom=0, disp_mode='fd',
@@ -713,13 +715,14 @@ class AlamodeCalc():
         ``disp_mode``.
         
         order : int 
-            1 (harmonic) or 2 (cubic)
+            1 (harmonic), 2 (cubic), 3, ...
         
         disp_mode : string
-            "fd" for finite displacement or
+            "fd" for finite displacement,
+            "random" for simple random displacement,
             "random_normalcoordinate" for random displacement in normal 
             coordinates
-         
+        
         nrandom : int
             Number of patterns generated with the random displacement
         
@@ -733,22 +736,13 @@ class AlamodeCalc():
         #
         ### ver.2
         structure = self.supercell
-
+        
         ### get displacements
         msg = "\n Displacement mode : " + disp_mode + "\n"
         logger.info(msg)
         if disp_mode == "fd":
             
-            ### ver.1 with ALM library
-            #all_disps = get_finite_displacements(
-            #        structure,
-            #        order=order, 
-            #        cutoffs=self.cutoffs[:order],  ## Bohr
-            #        nbody=self.nbody,
-            #        mag=self.mag                   ## Ang
-            #        )
-            
-            ### ver.2 with alm command and generated files
+            ### filename for displacement patterns
             file_pattern = self._get_file_pattern(order)
             
             all_disps = self._get_displacements("fd", file_pattern=file_pattern)
@@ -763,10 +757,10 @@ class AlamodeCalc():
                 self.run_alamode(propt=propt)
             
             ###
-            fevec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
+            file_evec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
             all_disps = self._get_displacements(
                     disp_mode,
-                    file_evec=fevec,
+                    file_evec=file_evec,
                     temperature=temperature, 
                     number_of_displacements=number_of_displacements,
                     classical=classical)
@@ -942,56 +936,32 @@ class AlamodeCalc():
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
         if order <= 2:
-            
             nsuggest = self._get_number_of_suggested_structures(order)
-            
-            nfcs = self._get_number_of_free_fcs(order)[order]
-            
-            ### ver.1
-            #if order == 1:
-            #    natoms = len(self.supercell)
-            #else:
-            #    natoms = len(self.supercell3)
-            #
-            ### ver.2
-            natoms = len(self.supercell)
-
             msg = "\n Number of the suggested structures with ALM : %d" % (nsuggest)
-            logger.info(msg)
-            
         else:
-            
+            ### want to always use LASSO
             nsuggest = nmax_suggest + 1
-            
-            nfcs = self._get_number_of_free_fcs(order)
-            
-            natoms = len(self.supercell)
-            
-            msg = "\n This part is still under development.\n"
-            logger.error(msg)
-            sys.exit()
+            msg = "\n Always use LASSO for high-order FCs."
+        
+        logger.info(msg)
+        
+        ### number of free FCs
+        nfcs_list = self._get_number_of_free_fcs(order, verbosity=True)
+        nfcs = nfcs_list[min(3, order)]
+        natoms = len(self.supercell)
         
         ### output directory
         if order == 1:
             outdir0 = self.out_dirs['harm']['force']
         elif order == 2:
-            
             if nsuggest <= nmax_suggest:
-                
                 self._fc3_type = 'fd'
                 outdir0 = self.out_dirs['cube']['force_fd']
-            
             else:
-
                 self._fc3_type = 'lasso'
-                
-                ### ver.2
                 outdir0 = self.out_dirs['cube']['force_lasso']
-        
         elif order > 2:
-            
             outdir0 = self.out_dirs['higher']['force']
-        
         else:
             msg = " WARNING: given order (%d) is not supported yet." % order
             logger.error(msg)
@@ -1003,27 +973,28 @@ class AlamodeCalc():
         ### nmax_suggest) structures will be generated with random displacement
         ### based on the normal coordinates.
         if order != 1 and nsuggest > nmax_suggest:
-        
-            ###
-            #self.lasso = True
             
-            ### ver.1
-            #nrandom = int(frac_nrandom * nsuggest + 0.5)
-            #
-            ### ver.2
+            ### number of random displacement patters
             nrandom = int(frac_nrandom * nfcs / natoms)
             
             ngen_min = 10
             ngenerated = max(ngen_min, nrandom)
             
+            ### name of order
+            order_names = {1: "harmonic", 2: "cubic"}
+            if order <= 2:
+                name = order_names[order]
+            else:
+                name = "4th-order"
+            
             msg  = "\n Maximum limit of the number of suggested patterns : %d" % (nmax_suggest)
             msg += "\n The number of suggested patterns exceeds the maximum limit."
             msg += "\n"
-            msg += "\n Number of FCs (Nfcs)     : %d" % (nfcs)
-            msg += "\n Number of atoms (Natoms) : %d" % (natoms)
-            msg += "\n Fractional number of the random patterns (frac) : %.3f" % (frac_nrandom)
-            msg += "\n Number of the generated random patterns (Ngen)  : %d" % (ngenerated)
-            msg += "\n Ngen = max(%d, int(frac * Nfcs / Natoms))" % (ngen_min)
+            msg += "\n Number of generated random patterns (Ngen) : %d" % ngenerated
+            msg += "\n - Ngen = max(%d, int(frac * Nfcs / Natoms))" % (ngen_min)
+            msg += "\n - Nfcs   : Number of free %s force constants, %d" % (name, nfcs)
+            msg += "\n - Natoms : Number of atoms in a supercell, %d" % (natoms)
+            msg += "\n - frac   : Fractional number of random patterns, %.3f" % (frac_nrandom)
             logger.info(msg)
              
             if order == 2:
@@ -1034,13 +1005,8 @@ class AlamodeCalc():
                         disp_mode='random',
                         number_of_displacements=ngenerated,
                         )
-
+            
             elif order > 2:
-                
-                msg = "\n\n NEED TO BE CHECKED\n\n"
-                logger.error(msg)
-                sys.exit()
-                
                 ## High order FCs are obtained with
                 ## a random-displacment based on normal coordinate
                 structures = self.get_suggested_structures(
@@ -1052,7 +1018,6 @@ class AlamodeCalc():
                         )
         
         else:
-             
             structures = self.get_suggested_structures(order, disp_mode='fd')
         
         ### get AMIN parameters
@@ -1066,31 +1031,21 @@ class AlamodeCalc():
                     pp[key] = amin_params[key]
         amin_params_set = pp.copy()
         
-        ###
+        ### start the force calculation
         num_done = 0
         nsuggest =  len(structures)
         struct_keys = list(structures.keys())
         for ii, key in enumerate(struct_keys):
             
-            ### output directory
+            ### name of output directory
             outdir = outdir0 + '/' + str(key)
-
+            
             ### get previous parameters
             if ii == 0:
                 prev_params = None
             else:
                 dir_prev = (outdir0 + "/" + str(struct_keys[ii-1]))
                 prev_params = get_previous_parameters(dir_prev)
-
-            ###### output yaml file
-            #name = "force-%d_order-%d" % (ii, order)
-            #if self.additional_directory is not None:
-            #    name += "_" + self.additional_directory
-            #info = {"directory": outdir.replace(self.base_directory, "."),
-            #        "kind": "VASP",
-            #        "note":
-            #        "force calculation (%d) for order %d" % (ii, order)}
-            #write_output_yaml(self.yamlfile_for_outdir, name, info)
             
             ### check
             filename = outdir + "/vasprun.xml"
@@ -1176,15 +1131,11 @@ class AlamodeCalc():
                 
                 fn0 = self.outfiles['cube_%s_dfset' % self.fc3_type]
             
-            elif order > 2:
-
-                fn0 = self.outfiles['lasso_dfset']
-
             else:
-                msg = " Error: order= " + str(order) + " is not supported yet."
-                logger.error(msg)
-                sys.exit()
+                
+                fn0 = self.outfiles['higher_dfset']
             
+            ###
             os.makedirs(self.out_dirs['result'], exist_ok=True)
             offset_xml = outdir0 + '/prist/vasprun.xml'
             outfile = self.out_dirs['result'] + "/" + fn0
@@ -1282,7 +1233,7 @@ class AlamodeCalc():
             else:
                 dir_work = self.out_dirs['higher'][propt]
                 relpath = os.path.relpath(dir_result, dir_work)
-                dfset = relpath + '/' + self.outfiles['lasso_dfset']
+                dfset = relpath + '/' + self.outfiles['higher_dfset']
                 
                 ## get file name of FC3 (fc3xml)
                 fc3xml = (relpath + '/' + 
@@ -1942,7 +1893,7 @@ class AlamodeCalc():
             
             #if newversion == False:
             #    fn1 = self.out_dirs['higher']['lasso']+'/'+self.prefix+'.xml'
-            #    fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
+            #    fn2 = self.out_dirs['result']+'/'+self.outfiles['higher_xml']
             #else:
             ##
             if order == 2:
@@ -1950,7 +1901,7 @@ class AlamodeCalc():
                 fn2 = self.out_dirs['result']+'/'+self.outfiles['cube_lasso_xml']
             else:
                 fn1 = self.out_dirs['higher']['lasso']+'/'+self.prefix+'.xml'
-                fn2 = self.out_dirs['result']+'/'+self.outfiles['lasso_xml']
+                fn2 = self.out_dirs['result']+'/'+self.outfiles['higher_xml']
         
         elif propt == 'fc2':
             fn1 = self.out_dirs['harm']['force']+'/'+self.prefix+'.xml'
@@ -2166,11 +2117,11 @@ class AlamodeCalc():
                     directory=self.out_dirs['cube']['cv'],
                     figname=figname)
         else:
-            figname = self.out_dirs['result'] + '/fig_cvsets.png'
+            figname = self.out_dirs['result'] + '/fig_cvsets_high.png'
             plot_cvsets(
                     directory=self.out_dirs['higher']['cv'], 
                     figname=figname)
-         
+        
         logger.info("")
     
     def plot_bandos(self, **kwargs):
@@ -2379,10 +2330,6 @@ def run_alamode(
     dir_init = os.getcwd()
     os.chdir(workdir)
     
-    ### check logfile
-    dir_base = dir_init + "/" + workdir.replace(dir_init, ".").split("/")[1]
-    check_unexpected_errors(logfile, dir_base=dir_base)
-    
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is judged from *.log file.
     if wasfinished_alamode(logfile) == False or neglect_log:
@@ -2447,6 +2394,10 @@ def run_alamode(
     ### set back OpenMP
     for key in omp_keys:
         os.environ[key] = "1"
+    
+    ### check logfile
+    dir_base = dir_init + "/" + workdir.replace(dir_init, ".").split("/")[1]
+    check_unexpected_errors(logfile, dir_base=dir_base)
     
     ###
     flag = wasfinished_alamode(logfile)
