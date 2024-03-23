@@ -28,6 +28,7 @@ output_directories = {
             'force'  : 'higher/force',
             'cv'     : 'higher/lasso',
             'lasso'  : 'higher/lasso',
+            'scph'   : 'higher/scph',
             'kappa'  : 'higher/kappa',
             },
         'result': 'result'

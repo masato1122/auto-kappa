@@ -256,6 +256,7 @@ def main():
         'ncores': ak_params['ncores'], 
         'anphon': ak_params['command_anphon'],
         'alm': ak_params['command_alm'],
+        'dfc2': ak_params['command_dfc2'],
         }
 
     ### Set AlmCalc

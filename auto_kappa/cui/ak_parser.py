@@ -193,6 +193,10 @@ def get_parser():
     ### parameters for high-order (>= 4th) FCs ###
     ##############################################
     ### on/off SCPH
+    parser.add_option("--command_dfc2", 
+            dest="command_dfc2", type="string", default="dfc2", 
+            help="Command to run dfc2 [dfc2]")
+    
     parser.add_option("--scph", dest="scph", type="int", default=0,
             help=("[This option is not supported yet.] "
                 "Consider phonon renormalization using "

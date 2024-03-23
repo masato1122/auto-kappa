@@ -37,8 +37,9 @@ def analyze_phonon_properties(
         #
         params_nac={'apdb': None, 'kpts': None},
         kdensities_for_kappa=[500, 1000, 1500],
-        ##
+        ## SCPH
         scph=0, disp_temp=500., frac_nrandom_higher=0.34,
+        temps_scph=100*np.arange(1,11),
         ):
     """ Analyze phonon properties
     
@@ -77,7 +78,10 @@ def analyze_phonon_properties(
     
     frac_nrandom_higher : float, 0.34
         fractional number of random displacement patterns for high-order FCs
-
+    
+    temps_scph : float, [100, 200, ..., 1000]
+        temperatures for SCPH
+    
     Return
     =======
     integer :
@@ -123,33 +127,62 @@ def analyze_phonon_properties(
     ### Calculate high-order FCs using LASSO
     ###
     if scph:
+        
+        from auto_kappa.calculators.scph import (
+                calculate_high_order_force_constants,
+                conduct_scph_calculation)
+        
+        ### calculate forces for SCPH
         calculate_high_order_force_constants(
                 almcalc, calc_force,
                 frac_nrandom=frac_nrandom_higher,
                 disp_temp=disp_temp,
                 )
-
-        ### Perform SCP calculation
-        print(" Conduct SCP calculation!")
-        print(" ^^^^^^^^^^^^^^^^^^^^^^^^^")
-        sys.exit()
         
+        ### Perform SCPH calculation
+        conduct_scph_calculation(
+                almcalc, temperatures=temps_scph)
+     
     ###
     ### Calculate kappa with different k-mesh densities
     ###
     if calc_kappa:
         if scph == 0:
             calculate_thermal_conductivities(almcalc, 
-                kdensities=kdensities_for_kappa,
-                neglect_log=neglect_log,
-                temperatures_for_spectral="300:500"
-                )
+                    kdensities=kdensities_for_kappa,
+                    neglect_log=neglect_log,
+                    temperatures_for_spectral="300:500"
+                    )
         else:
-            #calculate_thermal_conductivities_scph(almcalc,
-            #        kdensities=kdensities_for_kappa[1],
-            #        temperatures=[300])
-            pass
-    
+            temperature = 300
+            
+            fc2xml_abs = (
+                    almcalc.out_dirs["higher"]["scph"] + 
+                    "/%s_%dK.xml" % (almcalc.prefix, temperature))
+            fcsxml_abs = (
+                    almcalc.out_dirs["higher"]["lasso"] + 
+                    "/%s.xml" % (almcalc.prefix))
+            
+            fc2xml = os.path.relpath(
+                    fc2xml_abs, almcalc.out_dirs["higher"]["kappa"])
+            fcsxml = os.path.relpath(
+                    fcsxml_abs, almcalc.out_dirs["higher"]["kappa"])
+            
+            calculate_thermal_conductivities(almcalc, 
+                    kdensities=[1000],
+                    neglect_log=neglect_log,
+                    temperatures_for_spectral="%s" % temperature,
+                    ##
+                    ## additional params for SCPH
+                    ##
+                    calc_type="scph",
+                    fc2xml=fc2xml, 
+                    fcsxml=fcsxml,
+                    tmin=temperature,
+                    tmax=temperature + 1,
+                    dt=100
+                    )
+            
     ### output log.yaml 
     log = AkLog(material_name)
     log.write_yaml()
@@ -272,8 +305,6 @@ def analyze_harmonic_properties(
     """
     from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
     
-    #logger = logging.getLogger(__name__)
-    
     ##### suggest and creat structures for harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
     almcalc.run_alamode(propt='suggest', order=1)
@@ -287,14 +318,7 @@ def analyze_harmonic_properties(
     nac_orig = almcalc.nac
     for propt in ["fc2", "band", "dos"]:
         
-        ### ver.1
-        #_analyze_each_harm_propt(
-        #        propt, almcalc, 
-        #        neglect_log=neglect_log,
-        #        max_num_corrections=max_num_corrections,
-        #        deltak=deltak, reciprocal_density=reciprocal_density)
-        
-        ### ver.2: modified
+        ### analyze harmonic properties 
         almcalc.analyze_harmonic_property(
                 propt, 
                 max_num_corrections=max_num_corrections,
@@ -383,7 +407,7 @@ def analyze_harmonic_properties(
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
-    
+
 def calculate_cubic_force_constants(
         almcalc, calculator,
         nmax_suggest=None, frac_nrandom=None, neglect_log=False
@@ -412,40 +436,12 @@ def calculate_cubic_force_constants(
         almcalc.write_alamode_input(propt='fc3')
         almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
 
-def calculate_high_order_force_constants(
-        almcalc, calculator, order=5, frac_nrandom=None, 
-        disp_temp=500,):
-    """ Calculate high-order (up to 6th-order) force constants finally to
-    calculate 4th order FCs for phonon renormalization.
-    """
-    ### calculate forces for high-order FCs
-    almcalc.write_alamode_input(propt='suggest', order=order)
-    almcalc.run_alamode(propt='suggest', order=order)
-    almcalc.calc_forces(
-            order=order, calculator=calculator,
-            frac_nrandom=frac_nrandom,
-            temperature=disp_temp,
-            output_dfset=2,
-            )
-    
-    ### calculate anharmonic force constants
-    for propt in ['cv', 'lasso']:
-        almcalc.write_alamode_input(propt=propt, order=order)
-        almcalc.run_alamode(propt, order=order, neglect_log=False)
-
-
-#def calculate_thermal_conductivities_scph(
-#        almcalc, kdensities=[1000], temperatures=[300],
-#        **kwargs,):
-#    """ Calculate thermal conductivities with SCP theory """
-#    pass
-
-    
 def calculate_thermal_conductivities(
         almcalc, 
         kdensities=[500, 1000, 1500], 
         neglect_log=False,
         temperatures_for_spectral="300:500",
+        calc_type="cubic",
         **kwargs,
         ):
     """ Calculate thermal conductivities and plot spectral info
@@ -459,17 +455,26 @@ def calculate_thermal_conductivities(
     neglect_log : bool
 
     temperatures_for_spectral : string of floats seperated by ":"
+    
+    calc_type : string
+        "cubic" or "scph"
 
+    kwargs : dict   
+        Parameters for ALAMODE
+    
     """
     for kdensity in kdensities:
         
         kpts = get_automatic_kmesh(
                 almcalc.primitive, reciprocal_density=kdensity)
-            
-        outdir = (
-                almcalc.out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
-                "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
-                )
+        
+        suffix = "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
+        
+        if calc_type == "cubic":
+            outdir = (almcalc.out_dirs['cube']['kappa_%s' % almcalc.fc3_type] + 
+                    suffix)
+        elif calc_type == "scph":
+            outdir = almcalc.out_dirs['higher']['kappa'] + suffix
         
         ###
         almcalc.write_alamode_input(
@@ -499,40 +504,38 @@ def calculate_thermal_conductivities(
     msg += " ---------------------------"
     logger.info(msg)
     
-    out = almcalc.plot_kappa()
-    
-    #if out < 0:
-    #    msg = "\n"
-    #    msg += " Warning: thermal conductivity may be too small."
-    #    logger.error(msg)
+    if calc_type == "cubic":
+        figname = None
+        out = almcalc.plot_kappa(figname=figname, calc_type=calc_type)
     
     ###
-    try:
-        almcalc.plot_lifetime(temperatures=temperatures_for_spectral)
-    except Exception:
-        logger.warning("\n Warning: "\
-                "the figure of lifetime was not created properly.")
-    
-    try:
-        almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-    except Exception:
-        logger.warning("\n Warning: the figure of "\
-                "scattering rate was not created properly.")
-    
-    try:
-        almcalc.plot_cumulative_kappa(
-                temperatures=temperatures_for_spectral, 
-                wrt='frequency', xscale='linear')
-    except Exception:
-        logger.warning("\n Warning: the figure of "\
-                "cumulative thermal conductivity was not created properly.")
-    
-    try:
-        almcalc.plot_cumulative_kappa(
-                temperatures=temperatures_for_spectral, 
-                wrt='mfp', xscale='log')
-    except Exception:
-        logger.warning("\n Warning: the figure of "\
-                "cummulative TCs was not created properly.")
-    
+    if calc_type == "cubic":
+        try:
+            almcalc.plot_lifetime(
+                    temperatures=temperatures_for_spectral, calc_type=calc_type)
+        except Exception:
+            logger.warning("\n Warning: "\
+                    "the figure of lifetime was not created properly.")
+        
+        try:
+            almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+        except Exception:
+            logger.warning("\n Warning: the figure of "\
+                    "scattering rate was not created properly.")
+        
+        try:
+            almcalc.plot_cumulative_kappa(
+                    temperatures=temperatures_for_spectral, 
+                    wrt='frequency', xscale='linear')
+        except Exception:
+            logger.warning("\n Warning: the figure of "\
+                    "cumulative thermal conductivity was not created properly.")
+        
+        try:
+            almcalc.plot_cumulative_kappa(
+                    temperatures=temperatures_for_spectral, 
+                    wrt='mfp', xscale='log')
+        except Exception:
+            logger.warning("\n Warning: the figure of "\
+                    "cummulative TCs was not created properly.")
 

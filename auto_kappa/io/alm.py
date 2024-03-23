@@ -437,10 +437,6 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     return params
 
-#def suggest_alm_cutoff(structure):
-#    sym_all = structure.species
-#    exit()
-
 class AnphonInput(MSONable, dict):
     """ Class for writing and reading anphon input file.
     See the following URL for more detailed description.
@@ -464,7 +460,7 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
-            'fc3xml',       # None, string
+            ##'fc3xml',       # None, string
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -494,8 +490,33 @@ class AnphonInput(MSONable, dict):
             'lower_temp',        # 1,     integer
             'warmstart',         # 1,     integer
             'ialgo',             # 0,     integer
-            'restart_scph',      # 1 or 0, integer
+            'restart_scph',      # 1, integer (0 or 1)
+            ## >= 1.5.0
+            'bubble',            # 0, integer (0 or 1)
+            'relax_str',         # 0, integer (0, 1, 2, or 3)
+            'lower_temp',        # 1, integer (0 or 1)
+            'qha_scheme',        # 0, integer (0, 1, or 2)
             ]
+    ## >= 1.5.0
+    relax_keys = [
+            'relax_algo',       # 2,     integer (1 or 2)
+            'alpha_stdecent',   # 1e4,   double
+            'max_str_iter',     # 100,   integer
+            'add_hess_diag',    # 100.0, double
+            'coord_conv_tol',   # 1e-5,  double
+            'mixbeta_coord',    # 0.5,   double
+            'cell_conv_tol',    # 1e-5,  double
+            'mixbeta_cell',     # 0.5,   double
+            'set_init_str',     # 1,     integer (1, 2, or 3)
+            'cooling_u0_index', # 0,     integer (0, 1, ... 3N-1)
+            'cooling_u0_thr',   # 0.001, double, Bohr
+            'stat_pressure',    # 0.0,   double, GPa
+            'renorm_2to1st',    # 2,     integer
+            'renorm_34to1st',   # 0,     integer
+            'renorm_3to2nd',    # 2,     integer
+            'strain_ifc_dir',   # None,  string
+            ]
+    
     analysis_keys = [
             'gruneisen',      # 0, integer 
             'printevec',      # 0, integer
@@ -518,7 +539,7 @@ class AnphonInput(MSONable, dict):
             'anime_cellsize', # None, Array of integers
             'anime_format',   # xyz,  string
             ]
-
+    
     all_keys = (
             general_keys + scph_keys + 
             analysis_keys + ['cell', 'kpoint', 'kpmode']
@@ -784,6 +805,11 @@ class AnphonInput(MSONable, dict):
         general_nml = f90nml.Namelist({"general": general_dict})
         anp_str = str(general_nml) + "\n"
         
+        ## scph parameters
+        scph_dict = _get_subdict(self, self.scph_keys)
+        scph_nml = f90nml.Namelist({"scph": scph_dict})
+        anp_str += str(scph_nml) + "\n"
+
         ## cell parameters
         lines = _write_cell(self['cell'])
         for line in lines:

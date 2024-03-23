@@ -278,8 +278,8 @@ class AlamodeCalc():
         
         #self._order_lasso = order_lasso
         
-        self._file_result = None
-        self._file_isotope = None
+        #self._file_result = None
+        #self._file_isotope = None
         self._scat = None
         
         ###
@@ -1150,7 +1150,7 @@ class AlamodeCalc():
                 logger.info(msg)
         
         logger.info("")
-    
+        
     def write_alamode_input(
             self, propt=None, order=None, 
             deltak=0.01, kpts=[15,15,15],
@@ -1181,6 +1181,7 @@ class AlamodeCalc():
         """
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
+        
         if out is None:
             msg = "\n Error: %s is not supported yet.\n" % propt
             logger.error(msg)
@@ -1221,7 +1222,7 @@ class AlamodeCalc():
                 relpath = os.path.relpath(dir_result, dir_work)
                 fcsxml = (relpath + '/' + 
                         self.outfiles['cube_%s_xml' % self.fc3_type])
-        
+            
         elif propt == 'lasso' or propt == 'cv':
             
             if order == 2:
@@ -1271,7 +1272,14 @@ class AlamodeCalc():
             dfset = (relpath + '/' + 
                     self.outfiles['cube_%s_dfset' % self.fc3_type])
             fc2xml = relpath + '/' + self.outfiles['harm_xml']
-            
+        
+        elif propt == 'scph':
+
+            dir_work = self.out_dirs['higher']['scph']
+            relpath = os.path.relpath(dir_result, dir_work)
+            fc2xml = relpath + "/" + self.outfiles['harm_xml']
+            fcsxml = relpath + "/" + self.outfiles["higher_xml"] 
+             
         elif propt == 'suggest':
             
             if order is None:
@@ -1337,13 +1345,14 @@ class AlamodeCalc():
         
         ## set kpmode
         kpmode = None
-        if propt == 'band':
+        if propt in ['band', 'scph']:
             kpmode = 1
-        elif propt == 'dos' or propt == 'kappa':
+        elif propt in ['dos', 'kappa']:
             kpmode = 2
-        elif propt == 'evec_commensurate':
+        elif propt in ['evec_commensurate']:
             kpmode = 0
         
+        ####
         if alamode_type == 'anphon':
             
             ### set input file for anphon
@@ -1374,11 +1383,11 @@ class AlamodeCalc():
                     nonanalytic=self.nac, 
                     borninfo=borninfo
                 )
-        
         ###
         self._prefix = inp['prefix']
         
-        ## set kpoints and write a file
+        ################################################
+        ### Set parameters for the specific calculation
         filename = dir_work + '/' + propt + '.in'
         if propt == 'band':
             
@@ -1387,9 +1396,10 @@ class AlamodeCalc():
         elif propt == 'dos':
             
             if self.frequency_range is not None:
-                df = self.frequency_range[1] - self.frequency_range[0]
-                fmin = self.frequency_range[0] - df * 0.05
-                fmax = self.frequency_range[1] + df * 0.05
+                
+                diff = self.frequency_range[1] - self.frequency_range[0]
+                fmin = self.frequency_range[0] - diff * 0.05
+                fmax = self.frequency_range[1] + diff * 0.05
                 
                 npoints = 301
                 inp.update({'emin': fmin})
@@ -1401,36 +1411,21 @@ class AlamodeCalc():
         
         elif propt == 'evec_commensurate':
             
-            ###### supercell matrix wrt primitive cell
-            mat_p2s_tmp = np.dot(
-                    np.linalg.inv(self.primitive_matrix),
-                    self.scell_matrix
-                    )
-            
-            mat_p2s = np.rint(mat_p2s_tmp).astype(int)
-            diff_max = np.amax(abs(mat_p2s - mat_p2s_tmp))
-            if diff_max > 1e-3:
-                msg = "\n CAUTION: please check the cell size of primitive "\
-                        "and supercell\n"
-                msg += str(diff_max)
-                logger.warning(msg)
-            
-            ### commensurate points
-            from auto_kappa.structure.crystal import get_commensurate_points
-            comm_pts = get_commensurate_points(mat_p2s)
-            inp.update({'printevec': 1})
-            inp.set_kpoint(kpoints=comm_pts)
-        
+            from auto_kappa.alamode.parameters import set_parameters_evec
+            set_parameters_evec(inp, self.primitive_matrix, self.scell_matrix)
+
         elif propt == 'kappa':
+
+            from auto_kappa.alamode.parameters import set_parameters_kappa
+            set_parameters_kappa(inp, kpts=kpts, nac=self.nac)
             
-            inp.update({'kpts': kpts})
-            inp.update({'nac':  self.nac})
-            inp.update({'isotope': 2})
-            inp.update({'kappa_coherent': 1})
-            inp.update({'tmin': 50})
-            inp.update({'tmax': 1000})
-            inp.update({'dt': 50})
-        
+        elif propt == "scph":
+            
+            from auto_kappa.calculators.scph import set_parameters_scph
+            set_parameters_scph(
+                    inp, primitive=self.primitive, deltak=deltak,
+                    kdensities=[30, 10])
+            
         elif propt in ['cv', 'lasso', 'fc2', 'fc3', 'suggest']:
             """
             Comments
@@ -1486,12 +1481,8 @@ class AlamodeCalc():
                 inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
                 if propt == 'cv':
                     inp.update({'cv': 5})
-                    ### Alamode package set automatically.
-                    #inp.update({'cv_maxalpha': 1e-2})
-                    #inp.update({'cv_minalpha': 1e-8})
                     inp.update({'cv_nalpha': 50})
                 elif propt == 'lasso':
-                    
                     alpha = self.get_suggested_l1alpha(order=order)
                     inp.update({'cv': 0})
                     inp.update({'l1_alpha': alpha})      ### read l1_alpha
@@ -1506,16 +1497,17 @@ class AlamodeCalc():
         given_params = kwargs.copy()
         for key in given_params:
             if key in filename_keys:
-                given_params[key] = os.path.relpath(
-                        given_params[key], dir_work)
+                if given_params[key][0] == "/":
+                    given_params[key] = os.path.relpath(
+                            given_params[key], dir_work)
         
         ### make input script for ALAMODE
         inp.update(given_params)
         inp.to_file(filename=filename)
         
-        msg = "\n Make a ninput script for ALAMODE : %s." % (
+        msg = "\n Make an input script for ALAMODE : %s." % (
                 self.get_relative_path(filename))
-    
+
     def get_suggested_l1alpha(self, order=None):
         
         if order == 2:
@@ -1609,8 +1601,11 @@ class AlamodeCalc():
             outdir = self.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
             for propt in ["band", "dos"]:
                 
-                fcsxml = "../../../result/" + self.outfiles["harm_xml"]
-                
+                fcsxml_abs = (
+                        self.out_dirs["harm"]["force"] + "/" +
+                        self.outfiles["harm_xml"])
+                fcsxml = os.path.relpath(fcsxml_abs, outdir)
+
                 self.analyze_harmonic_property(
                         propt, 
                         outdir=outdir, 
@@ -1829,6 +1824,10 @@ class AlamodeCalc():
                 logger.error(msg)
                 sys.exit()
         
+        elif propt == 'scph':
+            
+            workdir = self.out_dirs['higher']['scph']
+        
         else:
             msg = "\n WARNING: %s property is not supported.\n" % (propt)
             logger.error(msg)
@@ -1972,27 +1971,23 @@ class AlamodeCalc():
     #    print("")
     
 
-    @property
-    def file_result(self):
-        return self._file_result
+    #@property
+    #def file_result(self):
+    #    return self._file_result
 
-    @property
-    def file_isotope(self):
-        return self._file_isotope
+    #@property
+    #def file_isotope(self):
+    #    return self._file_isotope
 
     @property
     def scat(self):
         return self._scat
     
-    def set_scattering_info(self, grain_size=None, temperature=300):
+    def set_scattering_info(
+            self, grain_size=None, temperature=300, calc_type="cubic"):
         
-        #### output file name
-        #if self.lasso:
-        #    dir_kappa = self.out_dirs['lasso']['kappa']
-        #else:
-        #    dir_kappa = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-        
-        dirs_kappa = self.get_kappa_directories()
+        ### directory name for kappa
+        dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
         
         ## get directory name for kappa with the finest k grid
         dir_kappa = None
@@ -2009,30 +2004,31 @@ class AlamodeCalc():
                 ksum = np.sum(kpts)
         
         ### file check
-        self._file_result = dir_kappa + '/%s.result' % (self.prefix)
-        self._file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
+        file_result = dir_kappa + '/%s.result' % (self.prefix)
+        file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
         
-        if os.path.exists(self.file_result) == False:
+        if os.path.exists(file_result) == False:
             msg = " Error: %s does not exist." % (
-                    self.get_relative_path(self.file_result))
+                    self.get_relative_path(file_result))
             logger.error(msg)
         
-        if os.path.exists(self.file_isotope) == False:
+        if os.path.exists(file_isotope) == False:
             msg = " Error: %s does not exist." % (
-                    self.get_relative_path(self.file_isotope))
+                    self.get_relative_path(file_isotope))
             logger.error(msg)
-            self._file_isotope = None
+            file_isotope = None
         
         ###
         from .analyzer.scattering import Scattering
         self._scat = Scattering(
-                self.file_result, 
-                file_isotope=self.file_isotope,
+                file_result, 
+                file_isotope=file_isotope,
                 grain_size=grain_size, 
                 temperature=temperature
                 )
         
-    def plot_lifetime(self, temperatures="300:500", grain_size=None):
+    def plot_lifetime(
+            self, temperatures="300:500", grain_size=None, calc_type="cubic"):
         
         data = temperatures.split(":")
         ts = [float(t) for t in data]
@@ -2049,8 +2045,12 @@ class AlamodeCalc():
             nbands = len(omegas[0])
             dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
             dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
-
-        figname = self.out_dirs['result'] + '/fig_lifetime.png'
+        
+        ### figname
+        prefix = self.out_dirs['result'] + '/fig_lifetime'
+        if calc_type != "cubic":
+            prefix += "_%s" % calc_type
+        figname = prefix + ".png"
         
         ### plot a figure
         from auto_kappa.plot.pltalm import plot_lifetime
@@ -2148,10 +2148,15 @@ class AlamodeCalc():
                 **kwargs
                 )
     
-    def get_kappa_directories(self):
+    def get_kappa_directories(self, calc_type="cubic"):
         
-        ll_tmp = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_"
-        line = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_*"
+        if calc_type == "cubic":
+            ll_tmp = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_"
+        elif calc_type == "scph":
+            ll_tmp = self.out_dirs["higher"]["kappa"] + "_"
+        
+        line = ll_tmp + "*"
+        
         dirs = glob.glob(line)
         dirs_done = {}
         for dd in dirs:
@@ -2163,16 +2168,23 @@ class AlamodeCalc():
                 dirs_done[label] = dd
         return dirs_done
     
-    def plot_kappa(self):
+    def plot_kappa(self, figname=None, calc_type="cubic"):
+        """
+        Args
+        ======
+
+        calc_type : string
+            "cubic", "scph"
+
+        """
         
-        dirs_kappa = self.get_kappa_directories()
+        dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
         
         keys = dirs_kappa.keys()
         
         dfs = {}
         logger.info("")
         for i, key in enumerate(keys):
-            
             try:
                 dir1 = self.get_relative_path(dirs_kappa[key])
                 msg = " Read %s" % (dir1)
@@ -2180,24 +2192,10 @@ class AlamodeCalc():
                 dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
             except Exception:
                 continue
-            
-            #if i == 0:
-            #    if "kp_xx" in dfs[key].columns:
-            #        kxx_max = np.max(dfs[key]["kp_xx"].values)
-            #        if kxx_max < 1e-7:
-            #            msg = "\n"
-            #            msg += " Warning : Maximum thermal conductivity is "\
-            #                    "too small (%.3e cm^-1)." % (kxx_max)
-            #            logger.warning(msg)
-            #            return -1
-            #    else:
-            #        msg = "\n"
-            #        msg += " Warning: kp_xx cannot be found."
-            #        logger.warning(msg)
-            #        return -2
         
         from auto_kappa.plot.pltalm import plot_kappa
-        figname = self.out_dirs['result'] + '/fig_kappa.png'
+        if figname is None:
+            figname = self.out_dirs['result'] + '/fig_kappa.png'
         logger.info("")
         plot_kappa(dfs, figname=self.get_relative_path(figname))
         return 0
