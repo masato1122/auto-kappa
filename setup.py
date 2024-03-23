@@ -27,6 +27,7 @@ def main(build_dir):
     packages_autokappa = [
             'auto_kappa',
             'auto_kappa.alamode',
+            'auto_kappa.calculators',
             'auto_kappa.alamode.tools',
             'auto_kappa.alamode.analyzer',
             'auto_kappa.cui',
