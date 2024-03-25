@@ -235,7 +235,7 @@ class StrictRelaxation():
         s_vol = (vinit - self.optimal_volume) / self.optimal_volume
         s_len = self._strain_volume2length(s_vol)
         mae = self.get_fitting_error()
-
+        
         msg = "\n"
         msg += " Minimum energy : %8.3f eV\n" % bm.e0
         msg += " Bulk modulus   : %8.3f GPa\n" % bm.b0_GPa

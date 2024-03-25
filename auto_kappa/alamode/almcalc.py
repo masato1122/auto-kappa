@@ -838,7 +838,7 @@ class AlamodeCalc():
         
         msg = "\n"
         msg += " Generate displacements with an Alamode tool\n"
-        msg += " Displacement mode : %s\n" % displacement_mode
+        msg += " Displacement mode : %s" % displacement_mode
         #msg += " %d patterns will be generated.\n" % (number_of_displacements)
         logger.info(msg)
         
@@ -848,6 +848,9 @@ class AlamodeCalc():
                 msg = " Error: file_pattern must be given."
                 logger.error(msg)
                 sys.exit()
+            
+            msg = " Displacement magnitude : %.2f Ang" % (self.magnitude)
+            logger.info(msg)
 
             header_list, disp_list = almdisp.generate(
                     file_pattern=[file_pattern], magnitude=self.magnitude,
@@ -855,6 +858,9 @@ class AlamodeCalc():
             
         elif displacement_mode == 'random_normalcoordinate':
             
+            msg = " Temperature : %.1f K" % (temperature)
+            logger.info(msg)
+
             header_list, disp_list = almdisp.generate(
                     temperature=temperature,
                     number_of_displacements=number_of_displacements,
@@ -863,13 +869,16 @@ class AlamodeCalc():
 
         elif displacement_mode == 'random':
             
+            msg = " Displacement magnitude : %.2f Ang" % (self.magnitude2)
+            logger.info(msg)
+            
             header_list, disp_list = almdisp.generate(
                     number_of_displacements=number_of_displacements,
                     magnitude=self.magnitude2
                     )
 
         else:
-            msg = " Error: %s is not supported." % (displacement_mode)
+            msg = "\n Error: %s is not supported." % (displacement_mode)
             logger.warning(msg)
             sys.exit()
         
@@ -1035,6 +1044,7 @@ class AlamodeCalc():
         num_done = 0
         nsuggest =  len(structures)
         struct_keys = list(structures.keys())
+        logger.info("")
         for ii, key in enumerate(struct_keys):
             
             ### name of output directory
