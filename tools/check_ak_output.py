@@ -57,109 +57,7 @@ POSSIBLE_STATUSES = {
         "sc": "Finished_sc",
         }
 
-#def too_many_symmetry_errors(directory, tol_number=5):
-#    """ check symmetry error during energy minimization """
-#    for ext in ["tar", "tar.gz"]:
-#        dir_error = "%s/relax_error%d.%s" % (directory, tol_number, ext)
-#        if os.path.exists(dir_error):
-#            return True
-#    return False
-#
-#def change_symmetry(directory):
-#    """ Check if the log file contains "symmetry change" or not. """
-#    logfile = directory + "/ak.log"
-#    if os.path.exists(logfile) == False:
-#        return False
-#    lines = open(logfile, 'r').readlines()
-#    for line in lines:
-#        if "Error: crystal symmetry was changed" in line:
-#            return True 
-#    return False
-#
-#def stop_with_error(directory):
-#    """ Check if the log file contains "STOP THE CALCULATION" or not. """
-#    logfile = directory + "/ak.log"
-#    if os.path.exists(logfile) == False:
-#        return False
-#    
-#    lines = open(logfile, 'r').readlines()
-#    for line in lines:
-#        if "STOP THE CALCULATION" in line:
-#            return True
-#    return False
-#
-#def _get_directory_name_for_largesc(dir_orig):
-#    """ get a directory name for larger SC """
-#    
-#    line = dir_orig + "/sc-*"
-#    dirs = glob.glob(line)
-#    if len(dirs) == 0:
-#        return None
-#    
-#    ### get the largest SC
-#    nsc_max = 0
-#    dir_tmp = None
-#    for dd in dirs:
-#        data = dd.split("/")[-1].replace("sc-", "").split("x")
-#        nsc_i = 0
-#        for j in range(3):
-#            nsc_i += int(data[j])
-#        if nsc_i > nsc_max:
-#            nsc_max = nsc_i
-#            dir_tmp = dd
-#    return dir_tmp
-#
-#def check_results_with_larger_sc(dir_orig):
-#    """ check results for larger supercell """
-#    dir_sc = _get_directory_name_for_largesc(dir_orig)
-#    if dir_sc is None:
-#        return None
-#    else:
-#        num = check_log_yaml(dir_sc)
-#        
-#        statuses = POSSIBLE_STATUSES
-#        if num in list(statuses.keys()):
-#            return statuses[num]
-#        else:
-#            return "Error"
-#
-#def check_log_yaml(dir_name, tol_zero=-1e-3):
-#    """
-#    Return
-#    --------
-#    0 : not yet finished
-#    1 : finished at harmonic
-#    2 : finished at cubic
-#    """
-#    emin = get_minimum_energy(dir_name)
-#    
-#    ### Band and DOS were not calculated.
-#    if emin is None:
-#        if change_symmetry(dir_name):
-#            return 3
-#        if too_many_symmetry_errors(dir_name):
-#            return 3
-#        if stop_with_error(dir_name):
-#            return 4
-#        #if too_many_relaxation_errors(dir_name, max_errors=200):
-#        #    return 4
-#        return 0
-#    
-#    ###
-#    if emin < tol_zero:
-#        """ with negative frequencies """
-#        return 1
-#    else:
-#        """ w/o negative frequencies """
-#        figname = dir_name + "/result/fig_kappa.png"
-#        if os.path.exists(figname):
-#            return 2
-#        else:
-#            return 0
-
-## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
+def _read_poscar(filename, tar=None):
     """ Read POSCAR file to get a structure object
     
     Args
@@ -170,20 +68,20 @@ def _read_poscar(filename, tar=None, file_tmp="_tmp.txt"):
     
     """
     if tar is None:
-        file_pos = filename
+        try:
+            return ase.io.read(filename, format='vasp')
+        except Exception:
+            return None
     else:
         try:
+            from pymatgen.io.vasp import Poscar
             content = tar.extractfile(filename).read().decode('utf-8')
-            with open(file_tmp, "w") as f:
-                f.write(content)
-            file_pos = file_tmp
+            poscar = Poscar.from_str(content)
+            return poscar.structure
         except Exception:
             print(" Error: %s" % filename)
             return None
-    try:
-        return ase.io.read(file_pos, format='vasp')
-    except Exception:
-        return None
+    return None
 
 def finish_relaxation(dir_base, tar=None):
     """ 
@@ -194,13 +92,14 @@ def finish_relaxation(dir_base, tar=None):
     
     tar : tarfile.TarFile
     """
-    dir_harm = dir_base + "/harm"
-    if _exists(dir_harm, tar=tar):
-        return True
-    else:
-        msg = " %s : relax" % (POSSIBLE_STATUSES[0])
-        logger.info(msg)
-        return False
+    #### easy check.
+    #dir_harm = dir_base + "/harm"
+    #if _exists(dir_harm, tar=tar):
+    #    return True
+    #else:
+    #    msg = " %s : relax" % (POSSIBLE_STATUSES[0])
+    #    logger.info(msg)
+    #    return False
     
     ###########################################################
     outdir = dir_base + "/" + output_directories["relax"]
@@ -214,7 +113,7 @@ def finish_relaxation(dir_base, tar=None):
         msg = " %s : full-1" % (POSSIBLE_STATUSES[0])
         logger.info(msg)
         return False
-
+    
     ### get structure
     num_orig = get_spg_number(struct_orig)
     
