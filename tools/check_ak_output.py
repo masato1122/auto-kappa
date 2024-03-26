@@ -79,7 +79,7 @@ def _read_poscar(filename, tar=None):
             poscar = Poscar.from_str(content)
             return poscar.structure
         except Exception:
-            print(" Error: %s" % filename)
+            #print(" Error: %s" % filename)
             return None
     return None
 
@@ -93,24 +93,36 @@ def finish_relaxation(dir_base, tar=None):
     tar : tarfile.TarFile
     """
     #### easy check.
-    #dir_harm = dir_base + "/harm"
-    #if _exists(dir_harm, tar=tar):
-    #    return True
-    #else:
-    #    msg = " %s : relax" % (POSSIBLE_STATUSES[0])
-    #    logger.info(msg)
-    #    return False
+    dir_harm = dir_base + "/harm"
+    if _exists(dir_harm, tar=tar):
+        return True
+    else:
+        msg = " %s : relax" % (POSSIBLE_STATUSES[0])
+        logger.info(msg)
+        return False
     
     ###########################################################
     outdir = dir_base + "/" + output_directories["relax"]
-
-    ### get initial structure
-    filename = outdir + "/full-1/POSCAR.orig"
+    struct_orig = None
+    for j in range(2):
+        
+        ### get initial structure
+        if j == 0:
+            filename = outdir + "/full-1/POSCAR.orig"
+        else:
+            filename = outdir + "/POSCAR.orig"
+        
+        ### for tar.gz
+        try:
+            struct_orig = _read_poscar(filename, tar=tar)
+        except Exception:
+            pass
+        
+        if struct_orig is not None:
+            break
     
-    ### for tar.gz
-    struct_orig = _read_poscar(filename, tar=tar)
     if struct_orig is None:
-        msg = " %s : full-1" % (POSSIBLE_STATUSES[0])
+        msg = " %s : relax" % (POSSIBLE_STATUSES[0])
         logger.info(msg)
         return False
     
@@ -340,7 +352,6 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     
     suffix = ".tar.gz"
     if dir_tmp.endswith(suffix):
-        
         ### for .tar.gz file
         tar = tarfile.open(dir_tmp, 'r')
         dir_type = "tar.gz"
