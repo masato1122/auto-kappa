@@ -179,6 +179,7 @@ def get_parser():
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 
             help=(
+                "[This option is not supported yet.] "
                 "Calculate potential energy surface (PES) "
                 "with respect to a phonon mode with negative frequency. [0] "
                 "PES is "
@@ -198,7 +199,7 @@ def get_parser():
             help="Command to run dfc2 [dfc2]")
     
     parser.add_option("--scph", dest="scph", type="int", default=0,
-            help=("[This option is not supported yet.] "
+                help=("[This option may be not stable yet.] "
                 "Consider phonon renormalization using "
                 "self-consistent phonon (SCP) theory [0]. "
                 "0.No or 1.Yest."))
