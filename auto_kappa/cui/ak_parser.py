@@ -201,8 +201,8 @@ def get_parser():
     parser.add_option("--scph", dest="scph", type="int", default=0,
                 help=("[This option may be not stable yet.] "
                 "Consider phonon renormalization using "
-                "self-consistent phonon (SCP) theory [0]. "
-                "0.No or 1.Yest."))
+                "self-consistent phonon (SCP) theory. "
+                "0.No or 1.Yes. [0]"))
     
     ### temperature for random displacements
     parser.add_option("--random_disp_temperature", 
