@@ -48,7 +48,7 @@ output_files = {
         'cube_lasso_dfset': 'DFSET.cube_lasso',
         'cube_lasso_xml'  : "FC3_lasso.xml",
         #
-        'higher_dfset': 'DFSET_high.lasso',
+        'higher_dfset': 'DFSET.high_lasso',
         'higher_xml'  : "FCs_high.xml",
         ##'lasso_dfset': 'DFSET.lasso',
         ##'lasso_xml'  : "FCs_lasso.xml",
