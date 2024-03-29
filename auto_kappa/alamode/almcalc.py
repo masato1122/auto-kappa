@@ -1719,6 +1719,7 @@ class AlamodeCalc():
             
             ### the property has been calculated properly
             if flag == False:
+                logger.debug(" (1)")
                 break
             
             ### modify the MPI and OpenMP conditions or finish the job
@@ -1747,9 +1748,14 @@ class AlamodeCalc():
 
             else:
                 has_error = True
+                logger.debug(" (11)")
                 break
         
         if has_error:
+            if max_num_corrections is not None:
+                logger.debug(" %d" % max_num_corrections)
+            else:
+                logger.debug(" None")
             msg = "\n Error: ALAMODE job for %s "\
                     "has not been finished properly." % propt
             msg += "\n A possible solution is to use a large memory node."
