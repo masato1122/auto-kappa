@@ -284,7 +284,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         else:
             lab = None
 
-        _plot_bands(ax1, band.kpoints, band.frequencies, 
+        plot_bands(ax1, band.kpoints, band.frequencies, 
                 col=col, lw=lw, linestyle=linestyle, zorder=2, label=lab)
     
     else:
@@ -356,7 +356,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         
         if 'bands' in filenames2:
             band2 = Band(filename=filenames2['bands'])
-            _plot_bands(ax1, band2.kpoints, band2.frequencies,
+            plot_bands(ax1, band2.kpoints, band2.frequencies,
                     linestyle=linestyle2,
                     col=col2, lw=lw2, zorder=1, label=fig_labels[1])
         
@@ -382,7 +382,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     
     return fig
 
-def _plot_bands(ax, ks_tmp, frequencies, 
+def plot_bands(ax, ks_tmp, frequencies, 
         col='blue', lw=0.5, zorder=10, label=None, 
         linestyle="-", marker="None", ms=1, mfc='none',
         **args):
