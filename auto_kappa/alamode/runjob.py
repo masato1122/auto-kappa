@@ -74,7 +74,7 @@ def run_alamode(
             ppn_prev = ppn_i
             nth_prev = nth_i
             
-            ppn_i = int(ppn_prev / 2)
+            ppn_i = max(1, int(ppn_prev / 2))
             if ppn_i > 1:
                 ppn_i += int(ppn_i % 2)
             
