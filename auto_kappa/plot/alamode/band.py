@@ -54,7 +54,7 @@ class Band():
         self.nk, self.nbands = get_nk_nbands(bfile)
     
     def set_symmetry_points(self, bfile):
-        self.label, self.ksym = get_symmetry_points(bfile)
+        self.label, self.ksym = get_symmetry_points_from_filename(bfile)
     
     def set_eigen(self, bfile):
         """ Read band file crated by ALAMODE """
@@ -101,7 +101,7 @@ def get_nk_nbands(bfile):
     nbands = len(data) - 1
     return nk, nbands
 
-def get_symmetry_points(bfile):
+def get_symmetry_points_from_filename(bfile):
     """Read symmetry points from band file
     
     Returns
@@ -115,8 +115,26 @@ def get_symmetry_points(bfile):
     """
     ifs = open(bfile, "r")
     nline = sum(1 for line in open(bfile))
-    line = ifs.readline(); data1 = line.split()
-    line = ifs.readline(); data2 = line.split()
+    lines = []
+    lines.append(ifs.readline())
+    lines.append(ifs.readline())
+    return get_symmetry_points_from_string(lines)
+
+def get_symmetry_points_from_string(lines):
+    """Read symmetry points from band file
+    
+    Returns
+    ---------
+    label : string
+        label for symmetry points
+    
+    ksym : double
+        \|k\| for symmetry points
+    
+    """
+    data1 = lines[0].split()
+    data2 = lines[1].split()
+    
     label_tmp = []
     kpoints = []
     for i in range(len(data1)-1):

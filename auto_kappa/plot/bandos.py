@@ -240,36 +240,6 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ax2.set_xlabel(x2label)
     
     ### set ticks and labels
-    def set_xticks_labels(ax, kmax, ksym, labels):
-        
-        dk_all = kmax
-        
-        label_mod = []
-        for i, label in enumerate(labels):
-            
-            lab = label.replace("GAMMA", " \\Gamma ")
-            lab = lab.replace("DELTA", " \\Delta ")
-            
-            if i < len(labels)-1:
-                for j in range(2):
-                    if j == 0:
-                        num = i - 1
-                    else:
-                        num = i + 1
-                    dk_each = ksym[num] - ksym[i]
-                    fw_each = dk_each / dk_all
-                    if "|" in label and fw_each < 0.1:
-                        names = lab.split('|')
-                        lab = "^{%s}/_{%s}" % (names[0], names[1])
-                        break
-            ###
-            #print("%15s => %15s" % (label, lab))
-            label_mod.append("${\\rm %s}$" % lab)
-
-        ###
-        ax.set_xticks(ksym)
-        ax.set_xticklabels(label_mod)
-    
     set_xticks_labels(
             ax1, band.kpoints[-1],
             band.ksym, band.label)
@@ -474,4 +444,34 @@ def plot_bandos_for_different_sizes(
             fig_labels=[lab1, lab2],
             figname=figname.replace(os.getcwd(), "."),
             )
+
+def set_xticks_labels(ax, kmax, ksym, labels):
+    """ """    
+    dk_all = kmax
     
+    label_mod = []
+    for i, label in enumerate(labels):
+        
+        lab = label.replace("GAMMA", " \\Gamma ")
+        lab = lab.replace("DELTA", " \\Delta ")
+        
+        if i < len(labels)-1:
+            for j in range(2):
+                if j == 0:
+                    num = i - 1
+                else:
+                    num = i + 1
+                dk_each = ksym[num] - ksym[i]
+                fw_each = dk_each / dk_all
+                if "|" in label and fw_each < 0.1:
+                    names = lab.split('|')
+                    lab = "^{%s}/_{%s}" % (names[0], names[1])
+                    break
+        ###
+        label_mod.append("${\\rm %s}$" % lab)
+    
+    ###
+    ax.set_xticks(ksym)
+    ax.set_xticklabels(label_mod)
+
+
