@@ -1613,8 +1613,8 @@ class AlamodeCalc():
             for propt in ["band", "dos"]:
                 
                 fcsxml_abs = (
-                        self.out_dirs["harm"]["force"] + "/" +
-                        self.outfiles["harm_xml"])
+                        self.out_dirs["harm"]["force"] + "/" + 
+                        self.prefix + ".xml")
                 fcsxml = os.path.relpath(fcsxml_abs, outdir)
                 
                 self.analyze_harmonic_property(

@@ -84,6 +84,7 @@ def run_alamode(
             
             ###
             msg = "\n Processes per node : %d => %d" % (ppn_prev, ppn_i)
+            msg += "\n %s " % os.getcwd()
             logger.info(msg)
         
         ### set number of parallelization
