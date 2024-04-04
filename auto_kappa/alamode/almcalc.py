@@ -746,8 +746,9 @@ class AlamodeCalc():
             ### filename for displacement patterns
             file_pattern = self._get_file_pattern(order)
             
-            all_disps = self._get_displacements("fd", file_pattern=file_pattern)
-         
+            all_disps = self._get_displacements(
+                    "fd", file_pattern=file_pattern, order=order)
+        
         elif disp_mode == "random_normalcoordinate":
             
             ### 
@@ -802,7 +803,8 @@ class AlamodeCalc():
     
     def _get_displacements(
             self, displacement_mode: None,
-            file_pattern=None, 
+            file_pattern=None,
+            order=None,
             #
             file_evec=None, number_of_displacements=None, temperature=500., 
             classical=False,
@@ -838,9 +840,8 @@ class AlamodeCalc():
             return None
         
         msg = "\n"
-        msg += " Generate displacements with an Alamode tool\n"
+        msg += " Generate displacement patterns with an Alamode tool\n"
         msg += " Displacement mode : %s" % displacement_mode
-        #msg += " %d patterns will be generated.\n" % (number_of_displacements)
         logger.info(msg)
         
         if displacement_mode == 'fd':
@@ -850,11 +851,16 @@ class AlamodeCalc():
                 logger.error(msg)
                 sys.exit()
             
-            msg = " Displacement magnitude : %.2f Ang" % (self.magnitude)
+            if order == 1:
+                mag = self.magnitude
+            elif order == 2:
+                mag = self.magnitude2
+            
+            msg = " Displacement magnitude : %.2f Ang" % (mag)
             logger.info(msg)
 
             header_list, disp_list = almdisp.generate(
-                    file_pattern=[file_pattern], magnitude=self.magnitude,
+                    file_pattern=[file_pattern], magnitude=mag,
                     )
             
         elif displacement_mode == 'random_normalcoordinate':
