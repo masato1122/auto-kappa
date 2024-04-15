@@ -65,7 +65,7 @@ def check_unexpected_errors(logfile, dir_base=None):
                 msg = "\n Error in %s" % logfile
                 msg += "\n The error is not supported yet."
                 logger.error(msg)
-                sys.eixt()
+                sys.exit()
         
         ### Version error
         if version_err in line:
@@ -73,18 +73,20 @@ def check_unexpected_errors(logfile, dir_base=None):
             _print_error_message(logfile, line)
             #ver_target = get_version(logfile)
             
-            if logfile in ["cv.log", "lasso.log"]:
+            if logfile in ["cv.log", "lasso.log", "fc3.log"]:
                 if is_fc_given(logfile, order=1):
                     _remove_harmonic_fcs(dir_base)
                     flag += 1
                 if is_fc_given(logfile, order=2):
+                    if logfile == "fc3.log":
+                        _remove_harmonic_fcs(dir_base)
                     _remove_cubic_fcs(dir_base)
                     flag += 10
             else:
                 msg = "\n Error in %s" % logfile
                 msg += "\n The error is not supported yet."
                 logger.error(msg)
-                sys.eixt()
+                sys.exit()
     
     ### Stop the calculation
     if flag != 0:
