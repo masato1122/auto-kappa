@@ -113,11 +113,17 @@ def wasfinished_alamode(logfile, tar=None):
 def get_status(logfile, tar=None):
     """ Read and return the status of ALAMODE job
     
+    Args
+    ------
+    
+    logfile : string
+        ALAMODE log file
+
     Return
     ---------
     
     status : list with two elements
-        out[0] : status
+        out[0] : status ("Finished", "NotYet", or "Error")
         out[1] : comment
     
     """

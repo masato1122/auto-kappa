@@ -21,7 +21,7 @@ try:
 except ImportError:
     pass
 
-from auto_kappa.alamode.io import wasfinished_alamode
+from auto_kappa.alamode.io import wasfinished_alamode, get_status
 from auto_kappa.alamode.errors import check_unexpected_errors
 
 logger = logging.getLogger(__name__)
@@ -42,21 +42,21 @@ def run_alamode(
 
     workdir : string
         work directory
-
+    
     Return
     =======
     int :
         ``-1`` when the job had been finished.
         ``0`` when the job was conducted.
         ``1`` when the job was not finished.
-
+    
     """
     omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
     
     ### change directory
     dir_init = os.getcwd()
     os.chdir(workdir)
-
+    
     ## If the job has been finished, the same calculation is not conducted.
     ## The job status is determined from *.log file.
     status = None
