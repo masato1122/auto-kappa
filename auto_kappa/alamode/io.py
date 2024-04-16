@@ -143,7 +143,7 @@ def get_status(logfile, tar=None):
         else:
             lines_tmp = tar.extractfile(logfile).readlines()
             lines = [ll.decode('utf-8') for ll in lines_tmp]
-    except exception:
+    except Exception:
         return [statuses[1], "Cannot find log file"]
     
     ### error check
