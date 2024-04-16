@@ -38,7 +38,8 @@ import tarfile
 from auto_kappa import output_directories
 from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
 from auto_kappa.structure.crystal import get_spg_number
-from auto_kappa.alamode.io import wasfinished_alamode
+#from auto_kappa.alamode.io import wasfinished_alamode
+from auto_kappa.alamode.io import get_status
 
 ### log definition
 import logging
@@ -176,35 +177,55 @@ def get_minimum_energy(dir_name, tar=None):
     
     return fmin
     
-def finish_harmonic(dir_base, tar=None):
+def get_status_harmonic(dir_base, tar=None):
     """ Check calculations for harmonic properties """
     
     ### check log files
     dir_bandos = dir_base + "/" + output_directories['harm']['bandos']
+    statuses = {}
     for propt in ["band", "dos"]:
         logfile = dir_bandos + "/" + propt + ".log"
-        if _exists(logfile, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
-            logger.info(msg)
-            return False
-        ##
-        if wasfinished_alamode(logfile, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_bandos)
-            logger.info(msg)
-            return False
+        statuses[propt] = get_status(logfile, tar=tar)
+        
+    if (statuses["band"][0].lower() == "finished" and
+            statuses["dos"][0].lower() == "finished"):
+        status = "Finished"
+        comment = ""
     
-    return True
+    elif (statuses["band"][0].lower() == "error" or
+            statuses["dos"][0].lower() == "error"):
+        status = "Error"
+        comment = "%s\n%s" % (statuses["band"][1], statuses["dos"][1])
+    
+    else:
+        status = "NotYet"
+        comment = "%s\n%s" % (statuses["band"][1], statuses["dos"][1])
+    
+    return [status, comment]
 
-def finish_cubic(dir_base, tar=None):
-    """ Check calculations for cubic properties """
+def get_status_cubic(dir_base, tar=None):
+    """ Check calculations for cubic properties and return its status """
     
     dir_cube = dir_base + "/cube"
     
     ### check
     if _exists(dir_cube, tar=tar) == False:
         msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_cube)
-        logger.info(msg)
-        return False
+        return ["NotYet", msg]
+    
+    logfiles = []
+    
+    ### FC3
+    log_fc3 = dir_cube + "/force_fd/fc3.log"
+    log_lasso = dir_cube + "/lasso/lasso.log"
+    if tar is None:
+        for ll in [log_fc3, log_lasso]:
+            if os.path.exists(ll):
+                logfiles.append(ll)
+    else:
+        for ll in [log_fc3, log_lasso]:
+            if ll in tar.getnames():
+                logfiles.append(ll)
     
     ### kappa
     if tar is None:
@@ -218,24 +239,58 @@ def finish_cubic(dir_base, tar=None):
                     len(line.split("/")) == len(name.split("/"))):
                 dirs.append(name)
     
-    ###
     for dd in dirs:
-        
-        logfile = dd + "/kappa.log"
-        
-        ### check presence
-        if _exists(logfile, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
-            logger.info(msg)
-            return False
-        
-        ### check if finished or not
-        if wasfinished_alamode(logfile, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
-            logger.info(msg)
-            return False
+        fn = dd + "/kappa.log"
+        if os.path.exists(fn):
+            logfiles.append(fn)
     
-    return True
+    ###
+    flag_fin = True
+    flag_error = False
+    msg = ""
+    for i, logfile in enumerate(logfiles):
+        
+        ### get status
+        status = get_status(logfile, tar=tar)
+        
+        if status[0].lower() == "error":
+            flag_error = True
+            msg += status[1]
+            if i <= len(logfiles):
+                msg += ", "
+
+        if status[0].lower() != "finished":
+            flag_fin = False
+            msg += status[1]
+            if i <= len(logfiles):
+                msg += ", "
+        
+        ### check kl and kl_coherent files
+        for suffix in [".kl", ".kl_coherent"]:
+            line = os.path.dirname(logfile) + "/*" + suffix
+            fns = glob.glob(line)
+            _is_error = False
+            if len(fns) == 0:
+                _is_error = True
+            else:
+                try:
+                    dump = np.genfromtxt(fns[0])
+                    if np.isnan(dump).any():
+                        _is_error = True
+                except Exception:
+                    _is_error = True
+            
+            if _is_error:
+                flag_error = True
+                msg += "Error while reading %s" % (suffix.replace(".", ""))
+    
+    if flag_error:
+        return ["error", msg]
+    else:
+        if flag_fin:
+            return ["finished", msg]
+        else:
+            return ["NotYet", msg]
 
 def check_result(dir_base, tar=None):
     """ Check output figures"""
@@ -270,22 +325,29 @@ def finish_strict_optimization(dir_base, tar=None):
 def finish_larger_sc(dir_base, tar=None, neg_freq=None):
     """ """
     ### harmonic for the supercell
-    flag_harm = finish_harmonic(dir_base, tar=tar)
-    if flag_harm == False:
-        return [False, "sc_harm"]
-    else:
-        
+    status_harm = get_status_harmonic(dir_base, tar=tar)
+    
+    if status_harm[0].lower() == "finished":
         ### check minimum frequency
         fmin = get_minimum_energy(dir_base, tar=tar)
-        
         if fmin < neg_freq:
             msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
             logger.info(msg)
             return [True, "sc_harm"]
     
+    else:
+        if status_harm[0].lower() == "error":
+            return [True, "sc_harm_error"]
+        else:
+            return [False, "sc_harm"]
+    
+    ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     ### cubic for the supercell
-    flag_cube = finish_cubic(dir_base, tar=tar)
-    if flag_cube == False:
+    status_cube = get_status_cubic(dir_base, tar=tar)
+    
+    if status_cube[0].lower() == "error":
+        return [True, "sc_cube_error"]
+    elif status_cube[0].lower() == "notyet":
         return [False, "sc_cube"]
     
     ### check result
@@ -360,7 +422,7 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
         tar = None
         dir_type = "directory"
         dir_base = dir_tmp
-    
+     
     ### log file
     logfile = dir_base + "/ak.log"
     if _exists(logfile, tar=tar) == False:
@@ -369,8 +431,7 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
         return [False, "ak.log"]
     
     ### check structure optimization
-    flag_relax = finish_relaxation(dir_base, tar=tar)
-    if flag_relax == False:
+    if finish_relaxation(dir_base, tar=tar) == False:
         return [False, "relax"]
     
     ### check strict optimization
@@ -388,12 +449,9 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
             return [False, "dir_nac"]
     
     ### check harmonic
-    flag_harm = finish_harmonic(dir_base, tar=tar)
+    status_harm = get_status_harmonic(dir_base, tar=tar)
     
-    if flag_harm == False:
-        return [False, "harm"]
-    else:
-        
+    if status_harm[0].lower() == "finished":    
         ### check minimum frequency
         fmin = get_minimum_energy(dir_base, tar=tar)
         
@@ -409,54 +467,62 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
                 flag = finish_larger_supercells(
                         dir_base, tar=tar, neg_freq=neg_freq)
                 return flag
-     
+    
+    elif status_harm[0].lower() == "error":
+            return [True, "harm_error"]
+    elif status_harm[0].lower() == "notyet":
+            return [False, "harm"]
+    
     ### check cubic
-    flag_cube = finish_cubic(dir_base, tar=tar)
-    if flag_cube == False:
+    status_cube = get_status_cubic(dir_base, tar=tar)
+    
+    if status_cube[0].lower() == "error":
+        return [True, "cube_error"]
+    elif status_cube[0].lower() == "notyet":
         return [False, "cube"]
     
     ### check result
     flag = check_result(dir_base, tar=tar)
     if flag == False:
         return [False, "result"]
-
+    
     return [True, "cube"]
 
-def main(options):
-    
-    flag = finish_ak_calculation(
-            options.directory, 
-            neg_freq=options.neg_freq,
-            vol_relax=options.vol_relax,
-            larger_sc=options.larger_sc)
-    
-    if flag[0]:
-        if "cube" in flag[1].lower():
-            msg = " %s" % (POSSIBLE_STATUSES[2])
-            logger.info(msg)
-        elif flag[1].lower() in ["sc"]:
-            msg = " %s" % (POSSIBLE_STATUSES["sc"])
-            logger.info(msg)
-    
-if __name__ == '__main__':
-    parser = OptionParser()
-    
-    parser.add_option("-d", "--directory", dest="directory", type="string",
-                help="directory name for APDB")
-    
-    parser.add_option("--neg_freq", dest="neg_freq", type="float",
-                default=-0.001, help="negtive frequency [-0.001]")
-    
-    parser.add_option("--vol_relax", dest="vol_relax", type="int",
-                default=0, help="check volume relaxation (0.No, 1.Yes) [0]")
-    
-    parser.add_option("--larger_sc", dest="larger_sc", type="int",
-                default=0, help="check larger supercell (0.No, 1.Yes) [0]")
-    
-    (options, args) = parser.parse_args()
-    
-    if options.directory.startswith("./"):
-        options.directory = options.directory.replace("./", "")
-    
-    main(options)
+#def main(options):
+#    
+#    flag = finish_ak_calculation(
+#            options.directory, 
+#            neg_freq=options.neg_freq,
+#            vol_relax=options.vol_relax,
+#            larger_sc=options.larger_sc)
+#    
+#    if flag[0]:
+#        if "cube" in flag[1].lower():
+#            msg = " %s" % (POSSIBLE_STATUSES[2])
+#            logger.info(msg)
+#        elif flag[1].lower() in ["sc"]:
+#            msg = " %s" % (POSSIBLE_STATUSES["sc"])
+#            logger.info(msg)
+#    
+#if __name__ == '__main__':
+#    parser = OptionParser()
+#    
+#    parser.add_option("-d", "--directory", dest="directory", type="string",
+#                help="directory name for APDB")
+#    
+#    parser.add_option("--neg_freq", dest="neg_freq", type="float",
+#                default=-0.001, help="negtive frequency [-0.001]")
+#    
+#    parser.add_option("--vol_relax", dest="vol_relax", type="int",
+#                default=0, help="check volume relaxation (0.No, 1.Yes) [0]")
+#    
+#    parser.add_option("--larger_sc", dest="larger_sc", type="int",
+#                default=0, help="check larger supercell (0.No, 1.Yes) [0]")
+#    
+#    (options, args) = parser.parse_args()
+#    
+#    if options.directory.startswith("./"):
+#        options.directory = options.directory.replace("./", "")
+#    
+#    main(options)
 
