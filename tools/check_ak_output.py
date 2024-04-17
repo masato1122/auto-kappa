@@ -58,6 +58,21 @@ POSSIBLE_STATUSES = {
         "sc": "Finished_sc",
         }
 
+def file2str(filename, tar=None):
+    if tar is None:
+        if os.path.exists(filename) == False:
+            return None
+        else:
+            lines = open(filename, 'r').readlines()
+            return lines
+    else:
+        try:
+            lines_tmp = tar.extractfile(filename).readlines()
+            lines = [ll.decode('utf-8').replace("\n", "") for ll in lines_tmp]
+            return lines
+        except Exception:
+            return None
+
 def _read_poscar(filename, tar=None):
     """ Read POSCAR file to get a structure object
     
@@ -387,6 +402,23 @@ def finish_larger_supercells(dir_base, tar=None, neg_freq=None):
     
     return [True, "sc"]
 
+def _memory_over(logfile, tar=None):
+    """ """
+    lines = file2str(logfile, tar=tar)
+    
+    flag_single = False
+    flag_stop = False
+    for ll in lines:
+        if "processes per node" in ll.lower() and "=> 1" in ll.lower():
+            flag_single = True
+        if "Error : ALAMODE job was not finished properly":
+            flag_stop = True
+    ##
+    if flag_single and flag_stop:
+        return True
+    else:
+        return False
+
 def _get_tar_prefix(tar):
     """ """
     data = tar.name.replace(os.getcwd() + "/", "").split("/")
@@ -424,13 +456,16 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
         tar = None
         dir_type = "directory"
         dir_base = dir_tmp
-     
+    
     ### log file
     logfile = dir_base + "/ak.log"
     if _exists(logfile, tar=tar) == False:
         msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_base)
         logger.info(msg)
         return [False, "ak.log"]
+    else:
+        if _memory_over(logfile, tar=tar):
+            return [True, "memory"]
     
     ### check structure optimization
     if finish_relaxation(dir_base, tar=tar) == False:
