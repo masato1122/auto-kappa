@@ -266,23 +266,25 @@ def get_status_cubic(dir_base, tar=None):
                 msg += ", "
         
         ### check kl and kl_coherent files
-        for suffix in [".kl", ".kl_coherent"]:
-            line = os.path.dirname(logfile) + "/*" + suffix
-            fns = glob.glob(line)
-            _is_error = False
-            if len(fns) == 0:
-                _is_error = True
-            else:
-                try:
-                    dump = np.genfromtxt(fns[0])
-                    if np.isnan(dump).any():
-                        _is_error = True
-                except Exception:
+        if logfile in ["kappa.log"]:
+            for suffix in [".kl", ".kl_coherent"]:
+                line = os.path.dirname(logfile) + "/*" + suffix
+                fns = glob.glob(line)
+                
+                _is_error = False
+                if len(fns) == 0:
                     _is_error = True
-            
-            if _is_error:
-                flag_error = True
-                msg += "Error while reading %s" % (suffix.replace(".", ""))
+                else:
+                    try:
+                        dump = np.genfromtxt(fns[0])
+                        if np.isnan(dump).any():
+                            _is_error = True
+                    except Exception:
+                        _is_error = True
+                
+                if _is_error:
+                    flag_error = True
+                    msg += "Error while reading %s" % (suffix.replace(".", ""))
     
     if flag_error:
         return ["error", msg]
