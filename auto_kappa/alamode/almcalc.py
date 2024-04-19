@@ -14,11 +14,9 @@ import sys
 import os
 import os.path
 import numpy as np
-#import time
 import logging
 
 import ase
-#import subprocess
 import shutil
 import pandas as pd
 import glob
@@ -34,7 +32,6 @@ from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_pa
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
 from auto_kappa.alamode.io import wasfinished_alamode
-from auto_kappa.alamode.errors import check_unexpected_errors
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.cui import ak_log
 from auto_kappa.io.vasp import write_born_info
@@ -2327,115 +2324,6 @@ class AlamodeCalc():
         
         ### move back to the initial directory
         os.chdir(dir_init)
-
-#def run_alamode(
-#        filename, logfile, workdir='.', neglect_log=0, file_err="std_err.txt",
-#        mpirun='mpirun', nprocs=1, nthreads=1, command='anphon'):
-#    """ Run alamode with a command (alm or anphon)
-#    
-#    Args
-#    ======
-#    filename : string
-#        input script of Alamode in workdir
-#    
-#    logfile : string
-#        log file name in workdir
-#    
-#    workdir : string
-#        work directory
-#    
-#    Return
-#    =======
-#    int : 
-#        ``-1`` when the job had been finished.
-#        ``0`` when the job was conducted.
-#        ``1`` when the job was not finished.
-#    
-#    """
-#    ### set number of parallelization
-#    cmd = "%s -n %d %s %s" %(mpirun, nprocs, command, filename)
-#    
-#    ### set OpenMP
-#    omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
-#    for key in omp_keys:
-#        os.environ[key] = str(nthreads)
-#     
-#    ### change directory
-#    dir_init = os.getcwd()
-#    os.chdir(workdir)
-#    
-#    ## If the job has been finished, the same calculation is not conducted.
-#    ## The job status is judged from *.log file.
-#    if wasfinished_alamode(logfile) == False or neglect_log:
-#        
-#        ## run the job!!
-#        status = None
-#        with open(logfile, 'w') as f, open(file_err, "w", buffering=1) as f_err:
-#            
-#            ### Error file, termination check
-#            proc = subprocess.Popen(
-#                    cmd, shell=True, env=os.environ, 
-#                    stdout=f, stderr=f_err)
-#            
-#            count = 0
-#            mem_max = -1
-#            while True:
-#                
-#                if proc.poll() is not None:
-#                    break
-#                
-#                ### get memory info if available
-#                mem_percentage = 0.
-#                try:
-#                    mem_info = psutil.virtual_memory()
-#                    mem_max = max(mem_max, mem_info.used)
-#                    mem_tot = mem_info.total
-#                    mem_percentage = mem_info.percentage
-#                    
-#                    if mem_percentage > 95.:
-#                        logger.info("\n Warning: memory usage is %.2f%%" % (
-#                            mem_info.percentage))
-#                        break
-#                
-#                except Exception:
-#                    pass
-#                
-#                waiting_time = min(10, count)
-#                time.sleep(waiting_time)
-#                count += 1
-#            
-#            if mem_max > 0.:
-#                msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
-#                logger.info(msg)
-#            
-#            status = proc.poll()
-#    
-#    else:
-#        ### The job has been already conducted.
-#        status = -1
-#    
-#    ### set back OpenMP
-#    for key in omp_keys:
-#        os.environ[key] = "1"
-#    
-#    ### check logfile
-#    dir_base = dir_init + "/" + workdir.replace(dir_init, ".").split("/")[1]
-#    check_unexpected_errors(logfile, dir_base=dir_base)
-#    
-#    ###
-#    flag = wasfinished_alamode(logfile)
-#     
-#    #### Return to the original directory
-#    os.chdir(dir_init)
-#    
-#    if flag:
-#        ### finished
-#        status = 0
-#    else:
-#        ### something wrong
-#        status = 1
-#    
-#    return status
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     """ 

@@ -211,6 +211,7 @@ def get_status_harmonic(dir_base, tar=None):
             statuses["dos"][0].lower() == "error"):
         status = "Error"
         comment = "%s\n%s" % (statuses["band"][1], statuses["dos"][1])
+        print(dir_base, comment)
     
     else:
         status = "NotYet"
@@ -269,6 +270,7 @@ def get_status_cubic(dir_base, tar=None):
         status = get_status(logfile, tar=tar)
         
         if status[0].lower() == "error":
+            #print(dir_base, status[1])
             flag_error = True
             msg += status[1]
             if i <= len(logfiles):
