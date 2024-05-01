@@ -665,8 +665,11 @@ class ApdbVasp():
             
             if c0 == 'c' or c0 == 'u':
                 
-                new_unitcell = ase.io.read(vasprun, format='vasp-xml')
-
+                try:
+                    new_unitcell = ase.io.read(vasprun, format='vasp-xml')
+                except Exception:
+                    _error_in_vasprun(vasprun)
+            
             else:
                 
                 ### read primitive and transform it to the unit cell
@@ -687,6 +690,13 @@ class ApdbVasp():
             self.update_structures(new_unitcell, standardization=standardization)
         
         return 0
+
+def _error_in_vasprun(filename):
+    dir_file = os.path.dirname(filename)
+    msg = "\n Error in %s" % filename 
+    msg += "\n Abort the calculation"
+    logger.info(msg)
+    sys.exit()
 
 def too_many_errors(directory, max_error=100):
     """ check the number of errors in ``directory`` """    
