@@ -391,6 +391,9 @@ def finish_larger_supercells(dir_base, tar=None, neg_freq=None):
                     len(line.split("/")) == len(name.split("/"))):
                 dirs.append(name)
     
+    if len(dirs) == 0:
+        return [False, "sc_NotStarted"]
+    
     ### check for each supercell
     for dir_sc in dirs:
         out = finish_larger_sc(dir_sc, tar=tar, neg_freq=neg_freq)
@@ -503,9 +506,9 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
                 return [True, "harm"]
             else:
                 ### calculation with supercell
-                flag = finish_larger_supercells(
+                out = finish_larger_supercells(
                         dir_base, tar=tar, neg_freq=neg_freq)
-                return flag
+                return out
     
     elif status_harm[0].lower() == "error":
             return [True, "harm_error"]

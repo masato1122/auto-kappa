@@ -359,7 +359,7 @@ class ApdbVasp():
         
         ### Get the relaxed structure obtained with the old version
         ### For the old version, the xml file is located under ``directory``.
-        if wasfinished(directory, filename='vasprun.xml'):
+        if volume_relaxation == 0 and wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
             prim = ase.io.read(filename, format='vasp-xml')
             
