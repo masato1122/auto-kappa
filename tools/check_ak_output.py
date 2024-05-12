@@ -44,9 +44,9 @@ from auto_kappa.alamode.io import get_status
 ### log definition
 import logging
 logger = logging.getLogger(__name__)
-sh = logging.StreamHandler()
-sh.setFormatter(logging.Formatter("%(message)s"))
-logging.basicConfig(level=logging.DEBUG, handlers=[sh])
+#sh = logging.StreamHandler()
+#sh.setFormatter(logging.Formatter("%(message)s"))
+#logging.basicConfig(level=logging.DEBUG, handlers=[sh])
 
 ###
 POSSIBLE_STATUSES = {
