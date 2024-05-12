@@ -44,9 +44,6 @@ from auto_kappa.alamode.io import get_status
 ### log definition
 import logging
 logger = logging.getLogger(__name__)
-#sh = logging.StreamHandler()
-#sh.setFormatter(logging.Formatter("%(message)s"))
-#logging.basicConfig(level=logging.DEBUG, handlers=[sh])
 
 ###
 POSSIBLE_STATUSES = {
@@ -113,8 +110,8 @@ def finish_relaxation(dir_base, tar=None):
     if _exists(dir_harm, tar=tar):
         return True
     else:
-        msg = " %s : relax" % (POSSIBLE_STATUSES[0])
-        logger.info(msg)
+        #msg = " %s : relax" % (POSSIBLE_STATUSES[0])
+        #logger.info(msg)
         return False
     
     ###########################################################
@@ -138,8 +135,8 @@ def finish_relaxation(dir_base, tar=None):
             break
     
     if struct_orig is None:
-        msg = " %s : relax" % (POSSIBLE_STATUSES[0])
-        logger.info(msg)
+        #msg = " %s : relax" % (POSSIBLE_STATUSES[0])
+        #logger.info(msg)
         return False
     
     ### get structure
@@ -159,12 +156,12 @@ def finish_relaxation(dir_base, tar=None):
         if os.path.exists(dir1) or dir1 in all_files:
             
             if wasfinished_vasp(dir1, tar=tar) == False:
-                msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
-                logger.info(msg)
+                #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+                #logger.info(msg)
                 return False
         else:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
-            logger.info(msg)
+            #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dd)
+            #logger.info(msg)
             return False
         
         ### symmetry check
@@ -172,8 +169,8 @@ def finish_relaxation(dir_base, tar=None):
         struct = _read_poscar(filename, tar=tar)
         num_i = get_spg_number(struct)
         if num_orig != num_i:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[3], dir1)
-            logger.info(msg)
+            #msg = " %s : %s" % (POSSIBLE_STATUSES[3], dir1)
+            #logger.info(msg)
             return False
     
     return True
@@ -325,8 +322,8 @@ def check_result(dir_base, tar=None):
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
             if _exists(figname, tar=tar) == False:
-                msg = " %s : %s" % (POSSIBLE_STATUSES[4], dir_result)
-                logger.info(msg)
+                #msg = " %s : %s" % (POSSIBLE_STATUSES[4], dir_result)
+                #logger.info(msg)
                 return False
     return True
 
@@ -336,8 +333,8 @@ def finish_strict_optimization(dir_base, tar=None):
     for ff in ["POSCAR.init", "POSCAR.opt", "fig_bm.png"]:
         filename = dir_vol + "/" + ff
         if _exists(filename, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_vol)
-            logger.info(msg)
+            #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_vol)
+            #logger.info(msg)
             return False
     return True
 
@@ -350,8 +347,8 @@ def finish_larger_sc(dir_base, tar=None, neg_freq=None):
         ### check minimum frequency
         fmin = get_minimum_energy(dir_base, tar=tar)
         if fmin < neg_freq:
-            msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
-            logger.info(msg)
+            #msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
+            #logger.info(msg)
             return [True, "sc_harm"]
     
     else:
@@ -398,8 +395,8 @@ def finish_larger_supercells(dir_base, tar=None, neg_freq=None):
     for dir_sc in dirs:
         out = finish_larger_sc(dir_sc, tar=tar, neg_freq=neg_freq)
         if out[0] == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_sc)
-            logger.info(msg)
+            #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_sc)
+            #logger.info(msg)
             return out
         else:
             if out[1] == "sc_harm":
@@ -479,8 +476,8 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     ### log file
     logfile = dir_base + "/ak.log"
     if _exists(logfile, tar=tar) == False:
-        msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_base)
-        logger.info(msg)
+        #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_base)
+        #logger.info(msg)
         return [False, "ak.log"]
     else:
         if _memory_over(logfile, tar=tar):
@@ -502,8 +499,8 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     dir_nac = dir_base + "/" + output_directories["nac"]
     if _exists(dir_nac, tar=tar):
         if wasfinished_vasp(dir_nac, tar=tar) == False:
-            msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_nac)
-            logger.info(msg)
+            #msg = " %s : %s" % (POSSIBLE_STATUSES[0], dir_nac)
+            #logger.info(msg)
             return [False, "dir_nac"]
     
     ### check harmonic
@@ -517,8 +514,8 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
             
             ### If negative frequencies were round,
             if larger_sc == 0:
-                msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
-                logger.info(msg)
+                #msg = " %s : %.3f" % (POSSIBLE_STATUSES[1], fmin)
+                #logger.info(msg)
                 return [True, "harm"]
             else:
                 ### calculation with supercell
