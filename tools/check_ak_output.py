@@ -430,7 +430,7 @@ def _symmetry_error(logfile, tar=None):
     
     flag_error = False
     for ll in lines:
-        if "Error: crystal symmetry was changed during the relaxation calculation" in ll.lower():
+        if "Error: crystal symmetry was changed during the relaxation calculation" in ll:
             flag_error = True
     ##
     if flag_error:
