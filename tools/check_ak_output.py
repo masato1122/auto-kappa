@@ -424,6 +424,20 @@ def _memory_over(logfile, tar=None):
     else:
         return False
 
+def _symmetry_error(logfile, tar=None):
+    """ """
+    lines = file2str(logfile, tar=tar)
+    
+    flag_error = False
+    for ll in lines:
+        if "Error: crystal symmetry was changed during the relaxation calculation" in ll.lower():
+            flag_error = True
+    ##
+    if flag_error:
+        return True
+    else:
+        return False
+
 def _get_tar_prefix(tar):
     """ """
     data = tar.name.replace(os.getcwd() + "/", "").split("/")
@@ -471,6 +485,8 @@ def finish_ak_calculation(dir_tmp, neg_freq=-0.001, vol_relax=None, larger_sc=No
     else:
         if _memory_over(logfile, tar=tar):
             return [True, "memory"]
+        elif _symmetry_error(logfile, tar=tar):
+            return [True, "symmetry"]
     
     ### check structure optimization
     if finish_relaxation(dir_base, tar=tar) == False:
