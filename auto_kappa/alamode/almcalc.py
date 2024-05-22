@@ -28,7 +28,7 @@ from phonopy.structure.cells import get_supercell
 from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
 from auto_kappa.structure.crystal import change_structure_format, get_formula
-from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, print_vasp_params
+from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, read_outcar, print_vasp_params
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
 from auto_kappa.alamode.io import wasfinished_alamode
@@ -1046,6 +1046,7 @@ class AlamodeCalc():
         
         ### start the force calculation
         num_done = 0
+        count_calc = 0
         nsuggest =  len(structures)
         struct_keys = list(structures.keys())
         logger.info("")
@@ -1065,7 +1066,8 @@ class AlamodeCalc():
             filename = outdir + "/vasprun.xml"
             if wasfinished(outdir):
                 if are_forces_available(filename):
-                    msg = " %s: skipped" % self.get_relative_path(outdir)
+                    path = self.get_relative_path(outdir)
+                    msg = " ( %d / %d ) %s : skip" % (ii+1, len(struct_keys), path)
                     logger.info(msg)
                     num_done += 1
                     continue
@@ -1132,8 +1134,27 @@ class AlamodeCalc():
                 
                 num_done += 1
             
-            logger.info(" %s" % self.get_relative_path(calculator.directory))
+            ### print log
+            msg = " ( %d / %d ) %s" % (ii+1, len(struct_keys), self.get_relative_path(calculator.directory))
+            try:
+                outinfo = read_outcar(calculator.directory + "/OUTCAR")
+                msg += " : %.2f min" % outinfo["cpu_time(min)"]
+            except Exception:
+                pass
+            logger.info(msg)
+            #logger.info("%d %d %d" % (count, ii, len(struct_keys)))
             
+            ### estimate remaining time
+            if count_calc == 0:
+                try:
+                    num_remain = len(struct_keys) - ii - 1
+                    rtime_est = outinfo["cpu_time(min)"] * num_remain / 60.
+                    msg = "\n Estimated remaining time for this part : %.2f hours\n" % (rtime_est)
+                    logger.info(msg)
+                except Exception:
+                    pass
+            count_calc += 1
+
         ### output DFSET
         if num_done == len(structures) and output_dfset:
              

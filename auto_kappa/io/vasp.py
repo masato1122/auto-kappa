@@ -287,6 +287,36 @@ def print_vasp_params(params):
                 str(params[name]))
     logger.info(msg)
 
+def read_outcar(filename):
+    """ 
+    Args
+    -----
+
+    filename : string
+        path for OUTCAR
+    """
+    dump = {}
+    lines = open(filename, 'r').readlines()
+    for line in lines:
+        data = line.split()
+        if "Total CPU time used (sec)" in line:
+            idx = -1
+            key = "cpu_time(min)"
+            scale = 1./60.
+        elif "Maximum memory used (kb)" in line:
+            idx = -1
+            key = "max_memory(GB)"
+            scale = 1e-3
+        else:
+            continue
+
+        try:
+            dump[key] = float(data[idx]) * scale
+        except Exception:
+            pass
+    
+    return dump
+
 #
 #class Vasprun:
 #    """ This class reads vasprun.xml.
