@@ -1138,7 +1138,7 @@ class AlamodeCalc():
             msg = " ( %d / %d ) %s" % (ii+1, len(struct_keys), self.get_relative_path(calculator.directory))
             try:
                 outinfo = read_outcar(calculator.directory + "/OUTCAR")
-                msg += " : %.2f min" % outinfo["cpu_time(min)"]
+                msg += " : %7.2f min" % outinfo["cpu_time(min)"]
             except Exception:
                 pass
             logger.info(msg)
@@ -2067,7 +2067,7 @@ class AlamodeCalc():
             logger.error(msg)
         
         if os.path.exists(file_isotope) == False:
-            msg = " Error: %s does not exist." % (
+            msg = " Note : %s does not exist." % (
                     self.get_relative_path(file_isotope))
             logger.error(msg)
             file_isotope = None
@@ -2139,6 +2139,9 @@ class AlamodeCalc():
         labels = {}
         scat_rates = {}
         for key in self.scat.scattering_rates:
+            
+            if self.scat.scattering_rates[key] is None:
+                continue
             
             scat_rates[key] = self.scat.scattering_rates[key].reshape(n1*n2)
             
