@@ -84,7 +84,7 @@ def run_alamode(
             
             ###
             msg = "\n Processes per node : %d => %d" % (ppn_prev, ppn_i)
-            msg += "\n %s " % os.getcwd()
+            #msg += "\n %s " % ("./" + os.path.relpath(os.getcwd(), dir_init))
             logger.info(msg)
         
         ### set number of parallelization
@@ -142,6 +142,7 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
         
         count = 0
         mem_max = -1
+        mem_info = None
         while True:
             
             if proc.poll() is not None:
@@ -150,11 +151,17 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
             ### get memory info if available
             mem_percentage = 0.
             try:
+                
+                ##### ver.2
+                ##process = psutil.Process(proc.pid)
+                ##mem_info = process.memory_info()
+                
+                #### ver.1
                 mem_info = psutil.virtual_memory()
                 mem_max = max(mem_max, mem_info.used)
                 mem_tot = mem_info.total
                 mem_percentage = mem_info.percentage
-
+                
                 if mem_percentage > 95.:
                     logger.info("\n Warning: memory usage is %.2f%%" % (
                         mem_info.percentage))
@@ -170,7 +177,15 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
         if mem_max > 0.:
             msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
             logger.info(msg)
-
+        
+        ##if mem_info is not None:
+        ##    try:
+        ##        msg = "\n Memory usage (GB) : %.3f (VMS), %.3f (RSS) " % (
+        ##                mem_info.vms/1e9, mem_info.rss/1e9)
+        ##        logger.info(msg)
+        ##    except Exception:
+        ##        pass
+            
         status = proc.poll()
     
     return 0
