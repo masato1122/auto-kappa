@@ -345,6 +345,8 @@ def main():
                     neglect_log=neglect_log
                     )
             
+            almcalc_large._fc3_type = almcalc.fc3_type
+
             ### calculate kappa
             kdensities = [500, 1000, 1500]
             calculate_thermal_conductivities(
