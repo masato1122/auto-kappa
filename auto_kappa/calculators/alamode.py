@@ -510,6 +510,7 @@ def calculate_thermal_conductivities(
     
     ###
     if calc_type == "cubic":
+        
         try:
             almcalc.plot_lifetime(
                     temperatures=temperatures_for_spectral, calc_type=calc_type)

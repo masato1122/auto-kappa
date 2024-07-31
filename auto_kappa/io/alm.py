@@ -72,9 +72,6 @@ class AlmInput(MSONable, dict):
                 }
             }
     
-    ##'l1_ratio', 'l1_alpha', 
-    ##'cv_maxalpha', 'cv_minalpha',
-    
     general_keys = [
             'prefix',       # None, string
             'mode',         # None, string (suggest or optimize)
@@ -93,11 +90,11 @@ class AlmInput(MSONable, dict):
             'fc3_shengbte', # 0, integer
             'fc_zero_thr',  # 1.0e-12, double
             ]
-    interaction_keys = {
+    interaction_keys = [
             'norder',       # None, integer
             'nbody',        # [2,3,...,norder+1], array of integers
-            }
-    optimize_keys = {
+            ]
+    optimize_keys = [
             ## always
             'lmodel',         # least-squares, string
             'dfset',          # None,  string
@@ -124,9 +121,6 @@ class AlmInput(MSONable, dict):
             'cv_minalpha',    # cv_maxalpha*1e-6,  double
             'cv_maxalpha',    # set automatically, double
             'cv_nalpha',      # 50,  integer
-            'enet_dnorm',     # 1.0, double
-            'solution_path',  # 0,   integer
-            'debias_ols',     # 0,   integer
             ## for lmode == 'enet'
             'standardize',    # 1,   integer
             ## >= v.1.4.x?
@@ -134,7 +128,7 @@ class AlmInput(MSONable, dict):
             'solution_path',  # 0, integer
             'debias_ols',     # 0, integer
             'stop_criterion', # 5, integer
-            }
+            ]
     
     def __init__(self, **kwargs):
         """
@@ -460,7 +454,6 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
-            ##'fc3xml',       # None, string
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -481,22 +474,26 @@ class AnphonInput(MSONable, dict):
             'restart',      # 1 or 0, integer
             ]
     scph_keys = [
-            'kmesh_interpolate', # None, Array of integers 
             'kmesh_scph',        # None, Array of integers
             'self_offdiag',      # 0,    Integer
             'tol_scph',          # 1e-10, double
             'mixalpha',          # 0.1,   double
             'maxiter',           # 1000,  integer
-            'lower_temp',        # 1,     integer
+            'lower_temp',        # 1, integer (0 or 1)
             'warmstart',         # 1,     integer
             'ialgo',             # 0,     integer
             'restart_scph',      # 1, integer (0 or 1)
             ## >= 1.5.0
             'bubble',            # 0, integer (0 or 1)
             'relax_str',         # 0, integer (0, 1, 2, or 3)
+            ]
+    qha_keys = [
+            'kmesh_interpolate', # None, Array of integers
+            'kmesh_qha',         # None, Array of integers
+            'relax_str',         # 0, integer (0, 1, 2, or 3)
             'lower_temp',        # 1, integer (0 or 1)
             'qha_scheme',        # 0, integer (0, 1, or 2)
-            ]
+            ]        
     ## >= 1.5.0
     relax_keys = [
             'relax_algo',       # 2,     integer (1 or 2)
@@ -541,7 +538,7 @@ class AnphonInput(MSONable, dict):
             ]
     
     all_keys = (
-            general_keys + scph_keys + 
+            general_keys + scph_keys + qha_keys + relax_keys +
             analysis_keys + ['cell', 'kpoint', 'kpmode']
             )
     
@@ -809,7 +806,17 @@ class AnphonInput(MSONable, dict):
         scph_dict = _get_subdict(self, self.scph_keys)
         scph_nml = f90nml.Namelist({"scph": scph_dict})
         anp_str += str(scph_nml) + "\n"
-
+        
+        ## qha parameters
+        qha_dict = _get_subdict(self, self.qha_keys)
+        qha_nml = f90nml.Namelist({"qha": qha_dict})
+        anp_str += str(qha_nml) + "\n"
+            
+        ## relax parameters
+        relax_dict = _get_subdict(self, self.relax_keys)
+        relax_nml = f90nml.Namelist({"relax": relax_dict})
+        anp_str += str(relax_nml) + "\n"
+            
         ## cell parameters
         lines = _write_cell(self['cell'])
         for line in lines:
@@ -1138,6 +1145,7 @@ def proc_val(key, val):
             'mode',          # None, string (suggest or optimize)
             'fc2xml',         # None,  string
             'fc3xml',         # None,  string
+            'fcsxml',         # None,  string
             ## alm
             'kd',            # None, array of strings
             'fcsym_basis',   # Lattice, string
@@ -1151,6 +1159,8 @@ def proc_val(key, val):
             'fcsxml',        # None, string
             'borninfo',      # None, string
             'anime_format',  # xyz,  string
+            ## relax
+            'strain_ifc_dir', # None, string
             )
     
     int_keys = (
@@ -1211,6 +1221,19 @@ def proc_val(key, val):
             'solution_path',  # 0, integer
             'debias_ols',     # 0, integer
             'stop_criterion', # 5, integer
+            ## scph
+            'bubble',         # 0, integer
+            'relax_str',      # 0, integer
+            'qha_scheme',     # 0, integer
+            ## relax
+            'relax_algo',     # 2, integer
+            'alpha_stdecent', # 2, integer
+            'max_str_iter',   # 100, integer
+            'set_init_str',   # 1, integer
+            'cooling_u0_index', # 1, integer
+            'renorm_2to1st',    # 2, integer
+            'renorm_34to1st',   # 0, integer
+            'renorm_3to2nd',    # 2, integer
             )
     
     double_keys = (
@@ -1236,6 +1259,14 @@ def proc_val(key, val):
             'cv_maxalpha',    # set automatically, double
             'enet_dnorm',     # 1.0, double
             'enet_dnorm',     # 1.0, double
+            ## relax
+            'add_hess_diag',  # 100.0, double
+            'coord_conv_tol', # 100.0, double
+            'mixbeta_coord',  # 1e-5,  double
+            'cell_conv_tol',  # 1e-5,  double
+            'mixbeta_cell',   # 0.5,   double
+            'cooling_u0_thr', # 0.001, double
+            'stat_pressure',  # 0.0,   double
             )
             
     strarray_keys = (
@@ -1252,6 +1283,8 @@ def proc_val(key, val):
             'anime_cellsize',    # None, Array of integers
             ## anphon
             'periodic',          # 1 1 1, array of integers
+            ## scph
+            'kmesh_qha',         # None, Array of integers
             )
 
     doublearray_keys = (

@@ -13,6 +13,7 @@
 import sys
 #import warnings
 import numpy as np
+from pathlib import Path
 
 from auto_kappa.alamode.analyzer.analyzer import get_kmode
 
@@ -75,7 +76,19 @@ class Result():
             logger.error(" Error: filename (*.result file) must be given.")
             sys.exit()
         
-        self._values = read_result_file(self.filename)
+        try:
+            self._values = read_result_file(self.filename)
+        except Exception:
+            fn_rel = Path(self.filename).relative_to(Path.cwd())
+            line = f"Error: cannot read {fn_rel} properly."
+            msg = "\n " + "#" * (len(line) + 2)
+            msg += f"\n {line}"
+            msg += "\n"
+            msg += "\n Possible solution for this issue is"
+            msg += f"\n * to delete {fn_rel} and"
+            msg += "\n * to calculate thermal conductivity again."
+            msg += "\n " + "#" * (len(line) + 2)
+            logger.error(msg)
         
     def get_free_energy(self, temperatures):
         """Calcualte free enrgy
@@ -368,22 +381,29 @@ def read_frequency(filename):
     lines = open(filename, 'r').readlines()
     iline0 = _get_line_number(lines, "#K-point")
     nlines = len(lines)
-
+    
     kpoints = []
     branches = []
     frequencies = []
     
-    for il in range(iline0+1, nlines):
+    if iline0 is not None:
         
-        line = lines[il]
-        data = line.split()
-
-        if "#" in line:
-            break
-        
-        kpoints.append(int(data[0]))
-        branches.append(int(data[1]))
-        frequencies.append(float(data[2]))
+        for il in range(iline0+1, nlines):
+            line = lines[il]
+            data = line.split()
+            if "#" in line:
+                break
+            kpoints.append(int(data[0]))
+            branches.append(int(data[1]))
+            frequencies.append(float(data[2]))
+    
+    else:
+        fn_rel = Path(filename).relative_to(Path.cwd())
+        msg = "\n Error: Frequency info in the following result file was not read properly."
+        msg += f"\n {fn_rel}"
+        msg += "\n You may need to rerun the calculation to solve this issue."
+        logger.warning(msg)
+        return None    
     
     kpoints = np.asarray(kpoints)
     branches = np.asarray(branches)
@@ -411,11 +431,17 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
     gammas : ndarray, float, shape=(ntemps,nk,nbands)
         gammas due to ph-ph scattering
     """
-    ##
+    ###
     lines = open(filename, 'r').readlines()
+    
+    ### ver >= 1.5.*
     iline0 = _get_line_number(lines, "##Phonon Relaxation Time")
     
-    # --- prepare arrays
+    ### ver < 1.5.*
+    if iline0 is None:
+        iline0 = _get_line_number(lines, "#GAMMA_EACH") - 1
+    
+    ### --- prepare arrays
     multiplicity = np.zeros(nk, dtype=int)
     velocities = []
     gammas = np.zeros(((ntemps, nk, nbands)))
@@ -423,6 +449,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
     il = iline0
     sword = "#GAMMA_EACH"
     for ik in range(nk):
+        
         velocities.append([])
         
         for ib in range(nbands):
@@ -443,10 +470,15 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ik_check = int(data[0])
             ib_check = int(data[1])
             if ik != ik_check-1 or ib != ib_check-1:
-                msg = "\n Error in %s" % filename
+                fn_rel = Path(filename).relative_to(Path.cwd())
+                msg = "\n #########################################################"
+                msg += "\n Error in %s" % fn_rel
                 msg += "\n ik(%d!=%d) or ib(%d!=%d)" % (ik, ik_check-1, ib, ib_check-1)
                 msg += "\n " + lines[il]
-                msg += "\n Thermal conductivity may need to be calculated again. "
+                msg += "\n Possible solution for this issue is"
+                msg += f"\n * to delete {fn_rel} and"
+                msg += "\n * to calculate thermal conductivity again."
+                msg += "\n #########################################################"
                 logger.error(msg)
                 return None
             

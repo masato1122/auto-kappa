@@ -322,8 +322,6 @@ def check_result(dir_base, tar=None):
         for name in names[order]:
             figname = dir_result + "/fig_%s.png" % name
             if _exists(figname, tar=tar) == False:
-                #msg = " %s : %s" % (POSSIBLE_STATUSES[4], dir_result)
-                #logger.info(msg)
                 return False
     return True
 

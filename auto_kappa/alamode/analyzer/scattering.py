@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 
 import auto_kappa.units as units
-from .result import Result
-from .analyzer import get_average_at_degenerate_point, get_kmode
+from auto_kappa.alamode.analyzer.result import Result
+from auto_kappa.alamode.analyzer.analyzer import get_average_at_degenerate_point, get_kmode
 
 import logging
 logger = logging.getLogger(__name__)
@@ -32,14 +32,14 @@ class Scattering():
     >>>                 isotope=file_isotope, 
     >>>                 temperature=options.T,
     >>>                 grain_size=size)
-    >>>
+    >>> 
     >>> scat.set_total_scattering_rate()
     >>> print(scat.kappa)
-    >>>
+    >>> 
     >>> 
     >>> size = 1000   # nm
     >>> scat.cahnge_grain_size(size)
-    >>>
+    >>> 
     >>> T = 100.
     >>> scat.change_tempearture(T)
     
@@ -68,6 +68,7 @@ class Scattering():
         if file_result is None:
             logger.error(" Error: file_result must be given.")
             sys.exit()
+        
         self.result = Result(filename=file_result)
         
         ### properties
@@ -112,7 +113,7 @@ class Scattering():
         ### T-independent
         if self.size is not None:
             self.set_scattering_rate_boundary(size=self.size)
-    
+        
     @property
     def kpoints(self):
         return self.result['kpoints']

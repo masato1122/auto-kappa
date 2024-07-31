@@ -33,7 +33,7 @@ from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.cui import ak_log
 #from auto_kappa.io.files import write_output_yaml
-from auto_kappa.vasp.params import get_amin_parameter
+from auto_kappa.vasp.params import reflect_previous_jobs, get_amin_parameter
 
 import logging
 logger = logging.getLogger(__name__)
@@ -636,19 +636,21 @@ class ApdbVasp():
             calc = self.get_calculator(
                     mode.lower(), directory=directory, kpts=kpts, **args
                     )
-            ##
-            if print_params:
-                print_vasp_params(calc.asdict()['inputs'])
             
+            ###
             if structure is None:
                 structure = self.primitive
             
-            ### get AMIN
-            amin = get_amin_parameter(
-                    calc.directory, structure.cell.array, **self.amin_params)
-            if amin is not None:
-                calc.set(amin=amin)
-
+            ### update VASP parameters based on the previous jobs
+            reflect_previous_jobs(
+                    calc, structure, method=method, 
+                    amin_params=self.amin_params,
+                    )
+            
+            ### print VASP parameters
+            if print_params:
+                print_vasp_params(calc.asdict()['inputs'])
+            
             ### run a VASP job
             run_vasp(calc, structure, method=method)
         
@@ -751,19 +753,4 @@ def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
     num_errors = get_number_of_errors(directory)
     nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
     return nsw
-
-#def _get_amin_parameter(directory, lattice, len_tol=50, amin_set=0.01):
-#    """ Get and return AMIN """
-#    
-#    num_errors = _get_number_of_errors(directory)
-#    if num_errors == 0:
-#        return None
-#    
-#    ### if error exists,
-#    amin = None
-#    for j in range(3):
-#        length = np.linalg.norm(lattice[j])
-#        if length > len_tol:
-#            return amin_set
-#    return None
 

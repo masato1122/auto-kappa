@@ -897,6 +897,7 @@ class AlamodeCalc():
             temperature=500., classical=False,
             calculate_forces=True, output_dfset=1,
             amin_params={},
+            max_limit_of_estimated_time=24.*30.,
             ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
@@ -954,7 +955,7 @@ class AlamodeCalc():
         else:
             ### want to always use LASSO
             nsuggest = nmax_suggest + 1
-            msg = "\n Always use LASSO for high-order FCs."
+            msg = "\n LASSO is used for high-order FCs."
         
         logger.info(msg)
         
@@ -1148,9 +1149,26 @@ class AlamodeCalc():
             if count_calc == 0:
                 try:
                     num_remain = len(struct_keys) - ii - 1
-                    rtime_est = outinfo["cpu_time(min)"] * num_remain / 60.
+                    rtime_est = outinfo["cpu_time(min)"] * num_remain / 60.  # hour
                     msg = "\n Estimated remaining time for this part : %.2f hours\n" % (rtime_est)
                     logger.info(msg)
+                    
+                    #### Switch from finite-displacement to LASSO
+                    #if rtime_est > max_limit_of_estimated_time:
+                    #    msg = ("\n Estimated remaining time exceeds "
+                    #            "the maximum limit (%.0f hours)" % (
+                    #                max_limit_of_estimated_time))
+                    #    logger.info(msg)
+                    #    self.calc_forces(
+                    #        order, calculator=calculator,
+                    #        nmax_suggest=100, frac_nrandom=frac_nrandom, 
+                    #        temperature=temperature, classical=classical,
+                    #        calculate_forces=calculate_forces, 
+                    #        output_dfset=output_dfset,
+                    #        amin_params=amin_params,
+                    #        max_limit_of_estimated_time=max_limit_of_estimated_time,
+                    #        )
+                
                 except Exception:
                     pass
             count_calc += 1
@@ -1185,7 +1203,7 @@ class AlamodeCalc():
                 logger.info(msg)
         
         logger.info("")
-        
+
     def write_alamode_input(
             self, propt=None, order=None, 
             deltak=0.01, kpts=[15,15,15],
@@ -2073,7 +2091,7 @@ class AlamodeCalc():
             file_isotope = None
         
         ###
-        from .analyzer.scattering import Scattering
+        from auto_kappa.alamode.analyzer.scattering import Scattering
         self._scat = Scattering(
                 file_result, 
                 file_isotope=file_isotope,
@@ -2089,6 +2107,7 @@ class AlamodeCalc():
         
         dfs = {}
         for t in ts:
+            
             self.set_scattering_info(temperature=t, grain_size=None)
             omegas = self.scat.result['frequencies']
             taus = self.scat.lifetime

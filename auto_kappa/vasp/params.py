@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*aaaaaaaaaa- coding: utf-8 -*-
 #
 # params.py
 #
@@ -28,6 +28,85 @@ def get_previous_parameters(directory):
     from pymatgen.io.vasp.inputs import Incar
     incar = Incar.from_file(filename)
     return incar
+
+def reflect_previous_jobs(calc, structure, method=None, amin_params=None):
+    """
+    Parameters
+    -----------
+    calc : ase.calculators.vasp.vasp.Vasp object
+    structure : ase.atoms.Atoms object
+    """
+    msges = {}
+
+    ### update AMIN
+    amin = get_amin_parameter(calc.directory, structure.cell.array, **amin_params)
+    if amin is not None:
+        msges['amin'] = "\n AMIN = %.3f" % amin
+        calc.set(amin=amin)
+    
+    ### update SYMPREC
+    symprec = get_symprec(calc.directory, scale=0.1)
+    if symprec is not None:
+        msges['symprec'] = "\n SYMPREC = %.3e" % symprec
+        calc.set(symprec=symprec)
+    
+    ### Add functions below if other parameters need to be modified.
+    #
+    # Example : get_other_vasp_param(calc.directory, structure)
+    #
+    
+    ### print message
+    if len(msges) > 0:
+        msg = "\n"
+        msg += "\n Newly set VASP parameters :"
+        for key in msges:
+            msg += msges[key]
+        logger.info(msg)
+    
+
+def get_symprec(directory, scale=None, default=1e-5):
+    """ Determine SYMPREC parameter """
+
+    line_error = "PRICELV: current lattice and primitive lattice are incommensurate"
+    outcar = f"{directory}/OUTCAR"
+    
+    ### check the presence of OUTCAR file
+    if os.path.exists(outcar) == False:
+        return None
+    
+    ### check OUTCAR file
+    with open(outcar, 'r') as f:
+        lines = f.readlines()
+    
+    found_error = False
+    for line in lines:
+        if line_error in line:
+            found_error = True
+            break
+    
+    ### if the error is not found,
+    if found_error == False:
+        return None
+    
+    ### check previously used parameters
+    incar = get_previous_parameters(directory)
+    if incar is None:
+        return None
+    
+    params = incar.as_dict()
+    if "SYMPREC" in params:
+        base_symprec = params["SYMPREC"]
+    else:
+        base_symprec = default
+    
+    ### Stop the calculation if the parameter is too small.
+    if base_symprec < 1e-10:
+        msg = "\n Error : SYMPREC is too small (%.3e)." % base_symprec
+        msg += "\n Stop the calculation."
+        logger.error(msg)
+        sys.exit()
+    
+    return base_symprec * scale
 
 def get_amin_parameter(directory, lattice, **args):
     """ Get and return AMIN """
