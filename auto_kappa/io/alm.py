@@ -474,6 +474,7 @@ class AnphonInput(MSONable, dict):
             'restart',      # 1 or 0, integer
             ]
     scph_keys = [
+            'kmesh_interpolate', # None, Array of integers
             'kmesh_scph',        # None, Array of integers
             'self_offdiag',      # 0,    Integer
             'tol_scph',          # 1e-10, double

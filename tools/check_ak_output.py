@@ -411,7 +411,7 @@ def _memory_over(logfile, tar=None):
     for ll in lines:
         if "processes per node" in ll.lower() and "=> 1" in ll.lower():
             flag_single = True
-        if "Error : ALAMODE job was not finished properly":
+        if "Error : ALAMODE job was not finished properly" in ll:
             flag_stop = True
     ##
     if flag_single and flag_stop:
