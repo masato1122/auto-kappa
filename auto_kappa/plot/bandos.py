@@ -418,11 +418,11 @@ def conv_unit(unit, band, dos):
 def plot_bandos_for_different_sizes(
         almcalc1, almcalc2, figname="fig_bandos.png"
         ):
-    """ Plot band dispersions and DOS for different supercell sizes
-
+    """ Plot phonon dispersions and DOS for different supercell sizes
+    
     Args
     =====
-
+    
     almcalc : auto_kappa.alamode.AlmCalc
     
     """
@@ -435,7 +435,7 @@ def plot_bandos_for_different_sizes(
         if j != 2:
             lab1 += "x"
             lab2 += "x"
-
+    
     plot_bandos(
             directory=almcalc1.out_dirs["harm"]["bandos"],
             prefix=almcalc1.prefix,

@@ -520,6 +520,7 @@ def get_previous_nac(base_dir):
             if "Please submit a bug report." in line:
                 msg = ("\n The previous VASP calculation in %s was aborted "
                         "due to a bug." % (dir_nac))
+                msg += f'\n See {file_err} for details.'
                 logger.info(msg)
                 return 0
     

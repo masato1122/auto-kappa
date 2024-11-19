@@ -47,7 +47,7 @@ class ApdbVasp():
             encut_scale_factor=1.3,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             amin_params = {},
-            #yamlfile_for_outdir=None,
+            params_modified = None,
             ):
         """
         Args
@@ -63,7 +63,15 @@ class ApdbVasp():
         scell_matrix : float, shape=(3,3)
             transformation matrix from the unitcell to the supercell with 
             the definition in Phonopy, which is not same as Pymatgen and ASE
-
+        
+        params_modified : dict
+            INCAR parameters to be modified.
+            VASP calculation will be performed using the default parameters for
+            different calculations, including relax, nac, force calculations, 
+            if this parameter is not given (None). If this parameter is given,
+            the given VASP paremeters with this function parameter will be set 
+            for every calculations.
+        
         Note
         ------
         Translational vectors of the primitive cell can be calculated as
@@ -114,6 +122,9 @@ class ApdbVasp():
             if key not in self.amin_params.keys():
                 self.amin_params[key] = default_amin_parameters[key]
         
+        ### parameters that differ from the default values
+        self.set_modified_params(params_modified)
+    
     @property
     def primitive_matrix(self):
         return self._mat_u2p
@@ -125,6 +136,16 @@ class ApdbVasp():
     @property
     def command(self):
         return self._command
+    
+    @property
+    def params_mod(self):
+        if self._params_mod is None:
+            return {}
+        else:
+            return self._params_mod
+    
+    def set_modified_params(self, params_mod):
+        self._params_mod = params_mod
     
     #@property
     #def yamlfile_for_outdir(self):
@@ -190,67 +211,14 @@ class ApdbVasp():
     @property
     def primitive(self):
         return self._structures['prim']
-        ##
-        #if self.relaxed_structure['prim'] is not None:
-        #    return self.relaxed_structure['prim']
-        #
-        #elif self.original_structure['prim'] is not None:
-        #    return self.original_structure['prim']
-        #
-        #else:
-        #    return None
     
     @property
     def unitcell(self):
         return self._structures['unit']
-        ##
-        #if self.relaxed_structure['unit'] is not None:
-        #    
-        #    ### relaxed unitcell    
-        #    return self.relaxed_structure['unit']
-        #
-        #elif self.relaxed_structure['prim'] is not None:
-        #    
-        #    ### ver. old: may contain a critical error
-        #    mat_p2u = np.rint(np.linalg.inv(self._mat_u2p)).astype(int)
-        #    #
-        #    ### ver. corrected
-        #    #mat_p2u = np.linalg.inv(self.primitive_matrix).T
-        #
-        #    ### relaxed prim => relaxed unit
-        #    self.relaxed_structure['unit'] = make_supercell(
-        #            self.relaxed_structure['prim'], mat_p2u)
-        #    
-        #    return self.relaxed_structure['unit']
-        #
-        #elif self.original_structure['unit'] is not None:
-        #    return self.original_structure['unit']
-        # 
-        #else:
-        #    return None
     
     @property
     def supercell(self):
         return self._structures['super']
-        ##
-        #if self.relaxed_structure['scell'] is not None:
-        #    
-        #    ### relaxed supercell
-        #    return self.relaxed_structure['scell']
-        #
-        #elif self.relaxed_structure['prim'] is not None:
-        #    
-        #    ### relaxed unit => relaxed scell
-        #    self.relaxed_structure['scell'] = make_supercell(
-        #            self.unitcell, self._mat_u2s)
-        #    
-        #    return self.relaxed_structure['scell']
-        #
-        #elif self.original_structure['scell'] is not None:
-        #    return self.original_structure['scell']
-        #
-        #else:
-        #    return None
     
     def get_calculator(self, mode, directory=None, kpts=None, **args):
         """ Return VASP calculator created by ASE
@@ -264,6 +232,10 @@ class ApdbVasp():
         
         kpts : list of float, shpae=(3,)
         
+        **args : dict
+            VASP parameters that will be modified which are prior to 
+            ``self.params_mod``
+        
         """
         from auto_kappa.calculators.vasp import get_vasp_calculator
         
@@ -273,13 +245,20 @@ class ApdbVasp():
         elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
         
-        calc = get_vasp_calculator(mode, 
+        ### merge ``args`` and ``self.params_mod``
+        ### `args`` is prior to ``self.params_mod`
+        merged_params_mod = self.params_mod.copy()
+        merged_params_mod.update(args)
+        
+        calc = get_vasp_calculator(
+                mode, 
                 directory=directory, 
                 atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
-                **args,
+                **merged_params_mod,
                 )
+        
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 
                 self.command['nprocs'],
@@ -493,6 +472,7 @@ class ApdbVasp():
             Vs, Es = relax.with_different_volumes(
                     kpts=kpts, 
                     command=self.command,
+                    params_mod=self.params_mod
                     )
             
             ### output figure
@@ -573,7 +553,6 @@ class ApdbVasp():
         with open(outfile, 'w') as f:
             yaml.dump(dict_data, f)
             
-    
     def run_vasp(self, mode: None, directory: './out', kpts: None, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 

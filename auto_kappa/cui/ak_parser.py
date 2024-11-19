@@ -229,7 +229,17 @@ def get_parser():
     #                "Maximum limit of the number of atoms in the supercell for "\
     #                " FC3 [None].")
     
-    ### Parameters that need to be changed for test calculations 
+    
+    #########################
+    ## parameters for VASP ##
+    #########################
+    parser.add_option("--vasp_parameters", dest="vasp_parameters", type="string",
+            default=None, help="VASP parameters. For example, \"ISORBIT=False,DIFFG=1e-7\"")
+    
+    
+    #################################################################
+    ### Parameters that need to be changed for test calculations  ###
+    #################################################################
     parser.add_option("--restart", dest="restart", type="int",
             default=1,
             help="The calculation will restart (1) or will NOT restart (0) "
@@ -259,4 +269,52 @@ def get_parser():
     (options, args) = parser.parse_args()
     
     return options
+
+def parse_vasp_params(params_string):
+    """
+    Parameters
+    ------------
+    params_string : string
+        VASP parameters which differ from the default values are given by ``--vasp_parameters`` option.
+        The parmeters can be given like following.
+
+    How to set the option
+    ---------------------
+    >>> --vasp_parameters=\"lsorbit=1,ediff=1e-9,ediffg=-1e7\"
+    
+    Return
+    ---------
+    dictionary of the parameters which will be modified
+    """
+    if params_string is None:
+        return None
+
+    from pymatgen.io.vasp.inputs import Incar
+
+    ### parse each parameter
+    params_dict = {}
+    list_params_mod = params_string.split(",")
+    for each in list_params_mod:
+
+        data = each.split("=")
+
+        ### check format
+        if len(data) != 2:
+            msg = f"\n Error : vasp_parameters is not given properly ({each})"
+            logger.error(msg)
+        
+        name = data[0].replace(" ", "").upper()
+        
+        ### parse a given value
+        try:
+            val = Incar.proc_val(name, data[1])
+        except Exception:
+            msg = f"\n Error : vasp_parameters may not given properly."
+            msg += f"\n {name} may not exist for VASP parameter."
+            logger.error(msg)
+            sys.exit()
+        
+        params_dict[name] = val
+    
+    return params_dict
 

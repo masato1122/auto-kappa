@@ -79,6 +79,7 @@ class StrictRelaxation():
             command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
             encut_factor=1.3, 
             verbosity=1,
+            params_mod=None
             ):
         
         ### Run VASP jobs for different volumes
@@ -103,7 +104,8 @@ class StrictRelaxation():
                 #
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
-                verbosity=2
+                verbosity=2,
+                params_mod=params_mod
                 )
         
         def _get_energy_info(energies):
@@ -142,7 +144,8 @@ class StrictRelaxation():
                     #
                     kpts=kpts, encut_factor=encut_factor,
                     command=command,
-                    verbosity=1
+                    verbosity=1,
+                    params_mod=params_mod
                     )
             
             ### check energies
@@ -450,6 +453,7 @@ def relaxation_with_different_volumes(
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
         tol_strain=1e-5,
         verbosity=1,
+        params_mod=None
         ):
     """ Structure relaxation with the Birch-Murnaghan equation of state
     Args
@@ -515,10 +519,11 @@ def relaxation_with_different_volumes(
         ### set calculator object
         calc = get_vasp_calculator(
                 'relax-freeze', 
-                atoms=atoms,
                 directory=outdir,
+                atoms=atoms,
                 kpts=kpts,
-                encut_scale_factor=encut_factor
+                encut_scale_factor=encut_factor,
+                **params_mod
                 )
         calc.command = "%s -n %d %s" % (
                 command['mpirun'],

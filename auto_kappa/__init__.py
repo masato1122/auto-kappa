@@ -54,6 +54,13 @@ output_files = {
         ##'lasso_xml'  : "FCs_lasso.xml",
         }
 
+#
+# According the manual for VASP:
+# "If you have no a priori knowledge of your system, for instance, if you do not know whether your system is an insulator, 
+# semiconductor or metal then always use Gaussian smearing ISMEAR=0 in combination with a small SIGMA=0.03-0.05."
+# ISMEAR = 0 : Gaussian smearing
+# SIGMA : width of smearing
+#
 default_vasp_parameters = {
         ### for relaxation
         'relax':{
@@ -90,7 +97,7 @@ default_vasp_parameters = {
             'nelmin': 5,
             'sigma': 0.02,
             'ediff': 1e-8,
-            'ismear': 0,
+            'ismear': 0,      # Gaussian smearing
             'ialgo': 38,
             'lreal': False,
             'addgrid': True,

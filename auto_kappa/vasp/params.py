@@ -1,4 +1,4 @@
-# -*aaaaaaaaaa- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 # params.py
 #

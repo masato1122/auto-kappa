@@ -27,7 +27,6 @@ from auto_kappa.calculators.alamode import (
         calculate_cubic_force_constants,
         calculate_thermal_conductivities,
         )
-from auto_kappa.cui.ak_parser import get_parser
 from auto_kappa.cui import ak_log
 from auto_kappa.cui.initialization import (
         use_omp_for_anphon,
@@ -80,8 +79,13 @@ def _stop_symmetry_error(out):
 def main():
     
     ### Parse given parameters
+    from auto_kappa.cui.ak_parser import get_parser, parse_vasp_params
+    
     options = get_parser()
+    
     ak_params = eval(str(options))
+    
+    vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Get the name of the base directory
     base_dir = get_base_directory_name(
@@ -206,6 +210,7 @@ def main():
             primitive_matrix=trans_matrices["primitive"],
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
+            params_modified=vasp_params_mod,
             #yamlfile_for_outdir=yaml_outdir
             )
     
@@ -231,9 +236,7 @@ def main():
             }
     write_output_yaml(yaml_outdir, "relax", info)
     
-    ##############################
     ### Get relaxed structures
-    ### This part was omitted in the beggining of ver.0.2.
     structures_relax = apdb.structures.copy()
     
     ### Calculate Born effective charge
