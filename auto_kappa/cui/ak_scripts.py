@@ -128,25 +128,15 @@ def main():
      
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
-            get_required_parameters(
-                base_directory=base_dir,
-                dir_phdb=ak_params['directory'], 
-                file_structure=ak_params['file_structure'],
-                max_natoms=ak_params['max_natoms'], 
-                #max_natoms3=ak_params['max_natoms3'],
-                k_length=ak_params['k_length'],
-                celltype_relax_given=ak_params['relaxed_cell'],
-                )
-            )
-    
-    print(structures['supercell'])
-    import ase.io
-    ase.io.write('POSCAR.unit', structures['unitcell'],
-                 direct=True, sort=True, vasp5=True)
-    ase.io.write('POSCAR.prim', structures['primitive'],
-                 direct=True, sort=True, vasp5=True)
-    exit()
-    
+        get_required_parameters(
+            base_directory=base_dir,
+            dir_phdb=ak_params['directory'], 
+            file_structure=ak_params['file_structure'],
+            max_natoms=ak_params['max_natoms'], 
+            #max_natoms3=ak_params['max_natoms3'],
+            k_length=ak_params['k_length'],
+            celltype_relax_given=ak_params['relaxed_cell'],
+        ))
     
     ### NONANALYTIC (primitive)
     if nac != 0:
