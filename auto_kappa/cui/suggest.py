@@ -132,13 +132,20 @@ def get_unitcell_and_primitive_matrix(structure):
             )
 
     ### get the unitcell
+    # ver.1
     cell_std = spglib.standardize_cell(cell, to_primitive=False)
-    
     unitcell = ase.Atoms(
             cell=cell_std[0], pbc=True,
             scaled_positions=cell_std[1],
             numbers=cell_std[2]
             )
+    # ver.2
+    # from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as spg_analyzer
+    # spg = spg_analyzer(change_structure_format(structure, 'pmg'))
+    # conv = spg.get_conventional_standard_structure()
+    # print(conv)
+    # conv.to("POSCAR")
+    # exit()
     
     ### primitive matrix
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
@@ -186,9 +193,9 @@ def klength2mesh(length, lattice, rotations=None):
     mesh_numbers = np.rint(rec_lat_lengths * length).astype(int)
 
     if rotations is not None:
+        from phonopy.structure.symmetry import get_lattice_vector_equivalence
         reclat_equiv = get_lattice_vector_equivalence(
-            [r.T for r in np.array(rotations)]
-        )
+            [r.T for r in np.array(rotations)])
         m = mesh_numbers
         mesh_equiv = [m[1] == m[2], m[2] == m[0], m[0] == m[1]]
         for i, pair in enumerate(([1, 2], [2, 0], [0, 1])):

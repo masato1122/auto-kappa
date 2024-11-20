@@ -169,7 +169,7 @@ def get_standardized_structure(struct_orig,
                 format=format,
                 )
          
-    elif version == 'pymatgen':
+    elif version == 'pymatgen' or version == 'pmg':
         
         if (isinstance(struct_orig, str_pmg.Structure) == False and
                 isinstance(struct_orig, str_pmg.IStructure) == False):

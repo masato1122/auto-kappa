@@ -458,7 +458,7 @@ def get_required_parameters(
                         k_length=k_length,
                         )
                     )
-
+        
         ### This part can be modified. So far, NAC is considered for materials
         ### which is not included in Phonondb.
         nac = 2

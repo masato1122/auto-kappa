@@ -89,12 +89,11 @@ def main():
     
     ### Get the name of the base directory
     base_dir = get_base_directory_name(
-            ak_params['material_name'], restart=ak_params['restart']
-            )
+            ak_params['material_name'], restart=ak_params['restart'])
     os.makedirs(base_dir, exist_ok=True)
     
     ### set logger
-    logfile = base_dir + "/ak.log"
+    logfile = os.path.join(base_dir, 'ak.log')
     ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
     
     ### Start auto-kappa
@@ -139,6 +138,15 @@ def main():
                 celltype_relax_given=ak_params['relaxed_cell'],
                 )
             )
+    
+    print(structures['supercell'])
+    import ase.io
+    ase.io.write('POSCAR.unit', structures['unitcell'],
+                 direct=True, sort=True, vasp5=True)
+    ase.io.write('POSCAR.prim', structures['primitive'],
+                 direct=True, sort=True, vasp5=True)
+    exit()
+    
     
     ### NONANALYTIC (primitive)
     if nac != 0:
