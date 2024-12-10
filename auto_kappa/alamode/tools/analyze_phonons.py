@@ -10,6 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import os
 import os.path
 import warnings
@@ -79,7 +80,7 @@ def write_lifetime_at_given_temperature(file_result: None,
         end_s = 0
     else:
         if len(mode.split(':')) == 1:
-            beg_s = int(options.mode)
+            beg_s = int(mode)
             end_s = beg_s
         elif len(mode.split(':')) == 2:
             arr = mode.split(':')

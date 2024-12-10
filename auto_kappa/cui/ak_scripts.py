@@ -235,7 +235,7 @@ def main():
     write_output_yaml(yaml_outdir, "relax", info)
     
     ### Get relaxed structures
-    structures_relax = apdb.structures.copy()
+    structures_relaxed = apdb.structures.copy()
     
     ### Calculate Born effective charge
     if nac:
@@ -262,7 +262,7 @@ def main():
 
     ### Set AlmCalc
     almcalc = AlamodeCalc(
-            structures_relax['prim'],
+            structures_relaxed['prim'],
             base_directory=base_dir,
             restart=ak_params['restart'],
             primitive_matrix=trans_matrices['primitive'],

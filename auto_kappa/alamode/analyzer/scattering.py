@@ -29,7 +29,7 @@ class Scattering():
     Hot To Use
     ------------
     >>> scat = Scattering(options.fresult, 
-    >>>                 isotope=file_isotope, 
+    >>>                 file_isotope=file_isotope, 
     >>>                 temperature=options.T,
     >>>                 grain_size=size)
     >>> 
@@ -187,7 +187,7 @@ class Scattering():
                 self._total_scattering_rate += self.scattering_rates[key]
         msg += "\n"
         if self.verbosity > 0:
-            logger.info(ms)
+            logger.info(msg)
         
         self.set_lifetime()
         self.set_kmode()
@@ -451,7 +451,7 @@ class Scattering():
     def set_scattering_rate_isotope(self):
         from .isotope import Isotope
         if os.path.exists(self.file_isotope) == False:
-            logger.warning(" %s does not exist." % filename)
+            logger.warning(" %s does not exist." % self.file_isotope)
         else:
             iso = Isotope(filename=self.file_isotope)
             ## 1/ps

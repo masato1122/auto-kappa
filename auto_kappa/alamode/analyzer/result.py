@@ -533,6 +533,7 @@ def _get_free_energy(natoms, volume, temps, multi, freqs):
     efree : array, float, shape=(nt), unit=[J/mol]
         T-dependent free energy
     """
+    from auto_kappa import units
     energies = freqs * units.CmToJ     # [J]
     kbTs = temps * units.KToJ          # [J]
     # -- T-independent term

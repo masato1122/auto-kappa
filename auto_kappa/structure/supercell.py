@@ -12,8 +12,8 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import math
-from auto_kappa.structure.crystal import change_structure_format
+# import math
+# from auto_kappa.structure.crystal import change_structure_format
 import spglib
 
 def estimate_supercell_matrix(structure, max_num_atoms=120, max_iter=100):

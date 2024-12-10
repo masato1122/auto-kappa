@@ -17,6 +17,7 @@ import re
 import tarfile
 import glob
 
+import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
@@ -41,6 +42,10 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     ### prepare a directory and write files
     os.makedirs(calc.directory, exist_ok=True)
     calc.write_input(atoms)
+    
+    ## output POSCAR file with "direct" style
+    file_poscar = os.path.join(calc.directory, 'POSCAR')
+    ase.io.write(file_poscar, atoms, direct=True, sort=True, vasp5=True)
     
     ### change directory
     cwd = os.getcwd()
@@ -99,7 +104,7 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
         logger.error(msg)
         sys.exit()
 
-def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
+def get_vasp_calculator(mode, atoms, directory=None, kpts=None,
         encut_scale_factor=1.3,
         setups='recommended', xc='pbesol',
         **args,
@@ -133,7 +138,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     >>> #mode = 'force'
     >>>
     >>> calc = get_vasp_calculator(
-            mode, directory='./out', kpts=[10,10,10])
+            mode, atoms, directory='./out', kpts=[10,10,10])
     >>> calc.command = "mpirun -n 2 vasp"
     >>> calc.write_input(structure)
     
@@ -147,7 +152,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     
     ### set defualt parameters
     params = default_vasp_parameters[mode.lower()].copy()
-    
+
     ### update for 'relax' mode
     if 'relax' in mode.lower():
         params_relax = default_vasp_parameters['relax'].copy()
@@ -160,11 +165,11 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     enmax = get_enmax(calc.ppp_list)
     params['encut'] = enmax * encut_scale_factor
     
-    #### set LREAL
-    #if len(atoms) >= auto_lreal_scell_size:
-    #    params['lreal'] = 'Auto'
-    #else:
-    #    params['lreal'] = False
+    ### Hubbard U correction
+    # from auto_kappa.calculators.hubbard import (
+    #         use_hubbard, get_hubbard_params)
+    # if use_hubbard(atoms.get_chemical_symbols()):
+    #     params.update(get_hubbard_params(atoms))
     
     ### kpoints
     if kpts is not None:
@@ -190,6 +195,10 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     calc.results.clear()
     return calc
 
+def get_default_params_pymatgen():
+    from pymatgen.io.vasp.sets import MPRelaxSet
+    return MPRelaxSet.CONFIG.get('INCAR')
+    
 def get_enmax(ppp_list):
     """
     Args

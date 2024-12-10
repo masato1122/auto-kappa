@@ -220,7 +220,7 @@ class ApdbVasp():
     def supercell(self):
         return self._structures['super']
     
-    def get_calculator(self, mode, directory=None, kpts=None, **args):
+    def get_calculator(self, mode, structure=None, directory=None, kpts=None, **args):
         """ Return VASP calculator created by ASE
         Args
         ------
@@ -240,10 +240,15 @@ class ApdbVasp():
         from auto_kappa.calculators.vasp import get_vasp_calculator
         
         ### get structure (Atoms obj)
-        if 'relax' in mode.lower() or mode.lower() == 'nac':
-            structure = self.primitive
-        elif 'force' in mode.lower() or mode.lower() == 'md':
-            structure = self.supercell
+        if structure is None:
+            if 'relax' in mode.lower() or mode.lower() == 'nac':
+                structure = self.primitive
+            elif 'force' in mode.lower() or mode.lower() == 'md':
+                structure = self.supercell
+            else:
+                msg = '\n Structure must be given.'
+                logger.error(msg)
+                sys.exit()
         
         ### merge ``args`` and ``self.params_mod``
         ### `args`` is prior to ``self.params_mod`
@@ -251,9 +256,8 @@ class ApdbVasp():
         merged_params_mod.update(args)
         
         calc = get_vasp_calculator(
-                mode, 
+                mode, structure,
                 directory=directory, 
-                atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
                 **merged_params_mod,
@@ -266,7 +270,7 @@ class ApdbVasp():
         return calc
     
     def run_relaxation(
-            self, directory: './out', kpts: None,
+            self, directory, kpts,
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
@@ -553,7 +557,7 @@ class ApdbVasp():
         with open(outfile, 'w') as f:
             yaml.dump(dict_data, f)
             
-    def run_vasp(self, mode: None, directory: './out', kpts: None, 
+    def run_vasp(self, mode: str, directory: str, kpts: list, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 
             standardization=True, verbosity=1, **args
@@ -600,9 +604,7 @@ class ApdbVasp():
             logger.info(msg)
         
         ### set OpenMP
-        omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
-        for key in omp_keys:
-            os.environ[key] = str(self.command['nthreads'])
+        set_openmp_environment(nthreads=self.command['nthreads'])
         
         ### perform the calculation
         if wasfinished(directory, filename='vasprun.xml') and force == False:
@@ -613,7 +615,7 @@ class ApdbVasp():
             
             #### ver.1 relax with one shot
             calc = self.get_calculator(
-                    mode.lower(), directory=directory, kpts=kpts, **args
+                    mode.lower(), structure=structure, directory=directory, kpts=kpts, **args
                     )
             
             ###
@@ -633,9 +635,8 @@ class ApdbVasp():
             ### run a VASP job
             run_vasp(calc, structure, method=method)
         
-        ### set back OpenMP 
-        for key in omp_keys:
-            os.environ[key] = "1"
+        ### set back OpenMP
+        set_openmp_environment(nthreads=1)
          
         ### Read the relaxed structure
         if 'relax' in mode.lower():
@@ -733,3 +734,9 @@ def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
     nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
     return nsw
 
+def set_openmp_environment(nthreads=None, default_threads=1):
+    omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"]
+    if nthreads is None:
+        nthreads = default_threads
+    for key in omp_keys:
+        os.environ[key] = str(nthreads)

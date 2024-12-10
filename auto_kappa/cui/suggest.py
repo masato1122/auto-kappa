@@ -10,7 +10,6 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
-import math
 import numpy as np
 
 import ase
@@ -125,27 +124,16 @@ def get_unitcell_and_primitive_matrix(structure):
     
     """
     ### structure preparation
-    cell = (
-            structure.cell,
+    cell = (structure.cell,
             structure.get_scaled_positions(),
-            structure.numbers
-            )
-
+            structure.numbers)
+    
     ### get the unitcell
-    # ver.1
     cell_std = spglib.standardize_cell(cell, to_primitive=False)
     unitcell = ase.Atoms(
             cell=cell_std[0], pbc=True,
             scaled_positions=cell_std[1],
-            numbers=cell_std[2]
-            )
-    # ver.2
-    # from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as spg_analyzer
-    # spg = spg_analyzer(change_structure_format(structure, 'pmg'))
-    # conv = spg.get_conventional_standard_structure()
-    # print(conv)
-    # conv.to("POSCAR")
-    # exit()
+            numbers=cell_std[2])
     
     ### primitive matrix
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
