@@ -266,7 +266,7 @@ class ApdbVasp():
         return calc
     
     def run_relaxation(
-            self, directory: './out', kpts: None,
+            self, directory: str, kpts: None,
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
@@ -553,7 +553,7 @@ class ApdbVasp():
         with open(outfile, 'w') as f:
             yaml.dump(dict_data, f)
             
-    def run_vasp(self, mode: None, directory: './out', kpts: None, 
+    def run_vasp(self, mode: None, directory: str, kpts: None, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 
             standardization=True, verbosity=1, **args
