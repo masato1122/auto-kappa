@@ -23,12 +23,12 @@ Manual
 
 Please follow the these steps to view the manual.
 
-1. Download "auto-kappa"
-2. Got into .../auto-kappa/docs
-3. make html
-4. Check if "./build/html" was created.
-5. Download "html" directory in your local PC.
-6. Open "./html/index.html" with your browser.
+1. Download "auto-kappa".
+2. Got into "{path to auto-kappa}/auto-kappa/docs" directory.
+3. Run the command "make html".
+4. Confirm that the "./build/html" directory has been created.
+5. Download the "html" directory to your local PC.
+6. Open "./html/index.html" in your browser.
 
 References
 -----------
