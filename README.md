@@ -18,6 +18,17 @@ Requirements
 * Spglib
 * Custodian
 
+Manual
+---------
+
+Please follow the following process to see the manual.
+
+1. Download "auto-kappa"
+2. Got into .../auto-kappa/docs
+3. make html
+4. Check if "./build/html" was created.
+5. Download "html" directory in your local PC.
+6. Open "./html/index.html" with your browser.
 
 References
 -----------
