@@ -21,7 +21,7 @@ Requirements
 Manual
 ---------
 
-Please follow the following process to see the manual.
+Please follow the these steps to view the manual.
 
 1. Download "auto-kappa"
 2. Got into .../auto-kappa/docs
