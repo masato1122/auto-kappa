@@ -39,13 +39,15 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
             VaspErrorHandler, UnconvergedErrorHandler)
     from custodian.vasp.jobs import VaspJob
     
+    ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     ### prepare a directory and write files
     os.makedirs(calc.directory, exist_ok=True)
     calc.write_input(atoms)
-    
-    ## output POSCAR file with "direct" style
-    file_poscar = os.path.join(calc.directory, 'POSCAR')
-    ase.io.write(file_poscar, atoms, direct=True, sort=True, vasp5=True)
+    # file_poscar = os.path.join(calc.directory, 'POSCAR')
+    # ase.io.write(file_poscar, atoms, direct=False, sort=True)
+    # print(' Check order of element in POSCAR and MAGMOM. Alphabetical?')
+    # sys.exit()
+    ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     ### change directory
     cwd = os.getcwd()
@@ -169,7 +171,12 @@ def get_vasp_calculator(mode, atoms, directory=None, kpts=None,
     # from auto_kappa.calculators.hubbard import (
     #         use_hubbard, get_hubbard_params)
     # if use_hubbard(atoms.get_chemical_symbols()):
-    #     params.update(get_hubbard_params(atoms))
+    #     params.update(
+    #         get_hubbard_params(
+    #             atoms, 
+    #             default_params=get_default_params_pymatgen()
+    #             )
+    #         )
     
     ### kpoints
     if kpts is not None:

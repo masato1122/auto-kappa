@@ -1,0 +1,364 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>auto_kappa.plot.alamode package &mdash; auto-kappa Oct. 3th, 2022 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=17ecafcb"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="auto_kappa.structure package" href="auto_kappa.structure.html" />
+    <link rel="prev" title="auto_kappa.plot package" href="auto_kappa.plot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">4. auto_kappa</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="auto_kappa.html">4.1. auto_kappa package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="auto_kappa.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.alamode.html">auto_kappa.alamode package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.cui.html">auto_kappa.cui package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.io.html">auto_kappa.io package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="auto_kappa.plot.html">auto_kappa.plot package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.structure.html">auto_kappa.structure package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.vasp.html">auto_kappa.vasp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.apdb">auto_kappa.apdb module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#auto-kappa-calculator-module">auto_kappa.calculator module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.units">auto_kappa.units module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.version">auto_kappa.version module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html"><span class="section-number">4. </span>auto_kappa</a></li>
+          <li class="breadcrumb-item"><a href="auto_kappa.html"><span class="section-number">4.1. </span>auto_kappa package</a></li>
+          <li class="breadcrumb-item"><a href="auto_kappa.plot.html">auto_kappa.plot package</a></li>
+      <li class="breadcrumb-item active">auto_kappa.plot.alamode package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto-kappa/auto_kappa.plot.alamode.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="auto-kappa-plot-alamode-package">
+<h1>auto_kappa.plot.alamode package<a class="headerlink" href="#auto-kappa-plot-alamode-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-auto_kappa.plot.alamode.band">
+<span id="auto-kappa-plot-alamode-band-module"></span><h2>auto_kappa.plot.alamode.band module<a class="headerlink" href="#module-auto_kappa.plot.alamode.band" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.Band">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">Band</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.Band" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.Band.read_bfile">
+<span class="sig-name descname"><span class="pre">read_bfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.Band.read_bfile" title="Link to this definition"></a></dt>
+<dd><p>Read band file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.Band.set_eigen">
+<span class="sig-name descname"><span class="pre">set_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.Band.set_eigen" title="Link to this definition"></a></dt>
+<dd><p>Read band file crated by ALAMODE</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.Band.set_nk_nbands">
+<span class="sig-name descname"><span class="pre">set_nk_nbands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.Band.set_nk_nbands" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.Band.set_symmetry_points">
+<span class="sig-name descname"><span class="pre">set_symmetry_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.Band.set_symmetry_points" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_eigen">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_eigen" title="Link to this definition"></a></dt>
+<dd><p>Get kpoints and frequencies</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_nk_nbands">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_nk_nbands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_nk_nbands" title="Link to this definition"></a></dt>
+<dd><p>Get nk and nbands from band file
+:param bfile: band file name of ALAMODE
+:type bfile: string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nk, nband</strong> – # of k-points and bands</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_normal_bands">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_normal_bands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_normal_bands" title="Link to this definition"></a></dt>
+<dd><p>Read .bands file</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_scph_bands">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_scph_bands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_scph_bands" title="Link to this definition"></a></dt>
+<dd><p>Read .scph_bands file and return array of dictionary for each
+temperature.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_symmetry_points_from_filename">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_symmetry_points_from_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_symmetry_points_from_filename" title="Link to this definition"></a></dt>
+<dd><p>Read symmetry points from band file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>label</strong> (<em>string</em>) – label for symmetry points</p></li>
+<li><p><strong>ksym</strong> (<em>double</em>) – |k| for symmetry points</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.band.get_symmetry_points_from_string">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.band.</span></span><span class="sig-name descname"><span class="pre">get_symmetry_points_from_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.band.get_symmetry_points_from_string" title="Link to this definition"></a></dt>
+<dd><p>Read symmetry points from band file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>label</strong> (<em>string</em>) – label for symmetry points</p></li>
+<li><p><strong>ksym</strong> (<em>double</em>) – |k| for symmetry points</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.plot.alamode.dos">
+<span id="auto-kappa-plot-alamode-dos-module"></span><h2>auto_kappa.plot.alamode.dos module<a class="headerlink" href="#module-auto_kappa.plot.alamode.dos" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.Dos">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.dos.</span></span><span class="sig-name descname"><span class="pre">Dos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.Dos" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.Dos.read_dfile">
+<span class="sig-name descname"><span class="pre">read_dfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.Dos.read_dfile" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.Dos.set_dos">
+<span class="sig-name descname"><span class="pre">set_dos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.Dos.set_dos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.Dos.set_elements">
+<span class="sig-name descname"><span class="pre">set_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.Dos.set_elements" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.Dos.set_nfreq">
+<span class="sig-name descname"><span class="pre">set_nfreq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.Dos.set_nfreq" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.get_dos">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.dos.</span></span><span class="sig-name descname"><span class="pre">get_dos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.get_dos" title="Link to this definition"></a></dt>
+<dd><p>Read DOS file
+:param nfreq: # of frequencies
+:type nfreq: integer
+:param nat: # of atoms in a primitive cell
+:type nat: integer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>dos_total</strong> (<em>array, float, shape=(nfreq)</em>) – Total DOS</p></li>
+<li><p><strong>dos_atom</strong> (<em>ndarray, float, shape=(nfreq, nat)</em>) – Atom projected DOS</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.get_elements">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.dos.</span></span><span class="sig-name descname"><span class="pre">get_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.get_elements" title="Link to this definition"></a></dt>
+<dd><p>Read elements in a primitive cell</p>
+<section id="parameter">
+<h3>Parameter<a class="headerlink" href="#parameter" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dfile<span class="classifier">string</span></dt><dd><p>DOS file name</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elements</strong> (<em>array, string, shape=(nels)</em>) – elements (H, He, Li, …, etc)</p></li>
+<li><p><strong>nat_el</strong> (<em>array, integer, shape=(nels)</em>) – # of each element</p></li>
+<li><p><strong>nels</strong> (<em>integer</em>) – # of kinds of element</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.dos.get_nfreq">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.dos.</span></span><span class="sig-name descname"><span class="pre">get_nfreq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.dos.get_nfreq" title="Link to this definition"></a></dt>
+<dd><p>Get number of frequencies</p>
+<section id="id1">
+<h3>Parameter<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>dfile<span class="classifier">string</span></dt><dd><p>DOS file name</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nline</strong> – # of frequencies</p>
+</dd>
+<dt class="field-even">rtype<span class="colon">:</span></dt>
+<dd class="field-even"><p>integer</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.plot.alamode.participation">
+<span id="auto-kappa-plot-alamode-participation-module"></span><h2>auto_kappa.plot.alamode.participation module<a class="headerlink" href="#module-auto_kappa.plot.alamode.participation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.participation.Participation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.participation.</span></span><span class="sig-name descname"><span class="pre">Participation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.participation.Participation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<section id="variables">
+<h3>Variables<a class="headerlink" href="#variables" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>.nk<span class="classifier">integer</span></dt><dd><p># of k-points</p>
+</dd>
+<dt>.nbands<span class="classifier">integer</span></dt><dd><p># of bands</p>
+</dd>
+<dt>kpoints<span class="classifier">ndarray, float, shape=(nk,3)</span></dt><dd><p>k-points</p>
+</dd>
+<dt>ratio<span class="classifier">ndarray, float, shape=(nk,nband)</span></dt><dd><p>Participation ratio of each modes</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.participation.Participation.set_numbers">
+<span class="sig-name descname"><span class="pre">set_numbers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FILE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.participation.Participation.set_numbers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.participation.Participation.set_pr_ratio">
+<span class="sig-name descname"><span class="pre">set_pr_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FILE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.participation.Participation.set_pr_ratio" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.plot.alamode.participation.get_numbers">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.plot.alamode.participation.</span></span><span class="sig-name descname"><span class="pre">get_numbers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">FILE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.plot.alamode.participation.get_numbers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-auto_kappa.plot.alamode">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-auto_kappa.plot.alamode" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="auto_kappa.plot.html" class="btn btn-neutral float-left" title="auto_kappa.plot package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="auto_kappa.structure.html" class="btn btn-neutral float-right" title="auto_kappa.structure package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

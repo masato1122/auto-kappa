@@ -1436,6 +1436,7 @@ class AlamodeCalc():
                     nonanalytic=self.nac, 
                     borninfo=borninfo
                 )
+            
         ###
         self._prefix = inp['prefix']
         
@@ -1557,7 +1558,6 @@ class AlamodeCalc():
         ### make input script for ALAMODE
         inp.update(given_params)
         inp.to_file(filename=filename)
-        
         msg = "\n Make an input script for ALAMODE : %s." % (
                 self.get_relative_path(filename))
 

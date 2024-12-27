@@ -12,15 +12,11 @@
 #from typing import Any, Dict, List, Optional, Union
 from typing import Dict
 from monty.json import MSONable
-import sys
 import warnings
-import re
 import math
 import numpy as np
-import pymatgen
 
 from pymatgen.io.vasp import Poscar
-from ase import Atoms
 
 from auto_kappa.units import AToBohr
 from auto_kappa.structure.crystal import (

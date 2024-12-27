@@ -307,6 +307,7 @@ def analyze_harmonic_properties(
     
     ##### suggest and creat structures for harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
+    
     almcalc.run_alamode(propt='suggest', order=1)
     
     ### calculate forces

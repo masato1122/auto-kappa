@@ -1,0 +1,185 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Use Auto-kappa &mdash; auto-kappa Oct. 3th, 2022 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=17ecafcb"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto-kappa/modules.html">4. auto_kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How to Use Auto-kappa</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-to-use-auto-kappa">
+<h1>How to Use Auto-kappa<a class="headerlink" href="#how-to-use-auto-kappa" title="Link to this heading"></a></h1>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">database</span></code> example</p></li>
+</ol>
+<p>The calculation in <code class="docutils literal notranslate"><span class="pre">database</span></code> calculates thermal conductivity of Silicon automatically.
+Because every process is included in this job, it takes one or two hours.
+It is recommended to use a job scheduler to submit this job.
+An example of job script is shown below. Please modify depending on your environment.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+<span class="c1">#PBS -q default         ## name of queue that you can check with a command like &quot;qstat -q&quot;.</span>
+<span class="c1">#PBS -l nodes=1:ppn=24  ## only nodes=1 is available</span>
+<span class="c1">#PBS -j oe</span>
+<span class="c1">#PBS -N test            ## job name</span>
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">LANG</span><span class="o">=</span>C
+<span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Please set OMP_NUM_THREADS=1</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$PBS_O_WORKDIR</span>
+
+<span class="nv">ncores</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## ncores must be smaller than ppn, which is set above.</span>
+
+<span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">             </span><span class="c1">## Si</span>
+<span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span><span class="w">  </span><span class="c1">## This line must be modified.</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Cannot find </span><span class="nv">$dir_db</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="nb">exit</span>
+<span class="k">fi</span>
+
+akrun<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--directory<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--material_name<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ncores<span class="w"> </span><span class="nv">$ncores</span>
+</pre></div>
+</div>
+</section>
+<section id="automation-calculation">
+<span id="sec-automation"></span><h2>Automation Calculation<a class="headerlink" href="#automation-calculation" title="Link to this heading"></a></h2>
+<p>Scripts in <code class="docutils literal notranslate"><span class="pre">examples/phonondb</span></code> and <code class="docutils literal notranslate"><span class="pre">examples/massive</span></code> may be useful to run the automation calculation.
+First, data of Phonondb need to be downloaded</p>
+<ol class="arabic simple">
+<li><p>Download data from Phonondb</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="o">(</span>arbitrary<span class="w"> </span>directory<span class="w"> </span><span class="k">in</span><span class="w"> </span>which<span class="w"> </span>Phonondb<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>downloaded.<span class="o">)</span>
+$<span class="w"> </span>cp<span class="w"> </span>.../examples/phonondb/*<span class="w"> </span>./
+
+<span class="c1">## modify &quot;imin&quot; and &quot;imax&quot; in get_phonondb.sh</span>
+$<span class="w"> </span>vi<span class="w"> </span>get_phonondb.sh
+$<span class="w"> </span>sh<span class="w"> </span>get_phonondb.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Start the calculation</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">dir</span><span class="o">=</span><span class="s2">&quot;APDB_0-10000&quot;</span>
+$<span class="w"> </span>mkdir<span class="w"> </span><span class="nv">$dir</span>
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$dir</span>
+$<span class="w"> </span>cp<span class="w"> </span>.../auto-kappa/examples/massive/run_massive.sh<span class="w"> </span>./
+<span class="c1">## modify the script and submit jobs</span>
+</pre></div>
+</div>
+</section>
+<section id="known-bugs">
+<h2>Known Bugs<a class="headerlink" href="#known-bugs" title="Link to this heading"></a></h2>
+<section id="potcar-file">
+<h3>POTCAR file<a class="headerlink" href="#potcar-file" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>You may get warning like below. While these messages will be removed, you can neglect them which do not affect the
+calculation. These messages are shown because POTCAR files are generated by ASE, which addes a few information in the POTCAR
+file, and these files are read by Pymatgen, which consideres that the additional information may be error.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>.../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738:<span class="w"> </span>UserWarning:<span class="w"> </span>Ignoring<span class="w"> </span>unknown<span class="w"> </span>variable<span class="w"> </span><span class="nb">type</span><span class="w"> </span>SHA256
+warnings.warn<span class="o">(</span>f<span class="s2">&quot;Ignoring unknown variable type {key}&quot;</span><span class="o">)</span>
+.../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738:<span class="w"> </span>UserWarning:<span class="w"> </span>Ignoring<span class="w"> </span>unknown<span class="w"> </span>variable<span class="w"> </span><span class="nb">type</span><span class="w"> </span>COPYR
+warnings.warn<span class="o">(</span>f<span class="s2">&quot;Ignoring unknown variable type {key}&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

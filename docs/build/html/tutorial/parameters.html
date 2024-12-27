@@ -1,0 +1,217 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3.1. Input Parameters of akrun &mdash; auto-kappa Oct. 3th, 2022 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=17ecafcb"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.2. Input Scripts for ALAMODE" href="alamode.html" />
+    <link rel="prev" title="3. Tutorial" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">3. Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.1. Input Parameters of akrun</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-to-be-modified-for-each-material">Parameters to be modified for each material</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-depending-on-the-environment">Parameters depending on the environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-for-the-calculation-conditions">Parameters for the calculation conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-for-k-mesh-densities-and-size-of-supercells">Parameters for k-mesh densities and size of supercells</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters-that-may-be-modified-for-test-calculations">Parameters that may be modified for test calculations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alamode.html">3.2. Input Scripts for ALAMODE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html">3.3. Useful Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../auto-kappa/modules.html">4. auto_kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html"><span class="section-number">3. </span>Tutorial</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">3.1. </span>Input Parameters of akrun</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/parameters.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="input-parameters-of-akrun">
+<h1><span class="section-number">3.1. </span>Input Parameters of akrun<a class="headerlink" href="#input-parameters-of-akrun" title="Link to this heading"></a></h1>
+<p>You can see descriptions for the input parameters of <code class="docutils literal notranslate"><span class="pre">akrun</span></code> with the following command.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>akrun<span class="w"> </span>-h
+</pre></div>
+</div>
+<p>You can find the options below.
+[***] denotes the default value.</p>
+<section id="parameters-to-be-modified-for-each-material">
+<h2>Parameters to be modified for each material<a class="headerlink" href="#parameters-to-be-modified-for-each-material" title="Link to this heading"></a></h2>
+<dl class="simple glossary">
+<dt id="term-d-DIRECTORY-directory-DIRECTORY">-d DIRECTORY, –directory=DIRECTORY<a class="headerlink" href="#term-d-DIRECTORY-directory-DIRECTORY" title="Link to this term"></a></dt><dd><p>Directory of Phonondb in which different files such as POSCAR-unitcell, phonopy.conf,
+KPOINTS-{relax, nac, force}, etc. are located. <code class="docutils literal notranslate"><span class="pre">--directory</span></code> or <code class="docutils literal notranslate"><span class="pre">--file_structure</span></code>
+must be given. When both of them are given, <code class="docutils literal notranslate"><span class="pre">--directory</span></code> takes priority over
+<code class="docutils literal notranslate"><span class="pre">--file_structure</span></code>.</p>
+</dd>
+<dt id="term-file_structure-FILE_STRUCTURE">–file_structure=FILE_STRUCTURE<a class="headerlink" href="#term-file_structure-FILE_STRUCTURE" title="Link to this term"></a></dt><dd><p>Structure file name. Different formats such as POSCAR and cif which can be read by
+<code class="docutils literal notranslate"><span class="pre">Structure.from_read</span></code> module in <code class="docutils literal notranslate"><span class="pre">Pymatgen.core.structure</span></code>.</p>
+</dd>
+<dt id="term-material_name-MATERIAL_NAME">–material_name=MATERIAL_NAME<a class="headerlink" href="#term-material_name-MATERIAL_NAME" title="Link to this term"></a></dt><dd><p>Material name which is used as the output directory [out].</p>
+</dd>
+</dl>
+</section>
+<section id="parameters-depending-on-the-environment">
+<h2>Parameters depending on the environment<a class="headerlink" href="#parameters-depending-on-the-environment" title="Link to this heading"></a></h2>
+<dl class="simple glossary">
+<dt id="term-n-NCORES-ncores-NCORES">-n NCORES, –ncores=NCORES<a class="headerlink" href="#term-n-NCORES-ncores-NCORES" title="Link to this term"></a></dt><dd><p>Number of cores used for the calculation [2]</p>
+</dd>
+<dt id="term-anphon_para-ANPHON_PARA">–anphon_para=ANPHON_PARA<a class="headerlink" href="#term-anphon_para-ANPHON_PARA" title="Link to this term"></a></dt><dd><p>Parallel mode of anphon: “mpi” for MPI, or “omp” for OpenMP [omp]</p>
+</dd>
+<dt id="term-mpirun-MPIRUN">–mpirun=MPIRUN<a class="headerlink" href="#term-mpirun-MPIRUN" title="Link to this term"></a></dt><dd><p>MPI command, for example, <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>, <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code>, etc. [mpirun]</p>
+</dd>
+<dt id="term-command_vasp-COMMAND_VASP">–command_vasp=COMMAND_VASP<a class="headerlink" href="#term-command_vasp-COMMAND_VASP" title="Link to this term"></a></dt><dd><p>Command to run VASP [vasp]</p>
+</dd>
+<dt id="term-command_anphon-COMMAND_ANPHON">–command_anphon=COMMAND_ANPHON<a class="headerlink" href="#term-command_anphon-COMMAND_ANPHON" title="Link to this term"></a></dt><dd><p>Command to run anphon [anphon]</p>
+</dd>
+<dt id="term-command_alm-COMMAND_ALM">–command_alm=COMMAND_ALM<a class="headerlink" href="#term-command_alm-COMMAND_ALM" title="Link to this term"></a></dt><dd><p>Command to run alm [alm]</p>
+</dd>
+</dl>
+</section>
+<section id="parameters-for-the-calculation-conditions">
+<h2>Parameters for the calculation conditions<a class="headerlink" href="#parameters-for-the-calculation-conditions" title="Link to this heading"></a></h2>
+<dl class="simple glossary">
+<dt id="term-cutoff3-CUTOFF3">–cutoff3=CUTOFF3<a class="headerlink" href="#term-cutoff3-CUTOFF3" title="Link to this term"></a></dt><dd><p>Cutoff length for cubic force constants (FCs) with the unit of angstrom [4.3]</p>
+</dd>
+<dt id="term-nmax_suggest-NMAX_SUGGEST">–nmax_suggest=NMAX_SUGGEST<a class="headerlink" href="#term-nmax_suggest-NMAX_SUGGEST" title="Link to this term"></a></dt><dd><p>Maximum number of suggested patterns for cubic FCs [100]</p>
+</dd>
+<dt id="term-frac_nrandom-FRAC_NRANDOM">–frac_nrandom=FRAC_NRANDOM<a class="headerlink" href="#term-frac_nrandom-FRAC_NRANDOM" title="Link to this term"></a></dt><dd><p><code class="docutils literal notranslate"><span class="pre">Npattern</span> <span class="pre">*</span> <span class="pre">Natom</span> <span class="pre">/</span> <span class="pre">Nfc3</span></code>, where <code class="docutils literal notranslate"><span class="pre">Npattern</span></code> is the number of generated random
+displacement patterns, <code class="docutils literal notranslate"><span class="pre">Natom</span></code> is the number of atoms in a supercell, and <code class="docutils literal notranslate"><span class="pre">Nfc3</span></code>
+is the number of cubic FCs [1.0]</p>
+</dd>
+<dt id="term-random_disp_temperature-RANDOM_DISP_TEMPERATURE">–random_disp_temperature=RANDOM_DISP_TEMPERATURE<a class="headerlink" href="#term-random_disp_temperature-RANDOM_DISP_TEMPERATURE" title="Link to this term"></a></dt><dd><p>Temperature for random displacement [500]. Atoms are displaced randomly based the
+normal coordinates for the LASSO calculation. Tools implemented in Alamode are used.</p>
+</dd>
+<dt id="term-magnitude2-MAGNITUDE2">–magnitude2=MAGNITUDE2<a class="headerlink" href="#term-magnitude2-MAGNITUDE2" title="Link to this term"></a></dt><dd><p>Magnitude of random displacement for cubic FCs [0.03]</p>
+</dd>
+<dt id="term-negative_freq-NEGATIVE_FREQ">–negative_freq=NEGATIVE_FREQ<a class="headerlink" href="#term-negative_freq-NEGATIVE_FREQ" title="Link to this term"></a></dt><dd><p>Threshold of negative frequency [-0.001]. If the minimum value of frequencies in
+phonon dispersion or phonon DOS, the calculation is stopped.</p>
+</dd>
+<dt id="term-volume_relaxation-VOLUME_RELAXATION">–volume_relaxation=VOLUME_RELAXATION<a class="headerlink" href="#term-volume_relaxation-VOLUME_RELAXATION" title="Link to this term"></a></dt><dd><p>Relaxation with the relationship between volume and energy. (0.off or 1.on) [0]
+If it is “1”, the relaxation is conducted by calculating the total energy with
+different volumes and fitting to Birch-Murnaghan equation of states.</p>
+</dd>
+<dt id="term-relaxed_cell-RELAXED_CELL">–relaxed_cell=RELAXED_CELL<a class="headerlink" href="#term-relaxed_cell-RELAXED_CELL" title="Link to this term"></a></dt><dd><p>Cell type used for the relaxation calculation [None] (primitive, unit/conventional, or
+supercell). For the restart calculation, the same type as the previous calculation
+is used while, for the new calculation, the conventional cell is used. It is
+recommended to use the conventional cell.</p>
+</dd>
+</dl>
+</section>
+<section id="parameters-for-k-mesh-densities-and-size-of-supercells">
+<h2>Parameters for k-mesh densities and size of supercells<a class="headerlink" href="#parameters-for-k-mesh-densities-and-size-of-supercells" title="Link to this heading"></a></h2>
+<dl class="simple glossary">
+<dt id="term-k_length-K_LENGTH">–k_length=K_LENGTH<a class="headerlink" href="#term-k_length-K_LENGTH" title="Link to this term"></a></dt><dd><p>Length to determine k-mesh. [20]
+The way in VASP manual is used.</p>
+</dd>
+<dt id="term-max_natoms-MAX_NATOMS">–max_natoms=MAX_NATOMS<a class="headerlink" href="#term-max_natoms-MAX_NATOMS" title="Link to this term"></a></dt><dd><p>Maximum limit of the number of atoms in the supercell for harmonic FCs [150]</p>
+</dd>
+<dt id="term-max_natoms3-MAX_NATOMS3">–max_natoms3=MAX_NATOMS3<a class="headerlink" href="#term-max_natoms3-MAX_NATOMS3" title="Link to this term"></a></dt><dd><p>Maximum limit of the number of atoms in the supercell for cubic FCs [None]</p>
+</dd>
+</dl>
+</section>
+<section id="parameters-that-may-be-modified-for-test-calculations">
+<h2>Parameters that may be modified for test calculations<a class="headerlink" href="#parameters-that-may-be-modified-for-test-calculations" title="Link to this heading"></a></h2>
+<dl class="simple glossary">
+<dt id="term-restart-RESTART">–restart=RESTART<a class="headerlink" href="#term-restart-RESTART" title="Link to this term"></a></dt><dd><p>The calculation will restart (1) or will be overwritten if the output directory exsits (0). [1]
+When the directory does not exist, a new calculation will be conducted.</p>
+</dd>
+<dt id="term-verbosity-VERBOSITY">–verbosity=VERBOSITY<a class="headerlink" href="#term-verbosity-VERBOSITY" title="Link to this term"></a></dt><dd><p>Verbosity (0 or 1) [0].</p>
+</dd>
+<dt id="term-neglect_log-NEGLECT_LOG">–neglect_log=NEGLECT_LOG<a class="headerlink" href="#term-neglect_log-NEGLECT_LOG" title="Link to this term"></a></dt><dd><p>Neglect log (1) or not (0) [0]. If it is “0”, some Alamode calculations will be performed even if
+they have been already done.</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="3. Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="alamode.html" class="btn btn-neutral float-right" title="3.2. Input Scripts for ALAMODE" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

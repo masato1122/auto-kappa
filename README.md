@@ -7,6 +7,11 @@ Version 0.3
 Auto-kappa is a software to automatically calculate anharmonic phonon properties, 
 including thermal conductivity using VASP and ALAMODE.
 
+Manual
+-----------
+
+Manual can be found [HERE](https://github.com/masato1122/auto-kappa/tree/develop/docs/build/html/index.html "manual").
+
 Requirements
 -------------
 

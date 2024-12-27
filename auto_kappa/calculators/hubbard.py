@@ -1,4 +1,14 @@
-# -*- coding: utf-8 -*-
+#
+# hubbard.py
+#
+# This script helps to make VASP parameters for Hubbard U correction.
+#
+# Copyright (c) 2024 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import numpy as np
 from auto_kappa.calculators import transition_metals, rare_earths
 
@@ -21,36 +31,52 @@ def use_hubbard(symbols):
     
     return flag_hubbard
 
-def get_hubbard_params(atoms, ldautype=2):
-    """
+
+# ind = np.argsort(atoms.symbols)
+# symbols = atoms.symbols[ind]
+# coord = coord[ind]
+# if constraints_present:
+#     sflags = sflags[ind]
+
+
+def get_hubbard_params(
+    atoms, default_params=None, ldautype=2, default_magmom=0.0, sort=True):
+    """ 
     Generate Hubbard U parameters for VASP from an ASE Atoms object.
     
-    Parameters:
-    - atoms: ASE Atoms object representing the structure.
-    - hubbard_u_values: Dictionary mapping chemical symbols to (U, L, J) values. Example:
-        {
-            "Fe": {"U": 4.0, "L": 2, "J": 0.0},
-            "O": {"U": 0.0, "L": -1, "J": 0.0}
-        }
-    - default_magmom: Default magnetic moment to assign to atoms without specific values (float).
+    Args
+    -----
+    atoms : Atoms object
     
-    Returns:
-    - dict: Dictionary with LDAUL, LDAUU, LDAUJ, and MAGMOM parameters.
+    default_params : dict
+        default Hubbard U parameters
+    
+    default_magmom : float
+        Default magnetic moment to assign to atoms without specific values (float).
+    
+    Returns
+    --------
+    dict : Dictionary with LDAUL, LDAUU, LDAUJ, and MAGMOM parameters.
     """
-    from auto_kappa.calculators.vasp import get_default_params_pymatgen
-    params_pmg = get_default_params_pymatgen()
+    for key in ['LDAUU', 'LDAUJ', 'MAGMOM']:
+        if key not in default_params:
+            raise ValueError(f' "default_params" is missing required key: {key}')
     
-    #unique_elements = sorted(set(atoms.get_chemical_symbols()))
+    ## sort with alphabetical order
+    if sort:
+        ind = np.argsort(atoms.symbols)
+        symbols = atoms.symbols[ind]
+    else:
+        symbols = atoms.symbols
     
+    unique_elements = sorted(set(symbols), key=symbols.index)
+    
+    ## Get LDAUL, LDAUU, LDAUJ
     ldaul = []
     ldauu = []
     ldauj = []
-    magmom = [0.0] * len(atoms)
     
-    symbols = atoms.get_chemical_symbols()
-    for i, element in enumerate(symbols):
-        
-        print(element)
+    for element in unique_elements:
         
         ## LDAUL
         ldaul.append(get_suggested_ldaul(element))
@@ -61,20 +87,21 @@ def get_hubbard_params(atoms, ldautype=2):
             if element in fo_element:
                 
                 ## LDAUU
-                if element in params_pmg['LDAUU'][fo_element]:
-                    ldauu_each = params_pmg['LDAUU'][fo_element][element]
+                if element in default_params['LDAUU'][fo_element]:
+                    ldauu_each = default_params['LDAUU'][fo_element][element]
                 
                 ## LDAUJ
-                if element in params_pmg['LDAUJ'][fo_element]:
-                    ldauj_each = params_pmg['LDAUJ'][fo_element][element]
-        
-        ## MAGMOM
-        if element in params_pmg['MAGMOM']:
-            magmom[i] = params_pmg['MAGMOM'][element]
+                if element in default_params['LDAUJ'][fo_element]:
+                    ldauj_each = default_params['LDAUJ'][fo_element][element]
         
         ldauu.append(ldauu_each)
         ldauj.append(ldauj_each)
-        
+    
+    ## MAGMOM
+    magmom = []
+    for element in symbols:
+        magmom.append(default_params.get("MAGMOM", {}).get(element, default_magmom))
+    
     atoms.set_initial_magnetic_moments(magmom)
     
     hubbard_params = {
@@ -84,22 +111,23 @@ def get_hubbard_params(atoms, ldautype=2):
             "ldauu": " ".join(map(str, ldauu)),
             "ldauj": " ".join(map(str, ldauj)),
             "ispin": 2,
-            "magmom": " ".join(map(str, magmom)),
+            "magmom": magmom,
             }
     
-    print(magmom)
-    exit()
     return hubbard_params
 
 def get_suggested_ldaul(element):
     """
     Get suggestd value for LDAUL
     
-    Parameters:
-    - element (str): The chemical symbol of the element (e.g., "Fe", "Ce", "O").
+    Args
+    -----
+    element : str
+        The chemical symbol of the element (e.g., "Fe", "Ce", "O").
     
-    Returns:
-    - str: "Transition Metal", "Rare Earth", or "Other".
+    Returns
+    --------
+    int : suggestd LDAUL parameter
     """
     # Define the periodic table groups for transition metals and rare earths
     if element in transition_metals:

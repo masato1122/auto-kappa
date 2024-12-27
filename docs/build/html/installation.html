@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Installation &mdash; auto-kappa Oct. 3th, 2022 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=17ecafcb"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Default parameters" href="parameters.html" />
+    <link rel="prev" title="Auto-KAPPA" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">1.1. Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preparation">1.2. Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#vasp-and-alamode">VASP and Alamode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phonondb">Phonondb</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-of-auto-kappa">1.3. Installation of auto-kappa</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">1.4. Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#automation-calculation">1.5. Automation Calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#known-bugs">1.6. Known Bugs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#potcar-file">POTCAR file</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto-kappa/modules.html">4. auto_kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">1. </span>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1><span class="section-number">1. </span>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="requirements">
+<h2><span class="section-number">1.1. </span>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Auto-kappa requires the following packages.
+While the python packages can be automatically downloaded during the installation process,
+users need to separately install VASP and ALAMODE. Please use the latest verison for VASP and ALAMODE.</p>
+<ul class="simple">
+<li><p>VASP (latest: ver.6.3.2)</p></li>
+<li><p>alamode (alm, anphon, ALM, latest: ver.1.4.2)</p></li>
+<li><p>eigen (&lt; 3.4)</p></li>
+<li><p>phonopy</p></li>
+<li><p>custodian</p></li>
+<li><p>pymatgen</p></li>
+<li><p>ase</p></li>
+<li><p>spglib</p></li>
+<li><p>seekpath</p></li>
+</ul>
+</section>
+<section id="preparation">
+<h2><span class="section-number">1.2. </span>Preparation<a class="headerlink" href="#preparation" title="Link to this heading"></a></h2>
+<section id="vasp-and-alamode">
+<h3>VASP and Alamode<a class="headerlink" href="#vasp-and-alamode" title="Link to this heading"></a></h3>
+<p>Auto-kappa needs <code class="docutils literal notranslate"><span class="pre">vasp</span></code>, <code class="docutils literal notranslate"><span class="pre">alm</span></code>, and <code class="docutils literal notranslate"><span class="pre">anphon</span></code> commands.
+Please install VASP and
+<a class="reference external" href="https://alamode.readthedocs.io/en/latest/index.html">ALAMODE</a>
+in advance.</p>
+<ul class="simple">
+<li><p>To allow ASE to call POTCAR files of VASP,
+set <code class="docutils literal notranslate"><span class="pre">VASP_PP_PATH</span></code> variable in your shell configuration file,
+which may be <code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code>.
+See the <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html">ASE page</a> for detail.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">VASP_PP_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/<span class="o">(</span>directory<span class="w"> </span><span class="k">in</span><span class="w"> </span>which<span class="w"> </span>potpaw_PBE<span class="w"> </span>is<span class="w"> </span>located<span class="o">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">potpaw_PBE.54.tar.gz</span></code> supposed to be expanded in <code class="docutils literal notranslate"><span class="pre">potpaw_PBE</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The latest version of Eigen (3.4) may not be compatible with Alamode 1.4.2.
+Eigen 3.3.* may need to be used.</p>
+</div>
+</section>
+<section id="phonondb">
+<h3>Phonondb<a class="headerlink" href="#phonondb" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Data of phonondb need to be downloaded.</p></li>
+<li><p>You can get data with “wget” (see <a class="reference internal" href="usage.html#sec-automation"><span class="std std-ref">Automation Calculation</span></a> for details).
+If you cannot get with wget, you can use data in Box (phonondb-20180417.tar.gz):
+<a class="reference external" href="https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36">…/Box/ppdb1/Others</a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="installation-of-auto-kappa">
+<h2><span class="section-number">1.3. </span>Installation of auto-kappa<a class="headerlink" href="#installation-of-auto-kappa" title="Link to this heading"></a></h2>
+<p>Because auto-kappa is currently located in a private repogitory on Github,
+if you’d like to use it, please contact M. Ohnishi (<a class="reference external" href="mailto:ohnishi&#37;&#52;&#48;t&#46;u-tokyo&#46;ac&#46;jp">ohnishi<span>&#64;</span>t<span>&#46;</span>u-tokyo<span>&#46;</span>ac<span>&#46;</span>jp</a>).</p>
+<ol class="arabic simple">
+<li><p>Send your ssh public key to the developper (M. Ohnishi).</p></li>
+<li><p>Once your key was registered, you can download auto-kappa with git command.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>develop<span class="w"> </span>git@github.com:masato1122/auto-kappa.git
+</pre></div>
+</div>
+<p>If you cannot download. Please add the following contents in ~/.ssh/config.
+If you newly create the config file, you also need to modify the permission.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Host<span class="w"> </span>github.com
+<span class="w">    </span>HostName<span class="w"> </span>ssh.github.com
+<span class="w">    </span>Port<span class="w"> </span><span class="m">443</span>
+<span class="w">    </span>IdentityFile<span class="w"> </span>~/.ssh/id_rsa<span class="w">  </span><span class="c1"># If you changed the directory, modify this part.</span>
+<span class="w">    </span>User<span class="w"> </span>git
+
+Host<span class="w"> </span>ssh.github.com
+<span class="w">    </span>Port<span class="w"> </span><span class="m">443</span>
+<span class="w">    </span>IdentityFile<span class="w"> </span>~/.ssh/id_rsa<span class="w">  </span><span class="c1"># Same as the above</span>
+<span class="w">    </span>User<span class="w"> </span>git
+</pre></div>
+</div>
+<p>You can change the permission with <code class="docutils literal notranslate"><span class="pre">chmod</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/.ssh/config
+</pre></div>
+</div>
+<p>To update auto-kappa, use the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="o">(</span>directory<span class="w"> </span>of<span class="w"> </span>auto-kappa<span class="o">)</span>
+$<span class="w"> </span>git<span class="w"> </span>pull
+$<span class="w"> </span>sh<span class="w"> </span>./install.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Create a virtual environment, <code class="docutils literal notranslate"><span class="pre">kappa</span></code>, with conda.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>kappa<span class="w"> </span><span class="nv">python</span><span class="o">==</span><span class="m">3</span>.9
+$<span class="w"> </span>conda<span class="w"> </span>init
+$<span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="o">(</span>You<span class="w"> </span>once<span class="w"> </span>need<span class="w"> </span>to<span class="w"> </span><span class="nb">logout</span><span class="w"> </span>and<span class="w"> </span>login<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>server.<span class="o">)</span>
+
+
+Login<span class="w"> </span>the<span class="w"> </span>server<span class="w"> </span>again<span class="w"> </span>and<span class="w"> </span>confirm<span class="w"> </span>the<span class="w"> </span>virtual<span class="w"> </span>environment<span class="w"> </span>was<span class="w"> </span>created.
+$<span class="w"> </span>conda<span class="w"> </span>env<span class="w"> </span>list
+...
+kappa<span class="w">       </span>/home/***/***/envs/kappa
+...
+
+
+Activate<span class="w"> </span>the<span class="w"> </span>virtual<span class="w"> </span>environment.
+$<span class="w"> </span>conda<span class="w"> </span>activate<span class="w"> </span>kappa
+</pre></div>
+</div>
+<p>To set <code class="docutils literal notranslate"><span class="pre">kappa</span></code> as the default, add the following line in <code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>activate<span class="w"> </span>kappa
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Continue to install auto-kappa.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="o">(</span>arbitrary<span class="w"> </span>directory<span class="o">)</span>/auto-kappa
+$<span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>pull.rebase<span class="w"> </span><span class="nb">false</span>
+$<span class="w"> </span>git<span class="w"> </span>pull<span class="w">     </span><span class="c1">## update the package</span>
+$<span class="w"> </span>sh<span class="w"> </span>install.sh
+
+Check<span class="w"> </span><span class="k">if</span><span class="w"> </span>auto_kappa<span class="w"> </span>is<span class="w"> </span>installed<span class="w"> </span>or<span class="w"> </span>not.
+$<span class="w"> </span>python
+&gt;&gt;&gt;<span class="w"> </span>import<span class="w"> </span>auto_kappa
+&gt;&gt;&gt;<span class="w"> </span>exit<span class="o">()</span>
+
+$<span class="w"> </span>akrun<span class="w"> </span>-h
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2><span class="section-number">1.4. </span>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Test for VASP and ALAMODE</p></li>
+</ol>
+<p>Test jobs can be found in <code class="docutils literal notranslate"><span class="pre">auto-kappa/examples</span></code>.
+Please read <code class="docutils literal notranslate"><span class="pre">README</span></code> in that directory.
+You can finde <code class="docutils literal notranslate"><span class="pre">1_alm</span></code>, <code class="docutils literal notranslate"><span class="pre">2_anphon</span></code>, etc., which are test jobs for
+<code class="docutils literal notranslate"><span class="pre">alamode</span></code> (<code class="docutils literal notranslate"><span class="pre">alm</span></code> and <code class="docutils literal notranslate"><span class="pre">anphon</span></code>), <code class="docutils literal notranslate"><span class="pre">ASE</span></code>, <code class="docutils literal notranslate"><span class="pre">custodian</span></code>, and <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code>.
+It is recommended to run these jobs before starting a massive calculation.</p>
+<ol class="arabic simple" start="2">
+<li><p><code class="docutils literal notranslate"><span class="pre">database</span></code> example</p></li>
+</ol>
+<p>The calculation in <code class="docutils literal notranslate"><span class="pre">database</span></code> calculates thermal conductivity of Silicon automatically.
+Because every process is included in this job, it takes one or two hours.
+It is recommended to use a job scheduler to submit this job.
+An example of job script is shown below. Please modify depending on your environment.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+<span class="c1">#PBS -q default         ## name of queue that you can check with a command like &quot;qstat -q&quot;.</span>
+<span class="c1">#PBS -l nodes=1:ppn=24  ## only nodes=1 is available</span>
+<span class="c1">#PBS -j oe</span>
+<span class="c1">#PBS -N test            ## job name</span>
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">LANG</span><span class="o">=</span>C
+<span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Please set OMP_NUM_THREADS=1</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$PBS_O_WORKDIR</span>
+
+<span class="nv">ncores</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## ncores must be smaller than ppn, which is set above.</span>
+
+<span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">             </span><span class="c1">## Si</span>
+<span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span><span class="w">  </span><span class="c1">## This line must be modified.</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Cannot find </span><span class="nv">$dir_db</span><span class="s2">&quot;</span>
+<span class="w">    </span><span class="nb">exit</span>
+<span class="k">fi</span>
+
+akrun<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--directory<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--material_name<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ncores<span class="w"> </span><span class="nv">$ncores</span>
+</pre></div>
+</div>
+</section>
+<section id="automation-calculation">
+<span id="sec-automation"></span><h2><span class="section-number">1.5. </span>Automation Calculation<a class="headerlink" href="#automation-calculation" title="Link to this heading"></a></h2>
+<p>Scripts in <code class="docutils literal notranslate"><span class="pre">examples/phonondb</span></code> and <code class="docutils literal notranslate"><span class="pre">examples/massive</span></code> may be useful to run the automation calculation.
+First, data of Phonondb need to be downloaded</p>
+<ol class="arabic simple">
+<li><p>Download data from Phonondb</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="o">(</span>arbitrary<span class="w"> </span>directory<span class="w"> </span><span class="k">in</span><span class="w"> </span>which<span class="w"> </span>Phonondb<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>downloaded.<span class="o">)</span>
+$<span class="w"> </span>cp<span class="w"> </span>.../examples/phonondb/*<span class="w"> </span>./
+
+<span class="c1">## modify &quot;imin&quot; and &quot;imax&quot; in get_phonondb.sh</span>
+$<span class="w"> </span>vi<span class="w"> </span>get_phonondb.sh
+$<span class="w"> </span>sh<span class="w"> </span>get_phonondb.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Start the calculation</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">dir</span><span class="o">=</span><span class="s2">&quot;APDB_0-10000&quot;</span>
+$<span class="w"> </span>mkdir<span class="w"> </span><span class="nv">$dir</span>
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$dir</span>
+$<span class="w"> </span>cp<span class="w"> </span>.../auto-kappa/examples/massive/run_massive.sh<span class="w"> </span>./
+<span class="c1">## modify the script and submit jobs</span>
+</pre></div>
+</div>
+</section>
+<section id="known-bugs">
+<h2><span class="section-number">1.6. </span>Known Bugs<a class="headerlink" href="#known-bugs" title="Link to this heading"></a></h2>
+<section id="potcar-file">
+<h3>POTCAR file<a class="headerlink" href="#potcar-file" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>You may get warning like below. While these messages will be removed, you can neglect them which do not affect the
+calculation. These messages are shown because POTCAR files are generated by ASE, which addes a few information in the POTCAR
+file, and these files are read by Pymatgen, which consideres that the additional information may be error.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>.../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738:<span class="w"> </span>UserWarning:<span class="w"> </span>Ignoring<span class="w"> </span>unknown<span class="w"> </span>variable<span class="w"> </span><span class="nb">type</span><span class="w"> </span>SHA256
+warnings.warn<span class="o">(</span>f<span class="s2">&quot;Ignoring unknown variable type {key}&quot;</span><span class="o">)</span>
+.../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738:<span class="w"> </span>UserWarning:<span class="w"> </span>Ignoring<span class="w"> </span>unknown<span class="w"> </span>variable<span class="w"> </span><span class="nb">type</span><span class="w"> </span>COPYR
+warnings.warn<span class="o">(</span>f<span class="s2">&quot;Ignoring unknown variable type {key}&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Auto-KAPPA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="parameters.html" class="btn btn-neutral float-right" title="2. Default parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
