@@ -3,6 +3,9 @@ import math
 import numpy as np
 import pandas as pd
 
+import logging
+logger = logging.getLogger(__name__)
+
 def set_parameters_evec(inp, primitive_matrix, scell_matrix):
     """ """
     ###### supercell matrix wrt primitive cell

@@ -257,8 +257,8 @@ def read_result_file(filename):
             filename, 
             len(params['temperature']['temperatures']),
             params['kpoint']['nk'], 
-            3 * params['system']['natoms']
-            )
+            3 * params['system']['natoms'])
+            # average_gamma=average_gamma)
     return params
 
 def read_system(filename):
@@ -421,7 +421,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
         .result file name
     ntemps, nk, nbands : integer
         # of temperatures, kpoints, and bands
-
+    
     Returns
     -------
     multiplicity : array, int, shape=(nk)
@@ -433,6 +433,21 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
     """
     ###
     lines = open(filename, 'r').readlines()
+    
+    ### Get frequencies
+    iline0 = _get_line_number(lines, "##Phonon Frequency")
+    iline1 = _get_line_number(lines, "#K-point (irreducible), Branch, Omega (cm^-1)")
+    assert iline1 == iline0 + 1, "Error: iline1 != iline0 + 1"
+    
+    frequencies = np.zeros((nk, nbands))
+    il = iline1
+    for ik in range(nk):
+        for ib in range(nbands):
+            il += 1
+            data = lines[il].split()
+            assert int(data[0]) == ik+1, "Error: ik(%d) != %d" % (int(data[0]), ik+1)
+            assert int(data[1]) == ib+1, "Error: ib(%d) != %d" % (int(data[1]), ib+1)
+            frequencies[ik,ib] = float(data[2])
     
     ### ver >= 1.5.*
     iline0 = _get_line_number(lines, "##Phonon Relaxation Time")
@@ -459,10 +474,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ### #GAMMA_EACH
             il += 1
             line = lines[il]
-            if sword not in line:
-                data = line.split()
-                logger.error("\n Error: %s does not include %s" % (data[0], sword))
-                sys.exit()
+            assert sword in line, "Error: %s does not include %s" % (line, sword)
             
             ### ik, ib
             il += 1
@@ -495,23 +507,75 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
                 data = lines[il].split()
                 for j in range(3):
                     velocities[ik][ib][im,j] = float(data[j])
+            
             ### (multi)- : gamma
             for it in range(ntemps):
                 il += 1
                 data = lines[il].split()
                 gammas[it,ik,ib] = float(data[0])
-            
+                
             ### #END GAMMA_EACH
             il += 1
             if "#END GAMMA_EACH" not in lines[il]:
                 logger.error(" Error while reading %s" % filename)
                 sys.exit()
     
+    ###
+    # if average_gamma:
+    #     average_gamma_at_degenerate_point(frequencies, gammas)
+    
     return {'multiplicity': multiplicity, 
             'velocities': velocities, 
             'gammas': gammas}
 
+# def average_gamma_at_degenerate_point(frequencies, gammas, tol_omega=1e-3):  
+#     """ Average gamma at degenerate point
+    
+#     Args
+#     -----
+#     frequencies : ndarray, float, shape=(nk,nb)
+#         frequencies
+#     gammas : ndarray, float, shape=(ntemps,nk,nb)
+#         gamma
+#     """
+#     tol_omega = 1.0e-3
+    
+#     nk, ns = frequencies.shape
+#     nt = gammas.shape[0]
+    
+#     for i in range(nk):
+#         degeneracy_at_k = []
+#         omega_prev = frequencies[i][0]
+#         ideg = 1
+        
+#         for j in range(1, ns):
+#             omega_now = frequencies[i][j]
+#             if abs(omega_now - omega_prev) < tol_omega:
+#                 ideg += 1
+#             else:
+#                 degeneracy_at_k.append(ideg)
+#                 ideg = 1
+#                 omega_prev = omega_now
+#         degeneracy_at_k.append(ideg)
+        
+#         im = 0
+        
+#         for ideg in degeneracy_at_k:
+#             if ideg > 1:
+#                 damp_sum = [0.0] * nt
 
+#                 # Calculate damp_sum
+#                 for k in range(im, im + ideg):
+#                     for l in range(nt):
+#                         damp_sum[l] += 1.0 / gammas[l][i][k]
+
+#                 # Update gammas values
+#                 for k in range(im, im + ideg):
+#                     for l in range(nt):
+#                         gammas[l][i][k] = ideg / damp_sum[l]
+
+#             im += ideg
+    
 
 def _get_free_energy(natoms, volume, temps, multi, freqs):
     """Calculate free energy with quasi-harmonic approximation (QHA)
@@ -533,6 +597,7 @@ def _get_free_energy(natoms, volume, temps, multi, freqs):
     efree : array, float, shape=(nt), unit=[J/mol]
         T-dependent free energy
     """
+    import auto_kappa.units as units
     energies = freqs * units.CmToJ     # [J]
     kbTs = temps * units.KToJ          # [J]
     # -- T-independent term

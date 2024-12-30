@@ -11,9 +11,12 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 #from optparse import OptionParser
-import os.path
+import sys
 import numpy as np
 import pandas as pd
+
+import logging
+logger = logging.getLogger(__name__)
 
 def read_fcs(filename):
     

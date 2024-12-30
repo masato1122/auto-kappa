@@ -99,8 +99,15 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
     nk = len(frequencies)
     nb = len(frequencies[0])
     
-    mmax = int(np.max(multiplicity))
+    # mmax = int(np.max(multiplicity))
     kmode = np.zeros((((nk,nb,3,3))))
+    
+    # # check velocity
+    # ik = 9
+    # ib = 26
+    # for ib in range(26, 30):
+    #     print('ik, ib, lifetime = ', ik, ib, lifetime[ik][ib])
+    # exit()
     
     for ik in range(nk):
         multi = multiplicity[ik]
@@ -133,6 +140,7 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
     for i in range(3):
         for j in range(3):
             kappa[i,j] = np.sum(kmode[:,:,i,j])
+    
     return kappa, kmode
 
 def get_heat_capacity(fkay, temp, min_fkay=1e-8):

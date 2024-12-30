@@ -8,33 +8,26 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-
 import logging
-
 logger = logging.getLogger(__name__)
 
 def get_used_memory():
     """ Get and return the used memory """
-    try:
-        
+    try:        
         mem = _get_used_memory_psutil()
         return mem
-    
     except ModuleNotFoundError:
-        
         try:
             mem = _get_used_memory_resource()
             return mem
-
         except ModuleNotFoundError:
-            
             return None
 
 def _get_used_memory_psutil(busy_thread=80):
 
     import psutil
     mem_percent = psutil.virtual_memory().percent
-    if mem_percent > busy_thred:
+    if mem_percent > busy_thread:
         msg = "\n Warning: memory usage percentage : %.1f%%" % mem_percent
         logger.warning(msg)
         
@@ -62,7 +55,4 @@ def _get_used_memory_resource():
     #    mem = r / 1024
     #return mem
     return None
-
-#print("psutil  :", _get_used_memory_psutil())
-#print("resource:", _get_used_memory_resource())
 

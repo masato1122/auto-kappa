@@ -187,7 +187,7 @@ class Scattering():
                 self._total_scattering_rate += self.scattering_rates[key]
         msg += "\n"
         if self.verbosity > 0:
-            logger.info(ms)
+            logger.info(msg)
         
         self.set_lifetime()
         self.set_kmode()
@@ -206,7 +206,7 @@ class Scattering():
                 self.total_scattering_rate)  # ps
         self._lifetime = get_average_at_degenerate_point(
                 self.result['frequencies'], lifetime)
-     
+        
     @property
     def kmode(self):
         if self._kmode is None:
@@ -436,22 +436,100 @@ class Scattering():
         self.set_kmode()
 
     def set_scattering_rate_phph(self):
-        """
-        Return
-        ------
-        *** : ndarray, float, shape=(nk,nb)
-            scattering rate due to ph-ph scattering [1/ps]
+        ## , smooth_scattering_rate=True, tol_gap=10.
+        """ Set scattering rate due to ph-ph scattering.
+        
+        Args
+        -------
+        smooth_scattering_rate : bool
+            if True, replace too small scattering rate to average 
+            value for modes above the band gap.
+        tol_gap : float
+            if difference of frequencies  is larger than 
+            tol_gap [kayser], the difference is regarded as gap.
         """
         itarget = np.argmin(abs(self.result['temperatures'] - self.temperature))
         
         ## 1/ps
         self.scattering_rates['phph'] = convert_gamma2scatrate(
-                self.result['gammas'][itarget,:,:])
+            self.result['gammas'][itarget,:,:])
         
+        if self.has_gap(tol_gap=10.0) != False:
+            logger.info(f'\n Note: Band gap exists. '
+                        f'({self.has_gap(tol_gap=10.0)} 1/cm)')
+        
+        # if smooth_scattering_rate:
+        #     self._smooth_scattering_rate(tol_gap=tol_gap)
+    
+    def has_gap(self, tol_gap=None):
+        """ Check if there is a band gap or not.
+        
+        Return
+        --------
+        fmin : float
+            minimum frequency above the band gap
+        """
+        ordered_freqs = np.sort(self.result['frequencies'][:,3:].flatten())
+        diff_freqs = np.diff(ordered_freqs)
+        idx_gap = np.where(diff_freqs > tol_gap)[0]
+        if len(idx_gap) == 0:
+            return False
+        else:
+            fmin = ordered_freqs[idx_gap[0]+1]
+            return fmin
+    
+    #
+    # To Do:
+    # When the scattering rate of some modes is too small, four-phonon scattering should be considred.
+    # Currently, the presence of a band gap is checked.
+    #
+    # def _smooth_scattering_rate(self, tol_gap=None, tol_scatrate=1e-10, tol_kappa=1e-3):
+    #     """ Replace too small scattering rate to average value 
+    #     for modes above the band gap.
+        
+    #     Args
+    #     -------
+    #     tol_gap : float
+    #         if difference of frequencies is larger than tol_gap, 
+    #         the difference is regarded as gap.
+    #     """
+    #     ## Minimum frequency above the band gap
+    #     fmin = self.has_gap(tol_gap=tol_gap)
+    #     if fmin == False:
+    #         return None
+        
+    #     from auto_kappa.alamode.analyzer.analyzer import get_heat_capacity
+        
+    #     ## Replace too small scattering rate to average value
+    #     nk, nb = self.scattering_rates['phph'].shape
+    #     for ik in range(nk):
+    #         for ib in range(nb):
+                
+    #             freq = self.result['frequencies'][ik,ib]  # 1/cm
+    #             if freq < fmin:
+    #                 continue
+                
+    #             rscat = self.scattering_rates['phph'][ik,ib]  # 1/ps
+                
+    #             if rscat < tol_scatrate:
+    #                 self.scattering_rates['phph'][ik,ib] = np.nan
+                
+    #             tau = 1./rscat  # ps
+    #             vg = self.averaged_velocities[ik,ib]  # m/s
+    #             mfp = vg * 0.001 / rscat  # nm
+    #             Cph = get_heat_capacity(freq, self.temperature)   # J/K
+    #             kappa = Cph * vg * mfp * 1e-9  # m^3 * W/m/K
+    #             kappa /= self.result['volume'] * units.BohrToM**3  # W/m/K
+                
+    #             if mfp > 1000. and kappa > tol_kappa:
+    #                 print(ik, ib, 'freq= %.3f 1/cm, tau= %.3e ps, MFP= %.3f nm, k= %.3f' % (
+    #                     freq, tau, mfp, kappa))
+    #                 self.scattering_rates['phph'][ik,ib] = np.nan
+    
     def set_scattering_rate_isotope(self):
         from .isotope import Isotope
         if os.path.exists(self.file_isotope) == False:
-            logger.warning(" %s does not exist." % filename)
+            logger.warning(" %s does not exist." % self.file_isotope)
         else:
             iso = Isotope(filename=self.file_isotope)
             ## 1/ps
@@ -491,8 +569,12 @@ def convert_scatrate2lifetime(rscat, epsilon=1e-10):
     Unit of scattering rate : [1/ps]
     Unit of lifetime : [ps]
     """
-    rscat_tmp = np.where(rscat<epsilon, 1.0, rscat)
-    lifetime = np.where(rscat<epsilon, 0.0, 1./rscat_tmp)
+    ### old version
+    # rscat_tmp = np.where(rscat<epsilon, 1.0, rscat)
+    # lifetime = np.where(rscat<epsilon, 0.0, 1./rscat_tmp)
+    
+    ### modified version
+    with np.errstate(divide='ignore', invalid='ignore'):
+        lifetime = np.where((np.isnan(rscat)) | (rscat < epsilon), 0.0, 1./rscat)
+    
     return lifetime
-
-
