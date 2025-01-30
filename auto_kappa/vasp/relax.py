@@ -525,6 +525,7 @@ def relaxation_with_different_volumes(
                 encut_scale_factor=encut_factor,
                 **params_mod
                 )
+        
         calc.command = "%s -n %d %s" % (
                 command['mpirun'],
                 command['nprocs'],

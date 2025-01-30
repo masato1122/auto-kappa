@@ -168,7 +168,7 @@ def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
     
     ### kpoints
     if kpts is not None:
-        calc.set(kpts=kpts)
+        calc.set(kpts=[int(k) for k in kpts])
         params['gamma'] = True
     
     ### update
