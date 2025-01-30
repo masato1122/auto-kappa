@@ -33,7 +33,7 @@ from auto_kappa.cui.initialization import (
         get_previous_nac,
         get_required_parameters,
         get_base_directory_name,
-        read_phonondb,
+        # read_phonondb,
         )
 
 import logging
