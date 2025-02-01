@@ -2288,9 +2288,21 @@ class AlamodeCalc():
         ts = [float(t) for t in data]
         dfs = {}
         for t in ts:
+            
+            ## Calculate cumulative and spectral kappa at a given temperature
             self.scat.change_temperature(t)
             dfs[int(t)] = self.scat.get_cumulative_kappa(
                     temperature=t, wrt=wrt, xscale=xscale, nbins=nbins)
+            
+            ## output file for the cumulative and spectral kappa
+            try:
+                df_each = dfs[int(t)].rename(columns={'xdat': wrt})
+                outfile = self.out_dirs['result'] + '/kspec_%s_%dK.dat' % (wrt, int(t))
+                df_each.to_csv(outfile, index=False, float_format='%.6e')
+                msg = " Output %s" % self.get_relative_path(outfile)
+                logger.info(msg)
+            except:
+                pass
         
         ##
         lab_kappa = "${\\rm \\kappa_{lat}}$"
