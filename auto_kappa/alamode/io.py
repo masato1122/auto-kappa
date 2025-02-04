@@ -160,4 +160,3 @@ def get_status(logfile, tar=None):
         return [statuses[0], "Job finished"]
     else:
         return [statuses[1], "Not yet finished"]
-
