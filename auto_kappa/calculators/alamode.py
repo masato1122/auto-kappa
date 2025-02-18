@@ -267,9 +267,10 @@ def analyze_harmonic_with_larger_supercells(
                 almcalc_new, calc_force,
                 negative_freq=negative_freq)
         
-        ### Finish
-        if almcalc_new.minimum_frequency < negative_freq:
-            ak_log.negative_frequency(almcalc_new.minimum_frequency)
+        ### If negative frequencies were eliminated, escape the loop
+        if almcalc_new.minimum_frequency > negative_freq:
+            msg = "\n Negative frequencies were eliminated!"
+            logger.info(msg)
             return almcalc_new
         
         isc += 1
@@ -278,7 +279,7 @@ def analyze_harmonic_with_larger_supercells(
         
         ### prepare for the next step
         sc_mat_prev = almcalc_new.scell_matrix
-    
+        
     return almcalc_new
 
 def analyze_harmonic_properties(
