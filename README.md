@@ -4,8 +4,8 @@ Auto-kappa
 Version 0.3
 ---------------
 
-Auto-kappa is a software to automatically calculate anharmonic phonon properties, 
-including thermal conductivity using VASP and ALAMODE.
+Auto-kappa is an automation software for calculating anharmonic phonon properties, 
+including thermal conductivity, using VASP and ALAMODE.
 
 Requirements
 -------------
@@ -27,26 +27,34 @@ Please follow the these steps to view the manual.
 2. cd ./auto-kappa
 3. sh install.sh
 
+How to Use (minimum)
+---------------------
+
+You can perform a simple calculation by following the steps below. 
+Please refer to the manual for details.
+
+1. Set ``VASP_PP_PATH`` variable to allow ASE read pseudopotential files of VASP.
+2. Prepare a structure file, for example, ``POSCAR.Si``
+3. ``akrun --file_structure POSCAR.Si --material_name Si``.
+
 Citation
 ---------
 
-Please cite the following paper as well as papers in references to use auto-kappa.
+Please cite the following paper, as well as papers in the references, when using Auto-kappa.
 
 - M. Ohnishi, et al., ... (2025).
-
 
 References
 -----------
 
-- **ALAMODE:** 
-T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014), and 
+- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014) and 
 T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
 - **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
 - **Spglib:** A. Togo and I. Tanaka, arXiv:1808.01590 (2018).
 
-- **Pymatgen**, **Custodian:** S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- **Pymatgen** and **Custodian:** S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
 - **ASE:** A. H. Larsen, et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
