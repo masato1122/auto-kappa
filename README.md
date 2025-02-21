@@ -34,6 +34,7 @@ You can perform a simple calculation by following the steps below.
 Please refer to the manual for details.
 
 1. Set the ``VASP_PP_PATH`` variable to allow ASE read pseudopotential files of VASP.
+
 ASE reads pseudopotential files in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
 2. Prepare a structure file: for example, ``POSCAR.Si``
