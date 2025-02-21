@@ -33,7 +33,8 @@ How to Use (minimum)
 You can perform a simple calculation by following the steps below. 
 Please refer to the manual for details.
 
-1. Set the ``VASP_PP_PATH`` variable to allow ASE read pseudopotential files of VASP.
+1. Set the ``VASP_PP_PATH`` variable to allow ASE read pseudopotential files of VASP: 
+([maunal HP for ASE][https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials]).
 
 ASE reads pseudopotential files in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
