@@ -47,8 +47,9 @@ Please cite the following paper, as well as papers in the references, when using
 References
 -----------
 
-- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014) and 
-T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
+- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+
+- **ALAMODE (SCP):** T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
 - **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
