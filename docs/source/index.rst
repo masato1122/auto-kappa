@@ -2,14 +2,14 @@
     Written by M. Ohnishi
     September 13, 2022.
 
-Auto-KAPPA
+Auto-kappa
 ============
 
 .. toctree::
     :maxdepth: 2
     :numbered: 2
     :glob:
-
+     
     installation
     parameters
     tutorial/index

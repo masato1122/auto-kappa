@@ -11,6 +11,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import os.path
 import numpy as np
 from optparse import OptionParser
@@ -91,19 +92,20 @@ def _get_band_files(directory, prefix):
             filenames [ext] = filename
     return filenames
 
-def plot_bandos(directory='.', prefix=None, figname=None,
-        directory2=None, prefix2=None,
-        fig_width=4.0, fig_aspect=0.5,
-        ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
-        fig_labels=[None, None],
-        lw=0.3, lw2=0.6, wspace=0.05,
-        linestyle="-", linestyle2=":",
-        dpi=300, col='blue', col2='grey',
-        unit='cm', legend_loc='best',
-        plot_dos=True, plot_pdos=True, plot_pr=True,
-        plot_dos2=False, 
-        show_legend=True, show_colorbar=True
-        ):
+def plot_bandos(
+    directory='.', prefix=None, figname=None,
+    directory2=None, prefix2=None,
+    fig_width=4.0, fig_aspect=0.5,
+    ymin=None, ymax=None, xmax2=None, yticks=None, myticks=None,
+    fig_labels=[None, None],
+    lw=0.3, lw2=0.6, wspace=0.05,
+    linestyle="-", linestyle2=":",
+    dpi=300, col='blue', col2='grey',
+    unit='cm', legend_loc='best',
+    plot_dos=True, plot_pdos=True, plot_pr=True,
+    plot_dos2=False, 
+    show_legend=True, show_colorbar=True,
+    ):
     """ Plot phonon dispersion and DOS. If .band.pr file (participation ratio) 
     is located in the given directory and ``plot_pr`` is True, it is shown with
     colors on phonon dispersion.
@@ -175,7 +177,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         return None
     else:
         if os.path.exists(filenames['bands']) == False:
-            msg = " %s does not exist." % fn_band
+            msg = " %s does not exist." % filenames['bands']
             logger.info(msg)
         else:
             band = Band(filename=filenames['bands'])
@@ -185,7 +187,7 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     dos = None
     if 'dos' in filenames and plot_dos:
         if os.path.exists(filenames['dos']) == False:
-            msg = " %s does not exist." % fn_dos
+            msg = " %s does not exist." % filenames['dos']
             logger.info(msg)
         else:
             dos = Dos(filename=filenames['dos'])
@@ -240,13 +242,6 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     ax2.set_xlabel(x2label)
     
     ### set ticks and labels
-    set_xticks_labels(
-            ax1, band.kpoints[-1],
-            band.ksym, band.label)
-    
-    ax1 = set_axis(ax1, yticks=yticks, myticks=myticks)
-    ax2 = set_axis(ax2, yticks=yticks, myticks=myticks)
-    
     if pr_ratio is None:
         
         if prefix2 is not None:
@@ -254,9 +249,14 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         else:
             lab = None
 
-        plot_bands(ax1, band.kpoints, band.frequencies, 
-                col=col, lw=lw, linestyle=linestyle, zorder=2, label=lab)
-    
+        plot_bands(
+            ax1, band.kpoints, band.frequencies, 
+            col=col, lw=lw, linestyle=linestyle, zorder=2, label=lab)
+        
+        set_xticks_labels(ax1, band.kpoints[-1], band.ksym, band.label)
+        ax1 = set_axis(ax1, yticks=yticks, myticks=myticks)
+        ax2 = set_axis(ax2, yticks=yticks, myticks=myticks)
+        
     else:
         # --- coloring fllowing the participation ratio
         cdict = {
@@ -285,7 +285,12 @@ def plot_bandos(directory='.', prefix=None, figname=None,
         ##
         if show_colorbar:
             set_colorbar(sc, ax=ax1)
-    
+
+        ### Set axes
+        set_xticks_labels(ax1, band.kpoints[-1], band.ksym, band.label)
+        ax1 = set_axis(ax1, yticks=yticks, myticks=myticks)
+        ax2 = set_axis(ax2, yticks=yticks, myticks=myticks)
+        
     ## zero-line
     #ax1.axhline(0, ls='-', lw=0.2, c='grey')
     
@@ -352,7 +357,24 @@ def plot_bandos(directory='.', prefix=None, figname=None,
     
     return fig
 
-def plot_bands(ax, ks_tmp, frequencies, 
+
+def plot_bands_with_symmetry_points(
+    ax, band,
+    col='blue', lw=0.5, zorder=10, label=None, 
+    linestyle="-", marker="None", ms=1, mfc='none',
+    yticks=None, myticks=None,
+    **args):
+    
+    plot_bands(ax, band.kpoints, band.frequencies, 
+               col=col, lw=lw, zorder=zorder, label=label,
+               linestyle=linestyle, marker=marker, ms=ms, mfc=mfc,
+               **args)
+    
+    set_xticks_labels(ax, band.kpoints[-1], band.ksym, band.label)
+    ax = set_axis(ax, yticks=yticks, myticks=myticks)
+
+
+def plot_bands(ax, ks_tmp, frequencies,
         col='blue', lw=0.5, zorder=10, label=None, 
         linestyle="-", marker="None", ms=1, mfc='none',
         **args):
@@ -364,7 +386,7 @@ def plot_bands(ax, ks_tmp, frequencies,
 
         idx_zero = np.where(np.diff(kpoints) < 1e-10)[0]
         
-        koffset = 0.
+        # koffset = 0.
         for isec in range(len(idx_zero)+1):
              
             if isec == 0:
@@ -454,6 +476,7 @@ def set_xticks_labels(ax, kmax, ksym, labels):
         
         lab = label.replace("GAMMA", " \\Gamma ")
         lab = lab.replace("DELTA", " \\Delta ")
+        lab = lab.replace("SIGMA", " \\Sigma ")
         
         if i < len(labels)-1:
             for j in range(2):

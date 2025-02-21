@@ -3,7 +3,7 @@ Useful Tips
 ==============
 
 
-To make DFSET file for Alamode
+Make DFSET file for Alamode
 ===============================
 
 ``get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
@@ -28,7 +28,7 @@ Many directories which contain a vasprun.xml file are supposed to be located und
 ..
 
 
-To plot phonon dispersion and DOS
+Plot phonon dispersion and DOS
 =================================
 
 ``plot_bandos`` helps to plot the phonon dispersion and DOS.
@@ -38,6 +38,7 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
     
     $ ls
     ... Si.bands Si.dos Si.band.pr ...
+..
 
 .. code-block:: python
 
@@ -45,8 +46,8 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
 
     plot_bandos(directory='.', prefix='Si',
                 figname='fig_bandos.png',
-                plot_pr=True,
-                )
+                plot_pr=True)
+..
 
 .. figure:: ../files/fig_bandos.png
     :height: 250px
@@ -56,8 +57,26 @@ Different files such as .bands, .dos, .band.pr are supposed to be in the same di
 
 ..
 
+A more flexible way is as follows:
 
-To plot results of cross validation
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+    from auto_kappa.plot.alamode.band import Band
+    from auto_kappa.plot.bandos import plot_bands_with_symmetry_points
+
+    fig, ax = plt.subplots(figsize=(5, 3))
+    
+    file_band = 'Si.bands'
+    band = Band(file_band)
+    plot_bands_with_symmetry_points(ax, band)
+
+    fig.savefig('fig_band.png', dpi=300, bbox_inches='tight')
+    
+..
+
+
+Plot results of cross validation
 =====================================
 
 .. code-block:: shell
