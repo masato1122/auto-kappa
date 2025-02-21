@@ -27,6 +27,14 @@ Please follow the these steps to view the manual.
 2. cd ./auto-kappa
 3. sh install.sh
 
+Citation
+---------
+
+Please cite the following paper as well as papers in references to use auto-kappa.
+
+- M. Ohnishi, et al., ... (2025).
+
+
 References
 -----------
 
@@ -40,4 +48,3 @@ References
 
 - **ASE:** A. H. Larsen, et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
-- **Auto-kappa:** M. Ohnishi, et al., ... (2025).
