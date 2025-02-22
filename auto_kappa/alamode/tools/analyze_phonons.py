@@ -10,6 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import os
 import os.path
 import warnings

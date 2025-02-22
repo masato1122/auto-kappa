@@ -11,11 +11,8 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
-#import warnings
 import numpy as np
 from pathlib import Path
-
-from auto_kappa.alamode.analyzer.analyzer import get_kmode
 
 import logging
 logger = logging.getLogger(__name__)
@@ -49,12 +46,31 @@ class Result():
         self.filename = filename
         
         self._lifetime = None
-        self._kmode = None
-        self._lmode = None
-
+        
         if self.filename is not None:
             self.set_result()
     
+    def __str__(self):
+        keys = list(self._values.keys())
+        msg = "\n Result file: %s" % self.filename
+        msg += "\n"
+        for k1 in keys:
+            msg += "\n %s " % k1
+            if isinstance(self._values[k1], dict):
+                for k2 in self._values[k1]:
+                    msg += "\n  |--- %13s : " % k2
+                    if isinstance(self._values[k1][k2], int):
+                        msg += "%d" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], float):
+                        msg += "%f" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], str):
+                        msg += "%s" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], np.ndarray):
+                        msg += "%s" % str(self._values[k1][k2].shape)
+                    else:
+                        msg += " %s" % type(self._values[k1][k2])
+        return msg
+        
     def __getitem__(self, key):
         
         for k1 in self._values:

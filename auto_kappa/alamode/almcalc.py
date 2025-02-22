@@ -13,6 +13,7 @@
 import sys
 import os
 import os.path
+import math
 import numpy as np
 import logging
 
@@ -20,6 +21,7 @@ import ase
 import shutil
 import pandas as pd
 import glob
+import itertools
 
 from phonopy import Phonopy
 from phonopy.structure.cells import get_primitive
@@ -2012,37 +2014,6 @@ class AlamodeCalc():
             logger.info(msg)
             shutil.copy(fn1, fn2)
     
-    #def write_lifetime(self, temperature=300, outfile=None):
-    #    
-    #    from auto_kappa.alamode.tools.analyze_phonons import (
-    #            write_lifetime_at_given_temperature)
-    #    
-    #    msg = "\n"
-    #    msg += " ### Analyze lifetime at %.1f K" % (temperature)
-    #    print(msg)
-    #    
-    #    ### output file name
-    #    if self.lasso:
-    #        dir_kappa = self.out_dirs['lasso']['kappa']
-    #    else:
-    #        dir_kappa = self.out_dirs['cube']['kappa']
-    #    
-    #    file_result = dir_kappa + '/%s.result' % (self.prefix)
-    #    file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
-    #    
-    #    if outfile is None:
-    #        outfile = dir_kappa + '/tau_%dK.dat' % (int(temperature))
-    #    
-    #    ### analyze lifetime
-    #    write_lifetime_at_given_temperature(
-    #            file_result, file_isotope=file_isotope, 
-    #            temperature=temperature, outfile=outfile)
-    #    
-    #    print("")
-    #    print(" Output", outfile)
-    #    print("")
-    
-
     #@property
     #def file_result(self):
     #    return self._file_result
@@ -2056,14 +2027,13 @@ class AlamodeCalc():
         return self._scat
     
     def set_scattering_info(
-            self, grain_size=None, temperature=300, calc_type="cubic"):
+            self, grain_size=None, temperature=300, calc_type="cubic", verbosity=True):
         
         ### directory name for kappa
         dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
         
         ## get directory name for kappa with the finest k grid
         dir_kappa = None
-        lab_kpts = None
         ksum = 0
         for lab in dirs_kappa:
             data = lab.lower().split("x")
@@ -2079,16 +2049,24 @@ class AlamodeCalc():
         file_result = dir_kappa + '/%s.result' % (self.prefix)
         file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
         
+        msg1 = "\n Scattering info is obtained from the following files:"
         if os.path.exists(file_result) == False:
-            msg = " Error: %s does not exist." % (
+            msg_error = " Error: %s does not exist." % (
                     self.get_relative_path(file_result))
-            logger.error(msg)
+            logger.error(msg_error)
+        else:
+            msg1 += "\n - %s." % (self.get_relative_path(file_result))
         
         if os.path.exists(file_isotope) == False:
-            msg = " Note : %s does not exist." % (
+            msg_error = " Note : %s does not exist." % (
                     self.get_relative_path(file_isotope))
-            logger.error(msg)
+            logger.error(msg_error)
             file_isotope = None
+        else:
+            msg1 += "\n - %s." % (self.get_relative_path(file_isotope))
+        
+        if verbosity:
+            logger.info(msg1)
         
         ###
         from auto_kappa.alamode.analyzer.scattering import Scattering
@@ -2098,9 +2076,91 @@ class AlamodeCalc():
                 grain_size=grain_size, 
                 temperature=temperature
                 )
+    
+    def write_lifetime_at_given_temperature(self, temperature=300, outfile=None, grain_size=None):
+        """ Write lifetime at a given temperature in a csv file in a format similar to ALAMODE.
         
+        Args
+        ------
+        temperature : float
+            Temperature in K.
+        
+        outfile : string
+            Output file name.
+        
+        grain_size : float
+            Grain size in nm.
+            
+        """
+        self.set_scattering_info(temperature=temperature, grain_size=grain_size, verbosity=False)
+        
+        dump = {"ik": [], "is": [], 
+                "frequency[cm^-1]": [], "lifetime[ps]": [], 
+                "|velocity|[m/s]": [], "MFP[nm]": [], "multiplicity": [],
+                "kxx": [], "kxy": [], "kxz": [],
+                "kyx": [], "kyy": [], "kyz": [],
+                "kzx": [], "kzy": [], "kzz": []}
+        
+        ## print(self.scat.result)
+        nk = len(self.scat.result['frequencies'])
+        nbands = len(self.scat.result['frequencies'][0])
+        for ik in range(nk):
+            multiplicity = self.scat.result['multiplicity'][ik]
+            for ib in range(nbands):
+                
+                frequency = self.scat.result['frequencies'][ik][ib] ## cm^-1
+                lifetime = self.scat.lifetime[ik][ib]  ## ps
+                
+                ## velocity
+                velo_all = self.scat.result['velocities'][ik][ib]  ## shape(multiplicity, 3)
+                velo_all = np.asarray(velo_all)
+                assert len(velo_all) == multiplicity
+                
+                vave = 0.
+                for im in range(multiplicity):
+                    vave += np.linalg.norm(velo_all[im]) / multiplicity
+                
+                ## kappa at each mode
+                kappa_each = np.zeros((3, 3))
+                for i1 in range(3):
+                    for i2 in range(3):
+                        kappa_each[i1, i2] += (
+                            self.scat.kmode[ik,ib,i1,i2] / multiplicity
+                        )
+                
+                dump["ik"].append(ik + 1)
+                dump["is"].append(ib + 1)
+                dump["frequency[cm^-1]"].append(frequency)
+                dump["lifetime[ps]"].append(lifetime)
+                dump["|velocity|[m/s]"].append(vave)
+                dump["MFP[nm]"].append(lifetime * vave)
+                dump["multiplicity"].append(multiplicity)
+                for i, j in itertools.product(range(3), repeat=2):
+                    dump["k" + "xyz"[i] + "xyz"[j]].append(kappa_each[i, j])
+            
+        ### write a csv file
+        if outfile is None:
+            outfile = self.out_dirs['result'] + '/tau_%dK.csv' % (int(temperature))
+        
+        df = pd.DataFrame(dump)
+        with open(outfile, 'w') as f:
+            f.write("# Created by auto-kappa in a format similar to ALAMODE\n")
+            f.write("# Input file   : %s\n" % self.get_relative_path(self.scat.result.filename))
+            if self.scat.file_isotope is not None:
+               if os.path.exists(self.scat.file_isotope):
+                    f.write("# Itotope      : %s\n" % self.get_relative_path(self.scat.file_isotope))
+            if grain_size is not None:
+                f.write("# Grain size   : %d nm\n" % grain_size)
+            f.write("# Temperature  : %d K\n" % temperature)
+            f.write("# kpoint range : 1 %d\n" % nk)
+            f.write("# mode   range : 1 %d\n" % nbands)
+            df.to_csv(f, index=False, float_format='%.7e')
+            msg = "\n Output : %s" % self.get_relative_path(outfile)
+            logger.info(msg)
+        
+    
     def plot_lifetime(
-            self, temperatures="300:500", grain_size=None, calc_type="cubic"):
+            self, temperatures="300:500", calc_type="cubic", outputfile=True):
         
         data = temperatures.split(":")
         ts = [float(t) for t in data]
@@ -2108,14 +2168,14 @@ class AlamodeCalc():
         dfs = {}
         for t in ts:
             
-            self.set_scattering_info(temperature=t, grain_size=None)
+            self.set_scattering_info(temperature=t, grain_size=None, verbosity=False)
             omegas = self.scat.result['frequencies']
             taus = self.scat.lifetime
             
-            dfs[int(t)] = pd.DataFrame()
-
             nk = len(omegas)
             nbands = len(omegas[0])
+            
+            dfs[int(t)] = pd.DataFrame()
             dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
             dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
         
@@ -2128,6 +2188,7 @@ class AlamodeCalc():
         ### plot a figure
         from auto_kappa.plot.pltalm import plot_lifetime
         out = plot_lifetime(dfs, figname=self.get_relative_path(figname))
+        
         return out
     
     def plot_scattering_rates(self, temperature=300., grain_size=1000.):
@@ -2461,137 +2522,7 @@ def _should_rerun_band(filename):
     else:
         return True
 
-
-#def run_alm(structure, order, cutoffs, nbody, mode=None,
-#        displacements=None, forces=None, outfile=None,
-#        fc2info=None, lasso=False, lasso_type='alm', verbosity=0
-#        ):
-#    """ get ALM object
-#    Note : length unit is Bohr
-#
-#    Args
-#    ==========
-#    order : int
-#    cutoff : float, unit=Bohr
-#    ndoby : shape=(order)
-#    
-#    displacements : shape=(npatterns, natoms, 3)
-#    forces : shape=(npatterns, natoms, 3)
-#    outfile : string
-#    
-#    lasso : bool
-#
-#    lasso_type : string
-#        "alm" or "scikit"
-#    
-#    Return
-#    ===========
-#    If mode == 'suggest':
-#    patterns : shape=(nstruct, natoms, 3)
-#
-#    If mode == 'optimize':
-#    alm.get_fc(order), which are fc*_values, elem*_indices
-#    
-#    """
-#    if outfile is not None:
-#        if os.path.exists(outfile):
-#            msg = "\n"
-#            msg += " ALM calculation (%s) has been already done.\n" % (mode)
-#            msg += " See: %s" % (outfile)
-#            logger.info(msg)
-#            return None
-#    
-#    from alm import ALM
-#
-#    if type(structure) == "ase.atoms.Atoms":
-#        atoms = structure.copy()
-#    else:
-#        atoms = change_structure_format(structure, format='ase')
-#    
-#    lave = atoms.cell * AToBohr
-#    xcoord = atoms.get_scaled_positions()
-#    kd = atoms.get_atomic_numbers()
-#    
-#    #if lasso and lasso_type == 'scikit':
-#    #    msg = "\n"
-#    #    msg = " Perform LASSO with Scikit_learn...\n"
-#    #    msg = "\n"
-#    #    logger.info(msg)
-#    #    from .alamode_tools.lasso import (
-#    #            get_training_data,
-#    #            run_lasso_by_scikit_learn
-#    #            )
-#    #    from . import default_lassobyscikit_parameters
-#    #    X, y = get_training_data(
-#    #            [lave, xcoord, kd], 
-#    #            displacements, forces,
-#    #            maxorder=order, cutoff=cutoffs, nbody=nbody
-#    #            )
-#    #    ###
-#    #    ### Default parameters may need to be adjusted.
-#    #    ###
-#    #    fc, alphas_lasso, rmse_mean, cv_mean = run_lasso_by_scikit_learn(
-#    #            X, y, len(atoms), len(forces), forces.ravel(),
-#    #            **default_lassobyscikit_parameters,
-#    #            )
-#        
-#    ###
-#    with ALM(lave, xcoord, kd) as alm:
-#        
-#        alm.define(order, cutoff_radii=cutoffs, nbody=nbody)
-#        alm.set_verbosity(verbosity)
-#        
-#        if mode == 'suggest':
-#            info = alm.suggest()
-#            if info == 1:
-#                msg = " Error during ALM calculation"
-#                logger.error(msg)
-#                return None
-#            else:
-#                patterns = alm.get_displacement_patterns(order)
-#                return patterns
-#            
-#        elif mode == 'optimize':
-#            
-#            alm.displacements = displacements
-#            alm.forces = forces
-#            
-#            ### for lasso
-#            #if lasso:
-#            #    alm.set_constraint(translation=True)
-#            
-#            ## freeze fc2
-#            if fc2info is not None:
-#                alm.freeze_fc(fc2info[0], fc2info[1])
-#            
-#            ## lasso
-#            if lasso:
-#                
-#                ### cross-validation
-#                optcontrol = {'linear_model': 2,
-#                              'cross_validation': 5,
-#                              'num_l1_alpha': 50}
-#                alm.set_optimizer_control(optcontrol)
-#                alm.optimize()
-#                
-#                ### prepare for optimization with lasso
-#                optcontrol['cross_validation'] = 0      ## change N -> 0
-#                optcontrol['l1_alpha'] = alm.get_cv_l1_alpha()
-#                alm.set_optimizer_control(optcontrol)
-#                
-#            ### optimization!!
-#            info = alm.optimize()
-#            
-#            if outfile is not None:
-#                alm.save_fc(outfile, format='alamode')
-#                msg = "\n Output " + outfile
-#                logger.info(msg)
-#            return alm.get_fc(order)
-#        
-#        else:
-#            msg = " WARNING: mode %s is not supported" % (mode)
-#            logger.warning(msg)
-    
+   
 def _read_kappa(dir_kappa, prefix):
     """ Read .kl and .kl_coherent files and return pandas.DataFrame object
     

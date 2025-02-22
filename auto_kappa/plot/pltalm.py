@@ -10,8 +10,9 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import numpy as np
+import sys
 import os
+import numpy as np
 import time
 
 import matplotlib

@@ -1,7 +1,7 @@
 #
 # alamode.py
 #
-# This script helps to conduct phonon analyses using ALAMODE and VASP.
+# This script helps to preform phonon analyses using ALAMODE and VASP.
 #
 # Copyright (c) 2022 Masato Ohnishi
 #
@@ -30,11 +30,8 @@ logger = logging.getLogger(__name__)
 def analyze_phonon_properties(
         almcalc, calc_force=None, negative_freq=-1e-3, 
         material_name=None, neglect_log=False, 
-        #
         harmonic_only=False, calc_kappa=True,
-        #
         nmax_suggest=None, frac_nrandom=1.0,
-        #
         params_nac={'apdb': None, 'kpts': None},
         kdensities_for_kappa=[500, 1000, 1500],
         ## SCPH
@@ -513,31 +510,33 @@ def calculate_thermal_conductivities(
     if calc_type == "cubic":
         
         try:
+            for T in temperatures_for_spectral.split(':'):
+                almcalc.write_lifetime_at_given_temperature(temperature=float(T))
+        except:
+            logger.warning("\n Warning: lifetime was not written properly.")
+        
+        try:
             almcalc.plot_lifetime(
                     temperatures=temperatures_for_spectral, calc_type=calc_type)
         except Exception:
-            logger.warning("\n Warning: "\
-                    "the figure of lifetime was not created properly.")
+            logger.warning("\n Warning: the figure of lifetime was not created properly.")
         
         try:
             almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
         except Exception:
-            logger.warning("\n Warning: the figure of "\
-                    "scattering rate was not created properly.")
+            logger.warning("\n Warning: the figure of scattering rate was not created properly.")
         
         try:
             almcalc.plot_cumulative_kappa(
                     temperatures=temperatures_for_spectral, 
                     wrt='frequency', xscale='linear')
         except Exception:
-            logger.warning("\n Warning: the figure of "\
-                    "cumulative thermal conductivity was not created properly.")
+            logger.warning("\n Warning: the figure of cumulative thermal conductivity was not created properly.")
         
         try:
             almcalc.plot_cumulative_kappa(
                     temperatures=temperatures_for_spectral, 
                     wrt='mfp', xscale='log')
         except Exception:
-            logger.warning("\n Warning: the figure of "\
-                    "cummulative TCs was not created properly.")
+            logger.warning("\n Warning: the figure of cummulative TCs was not created properly.")
 

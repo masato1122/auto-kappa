@@ -93,6 +93,10 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
 
     Return
     -------
+    
+    kappa : ndarray, float, shape=(3,3)
+        thermal conductivity
+    
     kmode : ndarray, float, shape=(nkpoints,nbands,3,3)
         thermal conductivity of each mode
     """
@@ -101,13 +105,6 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
     
     # mmax = int(np.max(multiplicity))
     kmode = np.zeros((((nk,nb,3,3))))
-    
-    # # check velocity
-    # ik = 9
-    # ib = 26
-    # for ib in range(26, 30):
-    #     print('ik, ib, lifetime = ', ik, ib, lifetime[ik][ib])
-    # exit()
     
     for ik in range(nk):
         multi = multiplicity[ik]
@@ -132,8 +129,9 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
                                                                # m^3 * W/(m*K) 
     ## --- dk
     ## np.sum(multiplicity) : number of k-points
-    kmode *= (1./ (volume * units.BohrToM**3) / 
-            float(np.sum(multiplicity)))                   # W/(m*K)
+    kmode *= (
+        1./(volume * units.BohrToM**3)/
+        float(np.sum(multiplicity)))  # W/(m*K)
     
     # --- thermal conductivity
     kappa = np.zeros((3,3))
