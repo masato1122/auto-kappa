@@ -477,6 +477,7 @@ def set_xticks_labels(ax, kmax, ksym, labels):
         lab = label.replace("GAMMA", " \\Gamma ")
         lab = lab.replace("DELTA", " \\Delta ")
         lab = lab.replace("SIGMA", " \\Sigma ")
+        lab = lab.replace("LAMBDA", " \\Lambda ")
         
         if i < len(labels)-1:
             for j in range(2):
