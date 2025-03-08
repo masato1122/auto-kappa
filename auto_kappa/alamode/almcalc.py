@@ -39,6 +39,7 @@ from auto_kappa.cui import ak_log
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.files import write_output_yaml
+from auto_kappa.alamode.errors import check_rank_deficient
 
 logger = logging.getLogger(__name__)
 
@@ -710,7 +711,7 @@ class AlamodeCalc():
     
     def get_suggested_structures(self, order: None, nrandom=0, disp_mode='fd',
             temperature=None, number_of_displacements=1, classical=False,
-            ):
+            can_return_none=False):
         """ Return structures in which atoms are displaced with the given method,
         ``disp_mode``.
         
@@ -738,7 +739,7 @@ class AlamodeCalc():
         structure = self.supercell
         
         ### get displacements
-        msg = "\n Displacement mode : " + disp_mode + "\n"
+        msg = f"\n Displacement mode : {disp_mode}\n"
         logger.info(msg)
         if disp_mode == "fd":
             
@@ -780,9 +781,14 @@ class AlamodeCalc():
         
         ### error
         if all_disps is None:
-            msg = "\n Error: Failed to obtain displacement patterns.\n"
+            msg = "\n Error: Failed to obtain displacement patterns."
+            msg += "\n The structures used in the current calculation may be "
+            msg += "incompatible with the ones used in the previous calculation."
             logger.error(msg)
-            sys.exit()
+            if can_return_none:
+                return None
+            else:
+                sys.exit()
         
         ## get pristine structure
         structures = {}
@@ -826,13 +832,18 @@ class AlamodeCalc():
         ##
         ## This part may need to be fixed.
         ##
-        almdisp = AlamodeDisplace(
-                displacement_mode, codeobj,
-                file_evec=file_evec,
-                primitive=self.primitive,
-                verbosity=self.verbosity
-                )
-         
+        try:
+            almdisp = AlamodeDisplace(
+                    displacement_mode, codeobj,
+                    file_evec=file_evec,
+                    primitive=self.primitive,
+                    verbosity=self.verbosity
+                    )
+        except:
+            ## error which may due to the incompatible structures for 
+            ## the structure used and the one used in previous calculations
+            almdisp = None
+        
         if almdisp is None:
             msg = " Error: Couldn't obtain AlamodeDisplace object properly."
             logger.error(msg)
@@ -971,8 +982,21 @@ class AlamodeCalc():
             outdir0 = self.out_dirs['harm']['force']
         elif order == 2:
             if nsuggest <= nmax_suggest:
-                self._fc3_type = 'fd'
-                outdir0 = self.out_dirs['cube']['force_fd']
+                
+                ## Avoid the unexpected error due to the rank deficiency
+                use_lasso = False
+                logfile = self.out_dirs['cube']['force_fd'] + '/fc3.log'
+                if os.path.exists(logfile):
+                    if check_rank_deficient(logfile):
+                        use_lasso = True
+                
+                if use_lasso:
+                    self._fc3_type = 'lasso'
+                    outdir0 = self.out_dirs['cube']['force_lasso']
+                else:    
+                    self._fc3_type = 'fd'
+                    outdir0 = self.out_dirs['cube']['force_fd']
+                
             else:
                 self._fc3_type = 'lasso'
                 outdir0 = self.out_dirs['cube']['force_lasso']
@@ -988,7 +1012,8 @@ class AlamodeCalc():
         ### When nsuggest > nmax_suggest, max(nsuggest * frac_nrandom,
         ### nmax_suggest) structures will be generated with random displacement
         ### based on the normal coordinates.
-        if order != 1 and nsuggest > nmax_suggest:
+        # if order != 1 and nsuggest > nmax_suggest:
+        if order != 1 and self.fc3_type == 'lasso':
             
             ### number of random displacement patters
             nrandom = int(frac_nrandom * nfcs / natoms)
@@ -1003,16 +1028,17 @@ class AlamodeCalc():
             else:
                 name = "4th-order"
             
-            msg  = "\n Maximum limit of the number of suggested patterns : %d" % (nmax_suggest)
-            msg += "\n The number of suggested patterns exceeds the maximum limit."
-            msg += "\n"
-            msg += "\n Number of generated random patterns (Ngen) : %d" % ngenerated
-            msg += "\n - Ngen = max(%d, int(frac * Nfcs / Natoms))" % (ngen_min)
-            msg += "\n - Nfcs   : Number of free %s force constants, %d" % (name, nfcs)
-            msg += "\n - Natoms : Number of atoms in a supercell, %d" % (natoms)
-            msg += "\n - frac   : Fractional number of random patterns, %.3f" % (frac_nrandom)
+            msg = ""
+            msg += f"\n Maximum limit of the number of suggested patterns : {nmax_suggest}"
+            msg += f"\n The number of suggested patterns exceeds the maximum limit."
+            msg += f"\n"
+            msg += f"\n Number of generated random patterns (Ngen) : {ngenerated}"
+            msg += f"\n - Ngen = max({ngen_min}, int(frac * Nfcs / Natoms))"
+            msg += f"\n - Nfcs   : Number of free {name} force constants, {nfcs}"
+            msg += f"\n - Natoms : Number of atoms in a supercell, {natoms}"
+            msg += f"\n - frac   : Fractional number of random patterns, {frac_nrandom:.3f}"
             logger.info(msg)
-             
+            
             if order == 2:
                 ## FC3 is obtained with random-displacement method
                 ## with a fixed displacement magnitude
@@ -1035,6 +1061,10 @@ class AlamodeCalc():
         
         else:
             structures = self.get_suggested_structures(order, disp_mode='fd')
+        
+        ### If something wrong, return None
+        if structures is None:
+            return None
         
         ### get AMIN parameters
         from auto_kappa import default_amin_parameters

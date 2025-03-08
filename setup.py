@@ -51,9 +51,9 @@ def main(build_dir):
     setup(
             name='auto_kappa',
             version=version,
-            description='auto-kappa module',
+            description='automation software for anharmonic phonon properties',
             author='Masato Ohnishi',
-            author_email='ohnishi@photon.t.u-tokyo.ac.jp',
+            author_email='masato.ohnishi.ac@gmail.com',
             packages=packages_autokappa,
             install_requires=[
               'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 

@@ -250,3 +250,14 @@ def _error_in_result_file():
     _move_and_compress_files(prefix, files_disp)
     return 0
 
+def check_rank_deficient(logfile):
+    """ Check the previous force constant calculation
+    If the following line is found in the logfile, return True.
+    
+    If "WARNING : Rank deficient
+    """
+    lines = open(logfile, 'r').readlines()
+    for line in lines:
+        if "Rank deficient" in line:
+            return True
+    return False
