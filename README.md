@@ -21,7 +21,7 @@ Requirements
 Installation
 -------------
 
-Please follow the these steps to view the manual.
+Please follow these steps to install the package.
 
 1. git clone https://github.com/masato1122/auto-kappa.git
 2. cd ./auto-kappa
