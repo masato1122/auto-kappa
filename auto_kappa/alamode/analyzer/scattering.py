@@ -454,9 +454,9 @@ class Scattering():
         self.scattering_rates['phph'] = convert_gamma2scatrate(
             self.result['gammas'][itarget,:,:])
         
-        if self.has_gap(tol_gap=10.0) != False:
-            logger.info(f'\n Note: Band gap exists. '
-                        f'({self.has_gap(tol_gap=10.0)} 1/cm)')
+        # if self.has_gap(tol_gap=10.0) != False:
+        #     logger.info(f'\n Note: Band gap exists. '
+        #                 f'({self.has_gap(tol_gap=10.0)} 1/cm)')
         
         # if smooth_scattering_rate:
         #     self._smooth_scattering_rate(tol_gap=tol_gap)

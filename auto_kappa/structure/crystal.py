@@ -36,15 +36,21 @@ logger = logging.getLogger(__name__)
 #    """
 #    return ase.build.make_supercell(atoms0, P)
 
-def get_automatic_kmesh(struct_init, reciprocal_density=1500, 
-        grid_density=0.01, method='reciprocal_density'):
+def get_automatic_kmesh(
+    struct_init, 
+    reciprocal_density=1500, 
+    grid_density=0.01, 
+    method='reciprocal_density'):
     
     structure = change_structure_format(struct_init, format='pmg')
     
     if method == 'reciprocal_density':
-        vol = structure.lattice.reciprocal_lattice.volume
-        kppa = reciprocal_density * vol * structure.num_sites
-        kpts = Kpoints.automatic_density(structure, kppa).kpts[0]
+        
+        force_gamma = False
+        
+        vol = structure.lattice.reciprocal_lattice.volume           ### A^3
+        kppa = reciprocal_density * vol * structure.num_sites       ### grid density
+        kpts = Kpoints.automatic_density(structure, kppa, force_gamma=force_gamma).kpts[0]
      
     #elif method == 'grid_density':
     #    Kpoints.automatic_density(structure, grid_density)

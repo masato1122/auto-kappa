@@ -193,8 +193,39 @@ class ApdbVasp():
                     self.scell_matrix)
             sc = change_structure_format(sc, format=format)
         
-        ###
+        # ###
+        # pmat_tmp = np.dot(prim.cell.array, np.linalg.inv(unit.cell.array)).T
+        # if np.allclose(pmat_tmp, self._mat_u2p, atol=1e-3) == False:
+        #     ##
+        #     ## This part is added to check the primitive matrix suggested by Phonopy (Spglib)
+        #     ##
+        #  
+        #     ## Get the primitive matrix suggested by Pymatgen
+        #     unit_pmg = change_structure_format(unit, format='pymatgen')
+        #     prim_pmg = unit_pmg.get_primitive_structure()
+        #   
+        #     ## Get structures: unitcell, primitive, and supercell
+        #     unit_ase = change_structure_format(unit, format='ase')
+        #     prim_ase = change_structure_format(prim_pmg, format='ase')
+        #     sc_ase = get_supercell(
+        #             change_structure_format(unit_ase, format='phonopy'),
+        #             self.scell_matrix)
+        #     sc_ase = change_structure_format(sc_ase, format='ase')
+        #   
+        #     ## check the primitive matrix
+        #     pmat_tmp = np.dot(prim_ase.cell.array, np.linalg.inv(unit.cell.array)).T
+        #     if np.allclose(pmat_tmp, self._mat_u2p, atol=1e-3) == False:
+        #         msg = "\n Error: The primitive matrix is not correct."
+        #         msg += "\n Please check the primitive matrix."
+        #         logger.error(msg)
+        #         sys.exit()
+        #   
+        #     structures = {'unit': unit_ase, 'prim': prim_ase, 'super': sc_ase}
+        # else:
+        #     structures = {"unit": unit, "prim": prim, "super": sc}
+        
         structures = {"unit": unit, "prim": prim, "super": sc}
+        
         return structures
     
     @property
@@ -511,6 +542,15 @@ class ApdbVasp():
             'volume_relaxation': volume_relaxation,
             })
         
+        ### output structures (>= ver.0.4.0)
+        outdir = directory + "/structures"
+        os.makedirs(outdir, exist_ok=True)
+        logger.info("\n")
+        for key in self.structures.keys():
+            fn = outdir.replace(os.getcwd(), ".") + "/POSCAR.%s" % key
+            ase.io.write(fn, self.structures[key], format='vasp', direct=True, vasp5=True, sort=True)
+            logger.info(" Output %s" % fn)
+        
         if spg_before != spg_after:
             ak_log.symmetry_error(spg_before, spg_after)
             return -1
@@ -581,7 +621,7 @@ class ApdbVasp():
 
         force : bool, default=False
             If it's True, the calculation will be done forcelly even if it had
-            been already finished.
+            already been finished.
         
         args : dict
             input parameters for VASP
@@ -606,7 +646,7 @@ class ApdbVasp():
         
         ### perform the calculation
         if wasfinished(directory, filename='vasprun.xml') and force == False:
-            msg = "\n The calculation has been already done."
+            msg = "\n The calculation has already been done."
             logger.info(msg)
         
         else:

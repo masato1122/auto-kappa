@@ -278,7 +278,7 @@ class AlmInput(MSONable, dict):
         lines = _write_cell(self['cell'])
         for line in lines:
             alm_str += line + "\n"
-
+        
         ### cutoff parameters
         lines = _write_cutoff(self['cutoff'])
         for line in lines:

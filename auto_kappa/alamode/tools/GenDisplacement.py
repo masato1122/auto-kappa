@@ -701,7 +701,7 @@ class AlamodeDisplace(object):
                         dmax = np.amax(abs(Mps - Mps_tmp))
                         if dmax > tol_zero:
                             msg = ("\n Warning: please check the sizes of "
-                                    "the primitive and super cell")
+                                    "the primitive and super cell. (%.3e > %.3e)" % (dmax, tol_zero))
                             logger.warning(msg)
                         
                         self._commensurate_qpoints = get_commensurate_points(Mps)

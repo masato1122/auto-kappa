@@ -23,9 +23,11 @@ import pandas as pd
 import glob
 import itertools
 
-from phonopy import Phonopy
-from phonopy.structure.cells import get_primitive
-from phonopy.structure.cells import get_supercell
+import ase.io
+from ase.geometry import get_distances
+
+# from phonopy import Phonopy
+from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files
 from auto_kappa.units import AToBohr, BohrToA
@@ -40,6 +42,13 @@ from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.alamode.errors import check_rank_deficient
+from auto_kappa.alamode.compat import (
+    was_primitive_changed,
+    was_tolerance_changed,
+    backup_previous_results,
+    adjust_keys_of_suggested_structures
+)
+from auto_kappa.units import BohrToA
 
 logger = logging.getLogger(__name__)
 
@@ -399,10 +408,10 @@ class AlamodeCalc():
             sc = get_supercell(unit_pp, self.scell_matrix)
         
         self._supercell = change_structure_format(sc, format=format)
-         
+        
         ### supercell for cubic FCs
-        xml_fd = self.out_dirs['cube']['force_fd'] + '/psist/vasprun.xml'
-        xml_lasso = self.out_dirs['cube']['force_lasso'] + '/psist/vasprun.xml'
+        # xml_fd = self.out_dirs['cube']['force_fd'] + '/psist/vasprun.xml'
+        # xml_lasso = self.out_dirs['cube']['force_lasso'] + '/psist/vasprun.xml'
         
         #try:
         #    sc3 = ase.io.read(xml_fd, format='vasp-xml')
@@ -908,9 +917,10 @@ class AlamodeCalc():
     def calc_forces(self, order: None, calculator=None, 
             nmax_suggest=100, frac_nrandom=10., 
             temperature=500., classical=False,
-            calculate_forces=True, output_dfset=1,
+            calculate_forces=True, 
+            output_dfset=None,
             amin_params={},
-            max_limit_of_estimated_time=24.*30.,
+            # max_limit_of_estimated_time=24.*30.,
             ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
@@ -953,6 +963,9 @@ class AlamodeCalc():
             line = "Force calculation (order: %s)" % order
         else:
             line = "Generate displacement structures (order: %s)" % order
+        
+        if output_dfset is not None:
+            msg = " Caution: \"output_dfset\" option is no loger used."
         
         msg = "\n\n " + line
         msg += "\n " + "=" * (len(line))
@@ -1060,8 +1073,11 @@ class AlamodeCalc():
                         )
         
         else:
-            structures = self.get_suggested_structures(order, disp_mode='fd')
-        
+            structures_tmp = self.get_suggested_structures(order, disp_mode='fd')
+            
+            ## Adjust keys of structures
+            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0)
+            
         ### If something wrong, return None
         if structures is None:
             return None
@@ -1095,7 +1111,26 @@ class AlamodeCalc():
                 dir_prev = (outdir0 + "/" + str(struct_keys[ii-1]))
                 prev_params = get_previous_parameters(dir_prev)
             
-            ### check
+            ### Check whether structures are same for the finite-displacement method
+            if self.fc3_type == 'fd':
+                file_poscar = outdir + "/POSCAR"
+                if os.path.exists(file_poscar):
+                    structure_prev = ase.io.read(file_poscar)
+                    _, D_len = get_distances(
+                        structure_prev.get_positions(),
+                        structures[key].get_positions(),
+                        cell=structure_prev.cell,
+                        pbc=structure_prev.pbc)
+                    
+                    dists = np.diag(D_len)
+                    if np.any(dists > 1e-3):
+                        msg = (
+                            f" Error: The structure is not the same as "
+                            f"the previous one. ({key}, {np.max(dists)})")
+                        logger.error(msg)
+                        sys.exit()
+            
+            ### Wheter the calculation has been finished
             filename = outdir + "/vasprun.xml"
             if wasfinished(outdir):
                 if are_forces_available(filename):
@@ -1160,8 +1195,7 @@ class AlamodeCalc():
                     count += 1
 
                     if count == max_num_try:
-                        msg = " Error: "\
-                                "atomic forces could not be calculated properly."
+                        msg = " Error: atomic forces could not be calculated properly."
                         logger.error(msg)
                         sys.exit()
                 
@@ -1175,7 +1209,6 @@ class AlamodeCalc():
             except Exception:
                 pass
             logger.info(msg)
-            #logger.info("%d %d %d" % (count, ii, len(struct_keys)))
             
             ### estimate remaining time
             if count_calc == 0:
@@ -1206,40 +1239,43 @@ class AlamodeCalc():
             count_calc += 1
 
         ### output DFSET
-        if num_done == len(structures) and output_dfset:
-             
+        # if num_done == len(structures) and output_dfset:
+        if num_done == len(structures):
+            
             if order == 1:
-                
                 fn0 = self.outfiles['harm_dfset']
-            
             elif order == 2:
-                
                 fn0 = self.outfiles['cube_%s_dfset' % self.fc3_type]
-            
             else:
-                
                 fn0 = self.outfiles['higher_dfset']
             
             ###
             os.makedirs(self.out_dirs['result'], exist_ok=True)
             offset_xml = outdir0 + '/prist/vasprun.xml'
             outfile = self.out_dirs['result'] + "/" + fn0
-            if os.path.exists(outfile) == False or output_dfset == 2:
-                out = get_dfset(
-                        outdir0, offset_xml=offset_xml, 
-                        outfile=self.get_relative_path(outfile),
-                        nset=nsuggest-1,
-                        )
-            else:
-                msg = "\n %s already exists" % (self.get_relative_path(outfile))
-                logger.info(msg)
+            
+            ### Output the DFSET file
+            # if os.path.exists(outfile) == False or output_dfset == 2:
+            #     out = get_dfset(
+            #             outdir0, offset_xml=offset_xml, 
+            #             outfile=self.get_relative_path(outfile),
+            #             nset=nsuggest-1,
+            #             )
+            # else:
+            #     msg = "\n %s already exists" % (self.get_relative_path(outfile))
+            #     logger.info(msg)
+
+            out = get_dfset(
+                outdir0, offset_xml=offset_xml, 
+                outfile=self.get_relative_path(outfile),
+                nset=nsuggest-1)
         
         logger.info("")
 
     def write_alamode_input(
             self, propt=None, order=None, 
             deltak=0.01, kpts=[15,15,15],
-            outdir=None,
+            outdir=None, tolerance=1.8897259886e-5,
             **kwargs
             ):
         """ Write Anphon Input
@@ -1446,7 +1482,8 @@ class AlamodeCalc():
                     mode=mode,
                     kpmode=kpmode,
                     fcsxml=fcsxml,
-                    nonanalytic=self.nac, borninfo=borninfo
+                    nonanalytic=self.nac, 
+                    borninfo=borninfo
                 )
             
             ### set primitive cell with Pymatgen-structure
@@ -1455,7 +1492,7 @@ class AlamodeCalc():
                         self.primitive, format="pymatgen-structure"
                         )
                     )
-        
+            
         elif alamode_type == 'alm':
             
             ### set input file for alm
@@ -1468,6 +1505,7 @@ class AlamodeCalc():
                     nonanalytic=self.nac, 
                     borninfo=borninfo
                 )
+            
         ###
         self._prefix = inp['prefix']
         
@@ -1583,16 +1621,26 @@ class AlamodeCalc():
         for key in given_params:
             if key in filename_keys:
                 if given_params[key][0] == "/":
-                    given_params[key] = os.path.relpath(
-                            given_params[key], dir_work)
+                    given_params[key] = os.path.relpath(given_params[key], dir_work)
         
         ### make input script for ALAMODE
+        inp.update({'tolerance': tolerance})
         inp.update(given_params)
+        
+        ## Check if the tolerance was changed
+        ## Settting of "tolerance" was added from ver.0.4.0.
+        if was_primitive_changed(self.unitcell, tol_prev=1e-3*BohrToA, tol_new=1e-5):
+            if was_tolerance_changed(filename, inp.as_dict()):
+                directory = os.path.dirname(filename)
+                backup_previous_results(directory, propt, prefix=self.prefix)
+        
+        
         inp.to_file(filename=filename)
         
         msg = "\n Make an input script for ALAMODE : %s." % (
                 self.get_relative_path(filename))
-
+        
+        
     def get_suggested_l1alpha(self, order=None):
         
         if order == 2:
@@ -1857,7 +1905,7 @@ class AlamodeCalc():
         Args
         ---------
         propt : string
-            "band", "dos", "evec_commensurate", or "kappa"
+            "band", "dos", "evec_commensurate", "fc*", "kappa", ...
 
         neglect_log : int
             If False, anphon will not be run if the same calculation had been
@@ -1970,7 +2018,7 @@ class AlamodeCalc():
                 )
         
         if val == -1:
-            msg = " %s has been already calculated." % propt
+            msg = " %s has already been calculated." % propt
             logger.info(msg)
         
         elif val == 1:
@@ -2180,7 +2228,7 @@ class AlamodeCalc():
                if os.path.exists(self.scat.file_isotope):
                     f.write("# Itotope      : %s\n" % self.get_relative_path(self.scat.file_isotope))
             if grain_size is not None:
-                f.write("# Grain size   : %d nm\n" % grain_size)
+                f.write("# Grain size   : %f nm\n" % grain_size)
             f.write("# Temperature  : %d K\n" % temperature)
             f.write("# kpoint range : 1 %d\n" % nk)
             f.write("# mode   range : 1 %d\n" % nbands)
@@ -2389,9 +2437,18 @@ class AlamodeCalc():
             try:
                 df_each = dfs[int(t)].rename(columns={'xdat': wrt})
                 outfile = self.out_dirs['result'] + '/kspec_%s_%dK.csv' % (wrt, int(t))
-                df_each.to_csv(outfile, index=False, float_format='%.6e')
-                msg = " Output %s" % self.get_relative_path(outfile)
-                logger.info(msg)
+                
+                ### save spectral kappa
+                with open(outfile, 'w') as f:
+                    
+                    ## comment
+                    f.write("# Temperature : %d\n" % t)
+                    if self.scat.size is not None:
+                        f.write("# Grain size  : %f\n" % self.scat.size)
+                    
+                    df_each.to_csv(f, index=False, float_format='%.6e')
+                    msg = " Output %s" % self.get_relative_path(outfile)
+                    logger.info(msg)
             except:
                 pass
         

@@ -9,7 +9,11 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 from optparse import OptionParser
+
+import logging
+logger = logging.getLogger(__name__)
 
 def get_parser():
     

@@ -19,6 +19,8 @@ import glob
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa import output_directories
 from auto_kappa.cui.suggest import klength2mesh
+from auto_kappa.structure.crystal import change_structure_format
+from auto_kappa.structure.crystal import get_primitive_structure_spglib
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     
     Algorithm
     ---------
-    1. If the relaxation calculation has been already started, read the 
+    1. If the relaxation calculation has already been started, read the 
     previously used cell type.
     
     2. If it is the initial calculation,
@@ -254,7 +256,6 @@ def _make_structures(unitcell,
     structures : dict of Structure obj
 
     """
-    from auto_kappa.structure.crystal import change_structure_format
     from phonopy.structure.cells import get_supercell, get_primitive
 
     unit_pp = change_structure_format(unitcell, format="phonopy")
@@ -416,6 +417,10 @@ def get_required_parameters(
         ### Read Phonondb directory
         unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)
         
+        # if trans_matrices["primitive"] is None:
+        #     print(unitcell)
+        #     exit
+        
         trans_matrices["unitcell"] = np.identity(3).astype(int)
         
         ### Suggest the structure for FC3
@@ -434,6 +439,30 @@ def get_required_parameters(
                 supercell_matrix=trans_matrices['supercell'],
                 )
         
+        # from auto_kappa.structure.crystal import get_spg_number
+        # ## Get primitive cell using Pymatgen or Phonopy (Spglib)
+        # if "primitive" not in structures:
+        #     unit_pmg = change_structure_format(unitcell, format='pymatgen')
+        #     prim_pmg = unit_pmg.get_primitive_structure(tolerance=1e-5)
+        #     prim_ase = get_primitive_structure_spglib(unitcell)
+        #
+        #     print('spg (unit)       ', get_spg_number(unitcell))
+        #     print('spg (prim pmg)   ', get_spg_number(prim_pmg))
+        #     print('spg (prim spglib)', get_spg_number(prim_ase))
+        #     exit()
+        #   
+        #     if prim_pmg.volume < 0.9 * prim_ase.get_volume():
+        #         msg = " The primitive cell was obtained using Pymatgen."
+        #         logger.info(msg)
+        #         structures['primitive'] = change_structure_format(prim_pmg, format='ase')
+        #     else:
+        #         structures['primitive'] = prim_ase.copy
+        #   
+        #     prim_matrix = np.dot(
+        #         structures['primitive'].cell.array,
+        #         np.linalg.inv(unitcell.cell.array)).T
+        #     trans_matrices["primitive"] = prim_matrix
+            
         ### get suggested k-mesh
         kpts_suggested = {
                 "primitive": klength2mesh(
@@ -443,7 +472,7 @@ def get_required_parameters(
                 "supercell": klength2mesh(
                     k_length, structures["supercell"].cell.array),
                 }
-    
+        
     elif file_structure is not None:
         """ Case 2: only a structure is given.
         Every required parameters are suggested.

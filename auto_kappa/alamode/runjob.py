@@ -159,7 +159,7 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
                 #### ver.1
                 mem_info = psutil.virtual_memory()
                 mem_max = max(mem_max, mem_info.used)
-                mem_tot = mem_info.total
+                # mem_tot = mem_info.total
                 mem_percentage = mem_info.percentage
                 
                 if mem_percentage > 95.:
@@ -174,9 +174,9 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
             time.sleep(waiting_time)
             count += 1
         
-        if mem_max > 0.:
-            msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
-            logger.info(msg)
+        # if mem_max > 0.:
+        #     msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
+        #     logger.info(msg)
         
         ##if mem_info is not None:
         ##    try:

@@ -1,7 +1,14 @@
+
+
+# Ver. 0.4.0 (April 24, 2023)
+
+## New
+
+- Set the primitive cell tolerance for ALAMODE calculations to match that of Spglib.
+
 ## Fix
 
-- Fix the minimum number of displacement patterns for LASSO. In the modified version, the minimum number was changed to 10.
-
+- Change the minimum number of displacement patterns for LASSO to 10.
 
 # Ver. 0.3 (September 8, 2023)
 

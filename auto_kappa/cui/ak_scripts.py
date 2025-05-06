@@ -259,7 +259,7 @@ def main():
         'alm': ak_params['command_alm'],
         'dfc2': ak_params['command_dfc2'],
         }
-
+    
     ### Set AlmCalc
     almcalc = AlamodeCalc(
             structures_relax['prim'],
@@ -275,7 +275,7 @@ def main():
             nac=nac,
             commands={'alamode': command_alamode, 'vasp': command_vasp},
             verbosity=ak_params['verbosity'],
-            yamlfile_for_outdir=yaml_outdir
+            yamlfile_for_outdir=yaml_outdir,
             )
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation
@@ -327,7 +327,7 @@ def main():
                 #
                 restart=ak_params['restart'],
                 )
-
+        
         ### plot band and DOS
         from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
         figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
@@ -347,7 +347,7 @@ def main():
                     )
             
             almcalc_large._fc3_type = almcalc.fc3_type
-
+            
             ### calculate kappa
             kdensities = [500, 1000, 1500]
             calculate_thermal_conductivities(
@@ -358,7 +358,7 @@ def main():
                     fc2xml = almcalc_large.fc2xml,
                     fcsxml = almcalc.fc3xml
                     )
-        
+            
         else:
             
             ak_log.negative_frequency(almcalc_large.minimum_frequency)

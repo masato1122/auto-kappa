@@ -82,7 +82,7 @@ def _plot_kappa_each(
                     marker=None, c=col, label=label)
     
 def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9):
     """ plot thermal conductivity """
     
     cmap = plt.get_cmap("tab10")
@@ -129,7 +129,7 @@ def _get_log_range(vmin, vmax, space=0.05):
     return [v0, v1]
 
 def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
     
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
@@ -199,7 +199,7 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
         figname='fig_scat_rates.png', 
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
     
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
@@ -261,7 +261,7 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
 
 def plot_cumulative_kappa(dfs, 
         figname='fig_kcumu.png', xlabel=None, ylabel=None, xscale='linear',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8, ms=2.0):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8, ms=2.0):
     """ 
     dfs : dict of DataFrame
         key is temperature
@@ -329,7 +329,7 @@ def plot_cumulative_kappa(dfs,
     return fig
 
 def plot_cvsets(directory='.', figname='fig_cvsets.png',
-        dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=0.5,
+        dpi=600, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=0.5,
         ):
     
     cmap = plt.get_cmap("tab10")
@@ -435,7 +435,7 @@ def _get_recommended_alpha(filename):
     return None
 
 def plot_times_with_pie(times, labels, figname="fig_times.png", 
-        dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=2.0):
+        dpi=600, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=2.0):
     
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
@@ -466,7 +466,7 @@ def plot_times_with_pie(times, labels, figname="fig_times.png",
     savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
-def savefigure(fig, figname, dpi=300, bbox_inches="tight", max_waiting_time=300):
+def savefigure(fig, figname, dpi=600, bbox_inches="tight", max_waiting_time=300):
     """ Save figure  """
     
     if figname is None:

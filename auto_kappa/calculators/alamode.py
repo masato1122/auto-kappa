@@ -301,18 +301,18 @@ def analyze_harmonic_properties(
         resolution of DOS
     
     """
-    from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
+    # from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
     
-    ##### suggest and creat structures for harmonic FCs
+    ### suggest and creat structures for the harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
-    almcalc.run_alamode(propt='suggest', order=1)
+    almcalc.run_alamode(propt='suggest', order=1, neglect_log=True)
     
-    ### calculate forces
+    ### calculate forces for the harmonic FCs
     almcalc.calc_forces(order=1, calculator=calculator)
     
     _ncores_orig = almcalc.commands['alamode']['ncores']
     _para_orig = almcalc.commands['alamode']['anphon_para']
-    
+
     nac_orig = almcalc.nac
     for propt in ["fc2", "band", "dos"]:
         
@@ -323,7 +323,7 @@ def analyze_harmonic_properties(
                 deltak=deltak, 
                 reciprocal_density=reciprocal_density
                 )
-        
+    
     ### optimize NAC option
     fmin = almcalc.get_minimum_frequency(which="both")
     
@@ -340,10 +340,10 @@ def analyze_harmonic_properties(
                     params_nac["kpts"],
                     print_params=True
                     )
-        except Exception:
+        except:
             msg = "\n Warning: cannot get parameters for NAC."
             logger.warning(msg)
-         
+    
     ### get optimal NONANALYTICAL option for Alamode
     if fmin < negative_freq and almcalc.nac != 0:
         
@@ -405,6 +405,7 @@ def analyze_harmonic_properties(
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    
 
 def calculate_cubic_force_constants(
         almcalc, calculator,

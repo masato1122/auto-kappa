@@ -100,7 +100,7 @@ def plot_bandos(
     fig_labels=[None, None],
     lw=0.3, lw2=0.6, wspace=0.05,
     linestyle="-", linestyle2=":",
-    dpi=300, col='blue', col2='grey',
+    dpi=600, col='blue', col2='grey',
     unit='cm', legend_loc='best',
     plot_dos=True, plot_pdos=True, plot_pr=True,
     plot_dos2=False, 
@@ -140,7 +140,7 @@ def plot_bandos(
         line width for the second phonon dispersion
     wspace : double, default 0.05
 
-    dpi : double, default 300
+    dpi : double, default 600
     col : default blue
     col2 : default grey
     unit : default cm

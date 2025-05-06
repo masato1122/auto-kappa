@@ -24,7 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def plot_fitting_result(bm, figname='fig.png', color='black',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.6, lw=0.5, ms=2.3):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.6, lw=0.5, ms=2.3):
     
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))

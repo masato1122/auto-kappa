@@ -1,0 +1,1 @@
+from auto_kappa.alamode.utils import get_num_disp_patterns
