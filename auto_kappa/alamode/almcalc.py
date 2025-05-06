@@ -45,6 +45,7 @@ from auto_kappa.alamode.errors import check_rank_deficient
 from auto_kappa.alamode.compat import (
     was_primitive_changed,
     was_tolerance_changed,
+    same_structures,
     backup_previous_results,
     adjust_keys_of_suggested_structures
 )
@@ -1020,6 +1021,13 @@ class AlamodeCalc():
             logger.error(msg)
             sys.exit()
         
+        if order == 1:
+            mag = self.magnitude
+        elif order == 2:
+            mag = self.magnitude2
+        else:
+            mag = None
+        
         ### Compressive sensing, LASSO, is used when the number of the 
         ### suggested structure (nsuggest) exceeds nmax_suggest.
         ### When nsuggest > nmax_suggest, max(nsuggest * frac_nrandom,
@@ -1076,7 +1084,8 @@ class AlamodeCalc():
             structures_tmp = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
-            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0)
+            structures = adjust_keys_of_suggested_structures(
+                structures_tmp, outdir0, mag=mag)
             
         ### If something wrong, return None
         if structures is None:
@@ -1116,6 +1125,7 @@ class AlamodeCalc():
                 file_poscar = outdir + "/POSCAR"
                 if os.path.exists(file_poscar):
                     structure_prev = ase.io.read(file_poscar)
+                    
                     _, D_len = get_distances(
                         structure_prev.get_positions(),
                         structures[key].get_positions(),

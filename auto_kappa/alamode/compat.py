@@ -43,14 +43,33 @@ def _get_previously_suggested_structures(outdir):
             continue
     return structures
 
-def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3):
+def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, mag=None):
     """ Sort the suggested structures and their displacement patterns 
     to align with those from the previous version.
+    
+    Args
+    ------
+    new_structures : dict
+        The new structures
+    
+    outdir : str
+        The output directory where the previous structures are stored.
+    
+    tolerance : float
+        The tolerance for the distance between the new and previous structures.
+    
+    mag : float
+        The magnitude of the atom displacement.
     """
     prev_structures = _get_previously_suggested_structures(outdir)
     
     if len(new_structures) == len(prev_structures):
         return prev_structures
+    
+    if 'prist' in prev_structures.keys():
+        struct_prist = prev_structures['prist']
+    else:
+        struct_prist = None
     
     ## Get index mapping from new to previous
     map_new2prev = {}
@@ -59,17 +78,19 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3):
         for prev_key, prev_structure in prev_structures.items():
             p2 = prev_structure.get_positions()
             
-            _, D_len = get_distances(
+            same = same_structures(
                 p1, p2,
                 cell=new_structure.cell,
+                pristine=struct_prist.get_positions() if struct_prist else None,
+                mag=mag,
+                tolerance=tolerance,
                 pbc=new_structure.pbc)
             
-            dists = np.diagonal(D_len)
-            if np.all(dists < tolerance):
+            if same:
                 map_new2prev[new_key] = prev_key
-                # print(new_key, prev_key)
                 break
-    
+            
+            
     ### Make a dict of structures with adjusted keys
     
     ## structures contained in prev_structures
@@ -80,14 +101,84 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3):
         adjusted_key_structures[prev_key] = new_structures[new_key]
         avail_keys.remove(str(prev_key))
     
+    ## maximum key in prev_structures
+    prev_key_max = 0
+    for prev_key in prev_structures.keys():
+        try:
+            prev_key_max = max(prev_key_max, int(prev_key))
+        except:
+            pass
+    
     ## new structures
+    key_cur = prev_key_max + 1
     for new_key, new_structure in new_structures.items():
         if new_key not in map_new2prev:
-            key = avail_keys[0]
+            key = str(key_cur)
             adjusted_key_structures[key] = new_structure
-            avail_keys.remove(key)
+            key_cur += 1
+            # avail_keys.remove(key)
+    
+    # if 'cube' in outdir:
+    #     ## remove the structures that are not in the previous version
+    #     print(prev_structures.keys())
+    #     print(adjusted_key_structures.keys())
+    #     sys.exit()
     
     return adjusted_key_structures
+
+def same_structures(
+    p1, p2, cell=None, pristine=None, pbc=[True, True, True],
+    tolerance=1e-3, mag=None):
+    """ Check whether the two structures are the same.
+    
+    Args
+    ------
+    p1 : np.ndarray
+        The positions of the first structure.
+    
+    p2 : np.ndarray
+        The positions of the second structure.
+    
+    cell : np.ndarray
+        The cell of the structure.
+    
+    pristine : ase.Atoms
+        The pristine structure.
+    
+    tolerance : float
+        The tolerance for the distance between the two structures.
+    
+    mag : float
+        The magnitude of the atom displacement.
+    """
+    D, D_len = get_distances(p1, p2, cell=cell, pbc=pbc)
+    dists = np.diagonal(D_len)
+    if np.all(dists < tolerance):
+        return True
+    
+    return False
+    
+    # if pristine is None:
+    #     return False
+    
+    # ### Compare with the pristine structure
+    # D1, D_len1 = get_distances(p1, pristine, cell=cell, pbc=pbc)
+    # dists1 = np.diagonal(D_len1)
+    # idx1 = np.where(abs(dists1) > tolerance)[0]
+    
+    # D2, D_len2 = get_distances(p2, pristine, cell=cell, pbc=pbc)
+    # dists2 = np.diagonal(D_len2)
+    # idx2 = np.where(abs(dists2) > tolerance)[0]
+    
+    # if len(idx1) == len(idx2) and len(idx1) == 1:
+    #     iat1 = idx1[0]
+    #     iat2 = idx2[0]
+    #     if iat1 == iat2:
+    #         iat_disp = iat1
+    #         disp_iat = D[iat_disp, iat_disp]
+    #         if abs(disp_iat - mag*2.) < tolerance:
+    #             return True
+    # return False
 
 def was_primitive_changed(struct_tmp, tol_prev, tol_new):
     """ Check whether the primitive cell was changed.
