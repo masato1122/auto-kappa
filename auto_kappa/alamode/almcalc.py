@@ -1087,6 +1087,9 @@ class AlamodeCalc():
             structures = adjust_keys_of_suggested_structures(
                 structures_tmp, outdir0, mag=mag)
             
+            print(structures.keys())
+            exit()
+            
         ### If something wrong, return None
         if structures is None:
             return None

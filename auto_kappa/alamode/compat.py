@@ -113,11 +113,13 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
     key_cur = prev_key_max + 1
     for new_key, new_structure in new_structures.items():
         if new_key not in map_new2prev:
-            key = str(key_cur)
+            if new_key == 'prist':
+                key = 'prist'
+            else:
+                key = str(key_cur)
+                key_cur += 1
             adjusted_key_structures[key] = new_structure
-            key_cur += 1
-            # avail_keys.remove(key)
-    
+            
     # if 'cube' in outdir:
     #     ## remove the structures that are not in the previous version
     #     print(prev_structures.keys())
