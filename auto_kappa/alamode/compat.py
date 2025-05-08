@@ -113,13 +113,18 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
     key_cur = prev_key_max + 1
     for new_key, new_structure in new_structures.items():
         if new_key not in map_new2prev:
+            
             if new_key == 'prist':
                 key = 'prist'
             else:
                 key = str(key_cur)
                 key_cur += 1
-            adjusted_key_structures[key] = new_structure
             
+            adjusted_key_structures[key] = new_structure
+    
+    # print(adjusted_key_structures.keys())        
+    # sys.exit()
+    
     # if 'cube' in outdir:
     #     ## remove the structures that are not in the previous version
     #     print(prev_structures.keys())
@@ -127,6 +132,16 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
     #     sys.exit()
     
     return adjusted_key_structures
+
+
+def min_cost_assignment(matrix):
+    from scipy.optimize import linear_sum_assignment
+    cost_matrix = np.array(matrix)
+    row_ind, col_ind = linear_sum_assignment(cost_matrix)
+    min_total_cost = cost_matrix[row_ind, col_ind].sum()
+    selected_elements = list(zip(row_ind, col_ind))
+    return selected_elements, min_total_cost
+
 
 def same_structures(
     p1, p2, cell=None, pristine=None, pbc=[True, True, True],
@@ -154,34 +169,21 @@ def same_structures(
         The magnitude of the atom displacement.
     """
     D, D_len = get_distances(p1, p2, cell=cell, pbc=pbc)
-    dists = np.diagonal(D_len)
+    
+    ##
+    selected_elements, min_total_cost = min_cost_assignment(D_len)
+    
+    dists = []
+    for i, j in selected_elements:
+        dists.append(D_len[i, j])
+    dists = np.array(dists)
+    
     if np.all(dists < tolerance):
         return True
     
     return False
     
-    # if pristine is None:
-    #     return False
     
-    # ### Compare with the pristine structure
-    # D1, D_len1 = get_distances(p1, pristine, cell=cell, pbc=pbc)
-    # dists1 = np.diagonal(D_len1)
-    # idx1 = np.where(abs(dists1) > tolerance)[0]
-    
-    # D2, D_len2 = get_distances(p2, pristine, cell=cell, pbc=pbc)
-    # dists2 = np.diagonal(D_len2)
-    # idx2 = np.where(abs(dists2) > tolerance)[0]
-    
-    # if len(idx1) == len(idx2) and len(idx1) == 1:
-    #     iat1 = idx1[0]
-    #     iat2 = idx2[0]
-    #     if iat1 == iat2:
-    #         iat_disp = iat1
-    #         disp_iat = D[iat_disp, iat_disp]
-    #         if abs(disp_iat - mag*2.) < tolerance:
-    #             return True
-    # return False
-
 def was_primitive_changed(struct_tmp, tol_prev, tol_new):
     """ Check whether the primitive cell was changed.
     
