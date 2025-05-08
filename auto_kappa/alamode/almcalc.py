@@ -43,9 +43,9 @@ from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.alamode.errors import check_rank_deficient
 from auto_kappa.alamode.compat import (
+    check_directory_name_for_pristine,
     was_primitive_changed,
     was_tolerance_changed,
-    same_structures,
     backup_previous_results,
     adjust_keys_of_suggested_structures
 )
@@ -1028,6 +1028,10 @@ class AlamodeCalc():
         else:
             mag = None
         
+        ### Check the directory name for the pristine structure (ver.1.4.0)
+        if self.supercell is not None:
+            check_directory_name_for_pristine(outdir0, self.supercell)
+        
         ### Compressive sensing, LASSO, is used when the number of the 
         ### suggested structure (nsuggest) exceeds nmax_suggest.
         ### When nsuggest > nmax_suggest, max(nsuggest * frac_nrandom,
@@ -1085,7 +1089,9 @@ class AlamodeCalc():
             
             ## Adjust keys of structures
             structures = adjust_keys_of_suggested_structures(
-                structures_tmp, outdir0, mag=mag)
+                structures_tmp, outdir0, 
+                prist_structure=self.supercell,
+                mag=mag)
             
         ### If something wrong, return None
         if structures is None:

@@ -43,7 +43,8 @@ def _get_previously_suggested_structures(outdir):
             continue
     return structures
 
-def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, mag=None):
+def adjust_keys_of_suggested_structures(
+    new_structures, outdir, prist_structure=None, tolerance=1e-3, mag=None):
     """ Sort the suggested structures and their displacement patterns 
     to align with those from the previous version.
     
@@ -66,7 +67,10 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
     if len(new_structures) == len(prev_structures):
         return prev_structures
     
-    if 'prist' in prev_structures.keys():
+    ## Get the pristine structure
+    if prist_structure is not None:
+        struct_prist = prist_structure
+    elif 'prist' in prev_structures.keys():
         struct_prist = prev_structures['prist']
     else:
         struct_prist = None
@@ -74,14 +78,14 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
     ## Get index mapping from new to previous
     map_new2prev = {}
     for new_key, new_structure in new_structures.items():
-        p1 = new_structure.get_positions()
+        # p1 = new_structure.get_positions()
         for prev_key, prev_structure in prev_structures.items():
-            p2 = prev_structure.get_positions()
+            # p2 = prev_structure.get_positions()
             
             same = same_structures(
-                p1, p2,
-                cell=new_structure.cell,
-                pristine=struct_prist.get_positions() if struct_prist else None,
+                new_structure, 
+                prev_structure,
+                pristine=struct_prist if struct_prist else None,
                 mag=mag,
                 tolerance=tolerance,
                 pbc=new_structure.pbc)
@@ -89,8 +93,7 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-3, 
             if same:
                 map_new2prev[new_key] = prev_key
                 break
-            
-            
+    
     ### Make a dict of structures with adjusted keys
     
     ## structures contained in prev_structures
@@ -144,20 +147,20 @@ def min_cost_assignment(matrix):
 
 
 def same_structures(
-    p1, p2, cell=None, pristine=None, pbc=[True, True, True],
+    struct1, struct2, pristine=None, pbc=[True, True, True],
     tolerance=1e-3, mag=None):
     """ Check whether the two structures are the same.
     
     Args
     ------
-    p1 : np.ndarray
-        The positions of the first structure.
+    struct1 : ase.Atoms
+        The first structure.
     
-    p2 : np.ndarray
-        The positions of the second structure.
+    struct2 : ase.Atoms
+        The second structure.
     
-    cell : np.ndarray
-        The cell of the structure.
+    # cell : np.ndarray
+    #     The cell of the structure.
     
     pristine : ase.Atoms
         The pristine structure.
@@ -168,9 +171,13 @@ def same_structures(
     mag : float
         The magnitude of the atom displacement.
     """
-    D, D_len = get_distances(p1, p2, cell=cell, pbc=pbc)
+    D, D_len = get_distances(
+        struct1.get_positions(), 
+        struct2.get_positions(),
+        cell=struct1.cell, 
+        pbc=pbc)
     
-    ##
+    ## Check the distance between atoms in the two structures
     selected_elements, min_total_cost = min_cost_assignment(D_len)
     
     dists = []
@@ -179,9 +186,55 @@ def same_structures(
     dists = np.array(dists)
     
     if np.all(dists < tolerance):
+        
+        ## Check chemical species
+        for i, j in selected_elements:
+            if struct1[i].symbol != struct2[j].symbol:
+                return False
+        
         return True
     
     return False
+
+def check_directory_name_for_pristine(path_force, pristine):
+    """ Check the directory name for the pristine structure.
+    
+    Args
+    ------
+    dir_force : str
+        The directory name for the force calculation.
+    
+    pristine : ase.Atoms
+        The pristine structure.
+    """
+    ## If "prist" directory already exists, return
+    dir_prist = os.path.join(path_force, 'prist')
+    if os.path.exists(dir_prist):
+        return
+    
+    ## Get the directory names
+    dirs_tmp = [entry.name for entry in os.scandir(path_force) if entry.is_dir()]
+    labels = []
+    for li in dirs_tmp:
+        dir_i = os.path.join(path_force, li)
+        fn = dir_i + "/POSCAR"
+        if os.path.exists(fn):
+            labels.append(li)
+    
+    ## Check the directory name for the pristine structure
+    for lab in labels:
+        fn = os.path.join(path_force, lab, "POSCAR")
+        structure = ase.io.read(fn)
+        if same_structures(structure, pristine):
+            if lab != 'prist':
+                dir1 = os.path.join(path_force, lab)
+                msg = (
+                    f"\n The directory name for the pristine structure "
+                    f"was changed from \"{lab}\" to \"prist\".")
+                logger.info(msg)
+                os.rename(dir1, dir_prist)
+                return 1
+    return 0
     
     
 def was_primitive_changed(struct_tmp, tol_prev, tol_new):
