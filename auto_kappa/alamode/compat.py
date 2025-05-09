@@ -97,13 +97,12 @@ def adjust_keys_of_suggested_structures(
     ### Make a dict of structures with adjusted keys
     
     ## structures contained in prev_structures
-    avail_keys = [str(key) for key in list(new_structures.keys())]
+    # avail_keys = [str(key) for key in list(new_structures.keys())]
     adjusted_key_structures = {}
     for new_key, prev_key in map_new2prev.items():
         # print(f" new {new_key} -> prev {prev_key}")
         adjusted_key_structures[prev_key] = new_structures[new_key]
-        avail_keys.remove(str(prev_key))
-    
+        
     ## maximum key in prev_structures
     prev_key_max = 0
     for prev_key in prev_structures.keys():
