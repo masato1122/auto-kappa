@@ -23,6 +23,7 @@ from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
+from auto_kappa.calculators.compat import remove_old_kappa_data
 
 import logging
 logger = logging.getLogger(__name__)
@@ -101,13 +102,15 @@ def analyze_phonon_properties(
         log.write_yaml()
         ak_log.negative_frequency(almcalc.minimum_frequency)
         
+        ## If the negative frequency is found, old kappa data are removed.
+        remove_old_kappa_data(almcalc.out_dirs)
+        
         ### If SCPH is not used and negative frequencies were found, return -1.
         if scph == 0:
             return -1
     
     if harmonic_only:
-        msg = "\n"
-        msg += " Harmonic properties have been calculated.\n"
+        msg = "\n Harmonic properties have been calculated.\n"
         logger.info(msg)
         return 0
     

@@ -1778,7 +1778,7 @@ class AlamodeCalc():
                         )
             except Exception:
                 fmin = -1e5
-             
+            
             if fmin > negative_freq:
                 self.nac = nac_orig
                 return nac
