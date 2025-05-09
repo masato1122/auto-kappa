@@ -212,8 +212,12 @@ def check_directory_name_for_pristine(path_force, pristine):
     if os.path.exists(dir_prist):
         return
     
+    if os.path.exists(path_force) == False:
+        return
+    
     ## Get the directory names
     dirs_tmp = [entry.name for entry in os.scandir(path_force) if entry.is_dir()]
+    
     labels = []
     for li in dirs_tmp:
         dir_i = os.path.join(path_force, li)
