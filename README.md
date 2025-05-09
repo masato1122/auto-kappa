@@ -64,7 +64,7 @@ References
 
 - **Spglib:** A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
-- **Pymatgen** and **Custodian:** S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- **Pymatgen** and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
-- **ASE:** A. H. Larsen, et al., J. Phys.: Cond. Matter 29, 273002 (2017).
+- **ASE:** A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
