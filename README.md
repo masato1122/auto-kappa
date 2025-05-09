@@ -27,6 +27,9 @@ Please follow these steps to install the package.
 2. cd ./auto-kappa
 3. sh install.sh
 
+Check whether ``akrun`` command is prepared. 
+One can see descriptions of the input parameters with ``akrun -h``.
+
 How to Use (minimum)
 ---------------------
 
