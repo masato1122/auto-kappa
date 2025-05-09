@@ -1,7 +1,7 @@
 Auto-kappa
 ============
 
-Version 0.3
+Version 0.4.0
 ---------------
 
 Auto-kappa is an automation software for calculating anharmonic phonon properties, 
@@ -46,7 +46,8 @@ Citation
 
 Please cite the following paper, as well as related papers in the references, when using auto-kappa.
 
-- M. Ohnishi, et al., "Database and deep-learning scalability of anharmonic phonon properties by automated brute-force first-principles calculations", ([arXiv:2504.21245](https://arxiv.org/abs/2504.21245)) (2025).
+- M. Ohnishi et al., "Database and deep-learning scalability of anharmonic phonon properties by automated brute-force first-principles calculations", 
+[arXiv:2504.21245](https://arxiv.org/abs/2504.21245) (2025).
 
 References
 -----------
