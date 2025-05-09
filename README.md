@@ -4,8 +4,9 @@ Auto-kappa
 Version 0.4.0
 ---------------
 
-Auto-kappa is an automation software for calculating anharmonic phonon properties, 
-including thermal conductivity, using VASP and ALAMODE.
+Auto-kappa is an automation tool for calculating anharmonic phonon properties
+—-including thermal conductivity and mode-dependent phonon lifetimes-—using VASP and ALAMODE.
+
 
 Requirements
 -------------
@@ -21,14 +22,14 @@ Requirements
 Installation
 -------------
 
-Please follow these steps to install the package.
+Follow these steps to install the package:
 
 1. git clone https://github.com/masato1122/auto-kappa.git
 2. cd ./auto-kappa
 3. sh install.sh
 
-Check whether ``akrun`` command is prepared. 
-One can see descriptions of the input parameters with ``akrun -h``.
+After installation, check that the ``akrun`` command is available.
+You can view a description of the input parameters by running ``akrun -h``.
 
 How to Use (minimum)
 ---------------------
@@ -36,18 +37,18 @@ How to Use (minimum)
 You can perform a simple calculation by following the steps below. 
 Please refer to the manual for details.
 
-1. Set the ``VASP_PP_PATH`` variable to allow ASE read pseudopotential files of VASP: 
+1. Set the ``VASP_PP_PATH`` environment variable so that ASE can read VASP pseudopotential files:
 ([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
 
-ASE reads pseudopotential files in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
+ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
-2. Prepare a structure file: for example, ``POSCAR.Si``
-3. ``akrun --file_structure POSCAR.Si --material_name Si``.
+2. Prepare a structure file, e.g., ``POSCAR.Si``
+3. Run the command: ``akrun --file_structure POSCAR.Si --material_name Si``.
 
 Citation
 ---------
 
-Please cite the following paper, as well as related papers in the references, when using auto-kappa.
+If you use auto-kappa, please cite the following paper, along with any related papers listed in the references:
 
 - M. Ohnishi et al., "Database and deep-learning scalability of anharmonic phonon properties by automated brute-force first-principles calculations", 
 [arXiv:2504.21245](https://arxiv.org/abs/2504.21245) (2025).
