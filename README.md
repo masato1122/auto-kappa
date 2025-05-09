@@ -44,9 +44,9 @@ ASE reads pseudopotential files in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``
 Citation
 ---------
 
-Please cite the following paper, as well as papers in the references, when using Auto-kappa.
+Please cite the following paper, as well as related papers in the references, when using auto-kappa.
 
-- M. Ohnishi, et al., ... (2025).
+- M. Ohnishi, et al., "Database and deep-learning scalability of anharmonic phonon properties by automated brute-force first-principles calculations", ([arXiv:2504.21245](https://arxiv.org/abs/2504.21245)) (2025).
 
 References
 -----------
@@ -57,7 +57,7 @@ References
 
 - **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-- **Spglib:** A. Togo and I. Tanaka, arXiv:1808.01590 (2018).
+- **Spglib:** A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
 - **Pymatgen** and **Custodian:** S. P. Ong, et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
