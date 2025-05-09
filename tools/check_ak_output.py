@@ -232,13 +232,15 @@ def get_status_cubic(dir_base, tar=None):
     log_fc3 = dir_cube + "/force_fd/fc3.log"
     log_lasso = dir_cube + "/lasso/lasso.log"
     if tar is None:
-        for ll in [log_fc3, log_lasso]:
+        for ll in [log_lasso, log_fc3]:
             if os.path.exists(ll):
                 logfiles.append(ll)
+                break
     else:
-        for ll in [log_fc3, log_lasso]:
+        for ll in [log_lasso, log_fc3]:
             if ll in tar.getnames():
                 logfiles.append(ll)
+                break
     
     ### kappa
     if tar is None:
