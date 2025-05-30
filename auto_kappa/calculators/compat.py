@@ -16,7 +16,7 @@ import fnmatch
 import shutil
 import subprocess
 
-from auto_kappa import output_files
+# from auto_kappa import output_files
 
 import logging
 logger = logging.getLogger(__name__)

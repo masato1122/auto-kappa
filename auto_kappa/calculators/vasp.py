@@ -246,7 +246,7 @@ def backup_vasp(
     num = max([0] + [int(f.split(".")[1]) for f in glob.glob(f"{prefix}.*.tar.gz")])
     filename = f"{prefix}.{num + 1}.tar.gz"
     
-    msg = " Backing up run to %s" % filename
+    msg = " Back up the job to %s" % filename
     logging.info(msg)
     with tarfile.open(filename, "w:gz") as tar:
         for fname in filenames:

@@ -1038,7 +1038,15 @@ class AlamodeCalc():
         ### nmax_suggest) structures will be generated with random displacement
         ### based on the normal coordinates.
         # if order != 1 and nsuggest > nmax_suggest:
-        if order != 1 and self.fc3_type == 'lasso':
+        if order == 1:
+            fc_type = 'fd'
+        elif order == 2:
+            fc_type = self.fc3_type
+        else:
+            fc_type = 'lasso'
+        
+        # if order > 1 and self.fc3_type == 'lasso':
+        if fc_type == 'lasso':
             
             ### number of random displacement patters
             nrandom = int(frac_nrandom * nfcs / natoms)
@@ -1085,6 +1093,7 @@ class AlamodeCalc():
                         )
         
         else:
+            ## if order == 1 or (order == 2 and self.fc3_type == 'fd'):
             structures_tmp = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
@@ -1127,7 +1136,7 @@ class AlamodeCalc():
                 prev_params = get_previous_parameters(dir_prev)
             
             ### Check whether structures are same for the finite-displacement method
-            if self.fc3_type == 'fd':
+            if order == 2 and self.fc3_type == 'fd':
                 file_poscar = outdir + "/POSCAR"
                 if os.path.exists(file_poscar):
                     structure_prev = ase.io.read(file_poscar)

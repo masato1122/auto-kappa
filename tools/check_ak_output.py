@@ -35,6 +35,9 @@ import glob
 import ase.io
 import tarfile
 
+path_file = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(path_file+"/..")
+
 from auto_kappa import output_directories
 from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
 from auto_kappa.structure.crystal import get_spg_number
