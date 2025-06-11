@@ -490,9 +490,9 @@ def read_log_relax(directory):
         return None
     
     out = {}
-    count = 0
     pos = None
     for type in ['full', 'freeze']:
+        count = 0
         for i in range(10):
             label = "%s-%d" % (type, i+1)
             
@@ -506,7 +506,7 @@ def read_log_relax(directory):
                 continue
             if count == 0:
                 out[type] = _read_each_vaspjob(diri)
-                pos = diri + '/POSCAR'
+                pos = diri + '/CONTCAR'
             count += 1
         ##
         if out['full'] is None:

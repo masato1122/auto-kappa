@@ -2258,7 +2258,7 @@ class AlamodeCalc():
             f.write("# kpoint range : 1 %d\n" % nk)
             f.write("# mode   range : 1 %d\n" % nbands)
             df.to_csv(f, index=False, float_format='%.7e')
-            msg = "\n Output : %s" % self.get_relative_path(outfile)
+            msg = " Output %s" % self.get_relative_path(outfile)
             logger.info(msg)
         
     

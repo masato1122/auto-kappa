@@ -68,16 +68,17 @@ def suggest_structures_and_kmeshes(
             format='ase')
     
     ### get the primitive cell
+    primitive = get_primitive(
+                change_structure_format(unitcell, format='phonopy'),
+                prim_mat,
+                )
     try:
-        
         primitive = get_primitive(
                 change_structure_format(unitcell, format='phonopy'),
                 prim_mat,
                 )
         primitive = change_structure_format(primitive, format='ase')
-
     except Exception:
-
         msg = " Error: the primitive cell could not be obtained."
         logger.error(msg)
         sys.exit()
