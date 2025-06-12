@@ -92,15 +92,12 @@ def wasfinished_alamode(logfile, tar=None):
         else:
             lines_tmp = tar.extractfile(logfile).readlines()
             lines = [ll.decode('utf-8') for ll in lines_tmp]
-        
         ###
         n = len(lines)
         num_fin = 0
         for line in lines:
-            data = line.split()
-            if len(data) != 0:
-                if "Job finished" in line:
-                    num_fin += 1
+            if "Job finished" in line:
+                num_fin += 1
         ###
         if num_fin > 1:
             msg = "\n Warning: ALAMODE was not compiled properly."
