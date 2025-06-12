@@ -258,6 +258,7 @@ def main():
         'anphon': ak_params['command_anphon'],
         'alm': ak_params['command_alm'],
         'dfc2': ak_params['command_dfc2'],
+        'anphon_ver2': ak_params['command_anphon_ver2'],
         }
     
     ### Set AlmCalc
@@ -299,6 +300,11 @@ def main():
             scph=ak_params['scph'],
             disp_temp=ak_params['random_disp_temperature'],
             frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+            #
+            four=ak_params['four'],
+            params_4phonon={
+                'frac_kdensity_4ph': ak_params['frac_kdensity_4ph']
+                },
             )
     
     ### Calculate PES

@@ -252,7 +252,7 @@ class AlmInput(MSONable, dict):
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
 
-    def to_file(self, filename: str = None):
+    def to_file(self, filename: str = None, version=None, verbosity=None):
         """ Make ALM input file
         Args
         -------
@@ -313,8 +313,8 @@ class AlmInput(MSONable, dict):
 
 ## This part should be modified (rewrite).
 def _get_subdict(master_dict, subkeys):
-    """Get a set of keys """
-    """Helper method to get a set of keys from a larger dictionary"""
+    """ Get a set of keys 
+    Helper method to get a set of keys from a larger dictionary"""
     return {
             k: master_dict[k] 
             for k in subkeys 
@@ -454,6 +454,10 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
+            'fc3xml',       # None, string
+            'fcsfile',       # None, string (ver >= 1.9)
+            'fc2file',       # None, string (ver >= 1.9)
+            'fc3file',       # None, string (ver >= 1.9)
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -538,9 +542,25 @@ class AnphonInput(MSONable, dict):
             'anime_format',   # xyz,  string
             ]
     
+    ### Added for 4-phonon calculation
+    ## for version >= 1.9
+    analysis_keys_2 = [
+        'quartic',
+    ]
+    kappa_keys_2 = [
+            'kappa_coherent',   # 0, integer
+            'kmesh_coarse',
+            'ismear_4ph',
+            'interpolator',
+            'adaptive_factor',
+            'kappa_spec',       # 0, integer
+            'isotope',          # 0, integer
+            'isofact',          # Automatically calculated from the KD-tag
+            ]
+    
     all_keys = (
             general_keys + scph_keys + qha_keys + relax_keys +
-            analysis_keys + ['cell', 'kpoint', 'kpmode']
+            analysis_keys + kappa_keys_2 + ['cell', 'kpoint', 'kpmode']
             )
     
     ### added keys for k-point 
@@ -644,7 +664,6 @@ class AnphonInput(MSONable, dict):
         anp_dict.update(kwargs)
         
         return AnphonInput(**anp_dict)
-     
     
     def set_kpoint(self, **kwargs):
         """ Set suggeted k-point parameters. This module may not well written.
@@ -713,10 +732,7 @@ class AnphonInput(MSONable, dict):
             self['kpts'] = kpts
         
         self.update(kwargs)
-
-    #def guess_cutoff(self):
-    #    pass
-
+    
     def check_parameters(self):
         
         ## check required parameters
@@ -759,8 +775,9 @@ class AnphonInput(MSONable, dict):
             self["isotope"] = 1
             self["isofact"] = out
         
-    def to_file(self, filename: str = None, verbosity=0):
+    def to_file(self, filename: str = None, version=None, verbosity=0):
         """ Make ANPHON input file
+        
         Args
         -------
         filename (str): ANPHON input file name
@@ -817,7 +834,7 @@ class AnphonInput(MSONable, dict):
         relax_dict = _get_subdict(self, self.relax_keys)
         relax_nml = f90nml.Namelist({"relax": relax_dict})
         anp_str += str(relax_nml) + "\n"
-            
+        
         ## cell parameters
         lines = _write_cell(self['cell'])
         for line in lines:
@@ -828,10 +845,27 @@ class AnphonInput(MSONable, dict):
         for line in lines:
             anp_str += line + "\n"
         
-        ## analysis parameters
-        analysis_dict = _get_subdict(self, self.analysis_keys)
-        analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
-        anp_str += str(analysis_nml) + "\n"
+        ## check version
+        is_version_2 = False
+        if version is not None:
+            parts = version.split('.')
+            ver_float = float(parts[0] + '.' + parts[1])
+            if ver_float >= 1.9:
+                is_version_2 = True
+        
+        ## analysis parameters        
+        if is_version_2 == False:
+            analysis_dict = _get_subdict(self, self.analysis_keys)
+            analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
+            anp_str += str(analysis_nml) + "\n"
+        else:
+            analysis_dict = _get_subdict(self, self.analysis_keys_2)
+            analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
+            anp_str += str(analysis_nml) + "\n"
+            
+            kappa_dict = _get_subdict(self, self.kappa_keys_2)
+            kappa_nml = f90nml.Namelist({"kappa": kappa_dict})
+            anp_str += str(kappa_nml) + "\n"
         
         ## characters to be replaced
         for char in [',', '\'']:

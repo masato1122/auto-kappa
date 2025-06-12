@@ -59,7 +59,7 @@ def get_automatic_kmesh(
         logger.warning(" Error: %s is not supported." % method)
         exit()
     
-    return kpts
+    return list(kpts)
 
 def get_commensurate_points(supercell_matrix):
     """ Get commensurate q-points.
