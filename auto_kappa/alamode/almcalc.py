@@ -15,7 +15,6 @@ import os
 import os.path
 import math
 import numpy as np
-import logging
 
 import ase
 import shutil
@@ -50,8 +49,11 @@ from auto_kappa.alamode.compat import (
     adjust_keys_of_suggested_structures
 )
 from auto_kappa.units import BohrToA
-from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
-        
+
+from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameters
+from auto_kappa.utils import get_version
+
+import logging
 logger = logging.getLogger(__name__)
 
 try:
@@ -308,7 +310,7 @@ class AlamodeForceCalculator():
 
 class AlamodeInputWriter():
     
-    def get_filenames(self, propt, order, outdir, **kwargs):
+    def _get_filenames(self, propt, order, outdir, **kwargs):
         
         dir_result = self.out_dirs["result"]
         
@@ -597,7 +599,7 @@ class AlamodeJobHandler():
             workdir = self.out_dirs['higher']['scph']
         
         else:
-            msg = "\n WARNING: %s property is not supported.\n" % (propt)
+            msg = "\n Error: %s property is not supported.\n" % (propt)
             logger.error(msg)
             sys.exit()
         
@@ -609,9 +611,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
     propts_mode_type = {
             'anphon': {
                 'phonons': ['band', 'dos', 'evec_commensurate'],
-                'rta': ['kappa'],
+                'rta':  ['kappa', 'kappa_scph'],
                 'scph': ['scph'],
                 },
+            'anphon_ver2': {
+                'rta': ['kappa_4ph', 'kappa_scph_4ph'],
+            },
             'alm':{
                 'suggest': ['suggest'],
                 'optimize': ['fc2', 'fc3', 'cv', 'lasso'],
@@ -1600,7 +1605,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         Args
         -----
         propt : string
-            "band", "phonons", "kappa", 'evec_commensurate'
+            "band", "phonons", "kappa", 'kappa_scph', 'kappa_4ph', 'kappa_scph_4ph', 'evec_commensurate'
         
         kpts : list of int, shape=(3)
             k-points
@@ -1621,14 +1626,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         out = self._get_alamodetype_mode(propt)
         if out is None:
             msg = "\n Error: %s is not supported yet.\n" % propt
-            logger.error(msg)
-            sys.exit()
         
         alamode_type = out[0]
         mode = out[1]
         
         ### prepare filenames
-        files = self.get_filenames(propt, order, outdir, **kwargs)
+        files = self._get_filenames(propt, order, outdir, **kwargs)
         fc2xml = files['fc2xml']
         fc3xml = files['fc3xml']
         fcsxml = files['fcsxml']
@@ -1655,7 +1658,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         info = {"directory": dir_work.replace(self.base_directory, "."),
                 "kind": "ALAMODE",
-                "note": "ALAMODE calculation for %s" % (propt)}
+                f"note": "ALAMODE calculation for {propt}"}
         write_output_yaml(self.yamlfile_for_outdir, name, info)
         
         ## non-analytical term
@@ -1673,7 +1676,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         kpmode = None
         if propt in ['band', 'scph']:
             kpmode = 1
-        elif propt in ['dos', 'kappa']:
+        elif propt in ['dos'] or propt.startswith('kappa'):
             kpmode = 2
         elif propt in ['evec_commensurate']:
             kpmode = 0
@@ -1685,6 +1688,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml, 
             dfset=dfset, borninfo=borninfo)
         
+        ####
         self._prefix = inp['prefix']
         
         ################################################
@@ -1699,10 +1703,15 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             if key in filename_keys:
                 if given_params[key][0] == "/":
                     given_params[key] = os.path.relpath(given_params[key], dir_work)
-        
+             
         ### make input script for ALAMODE
         inp.update({'tolerance': tolerance})
         inp.update(given_params)
+        
+        ### Modify parameters for 4 phonon scattering (anphon >= ver.1.9)
+        if '4ph' in propt:
+            params = self.modify_parameters_for_4ph(inp.as_dict())
+            inp = AnphonInput.from_dict(params)
         
         ## Check if the tolerance was changed
         ## Settting of "tolerance" was added from ver.0.4.0.
@@ -1712,7 +1721,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 directory = os.path.dirname(filename)
                 backup_previous_results(directory, propt, prefix=self.prefix)
         
-        inp.to_file(filename=filename)
+        inp.to_file(filename=filename, version=ver_alamode)
         
         # msg = "\n Make an input script for ALAMODE : %s." % (
         #         self.get_relative_path(filename))
@@ -1735,6 +1744,28 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             msg = " Warning: cannot find %s" % fn
             logger.warning(msg)
             return None
+    
+    def modify_parameters_for_4ph(self, params):
+        """ Modify parameters for 4-phonon scattering using anphon >= ver.2.0
+        """
+        ### fc*xml => fc*file
+        params_file = {}
+        for key in params.keys():
+            if key.startswith('fc') and key.endswith('xml'):
+                params_file[key] = params[key]
+        for key in params_file:
+            params.pop(key, None)
+            params[key.replace('xml', 'file')] = params_file[key]
+        
+        params['nkd'] = None
+        params['quartic'] = 1
+        # params['kmesh_coarse'] = [2, 2, 2]
+        params['ismeawr_4ph'] = 2   # adaptive smearing for 4ph
+        params['interpolator'] = 'log-linear' # linear, log-linear, modified-log-linear
+        # for adaptive smearing: default 1.0. 
+        # Smaller value makes the calculation faster, but less accurate.
+        params['adaptive_factor'] = 0.1
+        return params
     
     def _get_alamodetype_mode(self, propt):
         
@@ -1973,9 +2004,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         """
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
+        
         if out is None:
-            msg = " Error: %s is not supported yet." % propt
-            logger.error(msg)
+            logger.error(f" Error: {propt} is not supported yet.")
             sys.exit()
         
         alamode_type = out[0]
@@ -2000,7 +2031,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         logfile = propt + '.log'
         
         ## prepare command and environment
-        if (alamode_type == 'anphon' and 
+        # print(propt, alamode_type, mode)
+        if (alamode_type.startswith('anphon') and 
                 self.commands['alamode']['anphon_para'] == 'mpi'):
             _nprocs = self.commands['alamode']['ncores']
             _nthreads = 1
@@ -2029,9 +2061,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
             
             ### copy the generated FCs file to "result" directory
-            self._copy_generated_fcsfiles(
-                    propt=propt, order=order,
-                    )
+            self._copy_generated_fcsfiles(propt=propt, order=order)
             
             if propt in ['lasso']:
                 self._plot_cvsets(order=order)

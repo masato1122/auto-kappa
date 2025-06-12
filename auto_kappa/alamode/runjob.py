@@ -12,7 +12,6 @@
 #
 import os
 import os.path
-import logging
 import subprocess
 import time
 
@@ -24,6 +23,7 @@ except ImportError:
 from auto_kappa.alamode.io import wasfinished_alamode, get_status
 from auto_kappa.alamode.errors import check_unexpected_errors
 
+import logging
 logger = logging.getLogger(__name__)
 
 def run_alamode(
