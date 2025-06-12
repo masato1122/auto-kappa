@@ -598,11 +598,12 @@ def calculate_thermal_conductivities(
                 propt=propt, order=None, kpts=kpts, outdir=outdir, **kwargs)
         
         almcalc.run_alamode(
-                propt=propt, neglect_log=neglect_log, outdir=outdir)
+                propt=propt, neglect_log=neglect_log, outdir=outdir,
+                logfile=f"{propt}.log")
         
         ### check output file for kappa
-        kappa_log = outdir + "/kappa.log"
-        flag = should_rerun_alamode(kappa_log) 
+        kappa_log = f"{outdir}/{propt}.log"
+        flag = should_rerun_alamode(kappa_log)
         
         if flag and almcalc.commands['alamode']['anphon_para'] == "mpi":
             ##

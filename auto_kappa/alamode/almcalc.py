@@ -220,7 +220,7 @@ class AlamodeForceCalculator():
         try:
             amin = prev_params["AMIN"]
         except Exception:
-            amin = get_amin_parameter(
+            amin = get_amin_parameters(
                 calculator.directory, structure.cell.array, **amin_params_set)
         
         if amin is not None:
@@ -1721,6 +1721,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 directory = os.path.dirname(filename)
                 backup_previous_results(directory, propt, prefix=self.prefix)
         
+        ## Write input file
+        if alamode_type.startswith('anphon'):
+            ver_alamode = get_version(self.commands['alamode'][alamode_type])
+        else:
+            ver_alamode = None
         inp.to_file(filename=filename, version=ver_alamode)
         
         # msg = "\n Make an input script for ALAMODE : %s." % (
@@ -1989,7 +1994,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             logger.error(msg)
             sys.exit()
     
-    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None):
+    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None):
         """ Run anphon
         
         Args
@@ -2027,8 +2032,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         msg += " Working directory : " + self.get_relative_path(workdir)
         logger.info(msg)
         
-        filename = "%s.in" % propt
-        logfile = propt + '.log'
+        filename = f"{propt}.in"
+        if logfile is None:
+            logfile = f"{propt}.log"
         
         ## prepare command and environment
         # print(propt, alamode_type, mode)
