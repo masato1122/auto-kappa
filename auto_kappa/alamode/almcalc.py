@@ -1989,7 +1989,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             logger.error(msg)
             sys.exit()
     
-    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None):
+    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None):
         """ Run anphon
         
         Args
@@ -2027,8 +2027,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         msg += " Working directory : " + self.get_relative_path(workdir)
         logger.info(msg)
         
-        filename = "%s.in" % propt
-        logfile = propt + '.log'
+        filename = f"{propt}.in"
+        if logfile is None:
+            logfile = f"{propt}.log"
         
         ## prepare command and environment
         # print(propt, alamode_type, mode)

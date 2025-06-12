@@ -1,7 +1,7 @@
 Auto-kappa
 ============
 
-Version 0.4.0
+Version 0.5.0
 ---------------
 
 Auto-kappa is an automation tool for calculating anharmonic phonon properties
@@ -12,7 +12,8 @@ Requirements
 -------------
 
 * VASP >= 6.3.x
-* Alamode >= 1.4.x
+* Alamode >= 1.4
+* Alamode >= 2.0 for 4-phonon scattering
 * Phonopy
 * ASE
 * Pymatgen
