@@ -27,6 +27,8 @@ from auto_kappa.calculators.alamode import (
         calculate_cubic_force_constants,
         calculate_thermal_conductivities,
         )
+from auto_kappa.calculators.scph import (
+                calculate_high_order_force_constants)
 from auto_kappa.cui import ak_log
 from auto_kappa.cui.initialization import (
         use_omp_for_anphon,
@@ -345,6 +347,7 @@ def main():
         if (almcalc_large.minimum_frequency > ak_params["negative_freq"] and 
                 ak_params['harmonic_only'] == 0):
             
+            ### calculate cubic force constants
             calculate_cubic_force_constants(
                     almcalc, calc_force,
                     nmax_suggest=ak_params['nmax_suggest'], 
@@ -353,6 +356,16 @@ def main():
                     )
             
             almcalc_large._fc3_type = almcalc.fc3_type
+            
+            ### Calculate higher-order force constants
+            if ak_params['four'] == 1:
+                calculate_high_order_force_constants(
+                        almcalc, calc_force,
+                        frac_nrandom=ak_params['frac_nrandom_higher'],
+                        disp_temp=ak_params['random_disp_temperature'],
+                        )
+                print("<<<<<<<<<<<<<<<<<")
+                sys.exit()
             
             ### calculate kappa
             kdensities = [500, 1000, 1500]
