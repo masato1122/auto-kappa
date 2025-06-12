@@ -1049,8 +1049,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         out = self._get_alamodetype_mode(propt)
         if out is None:
             msg = "\n Error: %s is not supported yet.\n" % propt
-            logger.error(msg)
-            sys.exit()
         
         alamode_type = out[0]
         mode = out[1]
@@ -1429,6 +1427,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         """
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
+        
         if out is None:
             logger.error(f" Error: {propt} is not supported yet.")
             sys.exit()
