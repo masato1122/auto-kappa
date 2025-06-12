@@ -45,6 +45,3 @@ def set_parameters_kappa(
             }
     params.update(kwargs)
     inp.update(params)
-    
-
-
