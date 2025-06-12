@@ -17,7 +17,7 @@ import datetime
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
 from auto_kappa.alamode.almcalc import AlamodeCalc
-from auto_kappa.alamode.pes import calculate_pes
+# from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.calculators.alamode import analyze_phonon_properties
 from auto_kappa.cui import ak_log
@@ -305,9 +305,8 @@ def main():
     ########################
     ##  Larger supercell  ##
     ########################
-    ### calculate phonon properteis with larger supercells
-    if (almcalc.minimum_frequency < ak_params['negative_freq'] and 
-            ak_params["analyze_with_largersc"] == 1):
+    ### calculate phonon properties with larger supercells
+    if (almcalc.minimum_frequency < ak_params['negative_freq'] and ak_params["analyze_with_largersc"] == 1):
         
         from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
         analyze_phonon_properties_with_larger_supercells(
