@@ -12,7 +12,8 @@ Requirements
 -------------
 
 * VASP >= 6.3.x
-* Alamode >= 1.4.x
+* Alamode >= 1.4
+* Alamode >= 2.0 for 4-phonon scattering
 * Phonopy
 * ASE
 * Pymatgen
