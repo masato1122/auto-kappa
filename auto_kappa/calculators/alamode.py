@@ -17,13 +17,14 @@ import glob
 import shutil
 
 from auto_kappa.apdb import ApdbVasp
-from auto_kappa import output_directories
-from auto_kappa.alamode.almcalc import AlamodeCalc, should_rerun_alamode
+from auto_kappa.alamode.almcalc import AlamodeCalc
+from auto_kappa.alamode.helpers import should_rerun_alamode
 from auto_kappa.alamode.log_parser import AkLog
 from auto_kappa.structure.crystal import get_automatic_kmesh
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
 from auto_kappa.calculators.compat import remove_old_kappa_data
+from auto_kappa.calculators.scph import calculate_high_order_force_constants
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def analyze_phonon_properties(
         scph=0, disp_temp=500., frac_nrandom_higher=0.34,
         temps_scph=100*np.arange(1,11),
         ## 4-phonon
-        four=0, params_4phonon={'frac_kdensity_4ph': 0.5}
+        four=0, frac_kdensity_4ph=0.2
         ):
     """ Analyze phonon properties
     
@@ -143,8 +144,7 @@ def analyze_phonon_properties(
         
         ### Perform SCPH calculation
         if scph:
-            conduct_scph_calculation(
-                    almcalc, temperatures=temps_scph)
+            conduct_scph_calculation(almcalc, temperatures=temps_scph)
     
     ###
     ### Calculate kappa with different k-mesh densities
@@ -203,7 +203,7 @@ def analyze_phonon_properties(
             params_kappa['dt'] = 100
         
         if four:
-            params_kappa.update(params_4phonon)
+            frac_kdensity_4ph = frac_kdensity_4ph if frac_kdensity_4ph is not None else 0.2
         
         calculate_thermal_conductivities(
             almcalc,
@@ -211,80 +211,94 @@ def analyze_phonon_properties(
             neglect_log=neglect_log,
             temperatures_for_spectral=temperatures_for_spectral,
             calc_type=calc_type,
+            frac_kdensity_4ph=frac_kdensity_4ph,
             **params_kappa)
-        
-        # exit()
-        ### >>>>>>>>>>>>>>>>>>>>>>>>
-        # if scph == 0:
-        #     if four:
-        #         calc_type = "4ph"
-        #     else:
-        #         calc_type = "cubic"
-            
-        #     calculate_thermal_conductivities(almcalc,
-        #             kdensities=kdensities_for_kappa,
-        #             neglect_log=neglect_log,
-        #             temperatures_for_spectral="300:500",
-        #             calc_type=calc_type,
-        #             ##
-        #             ## additional params for cubic FCs
-        #             ##
-        #             # params_4phonon=params_4phonon,
-        #             )
-        # elif scph == 1:
-        #     temperature = 300
-            
-        #     if four:
-        #         calc_type = "scph_4ph"
-        #     else:
-        #         calc_type = "scph"
-            
-        #     ### Anharmonic FCs XML file
-        #     fcsxml_abs = (
-        #             almcalc.out_dirs["higher"]["lasso"] + 
-        #             "/%s.xml" % (almcalc.prefix))
-            
-        #     ### Harmonic FCs XML file
-        #     if scph == 1:
-        #         fc2xml_abs = (
-        #                 almcalc.out_dirs["higher"]["scph"] + 
-        #                 "/%s_%dK.xml" % (almcalc.prefix, temperature))
-        #     else:
-        #         fc2xml_abs = fcsxml_abs
-            
-        #     fc2xml = os.path.relpath(
-        #             fc2xml_abs, almcalc.out_dirs["higher"][f"kappa_{calc_type}"])
-        #     fcsxml = os.path.relpath(
-        #             fcsxml_abs, almcalc.out_dirs["higher"][f"kappa_{calc_type}"])
-            
-        #     params_scph = {
-        #         'fc2xml': fc2xml,
-        #         'fcsxml': fcsxml,
-        #         'tmin': temperature,
-        #         'tmax': temperature + 1,
-        #         'dt': 100,
-        #     }
-            
-        #     calculate_thermal_conductivities(almcalc, 
-        #             kdensities=kdensities_for_kappa,
-        #             neglect_log=neglect_log,
-        #             temperatures_for_spectral="%s" % temperature,
-        #             ##
-        #             ## additional params for SCPH
-        #             ##
-        #             calc_type=calc_type,
-        #             **params_scph,
-        #             ##
-        #             ## additional params for 4-phonon scattering
-        #             ##
-        #             # params_4phonon=params_4phonon,
-        #             )
-            
+    
     ### output log.yaml 
     log = AkLog(outdir)
     log.write_yaml()
     
     return 0
+
+def analyze_phonon_properties_with_larger_supercells(
+    base_dir, almcalc, calc_force,
+    max_natoms=300, delta_max_natoms=50, max_loop_for_largesc=2,
+    k_length=20, negative_freq=-1e-3, neglect_log=False,
+    restart=1, harmonic_only=False, 
+    nmax_suggest=100, frac_nrandom=1.0, frac_nrandom_higher=0.34,
+    random_disp_temperature=500.,
+    four=0, frac_kdensity_4ph=0.13,
+    pes=0,
+    ):
+    
+    almcalc_large = analyze_harmonic_with_larger_supercells(
+            almcalc,
+            base_dir=base_dir,
+            max_natoms_init=max_natoms,
+            delta_max_natoms=delta_max_natoms,
+            max_loop=max_loop_for_largesc,
+            k_length=k_length,
+            negative_freq=negative_freq,
+            neglect_log=neglect_log,
+            restart=restart,
+            )
+    
+    ### plot band and DOS
+    from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
+    figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
+    plot_bandos_for_different_sizes(
+            almcalc_large, almcalc, figname=figname)
+    
+    ### If negative frequencies could be removed, calculate cubic FCs with
+    ### the supercell of initial size
+    if (almcalc_large.minimum_frequency > negative_freq and 
+            harmonic_only == 0):
+        
+        ### calculate cubic force constants
+        calculate_cubic_force_constants(
+                almcalc, calc_force,
+                nmax_suggest=nmax_suggest, 
+                frac_nrandom=frac_nrandom, 
+                neglect_log=neglect_log
+                )
+        
+        almcalc_large._fc3_type = almcalc.fc3_type
+        
+        ### Calculate higher-order force constants
+        if four == 1:
+            calculate_high_order_force_constants(
+                    almcalc, calc_force,
+                    frac_nrandom=frac_nrandom_higher,
+                    disp_temp=random_disp_temperature,
+                    )
+        
+        ### calculate kappa
+        if four == 0:
+            kdensities = [500, 1000, 1500]
+            calc_type = 'cubic'
+            xml_files = {'fc2xml': almcalc.fc2xml, 'fcsxml': almcalc.fc3xml}
+        else:
+            kdensities = [1500]
+            calc_type = '4ph'
+            xml_files = {'fc2xml': almcalc_large.fc2xml, 'fcsxml': almcalc.higher_fcsxml}
+        
+        calculate_thermal_conductivities(
+                almcalc_large, 
+                kdensities=kdensities,
+                calc_type=calc_type,
+                neglect_log=neglect_log,
+                temperatures_for_spectral="300:500",
+                frac_kdensity_4ph=frac_kdensity_4ph,
+                **xml_files
+                )
+    else:
+        ak_log.negative_frequency(almcalc_large.minimum_frequency)
+        ### calculate PES
+        if pes > 0:
+            almcalc_large.calculate_pes(
+                    negative_freq=negative_freq)
+            sys.exit()
+
 
 def analyze_harmonic_with_larger_supercells(
         almcalc_orig, base_dir=None,
@@ -541,7 +555,7 @@ def calculate_thermal_conductivities(
         neglect_log=False,
         temperatures_for_spectral="300:500",
         calc_type="cubic",
-        four=False,
+        frac_kdensity_4ph=None, ## fractional k-densities for 4-phonon scattering
         **kwargs,
         ):
     """ Calculate thermal conductivities and plot spectral info
@@ -584,11 +598,8 @@ def calculate_thermal_conductivities(
         if '4ph' in calc_type:
             propt += '_4ph'  ## anphon >= ver.1.9    
             
-            if 'frac_kdensity_4ph' in kwargs:
-                frac_kdensity_4ph = kwargs['frac_kdensity_4ph']
-            else:
-                raise ValueError(
-                    "Please specify 'frac_kdensity_4ph' in kwargs for 4-phonon calculation.")
+            if frac_kdensity_4ph is None:
+                raise ValueError(" Error: 'frac_kdensity_4ph' option must be given for 4-phonon calculation.")
             
             kpts_4ph = get_automatic_kmesh(
                 almcalc.primitive, reciprocal_density=int(kdensity * frac_kdensity_4ph + 0.5))
