@@ -38,9 +38,7 @@ def calculate_high_order_force_constants(
         almcalc.write_alamode_input(propt=propt, order=order)
         almcalc.run_alamode(propt, order=order, neglect_log=False)
     
-def conduct_scph_calculation(almcalc, order=6,
-        temperatures=100*np.arange(1,11),
-        ):
+def conduct_scph_calculation(almcalc, order=6, temperatures=100*np.arange(1,11)):
     """ Conduct SCPH calculation and obtain effective harmonic FCs 
     """
     msg =  "\n Conduct SCPH calculation"
@@ -56,7 +54,7 @@ def conduct_scph_calculation(almcalc, order=6,
     propt = "scph"
     almcalc.write_alamode_input(propt=propt, tmin=tmin, tmax=tmax, dt=dt)
     almcalc.run_alamode(propt, order=order, neglect_log=False)
-
+    
     ### Create effectvie harmonic FCs
     for temp in temperatures:
         _create_effective_harmonic_fcs(almcalc, temperature=temp)
