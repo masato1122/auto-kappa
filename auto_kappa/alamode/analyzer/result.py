@@ -533,7 +533,10 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ### #END GAMMA_EACH
             il += 1
             if "#END GAMMA_EACH" not in lines[il]:
-                logger.error(" Error while reading %s" % filename)
+                msg = " " + lines[il]
+                msg += f" Error while reading the result file at line {il+1}."
+                msg += f"\n {filename}"
+                logger.error(msg)
                 sys.exit()
     
     ###
