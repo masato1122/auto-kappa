@@ -51,20 +51,21 @@ Some options
 You can view a description of the options using ``akrun -h``. 
 Frequently used commands are listed below.
 
-- file_structure: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
+- **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
 
-- material_name: Name of the output directory
+- **material\_name**: Name of the output directory
 
-- nprocs: Number of process for the calculation [2]
+- **nprocs**: Number of process for the calculation [Default: 2]
 
-- mpirun: MPI command [mpirun]
+- **mpirun**: MPI command [Default: mpirun]
 
-- command_{VASP/alm/anphon}: Command to run VASP, alm, and anphon [vasp, alm, anphon]
+- **command\_{VASP/alm/anphon}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon]
 
-- volume_relaxation: Perform relaxation calculations using the Birch-Murnaghan equation of state
+- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state
 
-- analyze_with_larger_supercell : Use a larger supercell when imaginary frequencies appear
+- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
 
+- **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
 
 Citation
 ---------
