@@ -6,15 +6,15 @@
 #
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
 
-ncores=2
+nprocs=2
 
 poscar=POSCAR.init   ## file name of the structure
-material_name=Si     ## this option is used only for the name of output directory
+material_name=Si     ## name of the output directory
 
 akrun \
     --file_structure $poscar \
     --material_name $material_name \
-    --ncores $ncores \
+    --nprocs $nprocs \
     --mpirun mpirun \
     --command_vasp vasp \
     --command_alm alm \

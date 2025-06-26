@@ -35,7 +35,7 @@ Preparation
 --------------
 
 You can perform a simple calculation following the steps below. 
-Please refer to the manual for details.
+Please refer to example jobs in ``auto_kappa/examples`` and the manual for details.
 
 1. Set the ``VASP_PP_PATH`` environment variable so that ASE can locate VASP pseudopotential files:
 ([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
