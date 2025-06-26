@@ -61,7 +61,7 @@ Frequently used commands are listed below.
 
 - command_{VASP/alm/anphon}: Command to run VASP, alm, and anphon [vasp, alm, anphon]
 
-- volume__relaxation: Perform relaxation calculations using the Birch-Murnaghan equation of state
+- volume_relaxation: Perform relaxation calculations using the Birch-Murnaghan equation of state
 
 - analyze_with_larger_supercell : Use a larger supercell when imaginary frequencies appear
 
