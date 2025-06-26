@@ -22,7 +22,7 @@ from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_outcar, print_vasp_params
 from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
 from auto_kappa.alamode.io import wasfinished_alamode
-from auto_kappa.alamode.errors import check_rank_deficient
+from auto_kappa.alamode.errors import found_rank_deficient
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 
 import logging
@@ -51,8 +51,11 @@ class AlamodeForceCalculator():
                 use_lasso = False
                 logfile = self.out_dirs['cube']['force_fd'] + '/fc3.log'
                 if os.path.exists(logfile):
-                    if check_rank_deficient(logfile):
-                        use_lasso = True                
+                    if found_rank_deficient(logfile):
+                        msg = "\n Previous calculation for the cubic FCs contained rank deficient error."
+                        msg += "\n Use lasso regression to avoid the error."
+                        logger.warning(msg)
+                        use_lasso = True
                 
                 if use_lasso:
                     self._fc3_type = 'lasso'
