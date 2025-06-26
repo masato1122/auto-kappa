@@ -59,7 +59,7 @@ Frequently used commands are listed below.
 
 - mpirun: MPI command [mpirun]
 
-- command__{vasp/alm/anphon}: Command to run VASP, alm, and anphon [vasp, alm, anphon]
+- command_{VASP/alm/anphon}: Command to run VASP, alm, and anphon [vasp, alm, anphon]
 
 - volume__relaxation: Perform relaxation calculations using the Birch-Murnaghan equation of state
 
