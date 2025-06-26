@@ -41,8 +41,11 @@ def get_parser():
             help="Material name which is used as the output directory [./out]")
     
     ### Parameters that need to be modified depending on the environment
-    parser.add_option("-n", "--ncores", dest="ncores", type="int",
-            default=2, help="Number of cores used for the calculation [2]")
+    parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
+                      "Number of cores used for the calculation "
+                      "(This option is not used any more, please use 'nprocs' instead.)")
+    parser.add_option("-n", "--nprocs", dest="nprocs", type="int",
+            default=2, help="Number of processes for the calculation [2]")
     
     parser.add_option("--anphon_para", 
             dest="anphon_para", type="string", default="mpi", 
@@ -271,6 +274,12 @@ def get_parser():
             default=None, help="affiliation (1. Univ. 1, 2. Univ. 2)")
     
     (options, args) = parser.parse_args()
+    
+    ###
+    if options.ncores is not None:
+        options.nprocs = options.ncores
+        logger.warning("The option --ncores is not used any more. "
+                       "Please use --nprocs instead.")
     
     return options
 

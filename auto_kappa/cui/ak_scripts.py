@@ -197,7 +197,7 @@ def main():
     ### command to run VASP jobs
     command_vasp = {
             'mpirun': ak_params['mpirun'], 
-            'nprocs': ak_params['ncores'], 
+            'nprocs': ak_params['nprocs'], 
             'nthreads': 1, 
             'vasp': ak_params['command_vasp'],
             }
@@ -254,7 +254,7 @@ def main():
     command_alamode = {
         'mpirun': ak_params['mpirun'], 
         'anphon_para': ak_params['anphon_para'], 
-        'ncores': ak_params['ncores'], 
+        'nprocs': ak_params['nprocs'],
         'anphon': ak_params['command_anphon'],
         'alm': ak_params['command_alm'],
         'dfc2': ak_params['command_dfc2'],

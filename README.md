@@ -31,10 +31,10 @@ Follow these steps to install the package:
 After installation, check that the ``akrun`` command is available.
 You can view a description of the input parameters by running ``akrun -h``.
 
-How to Use (minimum)
----------------------
+Preparation
+--------------
 
-You can perform a simple calculation by following the steps below. 
+You can conduct a simple calculation by following the steps below. 
 Please refer to the manual for details.
 
 1. Set the ``VASP_PP_PATH`` environment variable so that ASE can read VASP pseudopotential files:
@@ -44,6 +44,18 @@ ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element 
 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
 3. Run the command: ``akrun --file_structure POSCAR.Si --material_name Si``.
+
+Some options
+-------------
+
+You can read the description of options with ``akrun -h``.
+
+- material_name: 
+
+- nprocs:
+
+- 
+
 
 Citation
 ---------

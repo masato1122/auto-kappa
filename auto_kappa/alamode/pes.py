@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def calculate_pes(
         primitive, kpoint, 
         outdir="./pes", fcsxml="FC2xml", 
-        command={"mpirun": "mpirun", "ncores": 2, "anphon": "anphon"},
+        command={"mpirun": "mpirun", "nprocs": 2, "anphon": "anphon"},
         nac=0, vasp_xml=None):
     """ Calculate potential energy surface """
     
@@ -74,9 +74,9 @@ def calculate_evec(
     status = run_alamode(
             file_anphon, logfile, workdir=".", 
             mpirun=command["mpirun"],
-            nthreads=command["ncores"],
+            nthreads=command["nprocs"],
             command=command["anphon"])
-
+    
     ### back to the initial directory
     os.chdir(cwd)
     

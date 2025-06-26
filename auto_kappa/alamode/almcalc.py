@@ -693,7 +693,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             Number of processes and threads are given.
             default={
                 'mpirun': 'mpirun', "anphon_para": "omp", 
-                "ncores": 1, "anphon": "anphon", "alm": "alm",
+                "nprocs": 1, "anphon": "anphon", "alm": "alm",
                 }
         
         yamlfile_for_outdir : string
@@ -709,7 +709,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         >>>     cutoff2=-1, cutoff3=4.3,
         >>>     nbody=[2,3,3,2], magnitude=0.01,
         >>>     nac=1,
-        >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'ncores':1,'anphon':'anphon'},
+        >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
         >>>     verbosity=0
         >>>     )
         >>> calc_force = apdb.get_calculator('force', 
@@ -732,7 +732,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     'vasp': 'vasp'
                     },
                 'alamode':{
-                    'mpirun': 'mpirun', 'anphon_para': 1, 'ncores': 2,
+                    'mpirun': 'mpirun', 'anphon_para': 1, 'nprocs': 2,
                     'alm': 'alm', 'anphon': 'anphon',
                     }
                 }
@@ -1872,7 +1872,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
         
         count = 0
-        ncores = self.commands["alamode"]["ncores"]
+        nprocs = self.commands["alamode"]["nprocs"]
         has_error = False
         while True:
             
@@ -1929,16 +1929,16 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             elif count > 1 and count < max_num_corrections:
 
                 ### modify the number of threads (even number may be better)
-                ncores /= 2
-                if ncores > 1:
-                    ncores += int(ncores % 2)
+                nprocs /= 2
+                if nprocs > 1:
+                    nprocs += int(nprocs % 2)
                 
-                self.commands['alamode']['ncores'] = ncores
+                self.commands['alamode']['nprocs'] = nprocs
                 msg = "\n Rerun the ALAMODE job with "\
-                        "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % ncores
+                        "OMP_NUM_THREADS/SLURM_CPUS_PER_TASK = %d" % nprocs
                 logger.error(msg)
 
-                if ncores == 1:
+                if nprocs == 1:
                     count = max_num_corrections
 
             else:
@@ -2002,11 +2002,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         ## prepare command and environment
         if (alamode_type == 'anphon' and 
                 self.commands['alamode']['anphon_para'] == 'mpi'):
-            _nprocs = self.commands['alamode']['ncores']
+            _nprocs = self.commands['alamode']['nprocs']
             _nthreads = 1
         else:
             _nprocs = 1
-            _nthreads = self.commands['alamode']['ncores']
+            _nthreads = self.commands['alamode']['nprocs']
         
         val = run_alamode(filename, logfile, workdir=workdir, 
                 neglect_log=neglect_log,

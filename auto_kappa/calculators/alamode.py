@@ -313,7 +313,7 @@ def analyze_harmonic_properties(
     ### calculate forces for the harmonic FCs
     almcalc.calc_forces(order=1, calculator=calculator)
     
-    _ncores_orig = almcalc.commands['alamode']['ncores']
+    _nprocs_orig = almcalc.commands['alamode']['nprocs']
     _para_orig = almcalc.commands['alamode']['anphon_para']
 
     nac_orig = almcalc.nac
@@ -399,7 +399,7 @@ def analyze_harmonic_properties(
                         )
     
     ###
-    almcalc.commands['alamode']['ncores'] = _ncores_orig
+    almcalc.commands['alamode']['nprocs'] = _nprocs_orig
     almcalc.commands['alamode']['anphon_para'] = _para_orig
     
     ### plot band and DOS
