@@ -28,16 +28,16 @@ Follow these steps to install the package:
 2. cd ./auto-kappa
 3. sh install.sh
 
-After installation, check that the ``akrun`` command is available.
+After installation, ensure that the ``akrun`` command is available.
 You can view a description of the input parameters by running ``akrun -h``.
 
 Preparation
 --------------
 
-You can conduct a simple calculation by following the steps below. 
+You can perform a simple calculation following the steps below. 
 Please refer to the manual for details.
 
-1. Set the ``VASP_PP_PATH`` environment variable so that ASE can read VASP pseudopotential files:
+1. Set the ``VASP_PP_PATH`` environment variable so that ASE can locate VASP pseudopotential files:
 ([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
 
 ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
@@ -48,13 +48,22 @@ ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element 
 Some options
 -------------
 
-You can read the description of options with ``akrun -h``.
+You can view a description of the options using ``akrun -h``. 
+Frequently used commands are listed below.
 
-- material_name: 
+- file_structure: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
 
-- nprocs:
+- material_name: Name of the output directory
 
-- 
+- nprocs: Number of process for the calculation [2]
+
+- mpirun: MPI command [mpirun]
+
+- command__{vasp/alm/anphon}: Command to run VASP, alm, and anphon [vasp, alm, anphon]
+
+- volume__relaxation: Perform relaxation calculations using the Birch-Murnaghan equation of state
+
+- analyze_with_larger_supercell : Use a larger supercell when imaginary frequencies appear
 
 
 Citation
