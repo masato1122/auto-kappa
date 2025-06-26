@@ -55,7 +55,7 @@ Frequently used commands are listed below.
 
 - **material\_name**: Name of the output directory
 
-- **nprocs**: Number of process for the calculation [Default: 2]
+- **nprocs**: Number of processes for the calculation [Default: 2]
 
 - **mpirun**: MPI command [Default: mpirun]
 
