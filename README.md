@@ -68,6 +68,18 @@ Frequently used commands are listed below.
 
 - **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
 
+Some options
+-------------
+
+You can read the description of options with ``akrun -h``.
+
+- material_name: 
+
+- nprocs:
+
+- 
+
+
 Citation
 ---------
 
