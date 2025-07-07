@@ -11,6 +11,12 @@
 
 - Add four phonon scattering calculation with 'four' and 'command_anphon_ver2' options.
 
+# Ver. 1.0.0 (July 7, 2025)
+
+## New
+
+- Update the version for release the package
+
 # Ver. 0.4.0 (April 24, 2023)
 
 ## New
