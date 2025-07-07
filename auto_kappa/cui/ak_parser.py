@@ -41,6 +41,9 @@ def get_parser():
     parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
             help="Output directory name [./out]")
     
+    parser.add_option("--material_dimension", dest="material_dimension", type="int", default=3, 
+            help="Material dimension [3]")
+    
     ### Parameters that need to be modified depending on the environment
     parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
                       "Number of cores used for the calculation "
