@@ -36,9 +36,10 @@ def get_parser():
             "POSCAR and cif file can be read by ``Structure.from_file`` module "
             "in ``Pymatgen.core.structure``.")
     
-    parser.add_option("--material_name", dest="material_name", type="string",
-            default="./out", 
-            help="Material name which is used as the output directory [./out]")
+    parser.add_option("--material_name", dest="material_name", type="string", default=None,
+            help="This options is not used any more. See --outdir option. ")
+    parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
+            help="Output directory name [./out]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
@@ -280,7 +281,11 @@ def get_parser():
         options.nprocs = options.ncores
         logger.warning("The option --ncores is not used any more. "
                        "Please use --nprocs instead.")
-    
+    if options.material_name is not None:
+        options.outdir = options.material_name
+        logger.warning("The option --material_name is not used any more. "
+                       "Please use --outdir instead.")
+        
     return options
 
 def parse_vasp_params(params_string):
