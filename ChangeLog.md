@@ -1,4 +1,10 @@
 
+# Ver. 1.0.0 (July 7, 2025)
+
+## New
+
+- Update the version for release the package
+
 
 # Ver. 0.4.0 (April 24, 2023)
 
