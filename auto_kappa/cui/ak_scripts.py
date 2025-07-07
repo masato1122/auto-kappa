@@ -80,8 +80,7 @@ def main():
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Get the name of the base directory
-    base_dir = get_base_directory_name(
-            ak_params['outdir'], restart=ak_params['restart'])
+    base_dir = get_base_directory_name(ak_params['outdir'], restart=ak_params['restart'])
     os.makedirs(base_dir, exist_ok=True)
     
     ### set logger
@@ -280,7 +279,7 @@ def main():
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
-            outdir=ak_params['outdir'],
+            base_dir=base_dir,
             neglect_log=neglect_log,
             harmonic_only=ak_params['harmonic_only'],
             #
