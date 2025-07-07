@@ -1,7 +1,7 @@
 Auto-kappa
 ============
 
-Version 0.4.0
+Version 1.0.0
 ---------------
 
 Auto-kappa is an automation tool for calculating anharmonic phonon properties
