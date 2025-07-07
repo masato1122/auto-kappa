@@ -53,7 +53,7 @@ Frequently used commands are listed below.
 
 - **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
 
-- **outdir: Name of the output directory
+- **outdir**: Name of the output directory
 
 - **nprocs**: Number of processes for the calculation [Default: 2]
 
