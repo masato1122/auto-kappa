@@ -89,7 +89,7 @@ def main():
     
     ### Get the name of the base directory
     base_dir = get_base_directory_name(
-            ak_params['material_name'], restart=ak_params['restart'])
+            ak_params['outdir'], restart=ak_params['restart'])
     os.makedirs(base_dir, exist_ok=True)
     
     ### set logger
@@ -287,7 +287,7 @@ def main():
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
-            material_name=ak_params['material_name'],
+            outdir=ak_params['outdir'],
             neglect_log=neglect_log,
             harmonic_only=ak_params['harmonic_only'],
             #
