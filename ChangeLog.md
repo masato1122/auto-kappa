@@ -1,10 +1,3 @@
-
-# Ver. 1.0.0 (July 7, 2025)
-
-## New
-
-- Update the version for release the package
-
 # Ver. 0.5.0 (June 12, 2025)
 
 ## New
