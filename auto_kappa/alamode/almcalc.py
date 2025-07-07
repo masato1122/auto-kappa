@@ -14,6 +14,7 @@ import sys
 import os
 import os.path
 import numpy as np
+import logging
 
 import ase
 import shutil
@@ -1049,8 +1050,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         out = self._get_alamodetype_mode(propt)
         if out is None:
             msg = "\n Error: %s is not supported yet.\n" % propt
-            logger.error(msg)
-            sys.exit()
         
         alamode_type = out[0]
         mode = out[1]
@@ -1189,7 +1188,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         params['nkd'] = None
         params['quartic'] = 1
-        params['ismear_4ph'] = 2   # adaptive smearing for 4ph
+        # params['kmesh_coarse'] = [2, 2, 2]
+        params['ismeawr_4ph'] = 2   # adaptive smearing for 4ph
         params['interpolator'] = 'log-linear' # linear, log-linear, modified-log-linear
         # for adaptive smearing: default 1.0. 
         # Smaller value makes the calculation faster, but less accurate.
@@ -1429,6 +1429,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         """
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
+        
         if out is None:
             logger.error(f" Error: {propt} is not supported yet.")
             sys.exit()
