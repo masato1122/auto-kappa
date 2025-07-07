@@ -48,6 +48,7 @@ class ApdbVasp():
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             amin_params = {},
             params_modified = None,
+            mater_dim=3
             ):
         """
         Args
@@ -72,6 +73,9 @@ class ApdbVasp():
             the given VASP paremeters with this function parameter will be set 
             for every calculations.
         
+        mater_dim : int
+            Material dimension. Default is 3.
+        
         Note
         ------
         Translational vectors of the primitive cell can be calculated as
@@ -87,6 +91,7 @@ class ApdbVasp():
         ### https://phonopy.github.io/phonopy/setting-tags.html#basic-tags
         self._mat_u2p = primitive_matrix
         self._mat_u2s = scell_matrix
+        self._mater_dim = mater_dim
         
         if primitive_matrix is None:
             msg = " Error: primitive_matrix must be given."
@@ -124,6 +129,11 @@ class ApdbVasp():
         
         ### parameters that differ from the default values
         self.set_modified_params(params_modified)
+    
+    @property
+    def mater_dim(self):
+        """ Material dimension """
+        return self._mater_dim
     
     @property
     def primitive_matrix(self):
@@ -398,6 +408,9 @@ class ApdbVasp():
         max_sym_err = 2
         while True:
             
+            if self.mater_dim < 3:
+                break
+            
             ### set working directory and mode
             if count < num_full:
                 ## full relxation
@@ -487,6 +500,14 @@ class ApdbVasp():
         
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
+        
+        ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        if self.mater_dim < 3:
+            msg = "\n The material dimension is less than 3."
+            msg += "\n The relaxation calculation is not supported."
+            logger.info(msg)
+            sys.exit()
+        ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:

@@ -196,7 +196,7 @@ def main():
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
             params_modified=vasp_params_mod,
-            #yamlfile_for_outdir=yaml_outdir
+            mater_dim=ak_params['mater_dim']
             )
     
     ### Relaxation calculation
