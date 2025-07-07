@@ -38,8 +38,9 @@ def main(build_dir):
             'auto_kappa.plot.alamode',
             'auto_kappa.structure',
             'auto_kappa.vasp',
+            'auto_kappa.utils',
             ]
-
+    
     scripts_autokappa = [
             'scripts/akrun',
             #'scripts/ak-logger',
@@ -47,7 +48,7 @@ def main(build_dir):
             ]
     
     version = _get_version()
-
+    
     setup(
             name='auto_kappa',
             version=version,
@@ -65,7 +66,7 @@ def main(build_dir):
             license='MIT',
             provides=['auto_kappa'],
             )
- 
+
 if __name__ == "__main__":
     
     build_dir = pathlib.Path.cwd() / "_build"
