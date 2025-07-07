@@ -12,8 +12,7 @@ Requirements
 -------------
 
 * VASP >= 6.3.x
-* Alamode >= 1.4
-* Alamode (anphon) >= 1.9.9 for 4-phonon scattering
+* Alamode >= 1.4.x
 * Phonopy
 * ASE
 * Pymatgen
@@ -67,18 +66,6 @@ Frequently used commands are listed below.
 - **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
 
 - **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
-
-Some options
--------------
-
-You can read the description of options with ``akrun -h``.
-
-- material_name: 
-
-- nprocs:
-
-- 
-
 
 Citation
 ---------
