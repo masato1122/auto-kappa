@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 def analyze_phonon_properties(
         almcalc, calc_force=None, negative_freq=-1e-3, 
-        outdir=None, neglect_log=False, 
+        base_dir=None, neglect_log=False, 
         harmonic_only=False, calc_kappa=True,
         nmax_suggest=None, frac_nrandom=1.0,
         params_nac={'apdb': None, 'kpts': None},
@@ -101,7 +101,7 @@ def analyze_phonon_properties(
     if almcalc.minimum_frequency < negative_freq:
         
         ### If negative frequencies were found,
-        log = AkLog(outdir)
+        log = AkLog(base_dir)
         log.write_yaml()
         ak_log.negative_frequency(almcalc.minimum_frequency)
         
@@ -215,7 +215,7 @@ def analyze_phonon_properties(
             **params_kappa)
     
     ### output log.yaml 
-    log = AkLog(outdir)
+    log = AkLog(base_dir)
     log.write_yaml()
     
     return 0
