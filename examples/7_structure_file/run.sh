@@ -13,7 +13,7 @@ material_name=Si     ## name of the output directory
 
 akrun \
     --file_structure $poscar \
-    --material_name $material_name \
+    --outdir $material_name \
     --nprocs $nprocs \
     --mpirun mpirun \
     --command_vasp vasp \

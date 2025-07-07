@@ -43,7 +43,7 @@ Please refer to example jobs in ``auto_kappa/examples`` and the manual for detai
 ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
-3. Run the command: ``akrun --file_structure POSCAR.Si --material_name Si``.
+3. Run the command: ``akrun --file_structure POSCAR.Si --outdir Si``.
 
 Some options
 -------------
@@ -53,7 +53,7 @@ Frequently used commands are listed below.
 
 - **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
 
-- **material\_name**: Name of the output directory
+- **outdir: Name of the output directory
 
 - **nprocs**: Number of processes for the calculation [Default: 2]
 

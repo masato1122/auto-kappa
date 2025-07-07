@@ -13,7 +13,7 @@
 
 mpid=mp-149    ## Si
 
-ncores=2
+nprocs=2
 dir_db=./phonondb-20180417/${mpid}
 #########################################
 
@@ -23,11 +23,10 @@ fi
 
 akrun \
     --directory $dir_db \
-    --material_name $mpid \
-    --ncores $ncores \
+    --outdir $mpid \
+    --nprocs $nprocs \
     --mpirun mpirun \
     --command_vasp vasp \
     --command_alm alm \
-    --command_anphon anphon \
-    --verbosity 1
+    --command_anphon anphon 
 
