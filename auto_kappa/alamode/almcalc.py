@@ -14,6 +14,7 @@ import sys
 import os
 import os.path
 import numpy as np
+import logging
 
 import ase
 import shutil
@@ -1187,7 +1188,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         params['nkd'] = None
         params['quartic'] = 1
-        params['ismear_4ph'] = 2   # adaptive smearing for 4ph
+        # params['kmesh_coarse'] = [2, 2, 2]
+        params['ismeawr_4ph'] = 2   # adaptive smearing for 4ph
         params['interpolator'] = 'log-linear' # linear, log-linear, modified-log-linear
         # for adaptive smearing: default 1.0. 
         # Smaller value makes the calculation faster, but less accurate.
