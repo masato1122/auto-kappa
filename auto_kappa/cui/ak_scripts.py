@@ -80,11 +80,8 @@ def main():
     
     ### Parse given parameters
     from auto_kappa.cui.ak_parser import get_parser, parse_vasp_params
-    
     options = get_parser()
-    
     ak_params = eval(str(options))
-    
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Get the name of the base directory
@@ -98,7 +95,6 @@ def main():
     
     ### Start auto-kappa
     ak_log.start_autokappa()
-    
     #ak_log.print_machine_info()
     
     ### Set output directories
