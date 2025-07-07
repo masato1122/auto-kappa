@@ -9,9 +9,9 @@ Auto-kappa requires the following packages.
 While the python packages can be automatically downloaded during the installation process,
 users need to separately install VASP and ALAMODE. Please use the latest verison for VASP and ALAMODE.
 
-* VASP (latest: ver.6.3.2)
-* alamode (alm, anphon, ALM, latest: ver.1.4.2)
-* eigen (< 3.4)
+* VASP (ver.6.3.2)
+* alamode (alm, anphon)
+* eigen (< 3.4?)
 * phonopy
 * custodian 
 * pymatgen
@@ -31,7 +31,7 @@ Please install VASP and
 `ALAMODE <https://alamode.readthedocs.io/en/latest/index.html>`_
 in advance.
 
-* To allow ASE to call POTCAR files of VASP, 
+* To allow ASE call POTCAR files of VASP,
   set ``VASP_PP_PATH`` variable in your shell configuration file, 
   which may be ``~/.bash_profile``. 
   See the `ASE page <https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html>`_ for detail.
@@ -40,13 +40,13 @@ in advance.
     
     export VASP_PP_PATH=$HOME/(directory in which potpaw_PBE is located)
     
-``potpaw_PBE.54.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
+``potpaw_PBE.54.tar.gz`` or ``potpaw_PBE.64.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
 
 
-.. node::
+.. .. note::
 
-    The latest version of Eigen (3.4) may not be compatible with Alamode 1.4.2.
-    Eigen 3.3.* may need to be used.
+..     The latest version of Eigen (3.4) may not be compatible with Alamode 1.4.2.
+..     Eigen 3.3.* may need to be used.
 
 
 .. .. warning::
@@ -60,102 +60,43 @@ in advance.
 Phonondb
 ---------
 
-* Data of phonondb need to be downloaded.
+* If you would like to use parameters in Phonondb, download the data from `HERE <https://github.com/atztogo/phonondb/tree/main>`_.
 
-* You can get data with "wget" (see :ref:`sec-automation` for details). 
-  If you cannot get with wget, you can use data in Box (phonondb-20180417.tar.gz):
-  `.../Box/ppdb1/Others <https://app.box.com/s/69nioqnpu6xxis5q4f4ua3sqxwwvla36>`_.
+* The automation calculation initializes based on Phonondb parameters using ``--directory`` option.
 
 
-Installation of auto-kappa
-============================
+Installation 
+=============
 
-Because auto-kappa is currently located in a private repogitory on Github,
-if you'd like to use it, please contact M. Ohnishi (ohnishi@t.u-tokyo.ac.jp).
-
-1. Send your ssh public key to the developper (M. Ohnishi).
-
-2. Once your key was registered, you can download auto-kappa with git command.
-
-.. code-block:: bash
-    
-    $ git clone -b develop git@github.com:masato1122/auto-kappa.git
-
-
-If you cannot download. Please add the following contents in ~/.ssh/config.
-If you newly create the config file, you also need to modify the permission.
-
-.. code-block:: bash
-    
-    Host github.com
-        HostName ssh.github.com
-        Port 443
-        IdentityFile ~/.ssh/id_rsa  # If you changed the directory, modify this part.
-        User git
-
-    Host ssh.github.com
-        Port 443
-        IdentityFile ~/.ssh/id_rsa  # Same as the above
-        User git
-    
-
-You can change the permission with ``chmod``.
-
-.. code-block:: bash
-    
-    $ chmod 600 ~/.ssh/config
-
-To update auto-kappa, use the following commands:
+1. Create a virtual environment, ``kappa``.
 
 .. code-block:: bash
 
-    $ cd (directory of auto-kappa)
-    $ git pull
-    $ sh ./install.sh
-
-
-3. Create a virtual environment, ``kappa``, with conda.
-
-.. code-block:: bash
-
-    $ conda create -n kappa python==3.9
-    $ conda init
-    $ exit (You once need to logout and login to the server.)
+    $ (mkdir ~/.venv)
+    $ cd ~/.venv
+    $ python -m venv kappa
+    $ source ./kappa/bin/activate
     
-    
-    Login the server again and confirm the virtual environment was created.
-    $ conda env list
-    ...
-    kappa       /home/***/***/envs/kappa
-    ...
-    
-    
-    Activate the virtual environment.
-    $ conda activate kappa
-
-
 To set ``kappa`` as the default, add the following line in ``.bash_profile``.
 
 .. code-block:: bash
 
-    source activate kappa
+    $ source ~/.venv/kappa/bin/activate
 
 
-4. Continue to install auto-kappa.
+2. Download the code with git command.
 
 .. code-block:: bash
     
-    $ cd (arbitrary directory)/auto-kappa
-    $ git config pull.rebase false
-    $ git pull     ## update the package
-    $ sh install.sh
-     
-    Check if auto_kappa is installed or not.
-    $ python
-    >>> import auto_kappa
-    >>> exit()
-    
-    $ akrun -h
+    $ git clone git@github.com:masato1122/auto-kappa.git
+
+Update and install the code:
+
+.. code-block:: bash
+
+    $ cd ./auto-kappa
+    $ git pull
+    $ sh ./install.sh
 
 
 Examples
@@ -163,33 +104,12 @@ Examples
 
 1. Test for VASP and ALAMODE
 
-.. code-block:: bash
-    
-    $ cd (move to an arbitrary directory outside auto-kappa directory)
-    $ cp -r (auto-kappa directory)/auto-kappa/examples ./
-    $ cd examples
-    $ ls
-    1_alm 2_anphon 3_vasp_ase 4_vasp_custodian 5_database massive phonondb
-    
-    $ cd 1_alm
-    $ sh run.sh
-    
-    $ cd ../2_anphon
-    $ sh run.sh
-    
-    $ sh ../3_vasp_ase
-    $ sh run.sh
-    
-    # This job takes time. You can stop after checking output files such as OUTCAR
-    # OSZICAR, etc. were created.
-    $ sh ../4_vasp_custodian
-    $ sh run.sh    
-    
-    # This job also takes time. You can stop a few minutes after starting the job.
-    # As shown by this example, you need to download data from Phonondb.
-    $ sh ../5_database
-    $ sh run.sh
-    
+Test jobs can be found in ``auto-kappa/examples``.
+Please read ``README`` in that directory.
+You can finde ``1_alm``, ``2_anphon``, etc., which are test jobs for
+``alamode`` (``alm`` and ``anphon``), ``ASE``, ``custodian``, and ``auto-kappa``.
+It is recommended to run these jobs before starting a massive calculation.
+
 
 2. ``database`` example
 
@@ -201,7 +121,7 @@ An example of job script is shown below. Please modify depending on your environ
 .. code-block:: shell
     
     #!/bin/sh
-    #PBS -q default         ## name of queue that you can check with a command like "qstat -q".
+    #PBS -q default
     #PBS -l nodes=1:ppn=24  ## only nodes=1 is available
     #PBS -j oe
     #PBS -N test            ## job name
@@ -212,7 +132,7 @@ An example of job script is shown below. Please modify depending on your environ
     
     ncores=24               ## ncores must be smaller than ppn, which is set above.
     
-    mpid=mp-149             ## Si
+    mpid=mp-149             ## Si (mp-149)
     dir_db=${directory_of_downloaded_phoonondb}/${mpid}  ## This line must be modified.
     
     if [ ! -e $dir_db ]; then
@@ -227,51 +147,51 @@ An example of job script is shown below. Please modify depending on your environ
 
 .. _sec-automation:
 
-Automation Calculation
-=======================
+.. Automation Calculation
+.. =======================
 
-Scripts in ``examples/phonondb`` and ``examples/massive`` may be useful to run the automation calculation.
-First, data of Phonondb need to be downloaded
+.. Scripts in ``examples/phonondb`` and ``examples/massive`` may be useful to run the automation calculation.
+.. First, data of Phonondb need to be downloaded
 
-1. Download data from Phonondb
+.. 1. Download data from Phonondb
 
-.. code-block:: shell
+.. .. code-block:: shell
     
-    $ cd (arbitrary directory in which Phonondb will be downloaded.)
-    $ cp .../examples/phonondb/* ./
+..     $ cd (arbitrary directory in which Phonondb will be downloaded.)
+..     $ cp .../examples/phonondb/* ./
     
-    ## modify "imin" and "imax" in get_phonondb.sh
-    $ vi get_phonondb.sh
-    $ sh get_phonondb.sh
+..     ## modify "imin" and "imax" in get_phonondb.sh
+..     $ vi get_phonondb.sh
+..     $ sh get_phonondb.sh
 
 
-2. Start the calculation
+.. 2. Start the calculation
 
-.. code-block:: shell
+.. .. code-block:: shell
     
-    $ dir="APDB_0-10000"
-    $ mkdir $dir
-    $ cd $dir
-    $ cp .../auto-kappa/examples/massive/run_massive.sh ./
-    ## modify the script and submit jobs
+..     $ dir="APDB_0-10000"
+..     $ mkdir $dir
+..     $ cd $dir
+..     $ cp .../auto-kappa/examples/massive/run_massive.sh ./
+..     ## modify the script and submit jobs
 
 
-Known Bugs
-==========
+.. Known Bugs
+.. ==========
 
-POTCAR file
-------------
+.. POTCAR file
+.. ------------
 
-* You may get warning like below. While these messages will be removed, you can neglect them which do not affect the 
-  calculation. These messages are shown because POTCAR files are generated by ASE, which addes a few information in the POTCAR 
-  file, and these files are read by Pymatgen, which consideres that the additional information may be error.
+.. * You may get warning like below. While these messages will be removed, you can neglect them which do not affect the 
+..   calculation. These messages are shown because POTCAR files are generated by ASE, which addes a few information in the POTCAR 
+..   file, and these files are read by Pymatgen, which consideres that the additional information may be error.
 
-.. code-block:: shell
+.. .. code-block:: shell
 
-    .../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738: UserWarning: Ignoring unknown variable type SHA256 
-    warnings.warn(f"Ignoring unknown variable type {key}")
-    .../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738: UserWarning: Ignoring unknown variable type COPYR
-    warnings.warn(f"Ignoring unknown variable type {key}")
+..     .../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738: UserWarning: Ignoring unknown variable type SHA256 
+..     warnings.warn(f"Ignoring unknown variable type {key}")
+..     .../lib/python3.8/site-packages/pymatgen/io/vasp/inputs.py:1738: UserWarning: Ignoring unknown variable type COPYR
+..     warnings.warn(f"Ignoring unknown variable type {key}")
 
 
 

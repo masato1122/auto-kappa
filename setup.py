@@ -27,10 +27,12 @@ def main(build_dir):
     packages_autokappa = [
             'auto_kappa',
             'auto_kappa.alamode',
+            'auto_kappa.calculators',
             'auto_kappa.alamode.tools',
             'auto_kappa.alamode.analyzer',
             'auto_kappa.cui',
             'auto_kappa.io',
+            'auto_kappa.io.alamode',
             'auto_kappa.math',
             'auto_kappa.plot',
             'auto_kappa.plot.alamode',
@@ -40,23 +42,23 @@ def main(build_dir):
 
     scripts_autokappa = [
             'scripts/akrun',
-            'scripts/ak-logger',
+            #'scripts/ak-logger',
             'scripts/ak-plotter',
             ]
     
     version = _get_version()
 
-    
     setup(
             name='auto_kappa',
             version=version,
-            description='auto-kappa module',
+            description='automation software for anharmonic phonon properties',
             author='Masato Ohnishi',
-            author_email='ohnishi@photon.t.u-tokyo.ac.jp',
+            author_email='masato.ohnishi.ac@gmail.com',
             packages=packages_autokappa,
             install_requires=[
               'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 
               'custodian', 'xmltodict', 'mkl', 'f90nml', 'PyYAML',
+              'psutil'
               ],
             scripts=scripts_autokappa,
             url='https://github.com/masato1122/auto_kappa.git',

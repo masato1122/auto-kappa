@@ -14,24 +14,29 @@
 #
 import os.path
 import os
-import warnings
+import sys
 import numpy as np
+import glob
 
 import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
-from phonopy import Phonopy
-#from phonopy.structure.cells import get_primitive as get_primitive_pp
 from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
         get_standardized_structure_spglib,
         change_structure_format,
         )
-from auto_kappa.calculator import run_vasp
+from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.structure.crystal import get_spg_number
+from auto_kappa.cui import ak_log
+#from auto_kappa.io.files import write_output_yaml
+from auto_kappa.vasp.params import reflect_previous_jobs, get_amin_parameter
+
+import logging
+logger = logging.getLogger(__name__)
 
 class ApdbVasp():
     
@@ -41,6 +46,8 @@ class ApdbVasp():
             scell_matrix=None,
             encut_scale_factor=1.3,
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
+            amin_params = {},
+            params_modified = None,
             ):
         """
         Args
@@ -56,9 +63,17 @@ class ApdbVasp():
         scell_matrix : float, shape=(3,3)
             transformation matrix from the unitcell to the supercell with 
             the definition in Phonopy, which is not same as Pymatgen and ASE
-
-        Matrix
-        --------
+        
+        params_modified : dict
+            INCAR parameters to be modified.
+            VASP calculation will be performed using the default parameters for
+            different calculations, including relax, nac, force calculations, 
+            if this parameter is not given (None). If this parameter is given,
+            the given VASP paremeters with this function parameter will be set 
+            for every calculations.
+        
+        Note
+        ------
         Translational vectors of the primitive cell can be calculated as
         $$
         pcell = primitive_matrix.T @ unitcell.cell
@@ -74,10 +89,12 @@ class ApdbVasp():
         self._mat_u2s = scell_matrix
         
         if primitive_matrix is None:
-            print(" Error: primitive_matrix must be given.")
+            msg = " Error: primitive_matrix must be given."
+            logger(msg)
         
         if scell_matrix is None:
-            print(" Error: scell_matrix must be given.")
+            msg = " Error: scell_matrix must be given."
+            logger(msg)
         
         ### set structure variables
         ### Every structures will be stored in ``self._trajectory``.
@@ -87,30 +104,26 @@ class ApdbVasp():
         self._trajectory = []
         self.update_structures(unitcell)
         
-        ### prepare dictionaries for structures
-        #self.original_structure = {'prim': None, 'unit': None, 'scell': None}
-        # 
-        #self.original_structure['prim'] = \
-        #        change_structure_format(prim_pp, format='pmg-structure')
-        #
-        #self.original_structure['unit'] = unitcell.copy()
-        #
-        #if scell_matrix is not None:
-        #    self.original_structure['scell'] = \
-        #            make_supercell(unitcell, scell_matrix)
-        #
-        ###
-        #self.relaxed_structure = {
-        #        'prim': None,
-        #        'unit': None,
-        #        'scell': None,
-        #        }
-        
         ### VASP command
         self._command = command
         
         ### parameters
         self.encut_factor = encut_scale_factor
+
+        #self._yamlfile_for_outdir = yamlfile_for_outdir
+        
+        ### AMIN parameters
+        from auto_kappa import default_amin_parameters
+        self.amin_params = {}
+        for key in default_amin_parameters:
+            if key in amin_params.keys():
+                if amin_params[key] is not None:
+                    self.amin_params[key] = amin_params[key]
+            if key not in self.amin_params.keys():
+                self.amin_params[key] = default_amin_parameters[key]
+        
+        ### parameters that differ from the default values
+        self.set_modified_params(params_modified)
     
     @property
     def primitive_matrix(self):
@@ -123,7 +136,21 @@ class ApdbVasp():
     @property
     def command(self):
         return self._command
-
+    
+    @property
+    def params_mod(self):
+        if self._params_mod is None:
+            return {}
+        else:
+            return self._params_mod
+    
+    def set_modified_params(self, params_mod):
+        self._params_mod = params_mod
+    
+    #@property
+    #def yamlfile_for_outdir(self):
+    #    return self._yamlfile_for_outdir
+    
     def update_command(self, val):
         self._command.update(val)
     
@@ -135,10 +162,8 @@ class ApdbVasp():
             unit cell structure
         """
         if standardization:
-            
             unitcell = get_standardized_structure_spglib(
-                    unitcell, to_primitive=False, format=format
-                    )
+                    unitcell, to_primitive=False, format=format)
         ##
         structures = self.get_structures(unitcell, format=format)
         self._structures = structures
@@ -148,15 +173,56 @@ class ApdbVasp():
         """ Get primitive and supercells with the stored unitcell and 
         transformation matrices.
         """
-        phonon = Phonopy(
-                change_structure_format(unitcell, format='phonopy'),
-                self._mat_u2s,
-                primitive_matrix=self._mat_u2p
-                )
+        try:
+            from phonopy import Phonopy
+            phonon = Phonopy(
+                    change_structure_format(unitcell, format='phonopy'),
+                    self._mat_u2s,
+                    primitive_matrix=self._mat_u2p
+                    )
+            unit = change_structure_format(phonon.unitcell , format=format) 
+            prim = change_structure_format(phonon.primitive , format=format) 
+            sc   = change_structure_format(phonon.supercell , format=format)
+        except Exception:
+            from auto_kappa.structure.crystal import get_primitive_structure_spglib
+            unit = change_structure_format(unitcell , format=format) 
+            prim = get_primitive_structure_spglib(unitcell)
+            prim = change_structure_format(prim, format=format)
+            sc = get_supercell(
+                    change_structure_format(unitcell, format='phonopy'),
+                    self.scell_matrix)
+            sc = change_structure_format(sc, format=format)
         
-        unit = change_structure_format(phonon.unitcell , format=format) 
-        prim = change_structure_format(phonon.primitive , format=format) 
-        sc   = change_structure_format(phonon.supercell , format=format) 
+        # ###
+        # pmat_tmp = np.dot(prim.cell.array, np.linalg.inv(unit.cell.array)).T
+        # if np.allclose(pmat_tmp, self._mat_u2p, atol=1e-3) == False:
+        #     ##
+        #     ## This part is added to check the primitive matrix suggested by Phonopy (Spglib)
+        #     ##
+        #  
+        #     ## Get the primitive matrix suggested by Pymatgen
+        #     unit_pmg = change_structure_format(unit, format='pymatgen')
+        #     prim_pmg = unit_pmg.get_primitive_structure()
+        #   
+        #     ## Get structures: unitcell, primitive, and supercell
+        #     unit_ase = change_structure_format(unit, format='ase')
+        #     prim_ase = change_structure_format(prim_pmg, format='ase')
+        #     sc_ase = get_supercell(
+        #             change_structure_format(unit_ase, format='phonopy'),
+        #             self.scell_matrix)
+        #     sc_ase = change_structure_format(sc_ase, format='ase')
+        #   
+        #     ## check the primitive matrix
+        #     pmat_tmp = np.dot(prim_ase.cell.array, np.linalg.inv(unit.cell.array)).T
+        #     if np.allclose(pmat_tmp, self._mat_u2p, atol=1e-3) == False:
+        #         msg = "\n Error: The primitive matrix is not correct."
+        #         msg += "\n Please check the primitive matrix."
+        #         logger.error(msg)
+        #         sys.exit()
+        #   
+        #     structures = {'unit': unit_ase, 'prim': prim_ase, 'super': sc_ase}
+        # else:
+        #     structures = {"unit": unit, "prim": prim, "super": sc}
         
         structures = {"unit": unit, "prim": prim, "super": sc}
         
@@ -176,74 +242,16 @@ class ApdbVasp():
     @property
     def primitive(self):
         return self._structures['prim']
-        ##
-        #if self.relaxed_structure['prim'] is not None:
-        #    #print(" Return relaxed structure.")
-        #    return self.relaxed_structure['prim']
-        #
-        #elif self.original_structure['prim'] is not None:
-        #    print("")
-        #    print(" Return UNrelaxed structure.")
-        #    return self.original_structure['prim']
-        #
-        #else:
-        #    return None
     
     @property
     def unitcell(self):
         return self._structures['unit']
-        ##
-        #if self.relaxed_structure['unit'] is not None:
-        #    
-        #    ### relaxed unitcell    
-        #    return self.relaxed_structure['unit']
-        #
-        #elif self.relaxed_structure['prim'] is not None:
-        #    
-        #    ### ver. old: may contain a critical error
-        #    mat_p2u = np.rint(np.linalg.inv(self._mat_u2p)).astype(int)
-        #    #
-        #    ### ver. corrected
-        #    #mat_p2u = np.linalg.inv(self.primitive_matrix).T
-        #
-        #    ### relaxed prim => relaxed unit
-        #    self.relaxed_structure['unit'] = make_supercell(
-        #            self.relaxed_structure['prim'], mat_p2u)
-        #    
-        #    return self.relaxed_structure['unit']
-        #
-        #elif self.original_structure['unit'] is not None:
-        #    print(" Return UNrelaxed structure.")
-        #    return self.original_structure['unit']
-        # 
-        #else:
-        #    return None
     
     @property
     def supercell(self):
         return self._structures['super']
-        ##
-        #if self.relaxed_structure['scell'] is not None:
-        #    
-        #    ### relaxed supercell
-        #    return self.relaxed_structure['scell']
-        #
-        #elif self.relaxed_structure['prim'] is not None:
-        #    
-        #    ### relaxed unit => relaxed scell
-        #    self.relaxed_structure['scell'] = make_supercell(
-        #            self.unitcell, self._mat_u2s)
-        #    
-        #    return self.relaxed_structure['scell']
-        #
-        #elif self.original_structure['scell'] is not None:
-        #    print(" Return UNrelaxed structure.")
-        #    return self.original_structure['scell']
-        #
-        #else:
-        #    return None
     
-    def get_calculator(self, mode, directory=None, kpts=None):
+    def get_calculator(self, mode, directory=None, kpts=None, **args):
         """ Return VASP calculator created by ASE
         Args
         ------
@@ -255,8 +263,12 @@ class ApdbVasp():
         
         kpts : list of float, shpae=(3,)
         
+        **args : dict
+            VASP parameters that will be modified which are prior to 
+            ``self.params_mod``
+        
         """
-        from auto_kappa.calculator import get_vasp_calculator
+        from auto_kappa.calculators.vasp import get_vasp_calculator
         
         ### get structure (Atoms obj)
         if 'relax' in mode.lower() or mode.lower() == 'nac':
@@ -264,29 +276,77 @@ class ApdbVasp():
         elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
         
-        calc = get_vasp_calculator(mode, 
+        ### merge ``args`` and ``self.params_mod``
+        ### `args`` is prior to ``self.params_mod`
+        merged_params_mod = self.params_mod.copy()
+        merged_params_mod.update(args)
+        
+        calc = get_vasp_calculator(
+                mode, 
                 directory=directory, 
                 atoms=structure,
                 kpts=kpts,
                 encut_scale_factor=self.encut_factor,
+                **merged_params_mod,
                 )
+        
         calc.command = '%s -n %d %s' % (
                 self.command['mpirun'], 
                 self.command['nprocs'],
                 self.command['vasp'])
         return calc
     
-    def run_relaxation(self, directory: './out', kpts: None,
+    def run_relaxation(
+            self, directory: str, kpts: None,
             standardize_each_time=True,
-            volume_relaxation=False,
+            volume_relaxation=0,
             cell_type='p',
-            force=False, num_full=2, verbosity=1): 
+            force=False, num_full=2, verbosity=1,
+            max_error=None, nsw_params=None, 
+            **args
+            ):
         """ Perform relaxation calculation, including full relaxation 
         calculations (ISIF=3) with "num_full" times and a relaxation of atomic
         positions (ISIF=2). See descriptions for self.run_vasp for details.
-        """
-        spg_before = get_spg_number(self.primitive)
         
+        Args
+        =======
+
+        directory : string
+            working directory for VASP
+
+        kpts : array, shape=(3)
+            k-mesh for VASP
+
+        standardize_each_time : bool
+        
+        volume_relaxation : int
+
+        cell_type : string
+
+        force : bool
+
+        num_full : int,
+            Number of relxation calculation w/o any restriction [default: 2]
+
+        verbosity : int
+        
+        max_error : int
+            Max number of retry the calculation. If error.{max_error}.tar(.gz) 
+            exists, stop the calculation.
+        
+        args : dictionary
+            input parameters for VASP
+        
+        Return
+        ========
+        
+        integer :
+            If negative value, stop the job.
+            -1 : symmetry error
+            -2 : too many errors
+        
+        """
         ### relaxation cell type
         if cell_type[0].lower() == 'p':
             cell_type = 'primitive'
@@ -295,93 +355,138 @@ class ApdbVasp():
             cell_type = 'conventional'
             to_primitive = False
         else:
-            print(" Error")
-            exit()
+            msg = " Error"
+            logger.info(msg)
+            sys.exit()
         
         ### message
         if verbosity != 0:
-            line = "Structure optimization with %s cell" % cell_type
-            msg = "\n\n " + line + "\n"
-            msg += " " + "=" * (len(line))
-            print(msg)
+            line = "Structure optimization"
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
+            msg += "\n\n Cell type : %s" % cell_type
+            logger.info(msg)
         
-        #### Get the relaxed structure obtained with the old version
-        #### For the old version, the xml file is located under ``directory``.
-        #if wasfinished(directory, filename='vasprun.xml'):
-        #    filename = directory + "/vasprun.xml"
-        #    prim = ase.io.read(filename, format='vasp-xml')
-        #    prim_stand = get_standardized_structure(prim, to_primitive=True)
-        #    self.update_structures(prim_stand, cell_type='prim')
-        #    msg = "\n Already finised with the old version (single full relaxation)"
-        #    print(msg)
-        #    return 0
+        ### Get the relaxed structure obtained with the old version
+        ### For the old version, the xml file is located under ``directory``.
+        if volume_relaxation == 0 and wasfinished(directory, filename='vasprun.xml'):
+            filename = directory + "/vasprun.xml"
+            prim = ase.io.read(filename, format='vasp-xml')
+            
+            mat_p2u = np.linalg.inv(self.primitive_matrix)
+            mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+            unitcell = get_supercell(
+                    change_structure_format(prim, format='phonopy'),
+                    mat_p2u)
+            unitcell = change_structure_format(unitcell) 
+            self.update_structures(unitcell)
+            msg = "\n Already finised with the old version (single full relaxation)"
+            return 0
+        
+        ### NSW parameters
+        out = _parse_nsw_params(nsw_params)
+        nsw_init = out[0]
+        nsw_diff = out[1]
+        nsw_min = out[2]
+        
+        ### symmetry
+        spg_before = get_spg_number(self.unitcell)
         
         ### perform relaxation calculations
-        for ical in range(num_full+1):
+        count = 0
+        count_err = 0
+        max_sym_err = 2
+        while True:
             
             ### set working directory and mode
-            if ical < num_full:
-                num = ical + 1
+            if count < num_full:
+                ## full relxation
+                num = count + 1
                 dir_cur = directory + "/full-%d" % num
                 mode = 'relax-full'
             
             else:
-                num = ical - num_full + 1
+                ## relaxation of atomic positions
+                num = count - num_full + 1
                 dir_cur = directory + "/freeze-%d" % num
                 mode = 'relax-freeze'
             
+            #### check the number of errors
+            #if max_error is not None:
+            #    if too_many_errors(dir_cur, max_error=max_error):
+            #        return -2
+            
+            #### determine NSW parameter based on the number of errors
+            args['nsw'] = _get_nsw_parameter(
+                    dir_cur, nsw_init=nsw_init, 
+                    nsw_diff=nsw_diff, nsw_min=nsw_min)
+            
+            ### print message
             if verbosity != 0:
                 line = "%s (%d)" % (mode, num)
-                msg = "\n " + line + "\n"
-                msg += " " + "-" * len(line)
-                print(msg)
+                msg = "\n " + line
+                msg += "\n " + "-" * len(line)
+                logger.info(msg)
             
-            ###
-            if ical == 0:
-                #structure = self.primitive
-                print_params = True
-            
+            ##
+            if count == 0:
+                if count_err == 0:
+                    print_params = True
             else:
                 fn = dir_pre + "/CONTCAR"
                 if os.path.exists(fn) == False:
-                    warnings.warn(" Error: %s does not exist." % fn)
-                    exit()
+                    msg = "\n Error: %s does not exist." % fn
+                    logger.error(msg)
+                    sys.exit()
                 
-                #print("")
-                #print(" Update the primitive structure:", fn)
-                #structure = ase.io.read(fn, format='vasp')
                 print_params = False
             
             ### get the structure used for the analysis
             if to_primitive:
                 structure = self.primitive
-
             else:
                 structure = self.unitcell
             
-            #### standardization
-            #if standardize_each_time:
-            #    
-            #    structure = get_standardized_structure_spglib(
-            #            structure, to_primitive=to_primitive, format='ase'
-            #            )
-            #
-            
             ### run a relaxation calculation
-            self.run_vasp(
+            ### out == -1 : symmetry was changed
+            out = self.run_vasp(
                     mode, dir_cur, kpts, 
                     structure=structure, force=force, 
                     print_params=print_params,
                     cell_type=cell_type,
                     verbosity=0,
-                    standardization=standardize_each_time
+                    standardization=standardize_each_time,
+                    **args
                     )
             
+            if out == -1:
+                
+                ### backup failed result
+                backup_vasp(dir_cur, delete_files=True)
+                
+                ### set ISYM = 2 explicitly
+                #args["isym"] = 2
+                
+                count_err += 1
+                if max_sym_err == count_err:
+                    msg =  "\n The calculation was failed %d times." % (count_err)
+                    msg += "\n Abort the relaxation calculation."
+                    logger.info(msg)
+                    return -1
+                else:
+                    logger.info("\n Retry the relaxation calculation.")
+                    continue
+            
+            ### update
             dir_pre = dir_cur
-
+            
+            count += 1
+            count_err = 0
+            if count == num_full + 1:
+                break
+        
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
-        
         
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:
@@ -398,21 +503,29 @@ class ApdbVasp():
             Vs, Es = relax.with_different_volumes(
                     kpts=kpts, 
                     command=self.command,
+                    params_mod=self.params_mod
                     )
+            
+            ### output figure
             figname = outdir + '/fig_bm.png'
-            relax.plot_bm(figname=figname)
+            relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+            
+            ### print results
             relax.print_results()
+            
+            ### output structure file
             struct_opt = relax.get_optimal_structure()
             outfile = outdir + "/POSCAR.opt"
-            struct_opt.to(filename=outfile)
+            struct_opt.to(filename=outfile.replace(os.getcwd(), "."))
             struct_ase = change_structure_format(struct_opt, format='ase') 
             
-            ###
+            ### update structures
             if to_primitive:
+                _mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
                 unitcell = get_supercell(
-                        struct_ase, 
-                        np.linalg.inv(self.primitive_matrix)
-                        )
+                        change_structure_format(struct_ase, format='phonopy'),
+                        _mat_p2u)
             else:
                 unitcell = struct_ase.copy()
             
@@ -429,10 +542,20 @@ class ApdbVasp():
             'volume_relaxation': volume_relaxation,
             })
         
+        ### output structures (>= ver.0.4.0)
+        outdir = directory + "/structures"
+        os.makedirs(outdir, exist_ok=True)
+        logger.info("\n")
+        for key in self.structures.keys():
+            fn = outdir.replace(os.getcwd(), ".") + "/POSCAR.%s" % key
+            ase.io.write(fn, self.structures[key], format='vasp', direct=True, vasp5=True, sort=True)
+            logger.info(" Output %s" % fn)
+        
         if spg_before != spg_after:
-            print("")
-            warnings.warn(" WARRNING: The crystal symmetry was changed due to the structure relaxation")
-            exit()
+            ak_log.symmetry_error(spg_before, spg_after)
+            return -1
+        
+        return 0
     
     def _write_relax_yaml(self, params):
         import yaml
@@ -470,11 +593,10 @@ class ApdbVasp():
         with open(outfile, 'w') as f:
             yaml.dump(dict_data, f)
             
-    
-    def run_vasp(self, mode: None, directory: './out', kpts: None, 
+    def run_vasp(self, mode: None, directory: str, kpts: None, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 
-            standardization=True, verbosity=1
+            standardization=True, verbosity=1, **args
             ):
         """ Run relaxation and born effective charge calculation
         
@@ -499,37 +621,62 @@ class ApdbVasp():
 
         force : bool, default=False
             If it's True, the calculation will be done forcelly even if it had
-            been already finished.
+            already been finished.
+        
+        args : dict
+            input parameters for VASP
+        
+        Return
+        --------
+        integer :
+            0. w/o error
+            1. symmetry was changed during the relaxation calculation
+        
         """
         if verbosity != 0:
             line = "VASP calculation (%s)" % (mode)
-            msg = "\n\n " + line + "\n"
-            msg += " " + "=" * (len(line)) + "\n"
-            print(msg)
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
+            logger.info(msg)
         
-        os.environ['OMP_NUM_THREADS'] = str(self.command['nthreads'])
+        ### set OpenMP
+        omp_keys = ["OMP_NUM_THREADS", "SLURM_CPUS_PER_TASK"]
+        for key in omp_keys:
+            os.environ[key] = str(self.command['nthreads'])
         
+        ### perform the calculation
         if wasfinished(directory, filename='vasprun.xml') and force == False:
-            print("")
-            print(" The calculation had been already finished.")
-         
-        else:
+            msg = "\n The calculation has already been done."
+            logger.info(msg)
         
+        else:
+            
             #### ver.1 relax with one shot
             calc = self.get_calculator(
-                    mode.lower(), directory=directory, kpts=kpts
+                    mode.lower(), directory=directory, kpts=kpts, **args
                     )
-            ##
-            if print_params:
-                print_vasp_params(calc.asdict()['inputs'])
             
+            ###
             if structure is None:
                 structure = self.primitive
             
+            ### update VASP parameters based on the previous jobs
+            reflect_previous_jobs(
+                    calc, structure, method=method, 
+                    amin_params=self.amin_params,
+                    )
+            
+            ### print VASP parameters
+            if print_params:
+                print_vasp_params(calc.asdict()['inputs'])
+            
+            ### run a VASP job
             run_vasp(calc, structure, method=method)
         
-        os.environ["OMP_NUM_THREADS"] = "1"
-        
+        ### set back OpenMP 
+        for key in omp_keys:
+            os.environ[key] = "1"
+         
         ### Read the relaxed structure
         if 'relax' in mode.lower():
             
@@ -539,17 +686,90 @@ class ApdbVasp():
             
             if c0 == 'c' or c0 == 'u':
                 
-                new_unitcell = ase.io.read(vasprun, format='vasp-xml')
-
+                try:
+                    new_unitcell = ase.io.read(vasprun, format='vasp-xml')
+                except Exception:
+                    _error_in_vasprun(vasprun)
+            
             else:
                 
                 ### read primitive and transform it to the unit cell
                 new_prim = ase.io.read(vasprun, format='vasp-xml')
-                mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.linalg.inv(self.primitive_matrix)
+                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
                 new_unitcell = get_supercell(
                         change_structure_format(new_prim, format='phonopy'),
-                        mat_p2u)
+                        _mat_p2u)
+            
+            ##
+            num_init = get_spg_number(structure)
+            num_mod = get_spg_number(new_unitcell)
+            if num_init != num_mod:
+                ak_log.symmetry_error(num_init, num_mod)
+                return -1
             
             self.update_structures(new_unitcell, standardization=standardization)
-     
+        
+        return 0
+
+def _error_in_vasprun(filename):
+    dir_file = os.path.dirname(filename)
+    msg = "\n Error in %s" % filename 
+    msg += "\n Abort the calculation"
+    logger.info(msg)
+    sys.exit()
+
+def too_many_errors(directory, max_error=100):
+    """ check the number of errors in ``directory`` """    
+    for file_err in glob.glob(directory+"/error.*"):
+        try:
+            num = int(file_err.split("/")[-1].split(".")[1])
+        except Exception:
+            continue
+        if num >= max_error:
+            return True
+    return False
+
+#def _get_number_of_errors(directory):
+#    """ Get and return the number of errors in the given directory. """
+#    num_errors = 0
+#    ### number of errors
+#    for suffix in ["tar", "tar.gz"]:
+#        line = directory + "/error.*." + suffix
+#        fns = glob.glob(line)
+#        num_errors += len(fns)
+#    ####
+#    #line = directory + "/INCAR"
+#    #fns = glob.glob(line)
+#    #num_errors += len(fns)
+#    return num_errors
+
+def _parse_nsw_params(line, params_default=[200, 10, 20]):
+    """ Return NSW params with an array 
+    Args
+    ======
+    
+    line : string, "**:**:**"
+
+    Return
+    =======
+    
+    array, shape=(3)
+        initial, interval, and minimum NSW
+    """
+    data = line.split(":")
+    params = []
+    for j in range(3):
+        try:
+            params.append(int(data[j]))
+        except Exception:
+            params.append(int(params_default[j]))
+    return params
+
+def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
+    """ Determine the number of NSW based on the number of errors """
+    from auto_kappa.vasp.params import get_number_of_errors
+    num_errors = get_number_of_errors(directory)
+    nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
+    return nsw
 

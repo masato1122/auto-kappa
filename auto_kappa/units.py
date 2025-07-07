@@ -9,9 +9,9 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import numpy as np
+import math
 
-pi = np.pi
+pi = math.pi
 clight = 2.99792458e8      # m/s
 kb = 1.38064852e-23        # m2*kg/(s2K)
 plank = 6.62607004e-34     # m2*kg/s
@@ -24,8 +24,8 @@ Nav = 6.02214086e23        # mol^-1
 DToCM = (1e-21/clight) # C*m/Debye
 
 ## Distance [M]
-AToBohr = 1.889725989        # Bohr/A
-BohrToA = 0.529177249        # A/Bohr
+AToBohr = 1.8897259886       # Bohr/A
+BohrToA = (1./AToBohr)       # A/Bohr
 BohrToM = BohrToA * 1e-10    # m/Bohr
 
 ## Energy

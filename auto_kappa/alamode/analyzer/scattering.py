@@ -14,12 +14,15 @@
 import os, sys
 import os.path
 import numpy as np
-import warnings
+#import warnings
 import pandas as pd
 
 import auto_kappa.units as units
-from .result import Result
-from .analyzer import get_average_at_degenerate_point, get_kmode
+from auto_kappa.alamode.analyzer.result import Result
+from auto_kappa.alamode.analyzer.analyzer import get_average_at_degenerate_point, get_kmode
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Scattering():
     """
@@ -29,14 +32,14 @@ class Scattering():
     >>>                 isotope=file_isotope, 
     >>>                 temperature=options.T,
     >>>                 grain_size=size)
-    >>>
+    >>> 
     >>> scat.set_total_scattering_rate()
     >>> print(scat.kappa)
-    >>>
+    >>> 
     >>> 
     >>> size = 1000   # nm
     >>> scat.cahnge_grain_size(size)
-    >>>
+    >>> 
     >>> T = 100.
     >>> scat.change_tempearture(T)
     
@@ -63,8 +66,9 @@ class Scattering():
         self.verbosity = verbosity
 
         if file_result is None:
-            warnings.warn(" Error: file_result must be given.")
-            exit()
+            logger.error(" Error: file_result must be given.")
+            sys.exit()
+        
         self.result = Result(filename=file_result)
         
         ### properties
@@ -109,7 +113,7 @@ class Scattering():
         ### T-independent
         if self.size is not None:
             self.set_scattering_rate_boundary(size=self.size)
-    
+        
     @property
     def kpoints(self):
         return self.result['kpoints']
@@ -183,7 +187,7 @@ class Scattering():
                 self._total_scattering_rate += self.scattering_rates[key]
         msg += "\n"
         if self.verbosity > 0:
-            print(msg)
+            logger.info(msg)
         
         self.set_lifetime()
         self.set_kmode()
@@ -202,7 +206,7 @@ class Scattering():
                 self.total_scattering_rate)  # ps
         self._lifetime = get_average_at_degenerate_point(
                 self.result['frequencies'], lifetime)
-     
+        
     @property
     def kmode(self):
         if self._kmode is None:
@@ -263,7 +267,7 @@ class Scattering():
             xorig = frequencies.reshape(nk*nbands)  ## 1/cm
         else:
             xorig = self.mfp.reshape(nk*nbands)     ## nm
-            
+
         kmodes = np.zeros_like(frequencies)
         for ik in range(nk):
             for ib in range(nbands):
@@ -279,9 +283,14 @@ class Scattering():
             ymod = yorig[idx]
             
             isort = np.argsort(xmod)
+            
+            ### adjust xmin
             xmin = xmod[isort[5]]
             if wrt == 'mfp':
-                xmin = max(5., np.min(xmod))
+                mm = max(5., np.min(xmod))
+                if mm < np.max(xmod):
+                    xmin = mm
+            
             xmin_log = np.log10(xmin)
             xmax_log = np.log10(np.max(xmod))
             xbins = np.logspace(xmin_log, xmax_log, nbins+1)
@@ -292,7 +301,7 @@ class Scattering():
             xmin = 0.
             xmax = np.max(xorig)
             xbins = np.linspace(xmin, xmax, nbins+1)
-         
+        
         xbins[0] = np.min(xorig) - 1e-3
         ybins = np.zeros_like(xbins)
         cats = pd.cut(xorig, xbins)
@@ -411,10 +420,10 @@ class Scattering():
         self._temperature = self.result['temperatures'][idx]
         
         if abs(self.temperature - temperature) > 0.1:
-            print("")
-            print(" NOTE: target temperature is adjusted from %.1f K to "
-                    "%.1f K." % (temperature, self.temperature))
-            print("")
+            msg = "\n NOTE: target temperature is adjusted from %.1f K to "\
+                    "%.1f K.\n" % (temperature, self.temperature)
+            logger.info(msg)
+            sys.exit()
         
         self.set_scattering_rate_phph()
         self.set_total_scattering_rate()
@@ -427,22 +436,100 @@ class Scattering():
         self.set_kmode()
 
     def set_scattering_rate_phph(self):
-        """
-        Return
-        ------
-        *** : ndarray, float, shape=(nk,nb)
-            scattering rate due to ph-ph scattering [1/ps]
+        ## , smooth_scattering_rate=True, tol_gap=10.
+        """ Set scattering rate due to ph-ph scattering.
+        
+        Args
+        -------
+        smooth_scattering_rate : bool
+            if True, replace too small scattering rate to average 
+            value for modes above the band gap.
+        tol_gap : float
+            if difference of frequencies  is larger than 
+            tol_gap [kayser], the difference is regarded as gap.
         """
         itarget = np.argmin(abs(self.result['temperatures'] - self.temperature))
         
         ## 1/ps
         self.scattering_rates['phph'] = convert_gamma2scatrate(
-                self.result['gammas'][itarget,:,:])
+            self.result['gammas'][itarget,:,:])
         
+        # if self.has_gap(tol_gap=10.0) != False:
+        #     logger.info(f'\n Note: Band gap exists. '
+        #                 f'({self.has_gap(tol_gap=10.0)} 1/cm)')
+        
+        # if smooth_scattering_rate:
+        #     self._smooth_scattering_rate(tol_gap=tol_gap)
+    
+    def has_gap(self, tol_gap=None):
+        """ Check if there is a band gap or not.
+        
+        Return
+        --------
+        fmin : float
+            minimum frequency above the band gap
+        """
+        ordered_freqs = np.sort(self.result['frequencies'][:,3:].flatten())
+        diff_freqs = np.diff(ordered_freqs)
+        idx_gap = np.where(diff_freqs > tol_gap)[0]
+        if len(idx_gap) == 0:
+            return False
+        else:
+            fmin = ordered_freqs[idx_gap[0]+1]
+            return fmin
+    
+    #
+    # To Do:
+    # When the scattering rate of some modes is too small, four-phonon scattering should be considred.
+    # Currently, the presence of a band gap is checked.
+    #
+    # def _smooth_scattering_rate(self, tol_gap=None, tol_scatrate=1e-10, tol_kappa=1e-3):
+    #     """ Replace too small scattering rate to average value 
+    #     for modes above the band gap.
+        
+    #     Args
+    #     -------
+    #     tol_gap : float
+    #         if difference of frequencies is larger than tol_gap, 
+    #         the difference is regarded as gap.
+    #     """
+    #     ## Minimum frequency above the band gap
+    #     fmin = self.has_gap(tol_gap=tol_gap)
+    #     if fmin == False:
+    #         return None
+        
+    #     from auto_kappa.alamode.analyzer.analyzer import get_heat_capacity
+        
+    #     ## Replace too small scattering rate to average value
+    #     nk, nb = self.scattering_rates['phph'].shape
+    #     for ik in range(nk):
+    #         for ib in range(nb):
+                
+    #             freq = self.result['frequencies'][ik,ib]  # 1/cm
+    #             if freq < fmin:
+    #                 continue
+                
+    #             rscat = self.scattering_rates['phph'][ik,ib]  # 1/ps
+                
+    #             if rscat < tol_scatrate:
+    #                 self.scattering_rates['phph'][ik,ib] = np.nan
+                
+    #             tau = 1./rscat  # ps
+    #             vg = self.averaged_velocities[ik,ib]  # m/s
+    #             mfp = vg * 0.001 / rscat  # nm
+    #             Cph = get_heat_capacity(freq, self.temperature)   # J/K
+    #             kappa = Cph * vg * mfp * 1e-9  # m^3 * W/m/K
+    #             kappa /= self.result['volume'] * units.BohrToM**3  # W/m/K
+                
+    #             if mfp > 1000. and kappa > tol_kappa:
+    #                 print(ik, ib, 'freq= %.3f 1/cm, tau= %.3e ps, MFP= %.3f nm, k= %.3f' % (
+    #                     freq, tau, mfp, kappa))
+    #                 self.scattering_rates['phph'][ik,ib] = np.nan
+    
     def set_scattering_rate_isotope(self):
         from .isotope import Isotope
         if os.path.exists(self.file_isotope) == False:
-            warnings.warn(" %s does not exist." % filename)
+            logger.warning(" %s does not exist." % self.file_isotope)
         else:
             iso = Isotope(filename=self.file_isotope)
             ## 1/ps
@@ -482,71 +569,12 @@ def convert_scatrate2lifetime(rscat, epsilon=1e-10):
     Unit of scattering rate : [1/ps]
     Unit of lifetime : [ps]
     """
-    rscat_tmp = np.where(rscat<epsilon, 1.0, rscat)
-    lifetime = np.where(rscat<epsilon, 0.0, 1./rscat_tmp)
+    ### old version
+    # rscat_tmp = np.where(rscat<epsilon, 1.0, rscat)
+    # lifetime = np.where(rscat<epsilon, 0.0, 1./rscat_tmp)
+    
+    ### modified version
+    with np.errstate(divide='ignore', invalid='ignore'):
+        lifetime = np.where((np.isnan(rscat)) | (rscat < epsilon), 0.0, 1./rscat)
+    
     return lifetime
-
-#def dump_scattering_rate(filename, freqs, rscat_tot, temp,
-#        rscat_phph=None, rscat_iso=None, rscat_bdy=None,
-#        size=None, model=None, gamma=None,
-#        rscat_ts=None):
-#    """Output scattering rate
-#    freqs, rscat_**: ndarray, float, shape=(nk,nb)
-#        frequencies[1/cm] and scattering rate[1/ps]
-#    rscat_iso, rscat_bdy, rscat_ts : ndarray, float, shape=(nk,nb)
-#        scattering rate [1/ps] due to isotope, boundary, tunneling states,
-#        respectively
-#    size : float
-#        grain size [nm]
-#    model : string (n... or h...)
-#    gamma : float
-#        gamma parameter of Hori model
-#    """
-#    ofs = open(filename, "w")
-#    # ---- beggining
-#    ofs.write("# Scattering rate [1/ps] including the following effects.\n")
-#    ofs.write("# Tempearture : {:.2f} K\n".format(temp))
-#    ofs.write("# - Phonon-phonon scattering\n")
-#    if size:
-#        ofs.write("# - Boundary scattering due to {:.2f} nm "
-#                "grain\n".format(size))
-#        if model.lower()[0] == "n":
-#            ofs.write("#   calculated by 2*|v|/L model\n")
-#        if model.lower()[0] == "h":
-#            ofs.write("#   calculated by SL+nanocrystal model ")
-#            ofs.write("with gamma = {:f}\n".format(gamma))
-#    else:
-#        ofs.write("#\n")
-#    if rscat_iso is not None:
-#        ofs.write("# - Isotope scattering\n")
-#    else:
-#        ofs.write("#\n")
-#    ofs.write("#ik ib Frequency[1/cm]  total")
-#    if rscat_phph is not None:
-#        ofs.write("      ph-ph")
-#    if rscat_iso is not None:
-#        ofs.write("         isotope")
-#    if rscat_bdy is not None:
-#        ofs.write("       boundary({:s})".format(model))
-#    if rscat_ts is not None:
-#        ofs.write("      tunnling")
-#    ofs.write("\n")
-#    # --- dump data
-#    for ik in range(len(rscat_tot)):
-#        for ib in range(len(rscat_tot[ik])):
-#            ofs.write("{:2d} {:2d} ".format(ik, ib))
-#            ofs.write("{:12.5f}".format(freqs[ik,ib]))
-#            ofs.write(" {:13.5e}".format(rscat_tot[ik,ib]))
-#            if rscat_phph is not None:
-#                ofs.write(" {:13.5e}".format(rscat_phph[ik,ib]))
-#            if rscat_iso is not None:
-#                ofs.write(" {:13.5e}".format(rscat_iso[ik,ib]))
-#            if rscat_bdy is not None:
-#                ofs.write(" {:13.5e}".format(rscat_bdy[ik,ib]))
-#            if rscat_ts is not None:
-#                ofs.write(" {:13.5e}".format(rscat_ts[ik,ib]))
-#            ofs.write("\n")
-#    ofs.close()
-#    print(" Output", filename)
-
-

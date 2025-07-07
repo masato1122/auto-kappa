@@ -12,10 +12,26 @@ auto\_kappa.io.alm module
    :undoc-members:
    :show-inheritance:
 
+auto\_kappa.io.files module
+---------------------------
+
+.. automodule:: auto_kappa.io.files
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 auto\_kappa.io.phonondb module
 ------------------------------
 
 .. automodule:: auto_kappa.io.phonondb
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+auto\_kappa.io.times module
+---------------------------
+
+.. automodule:: auto_kappa.io.times
    :members:
    :undoc-members:
    :show-inheritance:

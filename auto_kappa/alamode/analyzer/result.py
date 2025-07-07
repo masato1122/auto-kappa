@@ -10,9 +10,12 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import warnings
+import sys
 import numpy as np
-from .analyzer import get_kmode
+from pathlib import Path
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Result():
     def __init__(self, filename=None):
@@ -43,12 +46,31 @@ class Result():
         self.filename = filename
         
         self._lifetime = None
-        self._kmode = None
-        self._lmode = None
-
+        
         if self.filename is not None:
             self.set_result()
     
+    def __str__(self):
+        keys = list(self._values.keys())
+        msg = "\n Result file: %s" % self.filename
+        msg += "\n"
+        for k1 in keys:
+            msg += "\n %s " % k1
+            if isinstance(self._values[k1], dict):
+                for k2 in self._values[k1]:
+                    msg += "\n  |--- %13s : " % k2
+                    if isinstance(self._values[k1][k2], int):
+                        msg += "%d" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], float):
+                        msg += "%f" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], str):
+                        msg += "%s" % self._values[k1][k2]
+                    elif isinstance(self._values[k1][k2], np.ndarray):
+                        msg += "%s" % str(self._values[k1][k2].shape)
+                    else:
+                        msg += " %s" % type(self._values[k1][k2])
+        return msg
+        
     def __getitem__(self, key):
         
         for k1 in self._values:
@@ -57,9 +79,9 @@ class Result():
             for k2 in self._values[k1]:
                 if k2 == key:
                     return self._values[k1][k2]
-        print()
-        warnings.warn(" Warning: %s cannot be found." % key)
-        print()
+        
+        msg = "\n Warning: %s cannot be found.\n" % key
+        logger.warning(msg)
         return None
     
     def set_result(self):
@@ -67,10 +89,22 @@ class Result():
         Read self.filename and set class
         """
         if self.filename is None:
-            warnings.warn("Error: filename (*.result file) must be given.")
-            exit()
+            logger.error(" Error: filename (*.result file) must be given.")
+            sys.exit()
         
-        self._values = read_result_file(self.filename)
+        try:
+            self._values = read_result_file(self.filename)
+        except Exception:
+            fn_rel = Path(self.filename).relative_to(Path.cwd())
+            line = f"Error: cannot read {fn_rel} properly."
+            msg = "\n " + "#" * (len(line) + 2)
+            msg += f"\n {line}"
+            msg += "\n"
+            msg += "\n Possible solution for this issue is"
+            msg += f"\n * to delete {fn_rel} and"
+            msg += "\n * to calculate thermal conductivity again."
+            msg += "\n " + "#" * (len(line) + 2)
+            logger.error(msg)
         
     def get_free_energy(self, temperatures):
         """Calcualte free enrgy
@@ -239,8 +273,8 @@ def read_result_file(filename):
             filename, 
             len(params['temperature']['temperatures']),
             params['kpoint']['nk'], 
-            3 * params['system']['natoms']
-            )
+            3 * params['system']['natoms'])
+            # average_gamma=average_gamma)
     return params
 
 def read_system(filename):
@@ -345,39 +379,47 @@ def read_temperature(filename):
     return {'tmin': t0, 'tmax': t1, 'dt': dt}
 
 def read_frequency(filename):
-    """ Read and return frequencies in rfile, which is *.result file.
+    """ Read and return frequencies in rfile, which is \*.result file.
     
     Args
     ----------
     filename : string
-        *.result file name
+        \*.result file name
 
     Return
     -------
     nkpoints, nbands : integer
         # of kpoints and bands
+    
     frequencies : ndarray, float, shape=(nkpoints, nbands)
         eigenvalues
     """
     lines = open(filename, 'r').readlines()
     iline0 = _get_line_number(lines, "#K-point")
     nlines = len(lines)
-
+    
     kpoints = []
     branches = []
     frequencies = []
     
-    for il in range(iline0+1, nlines):
+    if iline0 is not None:
         
-        line = lines[il]
-        data = line.split()
-
-        if "#" in line:
-            break
-        
-        kpoints.append(int(data[0]))
-        branches.append(int(data[1]))
-        frequencies.append(float(data[2]))
+        for il in range(iline0+1, nlines):
+            line = lines[il]
+            data = line.split()
+            if "#" in line:
+                break
+            kpoints.append(int(data[0]))
+            branches.append(int(data[1]))
+            frequencies.append(float(data[2]))
+    
+    else:
+        fn_rel = Path(filename).relative_to(Path.cwd())
+        msg = "\n Error: Frequency info in the following result file was not read properly."
+        msg += f"\n {fn_rel}"
+        msg += "\n You may need to rerun the calculation to solve this issue."
+        logger.warning(msg)
+        return None    
     
     kpoints = np.asarray(kpoints)
     branches = np.asarray(branches)
@@ -395,7 +437,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
         .result file name
     ntemps, nk, nbands : integer
         # of temperatures, kpoints, and bands
-
+    
     Returns
     -------
     multiplicity : array, int, shape=(nk)
@@ -405,11 +447,32 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
     gammas : ndarray, float, shape=(ntemps,nk,nbands)
         gammas due to ph-ph scattering
     """
-    ##
+    ###
     lines = open(filename, 'r').readlines()
+    
+    ### Get frequencies
+    iline0 = _get_line_number(lines, "##Phonon Frequency")
+    iline1 = _get_line_number(lines, "#K-point (irreducible), Branch, Omega (cm^-1)")
+    assert iline1 == iline0 + 1, "Error: iline1 != iline0 + 1"
+    
+    frequencies = np.zeros((nk, nbands))
+    il = iline1
+    for ik in range(nk):
+        for ib in range(nbands):
+            il += 1
+            data = lines[il].split()
+            assert int(data[0]) == ik+1, "Error: ik(%d) != %d" % (int(data[0]), ik+1)
+            assert int(data[1]) == ib+1, "Error: ib(%d) != %d" % (int(data[1]), ib+1)
+            frequencies[ik,ib] = float(data[2])
+    
+    ### ver >= 1.5.*
     iline0 = _get_line_number(lines, "##Phonon Relaxation Time")
     
-    # --- prepare arrays
+    ### ver < 1.5.*
+    if iline0 is None:
+        iline0 = _get_line_number(lines, "#GAMMA_EACH") - 1
+    
+    ### --- prepare arrays
     multiplicity = np.zeros(nk, dtype=int)
     velocities = []
     gammas = np.zeros(((ntemps, nk, nbands)))
@@ -417,6 +480,7 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
     il = iline0
     sword = "#GAMMA_EACH"
     for ik in range(nk):
+        
         velocities.append([])
         
         for ib in range(nbands):
@@ -426,19 +490,26 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
             ### #GAMMA_EACH
             il += 1
             line = lines[il]
-            if sword not in line:
-                data = line.split()
-                warnings.warn("Error: %s does not include %s" % (data[0], sword))
-                exit()
+            assert sword in line, "Error: %s does not include %s" % (line, sword)
+            
             ### ik, ib
             il += 1
             data = lines[il].split()
             ik_check = int(data[0])
             ib_check = int(data[1])
             if ik != ik_check-1 or ib != ib_check-1:
-                warnings.warn("Error: ik(%d!=%d) or ib(%d!=%d)" %(
-                    ik, ik_check-1, ib, ib_check-1))
-                exit()
+                fn_rel = Path(filename).relative_to(Path.cwd())
+                msg = "\n #########################################################"
+                msg += "\n Error in %s" % fn_rel
+                msg += "\n ik(%d!=%d) or ib(%d!=%d)" % (ik, ik_check-1, ib, ib_check-1)
+                msg += "\n " + lines[il]
+                msg += "\n Possible solution for this issue is"
+                msg += f"\n * to delete {fn_rel} and"
+                msg += "\n * to calculate thermal conductivity again."
+                msg += "\n #########################################################"
+                logger.error(msg)
+                return None
+            
             ### multiplicity
             il += 1
             data = lines[il].split()
@@ -452,23 +523,75 @@ def read_relaxation_time(filename, ntemps, nk, nbands):
                 data = lines[il].split()
                 for j in range(3):
                     velocities[ik][ib][im,j] = float(data[j])
+            
             ### (multi)- : gamma
             for it in range(ntemps):
                 il += 1
                 data = lines[il].split()
                 gammas[it,ik,ib] = float(data[0])
-            
+                
             ### #END GAMMA_EACH
             il += 1
             if "#END GAMMA_EACH" not in lines[il]:
-                warnings.warn(" Error")
-                exit()
+                logger.error(" Error while reading %s" % filename)
+                sys.exit()
+    
+    ###
+    # if average_gamma:
+    #     average_gamma_at_degenerate_point(frequencies, gammas)
     
     return {'multiplicity': multiplicity, 
             'velocities': velocities, 
             'gammas': gammas}
 
+# def average_gamma_at_degenerate_point(frequencies, gammas, tol_omega=1e-3):  
+#     """ Average gamma at degenerate point
+    
+#     Args
+#     -----
+#     frequencies : ndarray, float, shape=(nk,nb)
+#         frequencies
+#     gammas : ndarray, float, shape=(ntemps,nk,nb)
+#         gamma
+#     """
+#     tol_omega = 1.0e-3
+    
+#     nk, ns = frequencies.shape
+#     nt = gammas.shape[0]
+    
+#     for i in range(nk):
+#         degeneracy_at_k = []
+#         omega_prev = frequencies[i][0]
+#         ideg = 1
+        
+#         for j in range(1, ns):
+#             omega_now = frequencies[i][j]
+#             if abs(omega_now - omega_prev) < tol_omega:
+#                 ideg += 1
+#             else:
+#                 degeneracy_at_k.append(ideg)
+#                 ideg = 1
+#                 omega_prev = omega_now
+#         degeneracy_at_k.append(ideg)
+        
+#         im = 0
+        
+#         for ideg in degeneracy_at_k:
+#             if ideg > 1:
+#                 damp_sum = [0.0] * nt
 
+#                 # Calculate damp_sum
+#                 for k in range(im, im + ideg):
+#                     for l in range(nt):
+#                         damp_sum[l] += 1.0 / gammas[l][i][k]
+
+#                 # Update gammas values
+#                 for k in range(im, im + ideg):
+#                     for l in range(nt):
+#                         gammas[l][i][k] = ideg / damp_sum[l]
+
+#             im += ideg
+    
 
 def _get_free_energy(natoms, volume, temps, multi, freqs):
     """Calculate free energy with quasi-harmonic approximation (QHA)
@@ -490,6 +613,7 @@ def _get_free_energy(natoms, volume, temps, multi, freqs):
     efree : array, float, shape=(nt), unit=[J/mol]
         T-dependent free energy
     """
+    import auto_kappa.units as units
     energies = freqs * units.CmToJ     # [J]
     kbTs = temps * units.KToJ          # [J]
     # -- T-independent term

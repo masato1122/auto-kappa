@@ -9,10 +9,13 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-from typing import Any, Dict, List, Optional, Union
+#from typing import Any, Dict, List, Optional, Union
+from typing import Dict
 from monty.json import MSONable
+import sys
 import warnings
 import re
+import math
 import numpy as np
 import pymatgen
 
@@ -25,6 +28,12 @@ from auto_kappa.structure.crystal import (
         change_structure_format, 
         get_primitive_structure_spglib
         )
+
+from ase.data import atomic_masses as atomic_masses_ase
+from ase.data import atomic_numbers
+
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import f90nml
@@ -63,9 +72,6 @@ class AlmInput(MSONable, dict):
                 }
             }
     
-    ##'l1_ratio', 'l1_alpha', 
-    ##'cv_maxalpha', 'cv_minalpha',
-    
     general_keys = [
             'prefix',       # None, string
             'mode',         # None, string (suggest or optimize)
@@ -84,11 +90,11 @@ class AlmInput(MSONable, dict):
             'fc3_shengbte', # 0, integer
             'fc_zero_thr',  # 1.0e-12, double
             ]
-    interaction_keys = {
+    interaction_keys = [
             'norder',       # None, integer
             'nbody',        # [2,3,...,norder+1], array of integers
-            }
-    optimize_keys = {
+            ]
+    optimize_keys = [
             ## always
             'lmodel',         # least-squares, string
             'dfset',          # None,  string
@@ -115,9 +121,6 @@ class AlmInput(MSONable, dict):
             'cv_minalpha',    # cv_maxalpha*1e-6,  double
             'cv_maxalpha',    # set automatically, double
             'cv_nalpha',      # 50,  integer
-            'enet_dnorm',     # 1.0, double
-            'solution_path',  # 0,   integer
-            'debias_ols',     # 0,   integer
             ## for lmode == 'enet'
             'standardize',    # 1,   integer
             ## >= v.1.4.x?
@@ -125,7 +128,7 @@ class AlmInput(MSONable, dict):
             'solution_path',  # 0, integer
             'debias_ols',     # 0, integer
             'stop_criterion', # 5, integer
-            }
+            ]
     
     def __init__(self, **kwargs):
         """
@@ -154,11 +157,13 @@ class AlmInput(MSONable, dict):
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
         """ Make ALM input parameters from a structure file
+        
         Args
-        -------
+        -----
         filename (str): filename
-            Format must be supported by pymatgen's IStructure module: POSCAR,
+            Format must be supported by pymatgen's IStructure module: POSCAR, 
             .cif. etc.
+        
         """
         ## set norder
         kwargs['norder'] = norder
@@ -179,11 +184,14 @@ class AlmInput(MSONable, dict):
         Args
         --------
         structure (str, pymatgen's (I)Structure, ase's Atoms, or structure file 
+        
         such as POSCAR, .cif, etc.):
             If param is string (structure file), the file will be read with
             pymatgen.loadfn.
+        
         guess_primitive (bool):
             If it's True, the primitive structure will be guessed with spglib.
+        
         """
         alm_dict = {}
         
@@ -270,7 +278,7 @@ class AlmInput(MSONable, dict):
         lines = _write_cell(self['cell'])
         for line in lines:
             alm_str += line + "\n"
-
+        
         ### cutoff parameters
         lines = _write_cutoff(self['cutoff'])
         for line in lines:
@@ -423,10 +431,6 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     return params
 
-#def suggest_alm_cutoff(structure):
-#    sym_all = structure.species
-#    exit()
-
 class AnphonInput(MSONable, dict):
     """ Class for writing and reading anphon input file.
     See the following URL for more detailed description.
@@ -450,7 +454,6 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
-            'fc3xml',       # None, string
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -471,17 +474,47 @@ class AnphonInput(MSONable, dict):
             'restart',      # 1 or 0, integer
             ]
     scph_keys = [
-            'kmesh_interpolate', # None, Array of integers 
+            'kmesh_interpolate', # None, Array of integers
             'kmesh_scph',        # None, Array of integers
             'self_offdiag',      # 0,    Integer
             'tol_scph',          # 1e-10, double
             'mixalpha',          # 0.1,   double
             'maxiter',           # 1000,  integer
-            'lower_temp',        # 1,     integer
+            'lower_temp',        # 1, integer (0 or 1)
             'warmstart',         # 1,     integer
             'ialgo',             # 0,     integer
-            'restart_scph',      # 1 or 0, integer
+            'restart_scph',      # 1, integer (0 or 1)
+            ## >= 1.5.0
+            'bubble',            # 0, integer (0 or 1)
+            'relax_str',         # 0, integer (0, 1, 2, or 3)
             ]
+    qha_keys = [
+            'kmesh_interpolate', # None, Array of integers
+            'kmesh_qha',         # None, Array of integers
+            'relax_str',         # 0, integer (0, 1, 2, or 3)
+            'lower_temp',        # 1, integer (0 or 1)
+            'qha_scheme',        # 0, integer (0, 1, or 2)
+            ]        
+    ## >= 1.5.0
+    relax_keys = [
+            'relax_algo',       # 2,     integer (1 or 2)
+            'alpha_stdecent',   # 1e4,   double
+            'max_str_iter',     # 100,   integer
+            'add_hess_diag',    # 100.0, double
+            'coord_conv_tol',   # 1e-5,  double
+            'mixbeta_coord',    # 0.5,   double
+            'cell_conv_tol',    # 1e-5,  double
+            'mixbeta_cell',     # 0.5,   double
+            'set_init_str',     # 1,     integer (1, 2, or 3)
+            'cooling_u0_index', # 0,     integer (0, 1, ... 3N-1)
+            'cooling_u0_thr',   # 0.001, double, Bohr
+            'stat_pressure',    # 0.0,   double, GPa
+            'renorm_2to1st',    # 2,     integer
+            'renorm_34to1st',   # 0,     integer
+            'renorm_3to2nd',    # 2,     integer
+            'strain_ifc_dir',   # None,  string
+            ]
+    
     analysis_keys = [
             'gruneisen',      # 0, integer 
             'printevec',      # 0, integer
@@ -504,14 +537,17 @@ class AnphonInput(MSONable, dict):
             'anime_cellsize', # None, Array of integers
             'anime_format',   # xyz,  string
             ]
-
+    
     all_keys = (
-            general_keys + scph_keys + 
+            general_keys + scph_keys + qha_keys + relax_keys +
             analysis_keys + ['cell', 'kpoint', 'kpmode']
             )
     
-    ## added keys for k-point 
-    kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
+    ### added keys for k-point 
+    ##kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
+    
+    ### atomic massses which are not included in default setting of ALAMODE
+    atoms_no_mass = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Np", "Pu"]
     
     def __init__(self, **kwargs):
         """
@@ -547,8 +583,7 @@ class AnphonInput(MSONable, dict):
         #prim = struct_pmg.get_primitive_structure()
         #
         ### ver.3
-        prim = get_primitive_structure_spglib(
-                self.structure, to_primitive=True, format='ase')
+        prim = get_primitive_structure_spglib(self.structure, format='ase')
         
         return prim
     
@@ -561,11 +596,13 @@ class AnphonInput(MSONable, dict):
     @classmethod
     def from_structure_file(cls, filename, **kwargs):
         """ Make ANPHON input parameters from a structure file
+        
         Args
         -------
         filename (str): filename
             Object should be supported by pymatgen's IStructure module: POSCAR,
             .cif. etc.
+        
         """
         ## get a structure
         cls.structure = Poscar.from_file(filename, check_for_POTCAR=False).structure
@@ -661,7 +698,8 @@ class AnphonInput(MSONable, dict):
                 self['kpoints'] = [[0,0,0]]
         elif self['kpmode'] == 1:
             if 'kpath' not in self.keys():
-                print(" kpath is set automatically.")
+                msg = "\n kpath is set automatically."
+                logger.info(msg)
                 self['kpath'] = get_kpoint_path(
                         self.primitive, 
                         deltak=self['deltak']
@@ -699,14 +737,39 @@ class AnphonInput(MSONable, dict):
                     self['borninfo'] = 'BORNINFO'
         except:
             pass
-
-    def to_file(self, filename: str = None):
+    
+    def _add_mass_info(self):
+        """ Add mass info """
+        self["mass"] = get_mass_info(self["kd"])
+        
+    def _add_isofact_info(self):
+        """ Add isofact info """
+        
+        try:
+            out = get_isofact_info(self["kd"])
+        except Exception:
+            out = None
+        
+        if out is None:
+            isotope_orig = self["isotope"]
+            self["isotope"] = 0
+            msg = "\n Modify ISOTOPE option: %d => 0." % isotope_orig
+            logger.info(msg)
+        else:
+            self["isotope"] = 1
+            self["isofact"] = out
+        
+    def to_file(self, filename: str = None, verbosity=0):
         """ Make ANPHON input file
         Args
         -------
         filename (str): ANPHON input file name
         """
         self.check_parameters()
+        
+        if verbosity > 0:
+            msg = "\n Make an input script for ALAMODE : %s" % filename
+            logger.info(msg)
         
         ## output file name
         if filename is None:
@@ -720,11 +783,41 @@ class AnphonInput(MSONable, dict):
             else:
                 filename = self['mode']+'.in'
         
+        ### add mass and isotope info
+        all_masses_are_given = True
+        for el in self["kd"]:
+            if el in self.atoms_no_mass:
+                all_masses_are_given = False
+        
+        if all_masses_are_given == False:
+            
+            msg = "\n Add mass info which are not given by ALAMODE."
+            logger.info(msg)
+            
+            self._add_mass_info()
+            if "isotope" in self:
+                self._add_isofact_info()
+        
         ## general parameters
         general_dict = _get_subdict(self, self.general_keys)
         general_nml = f90nml.Namelist({"general": general_dict})
         anp_str = str(general_nml) + "\n"
         
+        ## scph parameters
+        scph_dict = _get_subdict(self, self.scph_keys)
+        scph_nml = f90nml.Namelist({"scph": scph_dict})
+        anp_str += str(scph_nml) + "\n"
+        
+        ## qha parameters
+        qha_dict = _get_subdict(self, self.qha_keys)
+        qha_nml = f90nml.Namelist({"qha": qha_dict})
+        anp_str += str(qha_nml) + "\n"
+            
+        ## relax parameters
+        relax_dict = _get_subdict(self, self.relax_keys)
+        relax_nml = f90nml.Namelist({"relax": relax_dict})
+        anp_str += str(relax_nml) + "\n"
+            
         ## cell parameters
         lines = _write_cell(self['cell'])
         for line in lines:
@@ -753,6 +846,101 @@ class AnphonInput(MSONable, dict):
         inp_dict = _read_alamode_input(filename)
         return cls(**inp_dict)
 
+def get_mass_info(elements):
+    """ get mass info 
+    
+    Args
+    =======
+
+    elements : array of string
+        name of elements
+    
+    Return
+    ========
+
+    array of float
+    
+    """
+    msg = "\n Add MASS info.\n"
+    mass_info = []
+    for el in elements:
+        num = atomic_numbers[el]
+        mass = atomic_masses_ase[num]
+        mass_info.append(mass)
+        msg += " %s: %.5f" % (el, mass)
+    logger.info(msg)
+    return mass_info
+
+def calc_g2_factor(isotopes, element=None):
+    """ Calculate g2 factor for Tamura model
+    
+    Args
+    ------
+    isotopes : dictionary
+        each element containes "mass" and "composition"
+    
+    element : string
+        Name of element. If ``element`` is given, check whether the averaged 
+        mass is realistic or not.
+    
+    Return
+    ---------
+    float
+    
+    """
+    ### calc. average mass
+    mave = 0.
+    for num2 in isotopes:
+        m_iso = isotopes[num2]['mass']
+        f_iso = isotopes[num2]['composition']
+        mave += m_iso * f_iso
+    
+    ### check average mass
+    if element:
+        num = atomic_numbers[element]
+        mass1 = atomic_masses_ase[num]
+        if abs((mave - mass1) / mass1) > 0.1:
+            msg = "\n Could not obtain isotope info for %s." % (element)
+            msg += "\n averaged mass: %.2f, reference mass: %.2f" % (mave, mass1)
+            logger.warning(msg)
+            return None
+    
+    ### calc. g2 factor for Tamura model
+    g2 = 0.
+    for num2 in isotopes:
+        m_iso = isotopes[num2]["mass"]
+        f_iso = isotopes[num2]['composition']
+        g2 += f_iso * math.pow(1. - m_iso / mave, 2)
+    return g2
+
+def get_isofact_info(elements):
+    """ Get isofact info 
+    
+    Args
+    ------
+    
+    elements : array of string
+    
+    Return
+    ------
+    
+    g2_factors : array, float
+        array for g2 factors
+
+    """
+    from auto_kappa.io.isotopes import isotopes
+    msg = "\n Get IFOFACT info."
+    g2_factors = []
+    for el in elements:
+        num = atomic_numbers[el]
+        g2_factors.append(calc_g2_factor(isotopes[num], element=el))
+    
+    ### output log
+    msg = "\n"
+    for i, el in enumerate(elements):
+        msg += " %s: %.3f " % (el, g2_factors[i])
+    logger.info(msg)
+    return g2_factors
 
 def _write_kpoint(params, kpoint=None):
     lines = []
@@ -804,9 +992,17 @@ def get_kpoint_path(primitive, deltak=0.01):
         is the corresponding k-point.
     """
     import seekpath
-    structure = [primitive.lattice.matrix,
-            primitive.frac_coords,
-            primitive.atomic_numbers]
+    
+    if "pymatgen" not in str(type(primitive)):
+        prim_pmg = change_structure_format(primitive, format='pymatgen')
+    else:
+        prim_pmg = primitive.copy()
+    
+    structure = [
+            prim_pmg.lattice.matrix,
+            prim_pmg.frac_coords,
+            prim_pmg.atomic_numbers
+            ]
     kpath = seekpath.get_path(
             structure, with_time_reversal=True, recipe='hpkot')
     
@@ -818,7 +1014,7 @@ def get_kpoint_path(primitive, deltak=0.01):
         k0 = np.asarray(kpath['point_coords'][each[0]])
         kvec = k1 - k0 
         kleng = np.linalg.norm(kvec)
-        nk = int(np.ceil(kleng / deltak))
+        nk = max(int(np.ceil(kleng / deltak)), 3)
         kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
     return kpoints
 
@@ -950,6 +1146,7 @@ def proc_val(key, val):
             'mode',          # None, string (suggest or optimize)
             'fc2xml',         # None,  string
             'fc3xml',         # None,  string
+            'fcsxml',         # None,  string
             ## alm
             'kd',            # None, array of strings
             'fcsym_basis',   # Lattice, string
@@ -963,6 +1160,8 @@ def proc_val(key, val):
             'fcsxml',        # None, string
             'borninfo',      # None, string
             'anime_format',  # xyz,  string
+            ## relax
+            'strain_ifc_dir', # None, string
             )
     
     int_keys = (
@@ -1023,6 +1222,19 @@ def proc_val(key, val):
             'solution_path',  # 0, integer
             'debias_ols',     # 0, integer
             'stop_criterion', # 5, integer
+            ## scph
+            'bubble',         # 0, integer
+            'relax_str',      # 0, integer
+            'qha_scheme',     # 0, integer
+            ## relax
+            'relax_algo',     # 2, integer
+            'alpha_stdecent', # 2, integer
+            'max_str_iter',   # 100, integer
+            'set_init_str',   # 1, integer
+            'cooling_u0_index', # 1, integer
+            'renorm_2to1st',    # 2, integer
+            'renorm_34to1st',   # 0, integer
+            'renorm_3to2nd',    # 2, integer
             )
     
     double_keys = (
@@ -1048,6 +1260,14 @@ def proc_val(key, val):
             'cv_maxalpha',    # set automatically, double
             'enet_dnorm',     # 1.0, double
             'enet_dnorm',     # 1.0, double
+            ## relax
+            'add_hess_diag',  # 100.0, double
+            'coord_conv_tol', # 100.0, double
+            'mixbeta_coord',  # 1e-5,  double
+            'cell_conv_tol',  # 1e-5,  double
+            'mixbeta_cell',   # 0.5,   double
+            'cooling_u0_thr', # 0.001, double
+            'stat_pressure',  # 0.0,   double
             )
             
     strarray_keys = (
@@ -1064,6 +1284,8 @@ def proc_val(key, val):
             'anime_cellsize',    # None, Array of integers
             ## anphon
             'periodic',          # 1 1 1, array of integers
+            ## scph
+            'kmesh_qha',         # None, Array of integers
             )
 
     doublearray_keys = (

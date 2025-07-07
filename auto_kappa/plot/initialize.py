@@ -11,6 +11,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt

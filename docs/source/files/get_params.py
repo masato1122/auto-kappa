@@ -49,7 +49,9 @@ def main(options):
         df[key] = each
     
     #print(df)
-    df.to_csv('default_params.csv')
+    outfile = "default_params.csv"
+    df.to_csv(outfile)
+    print(" Output", outfile)
     
 if __name__ == '__main__':
     parser = OptionParser()

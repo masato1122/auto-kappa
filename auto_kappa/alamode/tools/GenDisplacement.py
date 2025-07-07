@@ -4,7 +4,7 @@
 # Class to generate displacements of atoms
 #
 # Copyright (c) 2020 Terumasa Tadano
-# Modyfied by Masato Ohnishi, 2022
+# Modyfied by Masato Ohnishi, 2023
 #
 # This file is distributed under the terms of the MIT license.
 # Please see the file 'LICENCE.txt' in the root directory
@@ -17,6 +17,8 @@ import copy
 import math
 import cmath
 
+import logging
+logger = logging.getLogger(__name__)
 
 class AlamodeDisplace(object):
 
@@ -170,10 +172,10 @@ class AlamodeDisplace(object):
 
             if self._verbosity > 0:
                 print(" Displacement mode              : Finite displacement\n")
-                print(" %d displacement pattern are generated from\n"
+                print(" %d displacement patterns are generated from\n"
                       " the given *.pattern_* files" % len(self._pattern))
                 print("")
-
+            
             for pattern in self._pattern:
                 header, disp = self._get_finite_displacement(pattern)
                 self._counter += 1
@@ -676,10 +678,10 @@ class AlamodeDisplace(object):
                         ## error while the modification may not affect the
                         ## result.
                         ##
-                        msg = " get_commensurate_points was used to obtain "\
-                                "commensurate points, which may not affect the "\
-                                "result."
-                        print(msg)
+                        msg = ("\n \"get_commensurate_points\" was used to "
+                                "obtain commensurate points, which may not "
+                                "affect the result.")
+                        logger.info(msg)
                         
                         from auto_kappa.structure.crystal import get_commensurate_points
                         Mps_tmp = np.linalg.inv(convertor)
@@ -698,9 +700,9 @@ class AlamodeDisplace(object):
                                 )
                         dmax = np.amax(abs(Mps - Mps_tmp))
                         if dmax > tol_zero:
-                            print("")
-                            print(" WARRNING: please check the cell size of "\
-                                    "primitive and supercell")
+                            msg = ("\n Warning: please check the sizes of "
+                                    "the primitive and super cell. (%.3e > %.3e)" % (dmax, tol_zero))
+                            logger.warning(msg)
                         
                         self._commensurate_qpoints = get_commensurate_points(Mps)
                         return 0
@@ -759,16 +761,17 @@ class AlamodeDisplace(object):
         for i in range(3):
             for j in range(3):
                 convertor[i, j] = float(round(convertor[i, j]))
-
+        
         shift = np.zeros((self._supercell.nat, 3))
         map_s2p = np.zeros(self._supercell.nat, dtype=int)
-
+        
         for iat in range(self._supercell.nat):
             xtmp = self._supercell.x_fractional[iat, :]
             xnew = np.dot(xtmp, convertor)
-
+            
             iloc = -1
-
+            
+            diff_min = 1000.
             for jat in range(self._nat_primitive):
                 xp = self._xp_fractional[jat, :]
                 xdiff = np.array((xnew - xp) % 1.0)
@@ -776,12 +779,21 @@ class AlamodeDisplace(object):
                     if xdiff[i] >= 0.5:
                         xdiff[i] -= 1.0
                 diff = math.sqrt(np.dot(xdiff[:], xdiff[:]))
+                diff_min = min(diff_min, diff)
                 if diff < tol_zero:
                     iloc = jat
                     break
+            
             if iloc == -1:
+                print(diff_min)
+                msg = "\n"
+                msg += " min. diff. : %f\n" % diff_min
+                msg += " Error : Equivalent atom not found. "\
+                        "Check the relaxed structure. The relaxation "\
+                        "calculation may need to be run again."
+                logger.error(msg)
                 raise RuntimeError("Equivalent atom not found")
-
+            
             map_s2p[iat] = iloc
             shift[iat, :] = [float(round(xnew[i] - self._xp_fractional[iloc, i]))
                              for i in range(3)]

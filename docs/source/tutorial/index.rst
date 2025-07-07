@@ -3,7 +3,8 @@ Tutorial
 
 .. toctree::
     :glob:
-
-    input
+    
+    parameters
+    alamode
     tips
 

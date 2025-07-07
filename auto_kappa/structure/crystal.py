@@ -10,7 +10,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import warnings
+#import warnings
 
 from phonopy.structure.cells import get_primitive as get_primitive_phonopy
 import spglib 
@@ -21,6 +21,9 @@ import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Kpoints
 from phonopy.structure.atoms import PhonopyAtoms
+
+import logging
+logger = logging.getLogger(__name__)
 
 #def make_supercell(atoms0, P):
 #    """ Make a supercell of the given structure
@@ -33,21 +36,27 @@ from phonopy.structure.atoms import PhonopyAtoms
 #    """
 #    return ase.build.make_supercell(atoms0, P)
 
-def get_automatic_kmesh(struct_init, reciprocal_density=1500, 
-        grid_density=0.01, method='reciprocal_density'):
+def get_automatic_kmesh(
+    struct_init, 
+    reciprocal_density=1500, 
+    grid_density=0.01, 
+    method='reciprocal_density'):
     
     structure = change_structure_format(struct_init, format='pmg')
     
     if method == 'reciprocal_density':
-        vol = structure.lattice.reciprocal_lattice.volume
-        kppa = reciprocal_density * vol * structure.num_sites
-        kpts = Kpoints.automatic_density(structure, kppa).kpts[0]
+        
+        force_gamma = False
+        
+        vol = structure.lattice.reciprocal_lattice.volume           ### A^3
+        kppa = reciprocal_density * vol * structure.num_sites       ### grid density
+        kpts = Kpoints.automatic_density(structure, kppa, force_gamma=force_gamma).kpts[0]
      
     #elif method == 'grid_density':
     #    Kpoints.automatic_density(structure, grid_density)
     
     else:
-        warnings.warn(" Error: %s is not supported." % method)
+        logger.warning(" Error: %s is not supported." % method)
         exit()
     
     return kpts
@@ -104,7 +113,7 @@ def get_primitive_structure_spglib(structure, format='ase'):
             structure, to_primitive=True, format=format, version='spglib')
     
     if prim is None:
-        warnings.warn(" WARRNING: the primitive could not be found.")
+        logger.warning(" WARNING: the primitive could not be found.")
 
     return prim
 
@@ -123,8 +132,18 @@ def get_standardized_structure_spglib(
     """
     structure = change_structure_format(struct_orig, format='phonopy')
     
-    ### Get the standardized structure
-    out = spglib.standardize_cell(structure, to_primitive=to_primitive)
+    ### Both should provide the exactly same result.
+    try:
+        ### for new verison of spglib
+        out = spglib.standardize_cell(structure, to_primitive=to_primitive)
+    except Exception:
+        ### PhonopyAtom => tuple
+        cell = (
+                structure.get_cell(),
+                structure.get_scaled_positions(),
+                structure.get_atomic_numbers()
+                )
+        out = spglib.standardize_cell(cell, to_primitive=to_primitive)
     
     ### make the structure with the given format
     atoms = ase.Atoms(
@@ -156,7 +175,7 @@ def get_standardized_structure(struct_orig,
                 format=format,
                 )
          
-    elif version == 'pymatgen':
+    elif version == 'pymatgen' or version == 'pmg':
         
         if (isinstance(struct_orig, str_pmg.Structure) == False and
                 isinstance(struct_orig, str_pmg.IStructure) == False):
@@ -240,9 +259,9 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         lattice = structure.cell
         all_symbols = structure.get_chemical_symbols()
         coords = structure.get_scaled_positions()
-    
+        
     else:
-        warnings.warn(" Structure type {} is not supported".format(
+        logger.error(" Structure type {} is not supported".format(
             type(structure)))
         exit()
     
@@ -279,7 +298,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
             )
     else:
         
-        warnings.warn(" Structure type '{}' is not supported. "\
+        logger.warning(" Structure type '{}' is not supported. "\
                 "The structure type did not changed.".format(format))
         return structure
 
@@ -288,7 +307,7 @@ def get_formula(str_orig):
     return structure.composition.reduced_formula
     
 def get_spg_number(str_orig):
-    """ Regurn the international space group number
+    """ Return the international space group number
     """
     atoms = change_structure_format(str_orig, format='ase')
     cell = (

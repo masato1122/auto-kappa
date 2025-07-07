@@ -1,0 +1,183 @@
+
+              ___  __                __   __       
+     /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  
+    /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ 
+    ver. 0.2
+
+ Start at 05/11/2023 16:15:40
+
+
+ Input parameters:
+ =================
+ directory            : /home/ohnishi/phonondb-20180417/mp-147
+ material_name        : mp-147
+ ncores               : 32
+ anphon_para          : mpi
+ mpirun               : mpirun
+ command_vasp         : vasp
+ command_anphon       : anphon
+ command_alm          : alm
+ nonanalytic          : 2
+ cutoff3              : 4.3
+ nmax_suggest         : 100
+ frac_nrandom         : 1.0
+ random_disp_temperature : 500.0
+ magnitude2           : 0.03
+ negative_freq        : -0.001
+ volume_relaxation    : 0
+ k_length             : 20
+ max_natoms           : 150
+ interval_max_natoms  : 50
+ max_natoms3          : 150
+ restart              : 1
+ verbosity            : 1
+ neglect_log          : 0
+ harmonic_only        : 0
+
+ Cell type
+ ---------
+  relax :   unitcell
+    nac :  primitive
+   harm :  supercell
+   cube : supercell3
+
+ Transformation matrix
+ ---------------------
+  primitive : 0.667 -0.333 -0.333 0.333 0.333 -0.667 0.333 0.333 0.333 
+  supercell : 2 0 0 0 2 0 0 0 2 
+   unitcell : 1 0 0 0 1 0 0 0 1 
+ supercell3 : 2 0 0 0 2 0 0 0 2 
+
+ k-mesh
+ ------
+  relax : 2 2 4
+    nac : 5 5 5
+   harm : 1 1 2
+   cube : 1 1 2
+
+ Output /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/result/parameters.yaml
+
+
+ Structure optimization with conventional cell
+ =============================================
+
+ relax-full (1)
+ --------------
+
+  ENCUT         = 275.0215
+  SIGMA         = 0.02
+  EDIFF         = 1e-08
+  EDIFFG        = -1e-06
+  GGA           = PS
+  PREC          = Accurate
+  IALGO         = 38
+  IBRION        = 2
+  ISIF          = 3
+  ISMEAR        = 0
+  NELMIN        = 5
+  NSW           = 500
+  XC            = pbesol
+  PP            = PBE
+  SETUPS        = {'base': 'recommended', 'W': '_sv'}
+  TXT           = -
+  KPTS          = [2 2 4]
+  GAMMA         = True
+  RECIPROCAL    = False
+  IGNORE_CONSTRAINTS = False
+  CUSTOM        = {}
+  ADDGRID       = True
+  LCHARG        = False
+  LWAVE         = False
+
+
+ relax-full (2)
+ --------------
+
+ relax-freeze (1)
+ ----------------
+
+
+ VASP calculation (nac)
+ ======================
+
+
+  ENCUT         = 275.0215
+  SIGMA         = 0.02
+  EDIFF         = 1e-08
+  GGA           = PS
+  PREC          = Accurate
+  IALGO         = 38
+  IBRION        = -1
+  ISMEAR        = 0
+  NELMIN        = 5
+  XC            = pbesol
+  PP            = PBE
+  SETUPS        = {'base': 'recommended', 'W': '_sv'}
+  TXT           = -
+  KPTS          = [5 5 5]
+  GAMMA         = True
+  RECIPROCAL    = False
+  IGNORE_CONSTRAINTS = False
+  CUSTOM        = {}
+  ADDGRID       = True
+  LCHARG        = False
+  LEPSILON      = True
+  LWAVE         = False
+
+
+ Run alm for suggest:
+ --------------------
+
+ Working directory : /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/suggest
+
+
+
+ Force calculation (order: 1)
+ ============================
+
+
+ Number of the suggested structures with ALM : 12
+
+
+ Displacement mode : fd
+
+
+ Generate displacements with an Alamode tool
+ Displacement mode : fd
+ 1 patterns will be generated.
+
+
+ Displacement mode              : Finite displacement
+
+ 12 displacement pattern are generated from
+ the given *.pattern_* files
+
+
+  ENCUT         = 275.0215
+  SIGMA         = 0.02
+  EDIFF         = 1e-08
+  GGA           = PS
+  PREC          = Accurate
+  IALGO         = 38
+  IBRION        = -1
+  ISMEAR        = 0
+  NELMIN        = 5
+  XC            = pbesol
+  PP            = PBE
+  SETUPS        = {'base': 'recommended', 'W': '_sv'}
+  TXT           = -
+  KPTS          = [1 1 2]
+  GAMMA         = True
+  RECIPROCAL    = False
+  IGNORE_CONSTRAINTS = False
+  CUSTOM        = {}
+  ADDGRID       = True
+  LCHARG        = False
+  LWAVE         = False
+
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/prist
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/1
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/2
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/3
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/4
+ /home/ohnishi/work/PhDB/auto-kappa/examples/6_database/mp-147/harm/force/5

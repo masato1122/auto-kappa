@@ -11,10 +11,6 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from ..initialize import set_axis
 
 class Band():
     def __init__(self, filename=None):
@@ -41,10 +37,14 @@ class Band():
         self.unit = "cm^1"
         self.nk = None
         self.nbands = None
-        # -- eigenvalues and vectors
+        
+        ### eigenvalues and vectors
+        self.band_type = None
+        self.temperatures = None
         self.kpoints = None
         self.freqencies = None
-        # -- symmetry points
+        
+        ### symmetry points
         self.label = None
         self.ksym = None
         if filename is not None:
@@ -54,12 +54,24 @@ class Band():
         self.nk, self.nbands = get_nk_nbands(bfile)
     
     def set_symmetry_points(self, bfile):
-        self.label, self.ksym = get_symmetry_points(bfile)
+        self.label, self.ksym = get_symmetry_points_from_filename(bfile)
     
     def set_eigen(self, bfile):
-        self.kpoints, self.frequencies = (
-                get_eigen(bfile, self.nk, self.nbands))
-     
+        """ Read band file crated by ALAMODE """
+        out = get_eigen(bfile)
+        if len(out) == 2:
+            self.band_type = "normal"
+            self.kpoints = out[0]
+            self.frequencies = out[1]
+        elif len(out) == 3:
+            self.band_type = "scph"
+            self.temperatures = out[0]
+            self.kpoints = out[1]
+            self.frequencies = out[2]
+        else:
+            print(" Error:")
+            sys.exit()
+    
     def read_bfile(self, bfile):
         """Read band file
         """
@@ -67,82 +79,6 @@ class Band():
         self.set_symmetry_points(bfile)
         self.set_eigen(bfile)
     
-    #def plot_band(self, ax, lw=0.8, color='blue',
-    #        ylabel="Frequency (cm$^{-1}$)",
-    #        pr=None, fs_ticks=None
-    #        ):
-    #    """
-    #    pr : Participation object
-    #    """
-    #    
-    #    ## set ticks
-    #    ax.set_xticks(self.ksym)
-    #    if fs_ticks is not None:
-    #        ax.set_xticklabels(self.label, fontsize=fs_ticks)
-    #    else:
-    #        ax.set_xticklabels(self.label)
-    #    
-    #    ## plot band
-    #    if pr is None:
-    #        for ib in range(self.nbands):
-    #            ax.plot(self.kpoints, 
-    #                    self.frequencies[:,ib], 
-    #                    linestyle='-', lw=lw, 
-    #                    c=color,
-    #                    marker='None'
-    #                    )
-    #    else:
-    #        cdict = {'red':   ((0.0, 1.0, 1.0), (1.0, 0.0, 0.0)),
-    #                 'green': ((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-    #                 'blue':  ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0))}
-    #        cmap = matplotlib.colors.LinearSegmentedColormap(
-    #                'my_colormap', cdict, 256)
-    #        ##
-    #        kdump = np.zeros((self.nk, self.nbands))
-    #        fdump = np.zeros((self.nk, self.nbands))
-    #        cdump = np.zeros((self.nk, self.nbands))
-    #        for ib in range(self.nbands):
-    #            kdump[:,ib] = self.kpoints[:]
-    #            fdump[:,ib] = self.frequencies[:,ib]
-    #            cdump[:,ib] = pr.ratio[:,ib]
-    #        kdump = kdump.reshape(self.nk*self.nbands)
-    #        fdump = fdump.reshape(self.nk*self.nbands)
-    #        cdump = cdump.reshape(self.nk*self.nbands)
-    #        isort = np.argsort(cdump)[::-1]
-    #        sc = ax.scatter(
-    #                kdump[isort], fdump[isort], c=cdump[isort],
-    #                cmap=cmap, marker='.', s=0.15, lw=lw, zorder=2)
-    #        
-    #        ## color bar
-    #        from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-    #        axins = inset_axes(
-    #                ax, width="50%", height="3%", loc="upper center",
-    #                bbox_to_anchor=(0.0, -0.01, 1, 1),
-    #                bbox_transform=ax.transAxes
-    #                )
-    #        [axins.spines[k].set_visible(False) for k in axins.spines]
-    #        axins.set_facecolor([1,1,1,0.5])
-    #        axins.tick_params(
-    #                axis = 'both',
-    #                left = False,
-    #                top = False,
-    #                right = False,
-    #                bottom = False,
-    #                labelleft = False,
-    #                labeltop = False,
-    #                labelright = False,
-    #                labelbottom = False
-    #                )
-    #        sc.set_clim([0,1])
-    #        cb = plt.colorbar(
-    #                sc, cax=axins, orientation='horizontal', 
-    #                ticks=[0,0.5,1])
-    #        ## backgroud
-    #        set_axis(axins)
-    #
-    #    ##
-    #    ax.set_ylabel(ylabel)
-    #    set_axis(ax)
 
 def get_nk_nbands(bfile):
     """Get nk and nbands from band file
@@ -165,19 +101,40 @@ def get_nk_nbands(bfile):
     nbands = len(data) - 1
     return nk, nbands
 
-def get_symmetry_points(bfile):
+def get_symmetry_points_from_filename(bfile):
     """Read symmetry points from band file
+    
     Returns
     ---------
     label : string
         label for symmetry points
+    
     ksym : double
-        |k| for symmetry points
+        \|k\| for symmetry points
+    
     """
     ifs = open(bfile, "r")
     nline = sum(1 for line in open(bfile))
-    line = ifs.readline(); data1 = line.split()
-    line = ifs.readline(); data2 = line.split()
+    lines = []
+    lines.append(ifs.readline())
+    lines.append(ifs.readline())
+    return get_symmetry_points_from_string(lines)
+
+def get_symmetry_points_from_string(lines):
+    """Read symmetry points from band file
+    
+    Returns
+    ---------
+    label : string
+        label for symmetry points
+    
+    ksym : double
+        \|k\| for symmetry points
+    
+    """
+    data1 = lines[0].split()
+    data2 = lines[1].split()
+    
     label_tmp = []
     kpoints = []
     for i in range(len(data1)-1):
@@ -193,10 +150,16 @@ def get_symmetry_points(bfile):
                 lab = "%s|%s" % (lab0, label_tmp[it+1])
             if abs(kpoints[it] - kpoints[it-1]) < 1e-5:
                 lab = "%s|%s" % (label_tmp[it-1], lab0)
-        if "gamma" in lab.lower() or 'G' in lab:
-            label.append("G")
-        else:
-            label.append("%s"%(lab))
+
+        ### ver.1
+        #if "gamma" in lab.lower() or 'G' in lab:
+        #    label.append("G")
+        #else:
+        #    label.append("%s"%(lab))
+        #
+        ### ver.2
+        lab = lab.upper()
+        label.append(lab)
     
     ### adjust
     lab_new = []
@@ -212,37 +175,82 @@ def get_symmetry_points(bfile):
             knew.append(kpoints[ii])
     return lab_new, knew
 
-def get_eigen(bfile, nk, nbands):
-    """Get kpoints and eigenvalues from band file
-    Parameters
-    ----------
-    bfile : string
-        band file name
-    nk, nbnads : integer
-        # of kpoints and bands
-    Returns
-    --------
-    kpoints : float, shape=(nk)
-        k-points
-    freqs : float, shape=(nk, nbands)
-        frequencies
+def get_eigen(filename):
+    """ Get kpoints and frequencies """
+    
+    ### check whether normal band or scph bands
+    lines = open(filename, 'r').readlines()
+
+    if "temperature" in lines[2].lower():
+        return get_scph_bands(filename)
+    else:
+        return get_normal_bands(filename)
+
+def get_normal_bands(filename):
+    """ Read .bands file """
+    dump = np.genfromtxt(filename)
+    kpoints = dump[:,0]
+    frequencies = dump[:,1:]
+    return [kpoints, frequencies]
+
+def get_scph_bands(filename, tol=0.1):
+    """ Read .scph_bands file and return array of dictionary for each 
+    temperature.
     """
-    ifs = open(bfile, "r")
-    nline = sum(1 for line in open(bfile))
-    kpoints = np.zeros(nk)
-    freqs = np.zeros((nk, nbands))
-    count = 0
-    for il in range(nline):
-        line = ifs.readline()
-        data = line.split()
-        if len(data) == 0:
-            continue
-        if line[0] == "#":
-            continue
-        kpoints[count] = float(data[0])
-        for ib in range(nbands):
-            freqs[count,ib] = float(data[1+ib])
-        count += 1
-    ifs.close()
-    return kpoints, freqs
+    dump = np.genfromtxt(filename)
+    ndat = len(dump[:,0])
+
+    ### get list of temperatures
+    temperatures = []
+    temperatures.append(dump[0,0])
+    for i in range(1, ndat):
+        T0 = dump[i-1,0]
+        T1 = dump[i,0]
+        if abs(T1 - T0) > tol:
+            temperatures.append(T1)
+    temperatures = np.asarray(temperatures)
+    
+    ###
+    kpoints = []
+    frequencies = []
+    for temp in temperatures:
+        idx = np.where(abs(dump[:,0] - temp) < tol)[0]
+        kpoints.append(dump[idx,1])
+        frequencies.append(dump[idx,2:])
+        
+    return [temperatures, kpoints, frequencies]
+
+#def get_eigen(bfile, nk, nbands):
+#    """Get kpoints and eigenvalues from band file
+#    Parameters
+#    ----------
+#    bfile : string
+#        band file name
+#    nk, nbnads : integer
+#        # of kpoints and bands
+#    Returns
+#    --------
+#    kpoints : float, shape=(nk)
+#        k-points
+#    freqs : float, shape=(nk, nbands)
+#        frequencies
+#    """
+#    ifs = open(bfile, "r")
+#    nline = sum(1 for line in open(bfile))
+#    kpoints = np.zeros(nk)
+#    freqs = np.zeros((nk, nbands))
+#    count = 0
+#    for il in range(nline):
+#        line = ifs.readline()
+#        data = line.split()
+#        if len(data) == 0:
+#            continue
+#        if line[0] == "#":
+#            continue
+#        kpoints[count] = float(data[0])
+#        for ib in range(nbands):
+#            freqs[count,ib] = float(data[1+ib])
+#        count += 1
+#    ifs.close()
+#    return kpoints, freqs
 

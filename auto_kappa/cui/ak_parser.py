@@ -9,47 +9,82 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 from optparse import OptionParser
+
+import logging
+logger = logging.getLogger(__name__)
 
 def get_parser():
     
     parser = OptionParser()
-
-    ### parameters which need to be modified for each.
-    line = "Directory of Phonondb in which POSCAR-unitcell, phonopy.conf, "
-    line += "KPOINTS-**, etc. can be found. --directory or --file_structure "
-    line += "must be given. When both of them are given, --directory takes "
-    line += "priority over --file_structure."
+    
+    ### parameters that need to be modified for each calculation
     parser.add_option("-d", "--directory", dest="directory", type="string",
-            default=None, help=line)
+            default=None, help=""
+            "Directory name for data of Phonondb "
+            "where POSCAR-unitcell, phonopy.conf, KPOINTS-**, etc. "
+            "are located. "
+            "``--directory`` or ``--file_structure`` must be given. "
+            "When both of them are given, ``--directory`` takes "
+            "priority over ``--file_structure``."
+            )
      
     parser.add_option("--file_structure", dest="file_structure", type="string",
-            default=None, help="Structure file name.")
+            default=None, 
+            help="Structure file name. Different kinds of format such as "
+            "POSCAR and cif file can be read by ``Structure.from_file`` module "
+            "in ``Pymatgen.core.structure``.")
     
     parser.add_option("--material_name", dest="material_name", type="string",
             default="./out", 
-            help="Material name which is used as the output directory [out]")
+            help="Material name which is used as the output directory [./out]")
     
-    parser.add_option("--restart", dest="restart", type="int",
-            default=1,
-            help="The calculation will restart (1) or will NOT restart (0) "\
-                    "when the directory exsits. [1]")
-            
+    ### Parameters that need to be modified depending on the environment
+    parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
+                      "Number of cores used for the calculation "
+                      "(This option is not used any more, please use 'nprocs' instead.)")
+    parser.add_option("-n", "--nprocs", dest="nprocs", type="int",
+            default=2, help="Number of processes for the calculation [2]")
+    
+    parser.add_option("--anphon_para", 
+            dest="anphon_para", type="string", default="mpi", 
+            help=(
+                "[This option may not be supported in future.] "
+                "Parallel mode for \"anphon\". "
+                "Input value should be \"mpi\" for MPI and "
+                "\"omp\" for OpenMP [mpi]. "
+                "While \"mpi\", which is the default value, is "
+                "faster for most cases, "
+                "if the system is complex and requires a large memory, "
+                "it is recommended to use \"omp\". "))
+     
     parser.add_option("--mpirun", dest="mpirun", type="string",
             default="mpirun", help="MPI command [mpirun]")
     
-    parser.add_option("-n", "--ncores", dest="ncores", type="int",
-            default=2, help="ncores [2]")
+    parser.add_option("--command_vasp", 
+            dest="command_vasp", type="string", default="vasp", 
+            help="Command to run vasp [vasp]")
     
-    parser.add_option("--verbosity", dest="verbosity", type="int",
-            default=1, help="verbosity [0]")
+    parser.add_option("--command_anphon", 
+            dest="command_anphon", type="string", default="anphon", 
+            help="Command to run anphon [anphon]")
     
-    parser.add_option("--neglect_log", dest="neglect_log", type="int",
-            default=0, help="neglect log (1) or not (0) [0]")
+    parser.add_option("--command_alm", 
+            dest="command_alm", type="string", default="alm", 
+            help="Command to run alm [alm]")
     
-    ### parameters which may not need to be changed.
-    parser.add_option("--cutoff3", dest="cutoff3", type="float",
-            default=4.3, help="cutoff3, unit=Ang [4.3]")
+    parser.add_option("--nonanalytic", 
+            dest="nonanalytic", type="int", default=2, 
+            help="NONANALYTIC tag for Anphon calculation [2]. "
+            "While the default value is 2, the value is "
+            "modified to 0 when NAC is not considered.")
+    
+    ### Parameters for the calculation condictions
+    parser.add_option("--cutoff_cubic", dest="cutoff_cubic", type="float",
+            default=4.3, 
+            help="Cutoff length for cubic force constants with the unit of "
+            "angstrom [4.3]")
     
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=100, 
@@ -57,71 +92,242 @@ def get_parser():
     
     parser.add_option("--frac_nrandom", 
             dest="frac_nrandom", type="float", default=1.,
-            help="``Npattern * Natom / Nfc3``, where Npattern is the number "\
-            "of generated random displacement patterns, Natom is the number "\
-            "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]",
+            help="``Npattern * Natom / Nfc3``, where Npattern is the number "
+            "of generated random displacement patterns, Natom is the number "
+            "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]. "
+            "It should be larger than 1/3."
             )
     
-    parser.add_option("--command_vasp", 
-            dest="command_vasp", type="string", default="vasp", 
-            help="command to run vasp [vasp]")
+    parser.add_option("--mag_harm", 
+            dest="mag_harm", type="float", default=0.01, 
+            help="magnitude of displacements for harmonic FCs "
+            "with the unit of angstrom [0.01]")
     
-    parser.add_option("--command_anphon", 
-            dest="command_anphon", type="string", default="anphon", 
-            help="command to run anphon [anphon]")
+    parser.add_option("--mag_cubic", 
+            dest="mag_cubic", type="float", default=0.03, 
+            help="magnitude of displacements for cubic FCs [0.03]")
     
-    parser.add_option("--command_alm", 
-            dest="command_alm", type="string", default="alm", 
-            help="command to run alm [alm]")
-    
-    ### parameters which do not need to be changed.
-    parser.add_option("--nagative_freq", dest="negative_freq", type="float",
+    parser.add_option("--negative_freq", dest="negative_freq", type="float",
             default=-0.001, help="threshold of negative frequency [-0.001]")
             
-    parser.add_option("--random_disp_temperature", 
-            dest="random_disp_temperature", type="float",
-            default=500., 
-            help="temperature for random displacement [500]")
-    
-    #parser.add_option("--auto_lreal_scell_size",
-    #        dest="auto_lreal_scell_size", type="int",
-    #        default=65, 
-    #        help="number of atoms to set LREAL=True [65]")
-    
-    parser.add_option("--anphon_para", 
-            dest="anphon_para", type="string", default="omp", 
-            help="parallel mode of anphon: mpi for MPI, or omp for OpenMP [omp]")
-    
-    parser.add_option("--magnitude2", 
-            dest="magnitude2", type="float", default=0.03, 
-            help="magnitude of random displacement for FC3 [0.03]")
-    
     parser.add_option("--volume_relaxation", 
             dest="volume_relaxation", type="int", default=0,
-            help="relaxation with different volume (0.off or 1.on) [0]")
+            help="strict relaxation with the relation between energy and "
+            "volume (0.off or 1.on) [0]")
     
     parser.add_option("--relaxed_cell", 
             dest="relaxed_cell", type="string", default=None,
-            help="Cell type used for the relaxation calculation [None]. "\
-                    "For a restart calculation, the same type as the previous "\
-                    "calculation is used while, for the new calculation, the "
-                    "conventional cell is used."
+            help="Cell type used for the relaxation calculation [None]. "
+            "For the restarted calculation, the same type "
+            "as that for the previous calculation is used "
+            "while the conventional cell is used for the new calculation. "
+            "The value should be primitive (p), conventional (c), "
+            "or unitcell (u), where \"c\" and \"u\" are the same."
             )
     
-    ### parameters for k-mesh
+    ### Parameters to determine k-mesh densities and size of supercells
     parser.add_option("--k_length", dest="k_length", type="float", 
-            default=20, help="Length to determine k-mesh. [20]")
+            default=20, help=
+            "Length to determine k-mesh for first-principles calculations [20]. "
+            "The following equation is used to determine the k-mesh; "
+            "N = max(1, int(k_length * |a|^* + 0.5))."
+            )
     
-    ### parameters for supercell
+    ### options for supercell
     parser.add_option("--max_natoms", dest="max_natoms", type="int", 
             default=150, 
-            help="Maximum limit of the number of atoms in the supercell for FC2 [150]")
+            help=
+            "Initial maximum limit of the number of atoms in the "
+            "supercells [150]. When negative frequencies exist "
+            "at kpoints except for the commensurate points, "
+            "the maximum limit for harmonic FCs "
+            "will be increased with the step of "
+            "\"delta_max_natoms\". Note that the maximum limit for "
+            "cubic FCs is not changed during the simlation. ")
     
-    parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
-            default=None, 
-            help="Maximum limit of the number of atoms in the supercell for FC3 [None]")
+    ### three options for larger supercell
+    parser.add_option("--analyze_with_larger_supercell", 
+            dest="analyze_with_largersc", type="int", default=0,
+            help="Analyze harmonic properties with larger supercells if "
+            "negative frequencies exist. (0.no, 1.yes) [0]"
+            )
+    
+    parser.add_option("--delta_max_natoms", dest="delta_max_natoms", 
+            type="int", default=50, 
+            help="Increasing interval of the maximum limit of the number of "
+            "atoms in the supercell to calculate FC2 [50]. "
+            "This options is used only when ``--analyze_with_largersc`` == 1.")
+    
+    parser.add_option("--max_loop_for_largesc", dest="max_loop_for_largesc", 
+            type="int", default=1, 
+            help="Number of the maximum loop for larger supercell [1]."
+            "This options is used only when ``--analyze_with_largersc`` == 1.")
+    
+    ### parameters for NSW
+    parser.add_option("--nsw_params", dest="nsw_params", 
+            type="string", default="100:10:20", 
+            help=(
+                "Parameters which determine NSW for relaxation calculations "
+                "[100:10:20]. "
+                "\"{nsw_init}:{nsw_diff}:{nsw_min}\": NSW = min(``nsw_min``, "
+                "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "
+                "``num_errors`` is the number of errors."))
+    
+    #### parameters for amin
+    #parser.add_option("--amin", dest="amin", 
+    #        type="float", default=None, 
+    #        help=("AMIN parameter for VASP [None]: If the length of a lattice "
+    #            "vector exceeds 5 nm, AMIN of the given value is set for the "
+    #            "VASP job.")
+    #        )
+    
+    #### calculate potential energy sruface
+    parser.add_option("--pes", dest="pes",
+            type="int", default=0, 
+            help=(
+                "[This option is not supported yet.] "
+                "Calculate potential energy surface (PES) "
+                "with respect to a phonon mode with negative frequency. [0] "
+                "PES is "
+                "0. not calculated, "
+                "1. calculated only for larger supercells, or "
+                "2. calculated for both of small and larger supercells. "
+                "A representative k-point is chosen to calculate the PES: "
+                "Gamma point, commensurate point, or grid-point for DOS."
+                ))
+    
+    ##############################################
+    ### parameters for high-order (>= 4th) FCs ###
+    ##############################################
+    ### on/off SCPH
+    parser.add_option("--command_dfc2", 
+            dest="command_dfc2", type="string", default="dfc2", 
+            help="Command to run dfc2 [dfc2]")
+    
+    parser.add_option("--scph", dest="scph", type="int", default=0,
+                help=("[This option may be not stable yet.] "
+                "Consider phonon renormalization using "
+                "self-consistent phonon (SCP) theory. "
+                "0.No or 1.Yes. [0]"))
+    
+    ### temperature for random displacements
+    parser.add_option("--random_disp_temperature", 
+            dest="random_disp_temperature", type="float",
+            default=500., 
+            help=
+            "temperature for random displacements "
+            "for high-order FCs [500]")
+    
+    #### displacement magnitude for high-order FCs
+    #parser.add_option("--mag_high", 
+    #        dest="mag_high", type="float", default=0.03, 
+    #        help="magnitude of displacements for cubic FCs [0.03]")
+    
+    parser.add_option("--frac_nrandom_higher", 
+            dest="frac_nrandom_higher", type="float", default=0.34,
+            help="``Npattern * Natom / Nfc4``, where Npattern is the number "
+            "of generated random displacement patterns, Natom is the number "
+            "of atoms in a supercell, and Nfc4 is the number of FC4 [0.34]. "
+            )
+    
+    #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
+    #        default=None, 
+    #        help="This options is invalid! PLEASE DO NOT USE this option."\
+    #                "Maximum limit of the number of atoms in the supercell for "\
+    #                " FC3 [None].")
+    
+    
+    #########################
+    ## parameters for VASP ##
+    #########################
+    parser.add_option("--vasp_parameters", dest="vasp_parameters", type="string",
+            default=None, help="VASP parameters. For example, \"ISORBIT=False,DIFFG=1e-7\"")
+    
+    
+    #################################################################
+    ### Parameters that need to be changed for test calculations  ###
+    #################################################################
+    parser.add_option("--restart", dest="restart", type="int",
+            default=1,
+            help="The calculation will restart (1) or will NOT restart (0) "
+            "when the directory exsits. [1]")
+            
+    parser.add_option("--verbosity", dest="verbosity", type="int",
+            default=1, help="verbosity [0]")
+    
+    parser.add_option("--neglect_log", dest="neglect_log", type="int",
+            default=0, help="neglect log (1) or not (0) [0]")
+    
+    parser.add_option("--harmonic_only", dest="harmonic_only", type="int",
+            default=0, 
+            help="Calculate harmonic properties only (0.No, 1.Yes) [0]")
+    
+    parser.add_option("--max_relax_error", dest="max_relax_error", type="int",
+            default=500, 
+            help="Maximum number of errors for relaxation calculations with "
+            "VASP. Set this option if the number of error is too many. [500]")
+    
+    ### author
+    parser.add_option("--authors", dest="authors", type="string",
+            default=None, help="authors' name (A^1, B^1, C^2)")
+    parser.add_option("--affiliations", dest="affiliations", type="string",
+            default=None, help="affiliation (1. Univ. 1, 2. Univ. 2)")
     
     (options, args) = parser.parse_args()
     
+    ###
+    if options.ncores is not None:
+        options.nprocs = options.ncores
+        logger.warning("The option --ncores is not used any more. "
+                       "Please use --nprocs instead.")
+    
     return options
+
+def parse_vasp_params(params_string):
+    """
+    Parameters
+    ------------
+    params_string : string
+        VASP parameters which differ from the default values are given by ``--vasp_parameters`` option.
+        The parmeters can be given like following.
+
+    How to set the option
+    ---------------------
+    >>> --vasp_parameters=\"lsorbit=1,ediff=1e-9,ediffg=-1e7\"
+    
+    Return
+    ---------
+    dictionary of the parameters which will be modified
+    """
+    if params_string is None:
+        return None
+
+    from pymatgen.io.vasp.inputs import Incar
+
+    ### parse each parameter
+    params_dict = {}
+    list_params_mod = params_string.split(",")
+    for each in list_params_mod:
+
+        data = each.split("=")
+
+        ### check format
+        if len(data) != 2:
+            msg = f"\n Error : vasp_parameters is not given properly ({each})"
+            logger.error(msg)
+        
+        name = data[0].replace(" ", "").upper()
+        
+        ### parse a given value
+        try:
+            val = Incar.proc_val(name, data[1])
+        except Exception:
+            msg = f"\n Error : vasp_parameters may not given properly."
+            msg += f"\n {name} may not exist for VASP parameter."
+            logger.error(msg)
+            sys.exit()
+        
+        params_dict[name] = val
+    
+    return params_dict
 

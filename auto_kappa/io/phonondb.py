@@ -179,19 +179,26 @@ def read_phonopy_conf(filename):
     from phonopy.cui.settings import PhonopyConfParser
     confparser = PhonopyConfParser(filename=filename)
     params = confparser.get_configures()
-    
     from fractions import Fraction
-    matrix = np.zeros((2,3,3,))
-    matrix[0] = np.identity(3)
-    matrix[1] = np.identity(3)
+    # matrix = np.zeros((2,3,3,))
+    # matrix[0] = np.identity(3)
+    # matrix[1] = np.identity(3)
+    matrix = []
     for ii, target in enumerate(['dim', 'primitive_axis']):
+        matrix.append(np.identity(3))
         if target in params.keys():
             for i, num in enumerate(params[target].split()):
                 i1 = int(i/3)
                 i2 = int(i%3)
                 matrix[ii][i1,i2] = float(Fraction(num))
+                # print(float(Fraction(num)))
+    
     ##
-    scell = np.rint(matrix[0]).astype(int)
+    if matrix[0] is not None:
+        scell = np.rint(matrix[0]).astype(int)
+    else:
+        scell = None
+    
     primat = matrix[1]
     return scell, primat
 

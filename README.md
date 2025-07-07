@@ -1,14 +1,12 @@
-Auto-KAPPA
+Auto-kappa
 ============
 
-Version 0.2
+Version 0.4.0
 ---------------
 
-Auto-KAPPA is a software for automated calculations of thermal conductivity.
-The first version works with VASP and ALAMODE while, in furture versions,
-other software such as QuantumEspress, Phono3py, and ShenBTE, are available,
-which enables an easy comparison of results obtained with different software and
-use of different methods such as SCPH method, 4-phonon scattering, iterative or direct solution of BTE, etc.
+Auto-kappa is an automation tool for calculating anharmonic phonon properties
+—including thermal conductivity and mode-dependent phonon lifetimes—using VASP and ALAMODE.
+
 
 Requirements
 -------------
@@ -21,24 +19,74 @@ Requirements
 * Spglib
 * Custodian
 
+Installation
+-------------
+
+Follow these steps to install the package:
+
+1. git clone https://github.com/masato1122/auto-kappa.git
+2. cd ./auto-kappa
+3. sh install.sh
+
+After installation, ensure that the ``akrun`` command is available.
+You can view a description of the input parameters by running ``akrun -h``.
+
+Preparation
+--------------
+
+You can perform a simple calculation following the steps below. 
+Please refer to example jobs in ``auto_kappa/examples`` and the manual for details.
+
+1. Set the ``VASP_PP_PATH`` environment variable so that ASE can locate VASP pseudopotential files:
+([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
+
+ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
+
+2. Prepare a structure file, e.g., ``POSCAR.Si``
+3. Run the command: ``akrun --file_structure POSCAR.Si --material_name Si``.
+
+Some options
+-------------
+
+You can view a description of the options using ``akrun -h``. 
+Frequently used commands are listed below.
+
+- **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
+
+- **material\_name**: Name of the output directory
+
+- **nprocs**: Number of processes for the calculation [Default: 2]
+
+- **mpirun**: MPI command [Default: mpirun]
+
+- **command\_{vasp/alm/anphon}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon]
+
+- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state
+
+- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
+
+- **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
+
+Citation
+---------
+
+If you use auto-kappa, please cite the following paper, along with any related papers listed in the references:
+
+- M. Ohnishi et al., "Database and deep-learning scalability of anharmonic phonon properties by automated brute-force first-principles calculations", 
+[arXiv:2504.21245](https://arxiv.org/abs/2504.21245) (2025).
 
 References
 -----------
 
-ALAMODE:
+- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-- T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- **ALAMODE (SCP):** T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
-Phonopy:
+- **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-- Atsushi Togo and Isao Tanaka, Scr. Mater., 108, 1-5 (2015).
+- **Spglib:** A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
+- **Pymatgen** and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
-
-To Do
---------
-
-- Use AiiDa, or FireWorks and MongoDB
-
-- Failed materials: 2507 2651 3216 3626 4699
+- **ASE:** A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 

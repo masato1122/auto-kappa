@@ -12,6 +12,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
+import math
 from auto_kappa.structure.crystal import change_structure_format
 import spglib
 
@@ -87,7 +88,7 @@ def _get_lattice_parameters(lattice):
 #        ))
 #
 #    ### calculate the sphericity
-#    chi = np.power(np.pi, 1./3.) * np.power(6.*volume, 2./3.) / Atot
+#    chi = math.pow(np.pi, 1./3.) * mat.pow(6.*volume, 2./3.) / Atot
 #    return chi
 
 #def _get_next_modification_index(lengths, multi):

@@ -10,16 +10,81 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
+import os
 import numpy as np
+import time
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .initialize import (set_matplot, set_axis, set_legend)
 import glob
 
-def plot_kappa(dfs, figname='fig_kappa.png',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.5, ms=2.0):
+import logging
+logger = logging.getLogger(__name__)
 
+def _plot_kappa_each(
+        ax, df, col='black', kappa_label=None, kappa_min=None, 
+        show_label=False):
+    """ plot kappa for each condition (k-mesh) """
+    markers = ['+', 'x', '_', 'o']
+    
+    ### kp for different directions
+    cont = 'kp'
+    show_total = True
+    for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+
+        lab = "%s_%s" % (cont, direct)
+        xdat = df['temperature'].values
+        ydat = df[lab].values
+        
+        ### check the magnitude of kappa
+        if np.max(ydat) < kappa_min:
+            show_total = False
+            msg = (" Warning: %s component of Peierls contribution for "
+                    "%s is too small." % (direct, kappa_label))
+            logger.warning(msg)
+            continue
+
+        if direct == "ave" and show_total == False:
+            continue
+        
+        if show_label:
+            label = "${\\rm \\kappa_p^{%s}}$" % direct
+        else:
+            label = None
+        
+        ### marker width and size
+        if direct == "ave":
+            alpha = 1.0
+            ms = 2.3
+            lw = 0.5
+        else:
+            alpha = 0.5
+            ms = 2.0
+            lw = 0.3
+        
+        ax.plot(xdat, ydat, linestyle='None', lw=lw,
+                marker=markers[jj], markersize=ms,
+                mfc='none', mew=lw, mec=col, label=label,
+                alpha=alpha)
+    
+    if show_total:
+        ### kp+kc(ave)
+        xdat = df['temperature'].values
+        ydat = df['ksum_ave'].values
+        
+        lw = 0.5
+        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % kappa_label
+        if np.max(ydat) > kappa_min:
+            ax.plot(xdat, ydat, linestyle='-', lw=lw, 
+                    marker=None, c=col, label=label)
+    
+def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9):
+    """ plot thermal conductivity """
+    
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
@@ -30,44 +95,26 @@ def plot_kappa(dfs, figname='fig_kappa.png',
     #ax.set_xlabel('Temperature (K)')
     #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
     
-    markers = ['+', 'x', '_', 'o']
     for ik, klab in enumerate(dfs):
-        
-        col = cmap(ik)
-        
-        ### kp for different directions
-        cont = 'kp'
-        for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
 
-            lab = "%s_%s" % (cont, direct)
-            xdat = dfs[klab]['temperature'].values
-            ydat = dfs[klab][lab].values
-
-            if ik == 0:
-                label = "${\\rm \\kappa_p^{%s}}$" % direct
-            else:
-                label = None
-            ax.plot(xdat, ydat, linestyle='None', lw=lw,
-                    marker=markers[jj], markersize=ms,
-                    mfc='none', mew=lw, mec=col, label=label
-                    )
+        if ik == 0:
+            show_label = True
+        else:
+            show_label = False
         
-        ### kp+kc(ave)
-        xdat = dfs[klab]['temperature'].values
-        ydat = dfs[klab]['ksum_ave'].values
-        
-        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % klab
-        ax.plot(xdat, ydat, linestyle='-', lw=lw,
-                marker=None, c=col,
-                label=label
-                )
+        try:
+            _plot_kappa_each(
+                    ax, dfs[klab], col=cmap(ik), kappa_label=klab,
+                    kappa_min=kappa_min, show_label=show_label)
+        except Exception:
+            msg = "\n Error while kappa is plotted."
+            logger.error(msg)
+            pass
     
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=5, alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print()
-    print(" Output", figname)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def _get_log_range(vmin, vmax, space=0.05):
@@ -82,7 +129,7 @@ def _get_log_range(vmin, vmax, space=0.05):
     return [v0, v1]
 
 def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
     
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
@@ -103,6 +150,7 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
         
         ### get only available data
         idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+        
         xdat = xorig[idx_pos]
         ydat = yorig[idx_pos]
         
@@ -113,7 +161,15 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
         
         ### axes range
         idx_sort = np.argsort(xdat)
-        idx = np.where(xdat > 1e-5)[0]
+        
+        if len(idx_sort) < 6:
+            msg = "\n"
+            msg += " Error: the number of available lifetime data is too "\
+                    "small.\n"
+            msg += " Something wrong may happen for the lifetime calculation.\n"
+            logger.warning(msg)
+            return -1
+        
         xmin = np.min(xdat[idx_sort[5:]])
         xmax = np.max(xdat)
         xlim[0] = min(xlim[0], xmin)
@@ -138,13 +194,12 @@ def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
     set_axis(ax, xscale=xscale, yscale='log')
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print("")
-    print(" Output", figname)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
+    return 0
 
 def plot_scattering_rates(frequencies, scat_rates, labels, 
         figname='fig_scat_rates.png', 
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
     
     cmap = plt.get_cmap("tab10")
     set_matplot(fontsize=fontsize)
@@ -165,6 +220,10 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
         
         ### get only available data
         idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+        
+        if len(idx_pos) == 0:
+            continue
+        
         xdat = xorig[idx_pos]
         ydat = yorig[idx_pos]
         
@@ -197,14 +256,12 @@ def plot_scattering_rates(frequencies, scat_rates, labels,
     set_axis(ax, xscale='log', yscale='log')
     set_legend(ax, fs=6, loc='best', alpha=0.5)
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print("")
-    print(" Output", figname)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def plot_cumulative_kappa(dfs, 
         figname='fig_kcumu.png', xlabel=None, ylabel=None, xscale='linear',
-        dpi=300, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8, ms=2.0):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8, ms=2.0):
     """ 
     dfs : dict of DataFrame
         key is temperature
@@ -268,13 +325,11 @@ def plot_cumulative_kappa(dfs,
     ax.tick_params(labelright=False, right=False, which='both')
     ax2.tick_params(labelleft=False, left=False, which='both')
     
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print()
-    print(" Output", figname)
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def plot_cvsets(directory='.', figname='fig_cvsets.png',
-        dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=0.5,
+        dpi=600, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=0.5,
         ):
     
     cmap = plt.get_cmap("tab10")
@@ -300,7 +355,14 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
             continue
         
         fn = fns[0]
-        print(" Read", fn)
+        
+        if i == 0:
+            msg = "\n"
+        else:
+            msg = ""
+        msg += " Read " + fn.replace(os.getcwd(), ".")
+        logger.info(msg)
+        
         data = np.genfromtxt(fn)
         
         xdat = data[:,0]
@@ -359,10 +421,9 @@ def plot_cvsets(directory='.', figname='fig_cvsets.png',
     set_axis(ax, xscale='log')
     set_legend(ax, fs=6, alpha=0.5)
     
-    if figname is not None:
-        fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-        print()
-        print(" Output", figname)
+    savefigure(fig, 
+            figname.replace(os.getcwd(), "."), 
+            dpi=dpi, bbox_inches='tight')
     return fig
 
 def _get_recommended_alpha(filename):
@@ -374,7 +435,7 @@ def _get_recommended_alpha(filename):
     return None
 
 def plot_times_with_pie(times, labels, figname="fig_times.png", 
-        dpi=300, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=2.0):
+        dpi=600, fontsize=7, fig_width=2.0, aspect=0.9, lw=0.5, ms=2.0):
     
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
@@ -401,8 +462,40 @@ def plot_times_with_pie(times, labels, figname="fig_times.png",
     leg.set_bbox_to_anchor([0.9, 0.5])
     leg.get_frame().set_alpha(0.5)
     leg.get_frame().set_linewidth(0.2)
-
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    print(" Output", figname)
+    
+    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
+
+def savefigure(fig, figname, dpi=600, bbox_inches="tight", max_waiting_time=300):
+    """ Save figure  """
+    
+    if figname is None:
+        return -1
+    
+    fig.savefig(figname, dpi=dpi, bbox_inches=bbox_inches)
+    
+    count = 0
+    each_waiting_time = 5
+    max_num_wait = int(max_waiting_time / each_waiting_time)
+    
+    has_error = False
+    while True:
+        if os.path.exists(figname):
+            break
+        else:
+            time.sleep(each_waiting_time)
+        count += 1
+        if count == max_num_wait:
+            has_error = True
+            break
+    
+    if has_error:
+        msg = "\n Error: %s might not be created." % figname
+        logger.error(msg)
+        sys.exit()
+    else:
+        msg = " Output " + str(figname)
+        logger.info(msg)
+    
+    return 0
 

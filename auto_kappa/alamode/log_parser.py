@@ -1,15 +1,29 @@
 # -*- coding: utf-8 -*-
+#
+# log_parser.py
+#
+# Read log file of ALAMODE
+#
+# Copyright (c) 2023 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
+import sys
 import os.path
 import numpy as np
 from optparse import OptionParser
 import ase.io
 import datetime
 import yaml
-import warnings
 import glob
 from pymatgen.io.vasp import Poscar
 
 from auto_kappa import output_directories as out_dirs
+
+import logging
+logger = logging.getLogger(__name__)
 
 class AkLog():
     """
@@ -41,14 +55,17 @@ class AkLog():
     def out(self):
         return self._out
     
+    #def set_authors(self):
+
     def write_yaml(self, outfile=None):
         if outfile is None:
             outfile = self.directory+'/'+out_dirs['result']+'/log.yaml'
         with open(outfile, "w") as f:
             yaml.dump(self.out, f)
-            print("")
-            print(" Output", outfile)
-    
+            
+            msg = "\n Output " + outfile
+            logger.info(msg)
+
     def get_times(self):
         
         times = {}
@@ -473,9 +490,9 @@ def read_log_relax(directory):
         return None
     
     out = {}
-    count = 0
     pos = None
     for type in ['full', 'freeze']:
+        count = 0
         for i in range(10):
             label = "%s-%d" % (type, i+1)
             
@@ -489,9 +506,12 @@ def read_log_relax(directory):
                 continue
             if count == 0:
                 out[type] = _read_each_vaspjob(diri)
-                pos = diri + '/POSCAR'
+                pos = diri + '/CONTCAR'
             count += 1
         ##
+        if out['full'] is None:
+            out['full'] = {}
+        
         out['full']['repeat'] = count
     
     ## get prefix
@@ -520,7 +540,8 @@ def read_log_forces(directory, mode, fc3_type=None):
         dir1 = directory + '/' + out_dirs[mode]['force']
     
     else:
-        warnings.warn(" Warning: %s is not supported." % mode)
+        msg = " Warning: %s is not supported." % mode
+        logger.warning(msg)
         return None
 
     if os.path.exists(dir1) == False:
@@ -531,23 +552,23 @@ def read_log_forces(directory, mode, fc3_type=None):
     fmaxes = []
     total_time = 0.
     count = 0
-    for i in range(500):
+    for i in range(1000):
         if i == 0:
             prefix = 'prist'
         else:
             prefix = str(i)
         
         ### read vasprun.xml
-        dir_vasp = dir1 + '/'+prefix
+        dir_vasp = dir1 + '/' + prefix
         
         if os.path.exists(dir_vasp) == False:
             break
         
         out_each = _read_each_vaspjob(dir_vasp)
-
+        
         if out_each is None:
-            print(" Cannot find %s or the calculation has not been done." % dir_vasp)
-            #warnings.warn(" Error in %s" % dir_vasp)
+            msg = "\n Caution: Cannot find %s or the calculation has not finished." % dir_vasp
+            logger.warning(msg)
             continue
         
         ## total time
@@ -561,12 +582,16 @@ def read_log_forces(directory, mode, fc3_type=None):
         else:
             count += 1
             fmaxes.append(out_each['max_force'])
-       
+    
     out['number_of_patterns'] = count
     out['time'] = {'value': total_time, 'unit': 'sec'}
     
-    fmaxes = np.asarray(fmaxes)
-    out['minimum_fmax_patterns'] = float(np.min(fmaxes))
+    try:
+        fmaxes = np.asarray(fmaxes)
+        out['minimum_fmax_patterns'] = float(np.min(fmaxes))
+    except Exception:
+        pass
+    
     return out
 
 def read_log_lasso(directory):
@@ -635,9 +660,21 @@ def _get_cellsize_from_log(filename, type=None):
     
     return cell
     
-def _get_minimum_frequency(filename):
+def get_minimum_frequency_from_logfile(filename, tar=None):
+    """ Get minimum frequency among those written in ``filename``
     
-    lines = open(filename, 'r').readlines()
+    Args
+    -----
+    filename : string
+    
+    tar : tarfile.TarFile
+        
+    """
+    if tar is None:
+        lines = open(filename, 'r').readlines()
+    else:
+        lines_tmp = tar.extractfile(filename).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
     
     out = {}
     istart = None
@@ -665,19 +702,95 @@ def _get_minimum_frequency(filename):
             istart_freq = il
     
     ### get frequencies
-    frequencies = []
-    out['number_of_bands'] = 3 * out['number_of_atoms_primitive']
-    for ik in range(nks):
-        for ib in range(out['number_of_bands']):
-            num = 4 + istart_freq + ik*(3 + out['number_of_bands']) + ib
-            data = lines[num].split()
-            frequencies.append(float(data[1]))
-    frequencies = np.asarray(frequencies)
-    out['minimum_frequency'] = float(np.min(frequencies))
-    return out 
+    eigen = get_eigenvalues_from_logfile(filename, tar=tar)
+    if eigen is None:
+        msg = "\n WARNING: cannot read %s properly." % filename
+        logger.warning(msg)
+        return out
+    else:
+        kpoitns = eigen[0]
+        frequencies = eigen[1]
+    
+    out['minimum_frequency'] = float(np.amin(frequencies))
+    return out
 
+def get_eigenvalues_from_logfile(filename, tar=None):
+    """
+    Args
+    ------
+    filename : string
+        .log file name made by ALAMODE
+
+    tar : tarfile.TarFile
+    """
+    if tar is None:
+        lines = open(filename, 'r').readlines()
+    else:
+        lines_tmp = tar.extractfile(filename).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
+        
+    nks = None
+    nk_irred = None
+    natoms_prim = None
+    for il, line in enumerate(lines):
+        if "Number of k points" in line:
+            nkpoints = int(line.split()[-1])
+        if "Number of irreducible k points" in line:
+            nk_irred = int(line.split()[-1])
+        if "Number of atoms in the primitive cell" in line:
+            natoms_prim = int(line.split()[-1])
+        if "Phonon frequencies below:"in line:
+            istart_freq = il
+    
+    ### check the type of kpoints
+    num = 2 + istart_freq
+    if "irred" in lines[num].lower():
+        if nk_irred is None:
+            msg = " Error: cannot find the number of irreducible k points"
+            logger.error(msg)
+            return None
+        nks = nk_irred
+    else:
+        if nkpoints is None:
+            msg = " Error: cannot find the number of k poitns"
+            logger.error(msg)
+            return None
+        nks = nkpoints
+    
+    ###
+    kpoints = []
+    frequencies = []
+    nbands = natoms_prim * 3
+    for ik in range(nks):
+        num = 2 + istart_freq + ik*(3 + nbands)
+        line = lines[num].replace("(", " ").replace(")", " ").replace(",", " ")
+        data = line.split()
+        kpoints.append([])
+        for j in range(3):
+            kpoints[-1].append(float(data[-3+j]))
+        
+        frequencies.append([])
+        for ib in range(nbands):
+            num = 4 + istart_freq + ik*(3 + nbands) + ib
+            data = lines[num].split()
+            if data[1] != "cm^-1":
+                frequencies[-1].append(float(data[1]))
+            else:
+                ### Alamode log file shows frequency w/o a space btw its index
+                ### when the frequnecy is an extremely large negative value.
+                if "-" in data[0]:
+                    val = data[0].split("-")[1]
+                else:
+                    val = float(data[0][1:])
+                frequencies[-1].append(float(val))
+    
+    ###
+    kpoints = np.asarray(kpoints)
+    frequencies = np.asarray(frequencies)
+    return kpoints, frequencies
+    
 def read_log_eigen(directory, mode='band'):
-    """ """
+    """ Get eigenvalues in log file """
     if mode == 'band':
         filename = directory+'/'+out_dirs['harm']['bandos']+'/band.log'
     elif mode == 'evec':
@@ -685,7 +798,8 @@ def read_log_eigen(directory, mode='band'):
     elif mode == 'dos':
         filename = directory+'/'+out_dirs['harm']['bandos']+'/dos.log'
     else:
-        warnings.warn(" Error: %s is not supported." % mode)
+        msg = " Error: %s is not supported." % mode
+        logger.error(msg)
         return None
     ##
     if os.path.exists(filename) == False:
@@ -696,8 +810,77 @@ def read_log_eigen(directory, mode='band'):
     v = _get_alamode_runtime(filename)
     if v is not None:
         out['time'] = v
-    out.update(_get_minimum_frequency(filename))
+    
+    out_log = get_minimum_frequency_from_logfile(filename)
+    
+    out.update(out_log)
+    
     return out
+
+def get_kpath(filename):
+    """ Get k-path from the log file 
+    
+    Args
+    =======
+    
+    filename : string
+        log file for band
+
+    Return
+    =======
+    
+    array of dictionary :
+        each array element contains two dictionary elements with the name of
+        symmetry point
+    
+    """
+    line_search = "List of k paths"
+    
+    ### look for ``line_search``
+    lines = open(filename, 'r').readlines()
+    npaths = None
+    il_init = None
+    for il, line in enumerate(lines):
+        
+        if "Number of paths" in line:
+            data = line.split()
+            npaths = int(data[-1])
+        
+        if line_search in line:
+            il_init = il
+            break
+    
+    ### cannot find the ``line_search``
+    if npaths is None or il_init is None:
+        return None
+    
+    iadd = 1
+    count = 0
+    kpaths = []
+    while True:
+        
+        line = lines[il_init+iadd]
+        iadd += 1
+        data = line.split()
+        
+        if len(data) == 0:
+            continue
+        
+        ### read line
+        lmod = line.replace(":", " ").replace("(", " ").replace(")", " ")
+        data = lmod.split()
+        
+        ### get kpath
+        kpaths.append({})
+        kpaths[-1][data[1]] = np.asarray([float(data[i+2]) for i in range(3)])
+        kpaths[-1][data[5]] = np.asarray([float(data[i+6]) for i in range(3)])
+        
+        count += 1
+        if count == npaths:
+            break
+    
+    return kpaths
+
 
 def get_ak_logs(directory):
     """ Return diffent information in log files
@@ -792,6 +975,28 @@ def get_ak_logs(directory):
 
     return out_all
 
+def exceed_memory(filename):
+    if os.path.exists(filename) == False:
+        return False
+    lines = open(filename, 'r').readlines()
+    for i in range(2):
+        try:
+            line = lines[-i]
+            if "bad" in line.lower():
+                return True
+        except Exception:
+            return False
+    return False
+
+def get_version(filename):
+    """ Get version of ALAMODE from log file """
+    lines = open(filename, 'r').readlines()
+    for i in range(10):
+        if "ver." in lines[i].lower():
+            data = lines[i].split()
+            return data[1]
+    return None
+
 def get_parser():
 
     parser = OptionParser()
@@ -815,10 +1020,9 @@ def main():
     
     dirname = options.directory + '/' + out_dirs['result']
     if os.path.exists(dirname) == False:
-        print("")
-        print(" Cannot find data in %s" % options.directory)
-        print("")
-        exit()
+        msg = "\n Cannot find data in %s\n" % options.directory
+        logger.error(msg)
+        sys.exit()
 
     log = AkLog(options.directory)
     

@@ -10,7 +10,11 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Isotope():
     def __init__(self, filename=None):
@@ -68,8 +72,8 @@ def read_isotope(filename):
     """
     out = _get_numbers(filename)
     if out is None:
-        warnings.warn(" Error in %s" % filename)
-        exit()
+        logger.error(" Error in %s" % filename)
+        sys.exit()
     nk = out[0]
     nbands = out[1]
      
@@ -106,8 +110,8 @@ def read_isotope(filename):
         elif line.find("## xk =") != -1:
             
             if il != i0 + 1:
-                warnings.warn("Error while reading %s." % filename)
-                exit()
+                logger.error(" Error while reading %s." % filename)
+                sys.exit()
             
             for j in range(3):
                 kpoints[ik,j] = float(data[j+3])

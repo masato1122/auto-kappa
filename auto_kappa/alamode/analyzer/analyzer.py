@@ -10,20 +10,27 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 import auto_kappa.units as units
 
+import logging
+logger = logging.getLogger(__name__)
+
 def convert_gamma2tau(gammas):
     """Convert gamma[1/cm] to lifetime[ps]
+    
     Args
     ----
     gammas : ndarray, float, shape=(nk,nb)
         GAMMS written in .result file
         unit : Kayser[1/cm]
+    
     Return
     --------
     lifetime : ndarray, float, shape=(nk,nb)
         lifetime[ps]
+
     """
     eps = 1e-10
     g_tmp = np.where(gammas<eps, 1.0, gammas)
@@ -33,9 +40,13 @@ def convert_gamma2tau(gammas):
 
 def get_average_at_degenerate_point(omega, tau, eps=1e-3):
     """Average value for degenerate point
+    
+    Args
+    -----
     omega, tau : ndarray, float, shape=(nk,nb)
         frequencies and lifetime, but any value is available for the secont
         variable.
+
     """
     nk = len(omega)
     nb = len(omega[0])
@@ -82,13 +93,17 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
 
     Return
     -------
+    
+    kappa : ndarray, float, shape=(3,3)
+        thermal conductivity
+    
     kmode : ndarray, float, shape=(nkpoints,nbands,3,3)
         thermal conductivity of each mode
     """
     nk = len(frequencies)
     nb = len(frequencies[0])
     
-    mmax = int(np.max(multiplicity))
+    # mmax = int(np.max(multiplicity))
     kmode = np.zeros((((nk,nb,3,3))))
     
     for ik in range(nk):
@@ -103,8 +118,9 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
                         ) / multi)
             # -- heat capacity
             if frequencies[ik,ib] < 0.:
-                print(" SKIP ik: %d  ib: %d  %.2f cm^-1"%(
-                    ik, ib, frequencies[ik,ib]))
+                msg = " SKIP ik: %d  ib: %d  %.2f cm^-1"%(
+                    ik, ib, frequencies[ik,ib])
+                logger.info(msg)
                 kmode[ik,ib] = np.zeros((3,3))
             else:
                 Cph = get_heat_capacity(frequencies[ik,ib], temp)   # J/K
@@ -113,14 +129,16 @@ def get_kmode(volume, temp, frequencies, multiplicity, velocities, lifetime):
                                                                # m^3 * W/(m*K) 
     ## --- dk
     ## np.sum(multiplicity) : number of k-points
-    kmode *= (1./ (volume * units.BohrToM**3) / 
-            float(np.sum(multiplicity)))                   # W/(m*K)
+    kmode *= (
+        1./(volume * units.BohrToM**3)/
+        float(np.sum(multiplicity)))  # W/(m*K)
     
     # --- thermal conductivity
     kappa = np.zeros((3,3))
     for i in range(3):
         for j in range(3):
             kappa[i,j] = np.sum(kmode[:,:,i,j])
+    
     return kappa, kmode
 
 def get_heat_capacity(fkay, temp, min_fkay=1e-8):
@@ -169,7 +187,7 @@ def get_heat_capacity(fkay, temp, min_fkay=1e-8):
 #                velocities is not None and
 #                multiplicity is not None):
 #            print("Error: boundary effect is not yet supported.")
-#            exit()
+#            sys.exit()
 #            #rscat[it,:,:] += 2.*abs(velocities[it,:,)
 #            #......
 #    

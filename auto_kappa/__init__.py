@@ -1,31 +1,35 @@
 # -*- coding: utf-8 -*-
-from phonopy.version import __version__
 
 output_directories = {
         'relax': 'relax',
         'nac': 'nac',
+        ### Harmonic FCs with finite displacement method
         'harm':{
             'suggest': 'harm/suggest',
-            'force': 'harm/force',               ## FC2 with finite displacement
-            'bandos': 'harm/bandos',
-            'evec' : 'harm/evec',
+            'force':   'harm/force',     ## FC2 with finite displacement
+            'bandos':  'harm/bandos',
+            'evec' :   'harm/evec',
+            'pes'  :   'harm/pes',
             },
+        ### cubic FCs
         'cube':{
             'suggest':  'cube/suggest',
             'force_fd': 'cube/force_fd',         ## FC3 with finite displacement
             'kappa_fd': 'cube/kappa_fd',
             'force_lasso': 'cube/force_lasso',   ## FC3 with random displacement
-            'cv'   :        'cube/lasso',
-            'lasso':        'cube/lasso',
-            'kappa_lasso':  'cube/kappa_lasso',
+            'cv'   :       'cube/lasso',
+            'lasso':       'cube/lasso',
+            'kappa_lasso': 'cube/kappa_lasso',
+            #'kappa':       'cube/kappa',
             },
-        ## high-order FCs
+        ### high-order FCs using LASSO and fixed harmonic and cubic FCs
         'higher':{
-            'suggest': 'lasso/suggest',
-            'force': 'lasso/force',
-            'cv'   : 'lasso/lasso',
-            'lasso': 'lasso/lasso',
-            'kappa': 'lasso/kappa',
+            'suggest': 'higher/suggest',
+            'force'  : 'higher/force',
+            'cv'     : 'higher/lasso',
+            'lasso'  : 'higher/lasso',
+            'scph'   : 'higher/scph',
+            'kappa'  : 'higher/kappa',
             },
         'result': 'result'
         }
@@ -33,28 +37,36 @@ output_directories = {
 output_files = {
         'harm_dfset' : 'DFSET.harm',
         'harm_xml'   : "FC2.xml",
-        #'harm_xml'   : "FCs_harm.xml",
         #
         #'cube_dfset' : 'DFSET.cube',       ## not used anymore
         #'cube_xml'   : "FCs_cube.xml",     ## not used anymore
         #
-        #'cube_fd_xml'   : "FC3_cube_fd.xml",
+        #'cube_fd_xml'     : "FC3_cube_fd.xml",
         #'cube_lasso_xml'  : "FC3_cube_lasso.xml",
-        'cube_fd_dfset' : 'DFSET.cube_fd',
-        'cube_fd_xml'   : "FC3_fd.xml",
+        'cube_fd_dfset'   : 'DFSET.cube_fd',
+        'cube_fd_xml'     : "FC3_fd.xml",
         'cube_lasso_dfset': 'DFSET.cube_lasso',
         'cube_lasso_xml'  : "FC3_lasso.xml",
         #
-        'lasso_dfset': 'DFSET.lasso',
-        'lasso_xml'  : "FCs_lasso.xml",
+        'higher_dfset': 'DFSET.high_lasso',
+        'higher_xml'  : "FCs_high.xml",
+        ##'lasso_dfset': 'DFSET.lasso',
+        ##'lasso_xml'  : "FCs_lasso.xml",
         }
 
+#
+# According the manual for VASP:
+# "If you have no a priori knowledge of your system, for instance, if you do not know whether your system is an insulator, 
+# semiconductor or metal then always use Gaussian smearing ISMEAR=0 in combination with a small SIGMA=0.03-0.05."
+# ISMEAR = 0 : Gaussian smearing
+# SIGMA : width of smearing
+#
 default_vasp_parameters = {
         ### for relaxation
         'relax':{
             'prec': 'Accurate',
             'ibrion': 2,
-            'nsw': 500,
+            #'nsw': 500,
             'ediffg': -1e-6,
             'addgrid': True,
             },
@@ -85,7 +97,7 @@ default_vasp_parameters = {
             'nelmin': 5,
             'sigma': 0.02,
             'ediff': 1e-8,
-            'ismear': 0,
+            'ismear': 0,      # Gaussian smearing
             'ialgo': 38,
             'lreal': False,
             'addgrid': True,
@@ -93,6 +105,8 @@ default_vasp_parameters = {
             'lcharg': False,
             }
         }
+
+default_amin_parameters = {"value": 0.01, "tol_length": 50, "num_of_errors": 1}
 
 #default_lasso_parameters = {
 #        'lmodel': 'enet',

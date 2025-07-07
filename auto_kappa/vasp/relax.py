@@ -12,23 +12,29 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 #
+import sys
 import os.path
+import math
 import numpy as np
 import ase
 import glob
 import yaml
 
-import matplotlib
-matplotlib.use('Agg')
-
+import ase.io
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
 from auto_kappa.io.vasp import wasfinished
-from auto_kappa.calculator import get_vasp_calculator, run_vasp
+from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
+
+import matplotlib
+matplotlib.use('Agg')
+
+import logging
+logger = logging.getLogger(__name__)
 
 class StrictRelaxation():
 
@@ -47,28 +53,25 @@ class StrictRelaxation():
         if self._optimal_volume is not None:
             return self._optimal_volume
         else:
-            print("")
-            print(" Caution: Optimal volume is not yet obtained.")
-            print("")
+            msg = "\n Caution: Optimal volume is not yet obtained.\n"
+            logger.warning(msg)
     
     @property
     def volumes(self):
         if self._volumes is not None:
             return self._volumes
         else:
-            print("")
-            print(" Caution: volumes were not yet set.")
-            print("")
+            msg = "\n Caution: volumes were not yet set.\n"
+            logger.warning(msg)
 
     @property
     def energies(self):
         if self._energies is not None:
             return self._energies
         else:
-            print("")
-            print(" Caution: energies were not yet set.")
-            print("")
-
+            msg = "\n Caution: energies were not yet set.\n"
+            logger.warning(msg)
+    
     def with_different_volumes(self, 
             initial_strain_range=[-0.01, 0.05], nstrains=11,
             tol_frac_ediff=0.5,
@@ -76,16 +79,16 @@ class StrictRelaxation():
             command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
             encut_factor=1.3, 
             verbosity=1,
+            params_mod=None
             ):
-        """ Run VASP jobs with different volumes
         
-        """
-        line = " Relaxation with different volumes"
-        msg = "\n" + line + "\n"
-        msg += " " + "=" * len(line) + "\n"
+        ### Run VASP jobs for different volumes
+        line = " Strict structure optimization"
+        msg = "\n" + line
+        msg += "\n " + "=" * len(line)
         if verbosity > 0:
-            print(msg)
-        
+            logger.info(msg)
+         
         ### get the strain interval
         strain_interval = (
                 (initial_strain_range[1] - initial_strain_range[0]) /
@@ -101,7 +104,8 @@ class StrictRelaxation():
                 #
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
-                verbosity=2
+                verbosity=2,
+                params_mod=params_mod
                 )
         
         def _get_energy_info(energies):
@@ -140,7 +144,8 @@ class StrictRelaxation():
                     #
                     kpts=kpts, encut_factor=encut_factor,
                     command=command,
-                    verbosity=1
+                    verbosity=1,
+                    params_mod=params_mod
                     )
             
             ### check energies
@@ -162,13 +167,17 @@ class StrictRelaxation():
     
     def output_structures(self):
         
+        logger.info("")
+
         outfile = self.outdir + "/POSCAR.init"
         self.initial_structure.to(filename=outfile)
-        print(" Output", outfile)
+        msg = " Output %s" % outfile.replace(os.getcwd(), ".")
+        logger.info(msg)
 
         outfile = self.outdir + "/POSCAR.opt"
         self.get_optimal_structure().to(filename=outfile)
-        print(" Output", outfile)
+        msg = " Output %s" % outfile.replace(os.getcwd(), ".")
+        logger.info(msg)
     
     def get_calculated_volumes_and_energies(self):
         Vs, Es = _get_calculated_volumes_and_energies(self.outdir)
@@ -189,8 +198,8 @@ class StrictRelaxation():
         if type == 'mae':
             mae = np.sum(abs(self.energies - Es_fit)) / len(self.energies)
         else:
-            print(" Not yet supported")
-            exit()
+            logger.error(" Not yet supported.")
+            sys.exit()
         return mae
 
     def plot_bm(self, figname='fig_bm.png'):
@@ -200,13 +209,13 @@ class StrictRelaxation():
         bm = BirchMurnaghan(Vs, Es)
         bm.fit()
         
-        plt = bm.plot().savefig(figname, bbox_inches='tight')
-        print(" Output", figname)
+        from auto_kappa.plot.fitting import plot_fitting_result
+        fig = plot_fitting_result(bm, figname=figname)
     
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
         """
-        return np.power((s_vol + 1.), 1/3) - 1
+        return math.pow((s_vol + 1.), 1/3) - 1
     
     def get_optimal_structure(self, format='pmg'):
         
@@ -229,14 +238,15 @@ class StrictRelaxation():
         s_vol = (vinit - self.optimal_volume) / self.optimal_volume
         s_len = self._strain_volume2length(s_vol)
         mae = self.get_fitting_error()
-
-        print("")
-        print(" Minimum energy : %8.3f eV" % bm.e0)
-        print(" Bulk modulus   : %8.3f GPa" % bm.b0_GPa)
-        print(" Optimal volume : %8.3f A^3" % self.optimal_volume)
-        print(" Initial volume : %8.3f A^3" % vinit)
-        print(" Initial strain : %8.3f" % (s_len))
-        print(" Error (MAE)    : %8.5f eV" % (mae))
+        
+        msg = "\n"
+        msg += " Minimum energy : %8.3f eV\n" % bm.e0
+        msg += " Bulk modulus   : %8.3f GPa\n" % bm.b0_GPa
+        msg += " Optimal volume : %8.3f A^3\n" % self.optimal_volume
+        msg += " Initial volume : %8.3f A^3\n" % vinit
+        msg += " Initial strain : %8.3f\n" % (s_len)
+        msg += " Error (MAE)    : %8.5f eV" % (mae)
+        logger.info(msg)
         
         out = {}
         out['minimum_energy'] = [float(bm.e0), 'eV']
@@ -245,37 +255,59 @@ class StrictRelaxation():
         out['initial_volume'] = [float(vinit), 'A^3']
         out['initial_strain'] = [float(s_len), '-']
         out['mae'] = [float(mae), 'eV']
-        
+         
         with open(self.outfile_yaml, 'w') as f:
             yaml.dump(out, f)
-            print("")
-            print(" Output", self.outfile_yaml)
-
-
-def _get_calculated_results(base_dir):
-    """ Read all the results which have been already obtained.
+            msg = "\n Output %s" % self.outfile_yaml.replace(os.getcwd(), ".")
+            logger.info(msg)
+    
+def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
+    """ Get all the results which have been already obtained.
     
     Args
     ----
     base_dir : string
         VASP calculations were performed in base_dir+"/*".
-
+    
+    cell_pristine : ndarray, shape=(3,3)
+        cell size w/o strain
+    
     Return
     -------
     all_results : list of dictionary
         each element contains the info in strain.yaml file
     """
-    line = base_dir + "/*"
-    dirs = glob.glob(line)
+    ### get possible directories 
+    dirs = []
+    for ii in range(num_max):
+        dir_each = base_dir + "/%d" % ii
+        file_xml = dir_each + "/vasprun.xml"
+        if os.path.exists(file_xml):
+            dirs.append(dir_each)
+    
+    ### check each directory
     all_results = []
     for diri in dirs:
         
-        if wasfinished(diri, filename='vasprun.xml') == False:
+        ### check result (vasprun.xml)
+        ### ver.1
+        #if wasfinished(diri, filename='vasprun.xml') == False:
+        #    continue
+        
+        ### ver.2
+        file_xml = diri + "/vasprun.xml"
+        try:
+            vasprun = Vasprun(file_xml, parse_potcar_file=False)
+        except Exception:
             continue
         
+        ### Make strain.yaml if it doesn't exist and possible.
         file_yaml = diri + "/strain.yaml"
         if os.path.exists(file_yaml) == False:
-            continue
+            try:
+                _make_strain_yaml(diri, cell_pristine=cell_pristine)
+            except Exception:
+                continue
         
         with open(file_yaml, 'r') as yml:
             data = yaml.safe_load(yml)
@@ -283,9 +315,39 @@ def _get_calculated_results(base_dir):
     
     return all_results
 
-def _get_results_all(base_dir, keys=['strain']):
+def _make_strain_yaml(directory, cell_pristine=None):
+    """ Make strain.yaml file """
     
-    all_results = _get_calculated_results(base_dir)
+    ### read file 
+    file_xml = directory + "/vasprun.xml"
+    vasprun = Vasprun(file_xml, parse_potcar_file=False)
+    structure = vasprun.final_structure
+    
+    ### get strain
+    l1 = np.linalg.norm(structure.lattice.matrix[0])
+    l0 = np.linalg.norm(cell_pristine[0])
+    strain = (l1 - l0) / l0
+    
+    ### get parameters
+    out_data = {}
+    out_data['strain'] = float(strain)
+    out_data['energy'] = [
+            float(vasprun.final_energy.real),
+            str(vasprun.final_energy.unit)]
+    out_data['volume'] = float(structure.volume)
+    
+    ### output file
+    outfile = directory + "/strain.yaml"
+    with open(outfile, "w") as f:
+        yaml.dump(out_data, f)
+        msg = "\n Output %s" % outfile
+        logger.info(msg)
+    
+    return 0
+
+def _get_results_all(base_dir, keys=['strain'], cell_pristine=None):
+    
+    all_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine)
     extracted_data = []
     for each in all_results:
         try:
@@ -297,17 +359,37 @@ def _get_results_all(base_dir, keys=['strain']):
             pass
     return extracted_data
 
-def _get_calculated_strains(base_dir, key='strain'):
+def _get_calculated_strains(
+        base_dir, key='strain', cell_pristine=None, tol_strain=1e-9):
+    """ Get list of strains for which the energy has been already calculated. 
+    """
+    value_tmp = _get_results_all(
+            base_dir, keys=[key], 
+            cell_pristine=cell_pristine)
     
-    value_tmp = _get_results_all(base_dir, keys=[key])
     if len(value_tmp) == 0:
         return []
     else:
-        return np.asarray(value_tmp)[:,0]
+        strains_all = np.sort(np.asarray(value_tmp)[:,0])
+        
+        ### remove duplicative data
+        strains = []
+        for i in range(len(strains_all)):
+            if i == 0:
+                strains.append(strains_all[0])
+            else:
+                if strains_all[i] - strains_all[i-1] > tol_strain:
+                    strains.append(strains_all[i])
+        strains = np.asarray(strains)
+        return strains
 
-def _get_calculated_volumes_and_energies(base_dir, keys=['volume', 'energy']):
+def _get_calculated_volumes_and_energies(
+        base_dir, keys=['volume', 'energy'], cell_pristine=None):
     
-    value_tmp = _get_results_all(base_dir, keys=keys)
+    value_tmp = _get_results_all(
+            base_dir, keys=keys, 
+            cell_pristine=cell_pristine)
+    
     Vs = []
     Es = []
     for each in value_tmp:
@@ -365,13 +447,13 @@ def get_strained_structure(structure0, strain, format='pmg'):
     
     return structure
 
-
 def relaxation_with_different_volumes(
         struct_init, strain_range=[-0.01, 0.05], nstrains=11, kpts=[2,2,2],
         base_directory='./volume', encut_factor=1.3, 
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
         tol_strain=1e-5,
         verbosity=1,
+        params_mod=None
         ):
     """ Structure relaxation with the Birch-Murnaghan equation of state
     Args
@@ -383,25 +465,38 @@ def relaxation_with_different_volumes(
     nstrains : integer
         number of strains to be applied
     """
-    
-    #cell0 = struct_init.lattice.matrix
-    #scaled_positions0 = struct_init.frac_coords
+    ### list of strains to be analyzed
     strains = np.linspace(strain_range[0], strain_range[1], nstrains)
     
     ### get the calculated strains
-    calculated_strains = _get_calculated_strains(base_directory)
+    calculated_strains = _get_calculated_strains(
+            base_directory, 
+            cell_pristine=struct_init.lattice.matrix,
+            tol_strain=tol_strain*0.1)
     
+    ### print already-analyzed-strains
+    if len(calculated_strains) > 0:
+        line = "Strains already calcuclated (%):"
+        msg = "\n %s" % line
+        msg += "\n " + "-" * len(line)
+        msg += "\n "
+        for each in calculated_strains:
+            msg += "%.3f, " % (each*100.)
+        logger.info(msg)
+    
+    ### calculate the potential energy for each strain value
     for ist, strain in enumerate(strains):
         
         if len(calculated_strains) > 0:
             if np.min(abs(calculated_strains - strain)) < tol_strain:
                 continue
         
-        line = " Strain: %f" % strain
-        msg = line + "\n"
-        msg += " " + "-" * len(line)
+        ### print strain value
+        line = "Strain: %f" % strain
+        msg = "\n " + line
+        msg += "\n " + "-" * len(line)
         if verbosity > 0:
-            print(msg)
+            logger.info(msg)
         
         ### set the output directory
         flag = False
@@ -414,7 +509,8 @@ def relaxation_with_different_volumes(
             count += 1
         
         if verbosity > 0:
-            print(" Output directory:", outdir)
+            logger.info("\n Output directory: %s" % (
+                outdir.replace(os.getcwd(), ".")))
         
         #### prepare a strained structure
         #structure = get_strained_structure(struct_init, strain, format='pmg')
@@ -423,11 +519,13 @@ def relaxation_with_different_volumes(
         ### set calculator object
         calc = get_vasp_calculator(
                 'relax-freeze', 
-                atoms=atoms,
                 directory=outdir,
+                atoms=atoms,
                 kpts=kpts,
-                encut_scale_factor=encut_factor
+                encut_scale_factor=encut_factor,
+                **params_mod
                 )
+        
         calc.command = "%s -n %d %s" % (
                 command['mpirun'],
                 command['nprocs'],
@@ -438,18 +536,14 @@ def relaxation_with_different_volumes(
         run_vasp(calc, atoms, method='custodian')
         
         ### output data
-        vasprun = Vasprun(outdir + "/vasprun.xml")
+        vasprun = Vasprun(outdir + "/vasprun.xml", parse_potcar_file=False)
         
         volume = float(atoms.get_volume())
         energy = float(vasprun.final_energy.real)
-        out_data = {
-                'strain': float(strain), 
-                'energy': [
-                    energy,
-                    str(vasprun.final_energy.unit),
-                    ],
-                'volume': float(atoms.get_volume()),
-                }
+        out_data = {}
+        out_data['strain'] = float(strain)
+        out_data['energy'] = [energy, str(vasprun.final_energy.unit)]
+        out_data['volume'] = float(atoms.get_volume())
         
         ### output yamle file
         outfile = outdir + "/strain.yaml"
@@ -457,14 +551,13 @@ def relaxation_with_different_volumes(
             yaml.dump(out_data, f)
         
         if verbosity > 0:
-            print(" strain: %f  volume: %f  energy: %f" % (
-                strain, volume, energy))
-            print("")
+            msg = "\n strain: %f  volume: %f  energy: %f" % (
+                    strain, volume, energy)
+            logger.info(msg)
     
-    ##
+    ###
     Vs, Es = _get_calculated_volumes_and_energies(base_directory)
     return Vs, Es
-
 
 #from pymatgen.io.vasp import Poscar
 #

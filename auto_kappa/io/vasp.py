@@ -9,6 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import os
 import glob
 import numpy as np
 import xmltodict
@@ -19,13 +20,17 @@ from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
 from auto_kappa.units import BohrToA, RyToEv
 
+import logging
+logger = logging.getLogger(__name__)
+
 def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     """ Get dataset of displacements and forces from many vasprun.xml files.
+    
     Args
-    ======
+    -----
     directory : string
-        vasprun.xml can be found under ${directory}/*/ 
-        while ${directory}/prist/vasprun.xml is neglected.
+        vasprun.xml can be found under \${directory}/\*/ 
+        while \${directory}/prist/vasprun.xml is neglected.
     
     offset_xml : string
         vasprun.xml name for offset
@@ -35,6 +40,7 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     
     nset : int
         Number of data set. If not given, all data will be read.
+    
     """
     from ase.geometry import get_distances
     
@@ -113,10 +119,10 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
         ofs = open(outfile, 'w')
         ofs.write("\n".join(all_lines))
         ofs.close()
-        print("")
-        print(" Output", outfile)
-        print("")
-    
+        
+        msg = "\n Output " + outfile
+        logger.info(msg)
+
     return [all_disps, all_forces]
 
 def read_dfset(filename, natoms=None, nstructures=None):
@@ -155,13 +161,24 @@ def read_dfset(filename, natoms=None, nstructures=None):
     
     return disps, forces
 
-def wasfinished(directory, filename='vasprun.xml'):
-    try:
-        fn = directory + '/' + filename
-        lines = open(fn, 'r').readlines()
-    except Exception:
-        return False
-
+def wasfinished(directory, filename='vasprun.xml', tar=None):
+    """ 
+    Args
+    ------
+    directory : string
+        Path for the directory to be checked. Note that the path should be that
+        inside the tar.gz file when tar is not None.
+    """
+    fn_target = directory + '/' + filename
+    if tar is None:
+        try:
+            lines = open(fn_target, 'r').readlines()
+        except Exception:
+            return False
+    else:
+        lines_tmp = tar.extractfile(fn_target).readlines()
+        lines = [ll.decode('utf-8') for ll in lines_tmp]
+     
     n = len(lines)
     for i in range(n):
         num = n - 1 - i
@@ -208,7 +225,7 @@ def write_born_info(filename, outfile='BORNINFO'):
     """
     lines = []
     
-    vasprun = Vasprun(filename)
+    vasprun = Vasprun(filename, parse_potcar_file=False)
     dielectric_tensor = vasprun.epsilon_static
     born_charges = get_born_charges(filename)
     
@@ -247,7 +264,13 @@ def get_born_charges(filename):
     ## Read contents in "born_charges"
     borns = []
     for i in range(natoms):
-        lines = array['set'][i]['v']
+        
+        ### modified on April 17, 2023
+        if natoms == 1:
+            lines = array['set']['v']
+        else:
+            lines = array['set'][i]['v']
+        
         born = np.zeros((3,3))
         for i1, line in enumerate(lines):
             data = line.split()
@@ -257,11 +280,42 @@ def get_born_charges(filename):
     return borns
 
 def print_vasp_params(params):
-    
-    print("")
+    """ print the contents of a dictionary """
+    msg = ""
     for name in params.keys():
-        print(" ", name.upper().ljust(13), "=", params[name])
-    print("")
+        msg += ("\n " +  str(name.upper().ljust(13)) + " = " + 
+                str(params[name]))
+    logger.info(msg)
+
+def read_outcar(filename):
+    """ 
+    Args
+    -----
+
+    filename : string
+        path for OUTCAR
+    """
+    dump = {}
+    lines = open(filename, 'r').readlines()
+    for line in lines:
+        data = line.split()
+        if "Total CPU time used (sec)" in line:
+            idx = -1
+            key = "cpu_time(min)"
+            scale = 1./60.
+        elif "Maximum memory used (kb)" in line:
+            idx = -1
+            key = "max_memory(GB)"
+            scale = 1e-3
+        else:
+            continue
+
+        try:
+            dump[key] = float(data[idx]) * scale
+        except Exception:
+            pass
+    
+    return dump
 
 #
 #class Vasprun:
