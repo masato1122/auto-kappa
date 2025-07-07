@@ -19,18 +19,7 @@ from auto_kappa import output_directories
 from auto_kappa.alamode.almcalc import AlamodeCalc
 # from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.io.files import write_output_yaml
-<<<<<<< HEAD
 from auto_kappa.calculators.alamode import analyze_phonon_properties
-=======
-from auto_kappa.calculators.alamode import (
-        analyze_phonon_properties,
-        analyze_harmonic_with_larger_supercells,
-        calculate_cubic_force_constants,
-        calculate_thermal_conductivities,
-        )
-from auto_kappa.calculators.scph import (
-                calculate_high_order_force_constants)
->>>>>>> a89bc19... larger sc + four
 from auto_kappa.cui import ak_log
 from auto_kappa.cui.initialization import (
         use_omp_for_anphon,
@@ -314,7 +303,6 @@ def main():
     ### calculate phonon properties with larger supercells
     if (almcalc.minimum_frequency < ak_params['negative_freq'] and ak_params["analyze_with_largersc"] == 1):
         
-<<<<<<< HEAD
         from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
         analyze_phonon_properties_with_larger_supercells(
             base_dir, almcalc, calc_force,
@@ -334,53 +322,6 @@ def main():
             frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
             pes=ak_params['pes'],
         )
-=======
-        ### If negative frequencies could be removed, calculate cubic FCs with
-        ### the supercell of initial size
-        if (almcalc_large.minimum_frequency > ak_params["negative_freq"] and 
-                ak_params['harmonic_only'] == 0):
-            
-            ### calculate cubic force constants
-            calculate_cubic_force_constants(
-                    almcalc, calc_force,
-                    nmax_suggest=ak_params['nmax_suggest'], 
-                    frac_nrandom=ak_params['frac_nrandom'], 
-                    neglect_log=neglect_log
-                    )
-            
-            almcalc_large._fc3_type = almcalc.fc3_type
-            
-            ### Calculate higher-order force constants
-            if ak_params['four'] == 1:
-                calculate_high_order_force_constants(
-                        almcalc, calc_force,
-                        frac_nrandom=ak_params['frac_nrandom_higher'],
-                        disp_temp=ak_params['random_disp_temperature'],
-                        )
-                print("<<<<<<<<<<<<<<<<<")
-                sys.exit()
-            
-            ### calculate kappa
-            kdensities = [500, 1000, 1500]
-            calculate_thermal_conductivities(
-                    almcalc_large, 
-                    kdensities=kdensities,
-                    neglect_log=neglect_log,
-                    temperatures_for_spectral="300:500",
-                    fc2xml = almcalc_large.fc2xml,
-                    fcsxml = almcalc.fc3xml
-                    )
-            
-        else:
-            
-            ak_log.negative_frequency(almcalc_large.minimum_frequency)
-            
-            ### calculate PES
-            if ak_params['pes'] > 0:
-                almcalc_large.calculate_pes(
-                        negative_freq=ak_params['negative_freq'])
-                sys.exit()
->>>>>>> a89bc19... larger sc + four
     
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times
