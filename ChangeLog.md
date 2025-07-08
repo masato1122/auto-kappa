@@ -1,13 +1,4 @@
 
-# Ver. 1.1.0 (July 8, 2025)
-
-## New
-
-- Add 'four', 'frac_kdensity_4ph', and 'command_anphon_ver2' options for four phonon scattering
-
-- Add 'material_dimension' option for calculating 2D materials.
-
-
 # Ver. 1.0.0 (July 7, 2025)
 
 ## New
