@@ -66,6 +66,8 @@ Frequently used commands are listed below.
 
 - **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
 
+- **scph**: Flag for the phonon renormalization using the self-consistent phonon approach [Default: 0]
+
 Citation
 ---------
 
