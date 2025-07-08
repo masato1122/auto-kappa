@@ -58,13 +58,19 @@ Frequently used commands are listed below.
 
 - **mpirun**: MPI command [Default: mpirun]
 
-- **command\_{vasp/alm/anphon}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon]
+- **command\_{vasp/alm/anphon/anphon_ver2}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon, anphon.2.0]
 
 - **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state
 
 - **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
 
 - **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
+
+- **scph**: Flag for the phonon renormalization using the self-consistent phonon approach [Default: 0]
+
+- **four**: Flag for the four phonon scattering calculation [Default: 1]
+
+- **material_dimension**: Dimension of the material (2 or 3) [Default: 3]
 
 Citation
 ---------
