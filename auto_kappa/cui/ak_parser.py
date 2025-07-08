@@ -41,8 +41,8 @@ def get_parser():
     parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
             help="Output directory name [./out]")
     
-    parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
-            help="Material dimension [3]")
+    #parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
+    #        help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
@@ -294,7 +294,7 @@ def get_parser():
     
     (options, args) = parser.parse_args()
     
-    ###
+    ### deprecated option names
     if options.ncores is not None:
         options.nprocs = options.ncores
         logger.warning("The option --ncores is not used any more. "
