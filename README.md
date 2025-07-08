@@ -68,10 +68,6 @@ Frequently used commands are listed below.
 
 - **scph**: Flag for the phonon renormalization using the self-consistent phonon approach [Default: 0]
 
-- **four**: Flag for the four phonon scattering calculation [Default: 1]
-
-- **material_dimension**: Dimension of the material (2 or 3) [Default: 3]
-
 Citation
 ---------
 
