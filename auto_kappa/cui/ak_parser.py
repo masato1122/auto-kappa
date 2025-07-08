@@ -41,8 +41,8 @@ def get_parser():
     parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
             help="Output directory name [./out]")
     
-    parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
-            help="Material dimension [3]")
+    #parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
+    #        help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
@@ -78,9 +78,9 @@ def get_parser():
             dest="command_anphon", type="string", default="anphon", 
             help="Command to run anphon [anphon]")
     
-    parser.add_option("--command_anphon_ver2",
-            dest="command_anphon_ver2", type="string", default="anphon.2.0",
-            help="Command to run anphon for 4-phonon scattering [anphon.2.0]")
+    #parser.add_option("--command_anphon_ver2",
+    #        dest="command_anphon_ver2", type="string", default="anphon.2.0",
+    #        help="Command to run anphon for 4-phonon scattering [anphon.2.0]")
     
     parser.add_option("--nonanalytic", 
             dest="nonanalytic", type="int", default=2, 
@@ -218,16 +218,16 @@ def get_parser():
             "self-consistent phonon (SCP) approach. "
             "0.No or 1.Yes. [0]")
     
-    ##### 4-phonon scattering
-    parser.add_option(
-            "--four", dest="four", type="int", default=0, help=
-            "Flag to consider four-phonon scattering (0.off, 1.on) [0]. " 
-            "If 'scph' option is also set to 1, SCPH+4ph is performed. ")
-    parser.add_option(
-            "--frac_kdensity_4ph", dest="frac_kdensity_4ph", type="float", default=0.13, 
-            help=
-            "Fractional k-point density for 4-phonon scattering with respect to "
-            "the k-point density for three-phonon scattering calculation [0.13].")
+    ###### 4-phonon scattering
+    #parser.add_option(
+    #        "--four", dest="four", type="int", default=0, help=
+    #        "Flag to consider four-phonon scattering (0.off, 1.on) [0]. " 
+    #        "If 'scph' option is also set to 1, SCPH+4ph is performed. ")
+    #parser.add_option(
+    #        "--frac_kdensity_4ph", dest="frac_kdensity_4ph", type="float", default=0.13, 
+    #        help=
+    #        "Fractional k-point density for 4-phonon scattering with respect to "
+    #        "the k-point density for three-phonon scattering calculation [0.13].")
     
     ### temperature for random displacements
     parser.add_option("--random_disp_temperature", 
@@ -287,12 +287,21 @@ def get_parser():
             "VASP. Set this option if the number of error is too many. [500]")
     
     ### author
-    parser.add_option("--authors", dest="authors", type="string",
+    parser.add_option(
+            "--authors", dest="authors", type="string",
             default=None, help="authors' name (A^1, B^1, C^2)")
-    parser.add_option("--affiliations", dest="affiliations", type="string",
+    parser.add_option(
+            "--affiliations", dest="affiliations", type="string",
             default=None, help="affiliation (1. Univ. 1, 2. Univ. 2)")
     
     (options, args) = parser.parse_args()
+    
+    ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    options.command_anphon_ver2 = "anphon.2.0"
+    options.four = 0
+    options.frac_kdensity_4ph = 0.13
+    options.mater_dim = 3
+    ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     ### deprecated option names
     if options.ncores is not None:
@@ -303,7 +312,6 @@ def get_parser():
         options.outdir = options.material_name
         logger.warning("The option --material_name is not used any more. "
                        "Please use --outdir instead.")
-        
     return options
 
 def parse_vasp_params(params_string):
