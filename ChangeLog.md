@@ -1,6 +1,10 @@
-
 # Ver. 1.1.0 (July 8, 2025)
 
+## New
+
+- Add 'four', 'command_anphon_ver2', and 'frac_kdensity_4ph' options.
+
+- Add 'material_dimension' option for calculating 2D materials.
 
 # Ver. 1.0.0 (July 7, 2025)
 
