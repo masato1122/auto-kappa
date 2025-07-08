@@ -12,28 +12,20 @@
 import sys
 import os
 import os.path
-import numpy as np
 import datetime
-import time
 
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
 from auto_kappa.alamode.almcalc import AlamodeCalc
-from auto_kappa.alamode.pes import calculate_pes
+# from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.io.files import write_output_yaml
-from auto_kappa.calculators.alamode import (
-        analyze_phonon_properties,
-        analyze_harmonic_with_larger_supercells,
-        calculate_cubic_force_constants,
-        calculate_thermal_conductivities,
-        )
+from auto_kappa.calculators.alamode import analyze_phonon_properties
 from auto_kappa.cui import ak_log
 from auto_kappa.cui.initialization import (
         use_omp_for_anphon,
         get_previous_nac,
         get_required_parameters,
         get_base_directory_name,
-        # read_phonondb,
         )
 
 import logging
@@ -85,8 +77,7 @@ def main():
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Get the name of the base directory
-    base_dir = get_base_directory_name(
-            ak_params['outdir'], restart=ak_params['restart'])
+    base_dir = get_base_directory_name(ak_params['outdir'], restart=ak_params['restart'])
     os.makedirs(base_dir, exist_ok=True)
     
     ### set logger
@@ -205,7 +196,7 @@ def main():
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
             params_modified=vasp_params_mod,
-            #yamlfile_for_outdir=yaml_outdir
+            mater_dim=ak_params['mater_dim']
             )
     
     ### Relaxation calculation
@@ -254,6 +245,7 @@ def main():
         'anphon': ak_params['command_anphon'],
         'alm': ak_params['command_alm'],
         'dfc2': ak_params['command_dfc2'],
+        'anphon_ver2': ak_params['command_anphon_ver2'],
         }
     
     ### Set AlmCalc
@@ -283,7 +275,7 @@ def main():
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
-            outdir=ak_params['outdir'],
+            base_dir=base_dir,
             neglect_log=neglect_log,
             harmonic_only=ak_params['harmonic_only'],
             #
@@ -295,6 +287,9 @@ def main():
             scph=ak_params['scph'],
             disp_temp=ak_params['random_disp_temperature'],
             frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+            #
+            four=ak_params['four'],
+            frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
             )
     
     ### Calculate PES
@@ -305,65 +300,28 @@ def main():
     ########################
     ##  Larger supercell  ##
     ########################
-    ### calculate harmonic properteis with larger supercells
-    if (almcalc.minimum_frequency < ak_params['negative_freq'] and 
-            ak_params["analyze_with_largersc"] == 1):
+    ### calculate phonon properties with larger supercells
+    if (almcalc.minimum_frequency < ak_params['negative_freq'] and ak_params["analyze_with_largersc"] == 1):
         
-        almcalc_large = analyze_harmonic_with_larger_supercells(
-                almcalc,
-                base_dir=base_dir,
-                #
-                max_natoms_init=ak_params['max_natoms'],
-                delta_max_natoms=options.delta_max_natoms,
-                max_loop=options.max_loop_for_largesc,
-                #
-                k_length=ak_params['k_length'],
-                negative_freq=ak_params['negative_freq'],
-                neglect_log=neglect_log,
-                #
-                restart=ak_params['restart'],
-                )
-        
-        ### plot band and DOS
-        from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
-        figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
-        plot_bandos_for_different_sizes(
-                almcalc_large, almcalc, figname=figname)
-        
-        ### If negative frequencies could be removed, calculate cubic FCs with
-        ### the supercell of initial size
-        if (almcalc_large.minimum_frequency > ak_params["negative_freq"] and 
-                ak_params['harmonic_only'] == 0):
-            
-            calculate_cubic_force_constants(
-                    almcalc, calc_force,
-                    nmax_suggest=ak_params['nmax_suggest'], 
-                    frac_nrandom=ak_params['frac_nrandom'], 
-                    neglect_log=neglect_log
-                    )
-            
-            almcalc_large._fc3_type = almcalc.fc3_type
-            
-            ### calculate kappa
-            kdensities = [500, 1000, 1500]
-            calculate_thermal_conductivities(
-                    almcalc_large, 
-                    kdensities=kdensities,
-                    neglect_log=neglect_log,
-                    temperatures_for_spectral="300:500",
-                    fc2xml = almcalc_large.fc2xml,
-                    fcsxml = almcalc.fc3xml
-                    )
-            
-        else:
-            
-            ak_log.negative_frequency(almcalc_large.minimum_frequency)
-            
-            ### calculate PES
-            if ak_params['pes'] > 0:
-                almcalc_large.calculate_pes(
-                        negative_freq=ak_params['negative_freq'])
-                sys.exit()
+        from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
+        analyze_phonon_properties_with_larger_supercells(
+            base_dir, almcalc, calc_force,
+            max_natoms=ak_params['max_natoms'],
+            delta_max_natoms=ak_params['delta_max_natoms'],
+            max_loop_for_largesc=ak_params['max_loop_for_largesc'],
+            k_length=ak_params['k_length'],
+            negative_freq=ak_params['negative_freq'],
+            neglect_log=neglect_log,
+            restart=ak_params['restart'],
+            harmonic_only=ak_params['harmonic_only'],
+            nmax_suggest=ak_params['nmax_suggest'],
+            frac_nrandom=ak_params['frac_nrandom'],
+            frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+            random_disp_temperature=ak_params['random_disp_temperature'],
+            four=ak_params['four'],
+            frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
+            pes=ak_params['pes'],
+        )
     
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times

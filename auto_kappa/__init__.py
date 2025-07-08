@@ -29,7 +29,9 @@ output_directories = {
             'cv'     : 'higher/lasso',
             'lasso'  : 'higher/lasso',
             'scph'   : 'higher/scph',
-            'kappa'  : 'higher/kappa',
+            'kappa_scph'    : 'higher/kappa_scph',
+            'kappa_4ph'     : 'higher/kappa_4ph',
+            'kappa_scph_4ph': 'higher/kappa_scph_4ph',
             },
         'result': 'result'
         }
@@ -38,11 +40,6 @@ output_files = {
         'harm_dfset' : 'DFSET.harm',
         'harm_xml'   : "FC2.xml",
         #
-        #'cube_dfset' : 'DFSET.cube',       ## not used anymore
-        #'cube_xml'   : "FCs_cube.xml",     ## not used anymore
-        #
-        #'cube_fd_xml'     : "FC3_cube_fd.xml",
-        #'cube_lasso_xml'  : "FC3_cube_lasso.xml",
         'cube_fd_dfset'   : 'DFSET.cube_fd',
         'cube_fd_xml'     : "FC3_fd.xml",
         'cube_lasso_dfset': 'DFSET.cube_lasso',
