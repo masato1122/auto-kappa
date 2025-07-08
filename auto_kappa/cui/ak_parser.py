@@ -41,8 +41,8 @@ def get_parser():
     parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
             help="Output directory name [./out]")
     
-    #parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
-    #        help="Material dimension [3]")
+    parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
+            help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
@@ -181,13 +181,13 @@ def get_parser():
                 "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where "
                 "``num_errors`` is the number of errors."))
     
-    #### parameters for amin
-    #parser.add_option("--amin", dest="amin", 
-    #        type="float", default=None, 
-    #        help=("AMIN parameter for VASP [None]: If the length of a lattice "
-    #            "vector exceeds 5 nm, AMIN of the given value is set for the "
-    #            "VASP job.")
-    #        )
+    ##### parameters for amin
+    ##parser.add_option("--amin", dest="amin", 
+    ##        type="float", default=None, 
+    ##        help=("AMIN parameter for VASP [None]: If the length of a lattice "
+    ##            "vector exceeds 5 nm, AMIN of the given value is set for the "
+    ##            "VASP job.")
+    ##        )
     
     #### calculate potential energy sruface
     parser.add_option("--pes", dest="pes",
@@ -219,15 +219,15 @@ def get_parser():
             "0.No or 1.Yes. [0]")
     
     ##### 4-phonon scattering
-    #parser.add_option(
-    #        "--four", dest="four", type="int", default=0, help=
-    #        "Flag to consider four-phonon scattering (0.off, 1.on) [0]. " 
-    #        "If 'scph' option is also set to 1, SCPH+4ph is performed. ")
-    #parser.add_option(
-    #        "--frac_kdensity_4ph", dest="frac_kdensity_4ph", type="float", default=0.13, 
-    #        help=
-    #        "Fractional k-point density for 4-phonon scattering with respect to "
-    #        "the k-point density for three-phonon scattering calculation [0.13].")
+    parser.add_option(
+            "--four", dest="four", type="int", default=0, help=
+            "Flag to consider four-phonon scattering (0.off, 1.on) [0]. " 
+            "If 'scph' option is also set to 1, SCPH+4ph is performed. ")
+    parser.add_option(
+            "--frac_kdensity_4ph", dest="frac_kdensity_4ph", type="float", default=0.13, 
+            help=
+            "Fractional k-point density for 4-phonon scattering with respect to "
+            "the k-point density for three-phonon scattering calculation [0.13].")
     
     ### temperature for random displacements
     parser.add_option("--random_disp_temperature", 
@@ -237,10 +237,10 @@ def get_parser():
             "temperature for random displacements "
             "for high-order FCs [500]")
     
-    #### displacement magnitude for high-order FCs
-    #parser.add_option("--mag_high", 
-    #        dest="mag_high", type="float", default=0.03, 
-    #        help="magnitude of displacements for cubic FCs [0.03]")
+    ##### displacement magnitude for high-order FCs
+    ##parser.add_option("--mag_high", 
+    ##        dest="mag_high", type="float", default=0.03, 
+    ##        help="magnitude of displacements for cubic FCs [0.03]")
     
     parser.add_option("--frac_nrandom_higher", 
             dest="frac_nrandom_higher", type="float", default=0.34,
@@ -249,11 +249,11 @@ def get_parser():
             "of atoms in a supercell, and Nfc4 is the number of FC4 [0.34]. "
             )
     
-    #parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
-    #        default=None, 
-    #        help="This options is invalid! PLEASE DO NOT USE this option."\
-    #                "Maximum limit of the number of atoms in the supercell for "\
-    #                " FC3 [None].")
+    ##parser.add_option("--max_natoms3", dest="max_natoms3", type="int", 
+    ##        default=None, 
+    ##        help="This options is invalid! PLEASE DO NOT USE this option."\
+    ##                "Maximum limit of the number of atoms in the supercell for "\
+    ##                " FC3 [None].")
     
     
     #########################
