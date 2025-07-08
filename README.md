@@ -68,6 +68,8 @@ Frequently used commands are listed below.
 
 - **scph**: Flag for the phonon renormalization using the self-consistent phonon approach [Default: 0]
 
+- four: Flag for the four phonon scattering [Default: 0]
+
 Citation
 ---------
 
