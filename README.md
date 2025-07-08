@@ -61,9 +61,9 @@ Frequently used commands are listed below.
 
 - **command\_{vasp/alm/anphon/anphon_ver2}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon, anphon.2.0]
 
-- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state
+- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state [Default: 0]
 
-- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
+- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear [Default: 0]
 
 - **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
 
