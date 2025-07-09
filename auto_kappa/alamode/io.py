@@ -84,7 +84,7 @@ def read_fcs(filename):
     return dfs
 
 def wasfinished_alamode(logfile, tar=None):
-    """ Check the ALAMODE job has been finished or not with the log file.
+    """ Check the ALAMODE job has finished or not with the log file.
     """
     try:
         if tar is None:

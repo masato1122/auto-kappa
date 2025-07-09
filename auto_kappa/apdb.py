@@ -501,14 +501,6 @@ class ApdbVasp():
         ### update structures
         self.update_structures(self.unitcell, standardization=True)
         
-        ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        if self.mater_dim < 3:
-            msg = "\n The material dimension is less than 3."
-            msg += "\n The relaxation calculation is not supported."
-            logger.info(msg)
-            sys.exit()
-        ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:
             from auto_kappa.vasp.relax import StrictRelaxation
@@ -520,7 +512,7 @@ class ApdbVasp():
                 structure = self.unitcell
             
             init_struct = change_structure_format(structure, format='pmg')
-            relax = StrictRelaxation(init_struct, outdir=outdir)
+            relax = StrictRelaxation(init_struct, outdir=outdir, mater_dim=self.mater_dim)
             Vs, Es = relax.with_different_volumes(
                     kpts=kpts, 
                     command=self.command,
@@ -536,6 +528,7 @@ class ApdbVasp():
             
             ### output structure file
             struct_opt = relax.get_optimal_structure()
+            
             outfile = outdir + "/POSCAR.opt"
             struct_opt.to(filename=outfile.replace(os.getcwd(), "."))
             struct_ase = change_structure_format(struct_opt, format='ase') 

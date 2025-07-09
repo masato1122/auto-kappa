@@ -17,15 +17,17 @@ import os.path
 import math
 import numpy as np
 import ase
-import glob
+# import glob
 import yaml
 
-import ase.io
+# import ase.io
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
 from auto_kappa.io.vasp import wasfinished
 from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
+from auto_kappa.structure import (
+    change_structure_format, get_out_of_plane_direction)
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
@@ -38,13 +40,14 @@ logger = logging.getLogger(__name__)
 
 class StrictRelaxation():
 
-    def __init__(self, initial_structure, outdir="./volume"):
+    def __init__(self, initial_structure, mater_dim=3, outdir="./volume"):
         
         self.initial_structure = initial_structure
         self.outdir = outdir
         self._optimal_volume = None
         self.outfile_yaml = outdir + "/result.yaml"
-
+        self._mater_dim = mater_dim
+        
         self._volumes = None
         self._energies = None
     
@@ -71,6 +74,10 @@ class StrictRelaxation():
         else:
             msg = "\n Caution: energies were not yet set.\n"
             logger.warning(msg)
+    
+    @property
+    def mater_dim(self):
+        return self._mater_dim
     
     def with_different_volumes(self, 
             initial_strain_range=[-0.01, 0.05], nstrains=11,
@@ -105,7 +112,8 @@ class StrictRelaxation():
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
                 verbosity=2,
-                params_mod=params_mod
+                params_mod=params_mod,
+                mater_dim=self.mater_dim
                 )
         
         def _get_energy_info(energies):
@@ -145,7 +153,8 @@ class StrictRelaxation():
                     kpts=kpts, encut_factor=encut_factor,
                     command=command,
                     verbosity=1,
-                    params_mod=params_mod
+                    params_mod=params_mod,
+                    mater_dim=self.mater_dim
                     )
             
             ### check energies
@@ -215,18 +224,15 @@ class StrictRelaxation():
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
         """
-        return math.pow((s_vol + 1.), 1/3) - 1
+        return math.pow((s_vol + 1.), 1/self.mater_dim) - 1
     
     def get_optimal_structure(self, format='pmg'):
-        
-        vinit = self.initial_structure.volume
+        vinit = get_volume(self.initial_structure, dim=self.mater_dim)
         s_vol = (self.optimal_volume - vinit) / vinit
         s_len = self._strain_volume2length(s_vol)
-        
         struct_opt = get_strained_structure(
-                self.initial_structure, s_len, format=format)
-        
-        return struct_opt 
+                self.initial_structure, s_len, format=format, mater_dim=self.mater_dim)
+        return struct_opt
         
     def print_results(self):
         
@@ -246,6 +252,9 @@ class StrictRelaxation():
         msg += " Initial volume : %8.3f A^3\n" % vinit
         msg += " Initial strain : %8.3f\n" % (s_len)
         msg += " Error (MAE)    : %8.5f eV" % (mae)
+        if self.mater_dim == 2:
+            msg += "\n"
+            msg += " 2D thickness   : %8.3f A (temporal)" % (1.0)
         logger.info(msg)
         
         out = {}
@@ -255,7 +264,9 @@ class StrictRelaxation():
         out['initial_volume'] = [float(vinit), 'A^3']
         out['initial_strain'] = [float(s_len), '-']
         out['mae'] = [float(mae), 'eV']
-         
+        if self.mater_dim == 2:
+            out['thickness'] = [float(1.0), 'A']
+        
         with open(self.outfile_yaml, 'w') as f:
             yaml.dump(out, f)
             msg = "\n Output %s" % self.outfile_yaml.replace(os.getcwd(), ".")
@@ -312,7 +323,7 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
         with open(file_yaml, 'r') as yml:
             data = yaml.safe_load(yml)
             all_results.append(data)
-    
+        
     return all_results
 
 def _make_strain_yaml(directory, cell_pristine=None):
@@ -363,9 +374,7 @@ def _get_calculated_strains(
         base_dir, key='strain', cell_pristine=None, tol_strain=1e-9):
     """ Get list of strains for which the energy has been already calculated. 
     """
-    value_tmp = _get_results_all(
-            base_dir, keys=[key], 
-            cell_pristine=cell_pristine)
+    value_tmp = _get_results_all(base_dir, keys=[key], cell_pristine=cell_pristine)
     
     if len(value_tmp) == 0:
         return []
@@ -383,12 +392,9 @@ def _get_calculated_strains(
         strains = np.asarray(strains)
         return strains
 
-def _get_calculated_volumes_and_energies(
-        base_dir, keys=['volume', 'energy'], cell_pristine=None):
+def _get_calculated_volumes_and_energies(base_dir, keys=['volume', 'energy'], cell_pristine=None):
     
-    value_tmp = _get_results_all(
-            base_dir, keys=keys, 
-            cell_pristine=cell_pristine)
+    value_tmp = _get_results_all(base_dir, keys=keys, cell_pristine=cell_pristine)
     
     Vs = []
     Es = []
@@ -397,12 +403,9 @@ def _get_calculated_volumes_and_energies(
         Es.append(each[1][0])
     
     isort = np.argsort(Vs)
-    return (
-            np.asarray(Vs)[isort], 
-            np.asarray(Es)[isort], 
-            )
+    return np.asarray(Vs)[isort], np.asarray(Es)[isort]
 
-def get_strained_structure(structure0, strain, format='pmg'):
+def get_strained_structure(structure0, strain, format='pmg', mater_dim=3):
     """
     Args
     ----
@@ -416,8 +419,10 @@ def get_strained_structure(structure0, strain, format='pmg'):
     --------
     structure : 
         strained structure with the assigened format
-    
     """
+    if isinstance(structure0, Structure) == False:
+        structure0 = change_structure_format(structure0, format='pmg-Structure')
+    
     cell0 = structure0.lattice.matrix.copy()
     scaled_positions = structure0.frac_coords
     symbols = []
@@ -425,12 +430,20 @@ def get_strained_structure(structure0, strain, format='pmg'):
         symbols.append(el.name)
     
     ### prepare a strained structure
-    s = (1. + np.array(strain)) * np.eye(3)
+    if mater_dim == 3:
+        s = (1. + np.array(strain)) * np.eye(3)
+    elif mater_dim == 2:
+        normal_vec = get_out_of_plane_direction(structure0)
+        normal_idx = np.argmax(normal_vec)
+        s = (1. + np.array(strain)) * np.eye(3)
+        s[normal_idx, normal_idx] = 1.0
+    else:
+        logger.error(f" mater_dim == {mater_dim} is not supported.")
+        sys.exit()
+    
     cell = np.dot(cell0.T, s).T
     
-    if (format.lower() == 'pmg' or
-            format.lower() == 'pymatgen'
-            ):
+    if format.lower() == 'pmg' or format.lower() == 'pymatgen':
         ## pymatgen
         structure = Structure(
                 lattice=cell,
@@ -451,15 +464,14 @@ def relaxation_with_different_volumes(
         struct_init, strain_range=[-0.01, 0.05], nstrains=11, kpts=[2,2,2],
         base_directory='./volume', encut_factor=1.3, 
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
-        tol_strain=1e-5,
-        verbosity=1,
+        tol_strain=1e-5, verbosity=1, mater_dim=3,
         params_mod=None
         ):
     """ Structure relaxation with the Birch-Murnaghan equation of state
     Args
     ----
     struct_init : pymatgen Structure
-
+    
     strain_range : array of float, shape=(2), unit=[-]
     
     nstrains : integer
@@ -514,7 +526,7 @@ def relaxation_with_different_volumes(
         
         #### prepare a strained structure
         #structure = get_strained_structure(struct_init, strain, format='pmg')
-        atoms = get_strained_structure(struct_init, strain, format='ase')
+        atoms = get_strained_structure(struct_init, strain, format='ase', mater_dim=mater_dim)
         
         ### set calculator object
         calc = get_vasp_calculator(
@@ -526,11 +538,10 @@ def relaxation_with_different_volumes(
                 **params_mod
                 )
         
-        calc.command = "%s -n %d %s" % (
-                command['mpirun'],
-                command['nprocs'],
-                command['vasp'],
-                )
+        mpirun = command.get('mpirun', 'mpirun')
+        nprocs = command.get('nprocs', 1)
+        vasp = command.get('vasp', 'vasp')
+        calc.command = f"{mpirun} -n {nprocs} {vasp}"
         
         ### run VASP
         run_vasp(calc, atoms, method='custodian')
@@ -538,12 +549,13 @@ def relaxation_with_different_volumes(
         ### output data
         vasprun = Vasprun(outdir + "/vasprun.xml", parse_potcar_file=False)
         
-        volume = float(atoms.get_volume())
+        volume = get_volume(atoms, dim=mater_dim)
         energy = float(vasprun.final_energy.real)
         out_data = {}
         out_data['strain'] = float(strain)
         out_data['energy'] = [energy, str(vasprun.final_energy.unit)]
-        out_data['volume'] = float(atoms.get_volume())
+        out_data['volume'] = float(volume)
+        out_data['dim'] = int(mater_dim)
         
         ### output yamle file
         outfile = outdir + "/strain.yaml"
@@ -551,13 +563,26 @@ def relaxation_with_different_volumes(
             yaml.dump(out_data, f)
         
         if verbosity > 0:
-            msg = "\n strain: %f  volume: %f  energy: %f" % (
-                    strain, volume, energy)
+            msg = f" strain(%): {strain*100:.3f}   volume(A^3): {volume:.3f}   energy(eV): {energy:.3f}"
             logger.info(msg)
     
     ###
     Vs, Es = _get_calculated_volumes_and_energies(base_directory)
     return Vs, Es
+
+def get_volume(struct, dim=3):
+    
+    struct_pmg = change_structure_format(struct, format='pmg-Structure')
+    vol = struct_pmg.volume
+    cell = struct_pmg.lattice.matrix
+    
+    if dim == 3:
+        return vol
+    elif dim == 2:
+        norm_vec = get_out_of_plane_direction(struct_pmg)
+        height = np.linalg.norm(cell @ norm_vec)
+        area = vol / height
+        return float(area)
 
 #from pymatgen.io.vasp import Poscar
 #
@@ -571,4 +596,3 @@ def relaxation_with_different_volumes(
 #struct_opt = relax.get_optimal_structure()
 #struct_opt.to(filename="POSCAR.opt")
 #
-

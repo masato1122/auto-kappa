@@ -25,10 +25,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def suggest_structures_and_kmeshes(
-        filename=None, structure=None,
-        max_natoms=150, 
-        k_length=20,
-        ):
+    filename=None, structure=None, max_natoms=150, k_length=20, dim=3):
     """ Return the required parameters
 
     Parameters
@@ -55,11 +52,24 @@ def suggest_structures_and_kmeshes(
     else:
         struct_ase = change_structure_format(structure, format='ase')
     
+    ### 2D
+    if dim == 2:
+        ## Align the out-of-plane direction to the z-axis
+        from auto_kappa.structure.two import align_to_z_axis
+        struct_ase = align_to_z_axis(struct_ase)
+    
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
     
     ### get the supercell matrix and supercell for FC2
-    sc_mat = estimate_supercell_matrix(unitcell, max_num_atoms=max_natoms)
+    if dim == 3:
+        sc_mat = estimate_supercell_matrix(unitcell, max_num_atoms=max_natoms)
+    elif dim == 2:
+        from auto_kappa.structure.two import estimate_supercell_matrix_2d
+        sc_mat = estimate_supercell_matrix_2d(unitcell, max_num_atoms=max_natoms)
+    else:
+        logger.error("\n Error: dim must be 2 or 3.")
+        sys.exit()
     
     supercell = change_structure_format(
             get_supercell(
@@ -102,7 +112,11 @@ def suggest_structures_and_kmeshes(
             "unitcell": klength2mesh(k_length, unitcell.cell.array),
             "supercell": klength2mesh(k_length, supercell.cell.array),
             }
-
+    
+    if dim == 2:
+        for name in kpts:
+            kpts[name][2] = 1
+    
     return structures, matrices, kpts
 
 def get_unitcell_and_primitive_matrix(structure):
@@ -182,7 +196,6 @@ def klength2mesh(length, lattice, rotations=None):
     Returns
     -------
     array_like : int, shape=(3,)
-    
     
     Note
     -----

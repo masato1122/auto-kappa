@@ -509,14 +509,17 @@ def read_log_relax(directory):
                 pos = diri + '/CONTCAR'
             count += 1
         ##
-        if out['full'] is None:
-            out['full'] = {}
+        if count == 0:
+            break
         
+        if out.get('full') is None:
+            out['full'] = {}
         out['full']['repeat'] = count
     
     ## get prefix
-    structure = Poscar.from_file(pos, check_for_POTCAR=False).structure
-    out['prefix'] = structure.composition.reduced_formula
+    if pos is not None:
+        structure = Poscar.from_file(pos, check_for_POTCAR=False).structure
+        out['prefix'] = structure.composition.reduced_formula
     return out
 
 def read_log_nac(directory):

@@ -26,14 +26,19 @@ logger = logging.getLogger(__name__)
 
 def _plot_kappa_each(
         ax, df, col='black', kappa_label=None, kappa_min=None, 
-        show_label=False):
+        show_label=False, dim=3):
     """ plot kappa for each condition (k-mesh) """
     markers = ['+', 'x', '_', 'o']
     
+    if dim == 3:
+        data_types = ['xx', 'yy', 'zz', 'ave']
+    elif dim == 2:
+        data_types = ['xx', 'yy', 'ave']
+        
     ### kp for different directions
     cont = 'kp'
     show_total = True
-    for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+    for jj, direct in enumerate(data_types):
 
         lab = "%s_%s" % (cont, direct)
         xdat = df['temperature'].values
@@ -46,7 +51,7 @@ def _plot_kappa_each(
                     "%s is too small." % (direct, kappa_label))
             logger.warning(msg)
             continue
-
+        
         if direct == "ave" and show_total == False:
             continue
         
@@ -82,7 +87,7 @@ def _plot_kappa_each(
                     marker=None, c=col, label=label)
     
 def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, dim=3):
     """ plot thermal conductivity """
     
     cmap = plt.get_cmap("tab10")
@@ -105,7 +110,7 @@ def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
         try:
             _plot_kappa_each(
                     ax, dfs[klab], col=cmap(ik), kappa_label=klab,
-                    kappa_min=kappa_min, show_label=show_label)
+                    kappa_min=kappa_min, show_label=show_label, dim=dim)
         except Exception:
             msg = "\n Error while kappa is plotted."
             logger.error(msg)

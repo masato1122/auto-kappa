@@ -12,15 +12,15 @@
 #from typing import Any, Dict, List, Optional, Union
 from typing import Dict
 from monty.json import MSONable
-import sys
+# import sys
 import warnings
-import re
+# import re
 import math
 import numpy as np
-import pymatgen
+# import pymatgen
 
 from pymatgen.io.vasp import Poscar
-from ase import Atoms
+# from ase import Atoms
 
 from auto_kappa.units import AToBohr
 from auto_kappa.structure.crystal import (
@@ -665,7 +665,7 @@ class AnphonInput(MSONable, dict):
         
         return AnphonInput(**anp_dict)
     
-    def set_kpoint(self, **kwargs):
+    def set_kpoint(self, dim=3, **kwargs):
         """ Set suggeted k-point parameters. This module may not well written.
         
         ## kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
@@ -681,7 +681,6 @@ class AnphonInput(MSONable, dict):
             else:
                 ValueError(' kpmode must be given.')
         
-        #exit()
         ## Check if kpmode key is set or not
         set_kpmode = False
         if 'kpmode' not in self.as_dict().keys():
@@ -719,10 +718,7 @@ class AnphonInput(MSONable, dict):
             if 'kpath' not in self.keys():
                 msg = "\n kpath is set automatically."
                 logger.info(msg)
-                self['kpath'] = get_kpoint_path(
-                        self.primitive, 
-                        deltak=self['deltak']
-                        )
+                self['kpath'] = get_kpoint_path(self.primitive, deltak=self['deltak'], dim=dim)
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []
@@ -1012,7 +1008,18 @@ def _check_dict_contents(dictionary, key, message=True):
                 )
     return flag
 
-def get_kpoint_path(primitive, deltak=0.01):
+# def modify_kapath_for_2d(kpath_orig):
+#     """ Modify k-path for 2D calculations
+#     """
+#     print(kpath_orig)
+#     # kpath_mod = []
+#     # for kk in kpath_orig:
+#     #     print(kk)
+#     exit()
+    
+#     return kpath_mod
+
+def get_kpoint_path(primitive, deltak=0.01, dim=3):
     """
     Args
     --------
@@ -1037,19 +1044,19 @@ def get_kpoint_path(primitive, deltak=0.01):
             prim_pmg.frac_coords,
             prim_pmg.atomic_numbers
             ]
-    kpath = seekpath.get_path(
-            structure, with_time_reversal=True, recipe='hpkot')
+    kpath = seekpath.get_path(structure, with_time_reversal=True, recipe='hpkot')
     
     ## extract required data
     kpoints = []
     for each in kpath['path']:
-        kpoints.append([])
         k1 = np.asarray(kpath['point_coords'][each[1]])
         k0 = np.asarray(kpath['point_coords'][each[0]])
-        kvec = k1 - k0 
+        if dim == 2 and (abs(k1[2]) > 1e-3 or abs(k0[2]) > 1e-3):
+            continue
+        kvec = k1 - k0
         kleng = np.linalg.norm(kvec)
         nk = max(int(np.ceil(kleng / deltak)), 3)
-        kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
+        kpoints.append([{each[0]: k0}, {each[1]: k1}, nk])
     return kpoints
 
 def _read_alamode_input(filename):

@@ -9,7 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import sys
+# import sys
 import os
 import os.path
 import numpy as np
@@ -93,7 +93,7 @@ def _create_effective_harmonic_fcs(
     return 0
 
 def set_parameters_scph(
-        inp, primitive=None, deltak=0.01, kdensities=[30, 10], **kwargs):
+        inp, primitive=None, deltak=0.01, kdensities=[30, 10], dim=3, **kwargs):
     """ Set ALAMODE parameters for SCPH calculation.
     
     Args
@@ -123,15 +123,15 @@ def set_parameters_scph(
             "tol_scph": 1e-10,    ## default
             }
     
-    inp.set_kpoint(deltak=deltak)
+    inp.set_kpoint(deltak=deltak, dim=dim)
     
     ### kmesh_scph
     kmesh_scph = get_automatic_kmesh(
-            primitive, reciprocal_density=kdensities[0])
+            primitive, reciprocal_density=kdensities[0], dim=dim)
     
     ### kmesh_interpolate
     kmesh_int = get_automatic_kmesh(
-            primitive, reciprocal_density=kdensities[1])
+            primitive, reciprocal_density=kdensities[1], dim=dim)
     
     ### kmesh_scph should be equal to or a multiple of the number of
     ### kmesh_interpolate in the same direction.

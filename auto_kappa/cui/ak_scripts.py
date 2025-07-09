@@ -123,6 +123,7 @@ def main():
             #max_natoms3=ak_params['max_natoms3'],
             k_length=ak_params['k_length'],
             celltype_relax_given=ak_params['relaxed_cell'],
+            dim=ak_params['mater_dim'],
         ))
     
     ### NONANALYTIC (primitive)
@@ -264,6 +265,7 @@ def main():
             commands={'alamode': command_alamode, 'vasp': command_vasp},
             verbosity=ak_params['verbosity'],
             yamlfile_for_outdir=yaml_outdir,
+            dim=ak_params['mater_dim'],
             )
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation

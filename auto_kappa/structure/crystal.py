@@ -9,10 +9,11 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import sys
 import numpy as np
 #import warnings
 
-from phonopy.structure.cells import get_primitive as get_primitive_phonopy
+# from phonopy.structure.cells import get_primitive as get_primitive_phonopy
 import spglib 
 import ase, ase.data
 from ase.data import atomic_numbers, chemical_symbols
@@ -39,25 +40,28 @@ logger = logging.getLogger(__name__)
 def get_automatic_kmesh(
     struct_init, 
     reciprocal_density=1500, 
-    grid_density=0.01, 
-    method='reciprocal_density'):
+    grid_density=0.01,
+    method='reciprocal_density', dim=3):
     
     structure = change_structure_format(struct_init, format='pmg')
     
-    if method == 'reciprocal_density':
-        
+    if method == 'reciprocal_density':    
         force_gamma = False
-        
         vol = structure.lattice.reciprocal_lattice.volume           ### A^3
         kppa = reciprocal_density * vol * structure.num_sites       ### grid density
         kpts = Kpoints.automatic_density(structure, kppa, force_gamma=force_gamma).kpts[0]
-     
+        if dim == 2:
+            kpts = np.array(kpts)
+            kpts[2] = 1
+            kpts = kpts.tolist()
+    
     #elif method == 'grid_density':
     #    Kpoints.automatic_density(structure, grid_density)
     
     else:
-        logger.warning(" Error: %s is not supported." % method)
-        exit()
+        msg = f"\n Method '{method}' is not supported. Please use 'reciprocal_density'."
+        logger.error(msg)
+        sys.exit()
     
     return list(kpts)
 
@@ -316,4 +320,3 @@ def get_spg_number(str_orig):
             atoms.numbers)
     dataset = spglib.get_symmetry_dataset(cell)
     return dataset['number']
-

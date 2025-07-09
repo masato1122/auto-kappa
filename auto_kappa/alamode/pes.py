@@ -28,13 +28,13 @@ def calculate_pes(
             nac=nac, vasp_xml=vasp_xml, command=command)
      
     ### make vibration
-
+    logger.error("\n Error: make_vibration is not implemented yet.")
     exit()
     return None
 
 def calculate_evec(
         prim, kpoint, outdir="./evec", fcsxml=None, command=None,
-        vasp_xml=None, file_anphon="evec.in", nac=0):
+        vasp_xml=None, file_anphon="evec.in", nac=0, dim=3):
     """ Calculate eiven vector at the given kpoint """
     
     from auto_kappa.io.vasp import write_born_info
@@ -65,7 +65,7 @@ def calculate_evec(
             nonanalytic=nac,
             borninfo=borninfo)
     inp.update({"printevec": 1})
-    inp.set_kpoint(kpoints=[kpoint])
+    inp.set_kpoint(kpoints=[kpoint], dim=dim)
     inp.to_file(filename=file_anphon)
     
     ### run anphon

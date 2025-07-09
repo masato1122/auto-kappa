@@ -23,7 +23,8 @@ import glob
 import logging
 logger = logging.getLogger(__name__)
 
-def plot_fitting_result(bm, figname='fig.png', color='black',
+def plot_fitting_result(
+        bm, figname='fig.png', color='black',
         dpi=600, fontsize=7, fig_width=2.3, aspect=0.6, lw=0.5, ms=2.3):
     
     set_matplot(fontsize=fontsize)

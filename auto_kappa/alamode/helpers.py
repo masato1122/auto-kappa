@@ -392,7 +392,7 @@ class AlamodeInputWriter():
                     kpmode=kpmode,
                     fcsxml=fcsxml,
                     nonanalytic=self.nac, 
-                    borninfo=borninfo
+                    borninfo=borninfo,
                 )
             ### set primitive cell with Pymatgen-structure
             inp.set_primitive(
@@ -414,8 +414,8 @@ class AlamodeInputWriter():
     def _set_parameters_for_property(
         self, inp, propt=None, deltak=None, kpts=None, order=None):
         
-        if propt == 'band':    
-            inp.set_kpoint(deltak=deltak)
+        if propt == 'band':
+            inp.set_kpoint(deltak=deltak, dim=self.dim)
         
         elif propt == 'dos':
             if self.frequency_range is not None:
@@ -433,7 +433,7 @@ class AlamodeInputWriter():
         
         elif propt == 'evec_commensurate':
             from auto_kappa.alamode.parameters import set_parameters_evec
-            set_parameters_evec(inp, self.primitive_matrix, self.scell_matrix)
+            set_parameters_evec(inp, self.primitive_matrix, self.scell_matrix, dim=self.dim)
         
         elif propt.startswith('kappa'):
             from auto_kappa.alamode.parameters import set_parameters_kappa
@@ -443,7 +443,7 @@ class AlamodeInputWriter():
             from auto_kappa.calculators.scph import set_parameters_scph
             set_parameters_scph(
                     inp, primitive=self.primitive, deltak=deltak,
-                    kdensities=[30, 10])
+                    kdensities=[30, 10], dim=self.dim)
             
         elif propt in ['cv', 'lasso', 'fc2', 'fc3', 'suggest']:
             """
@@ -661,7 +661,7 @@ def should_rerun_band(filename):
     else:
         return True
 
-def read_kappa(dir_kappa, prefix):
+def read_kappa(dir_kappa, prefix, dim=3):
     """ Read .kl and .kl_coherent files and return pandas.DataFrame object
     
     Args
@@ -694,8 +694,8 @@ def read_kappa(dir_kappa, prefix):
     
     nt = len(data)
     df['temperature'] = data[:,0]
-    dirs = ['x', 'y', 'z']
-    for i1 in range(3):
+    dirs = [['x', 'y', 'z'][i] for i in range(dim)]
+    for i1 in range(dim):
         d1 = dirs[i1]
         
         if data2 is not None:
@@ -703,20 +703,33 @@ def read_kappa(dir_kappa, prefix):
             lab2 = 'kc_%s%s' % (dd, dd)
             df[lab2] = data2[:,i1+1]
         
-        for i2 in range(3):
+        for i2 in range(dim):
             d2 = dirs[i2]
             num = i1*3 + i2 + 1
             lab = 'kp_%s%s' % (d1, d2)
             df[lab] = data[:,num]
     
-    kave = (df['kp_xx'].values + df['kp_yy'].values + df['kp_zz'].values) / 3.
+    kave = df['kp_xx'].values / dim
+    for i in range(1, dim):
+        kave += df['kp_%s%s' % (dirs[i], dirs[i])].values / dim
+    
     df['kp_ave'] = kave
     
     if data2 is not None:
-        kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
+        if dim == 3:
+            kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
+        elif dim == 2:
+            kave = (df['kc_xx'].values + df['kc_yy'].values) / 2.
+        else:
+            msg = "\n Error: dim=%d is not supported." % dim
+            logger.error(msg)
+            sys.exit()
+        
         df['kc_ave'] = kave
         
         for pre in ['xx', 'yy', 'zz', 'ave']:
+            if dim == 2 and pre == 'zz':
+                continue
             key = 'ksum_%s' % pre
             df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
     

@@ -6,7 +6,7 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-def set_parameters_evec(inp, primitive_matrix, scell_matrix):
+def set_parameters_evec(inp, primitive_matrix, scell_matrix, dim=3):
     """ """
     ###### supercell matrix wrt primitive cell
     mat_p2s_tmp = np.dot(
@@ -26,7 +26,7 @@ def set_parameters_evec(inp, primitive_matrix, scell_matrix):
     from auto_kappa.structure.crystal import get_commensurate_points
     comm_pts = get_commensurate_points(mat_p2s)
     inp.update({'printevec': 1})
-    inp.set_kpoint(kpoints=comm_pts)
+    inp.set_kpoint(kpoints=comm_pts, dim=dim)
 
 def set_parameters_kappa(
         inp, kpts=None, nac=None, 

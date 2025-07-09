@@ -84,6 +84,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             commands=None,
             verbosity=0,
             yamlfile_for_outdir=None,
+            dim=3,
             ):
         """ This class helps to manage ALAMODE calculations including force
         calculations with VASP.
@@ -240,6 +241,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._unitcell = None
         self._supercell = None
         #self._supercell3 = None
+        self._dim = dim
         
         self._set_structures(unit_pp)
         
@@ -294,6 +296,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._harm_dfset = None
         self._cube_dfset = None
         self._higher_dfset = None
+    
+    @property
+    def dim(self):
+        """ Dimension of the structure """
+        return self._dim
     
     def _get_previous_nac(self):
         """ Get previously used NAC option """
@@ -994,7 +1001,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             self._make_dfset_file(order, nsuggest, outdir0)
             
         logger.info("")
-
+    
     def _write_alamode_input_harmonic(
         self, propt, outdir=None, deltak=None, reciprocal_density=None, **kwargs):
         """ Make an input script for the ALAMODE job for an harmonic property
@@ -1005,11 +1012,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             self.write_alamode_input(
                     propt=propt, deltak=deltak, outdir=outdir, **kwargs)
         elif propt == "dos":
-            nkts = get_automatic_kmesh(
+            kpts = get_automatic_kmesh(
                     self.primitive,
-                    reciprocal_density=reciprocal_density)
+                    reciprocal_density=reciprocal_density, dim=self.dim)
             self.write_alamode_input(
-                    propt=propt, nkts=nkts, outdir=outdir, **kwargs)
+                    propt=propt, kpts=kpts, outdir=outdir, **kwargs)
         elif propt == "fc2":
             self.write_alamode_input(
                     propt=propt, outdir=outdir, **kwargs)
@@ -1169,7 +1176,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                     return alpha
             return None
         except Exception:
-            msg = " Warning: cannot find %s" % fn
+            msg = "\n Warning: cannot find %s" % fn
             logger.warning(msg)
             return None
     
@@ -1405,9 +1412,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 logger.debug(" %d" % max_num_corrections)
             else:
                 logger.debug(" None")
-            msg = "\n Error: ALAMODE job for %s "\
-                    "has not been finished properly." % propt
-            msg += "\n A possible solution is to use a large memory node."
+            msg = f"\n Error: ALAMODE job for {propt} did not finish properly, possibly due to insufficient memory."
             msg += "\n Abort the job."
             logger.error(msg)
             sys.exit()
@@ -1474,7 +1479,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         if val == -1:
             logger.info(f" {propt} has already been calculated.")
         elif val == 1:
-            msg = "\n Error : ALAMODE job was not finished properly."
+            msg = "\n Error : ALAMODE job did not finish properly, possibly due to insufficient memory."
             msg += "\n Stop the calculation."
             logger.error(msg)
             sys.exit()
@@ -1842,9 +1847,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             "cubic", "scph"
 
         """
-        
         dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
-        
         keys = dirs_kappa.keys()
         
         dfs = {}
@@ -1854,7 +1857,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 dir1 = self.get_relative_path(dirs_kappa[key])
                 msg = " Read %s" % (dir1)
                 logger.info(msg)
-                dfs[key] = helper.read_kappa(dirs_kappa[key], self.prefix)
+                dfs[key] = helper.read_kappa(dirs_kappa[key], self.prefix, dim=self.dim)
             except Exception:
                 continue
         
@@ -1862,7 +1865,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         if figname is None:
             figname = self.out_dirs['result'] + '/fig_kappa.png'
         logger.info("")
-        plot_kappa(dfs, figname=self.get_relative_path(figname))
+        plot_kappa(dfs, figname=self.get_relative_path(figname), dim=self.dim)
         return 0
     
     def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',

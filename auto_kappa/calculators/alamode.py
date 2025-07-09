@@ -117,18 +117,14 @@ def analyze_phonon_properties(
         logger.info(msg)
         return 0
     
-    ###
-    ### Calculate cubic FCs
-    ###
+    ## Calculate cubic FCs
     calculate_cubic_force_constants(
             almcalc, calc_force,
             nmax_suggest=nmax_suggest, 
             frac_nrandom=frac_nrandom, 
             neglect_log=neglect_log)
     
-    ###
-    ### Calculate high-order FCs using LASSO
-    ###
+    ## Calculate high-order FCs using LASSO
     if scph or four:
         
         from auto_kappa.calculators.scph import (
@@ -146,11 +142,8 @@ def analyze_phonon_properties(
         if scph:
             conduct_scph_calculation(almcalc, temperatures=temps_scph)
     
-    ###
-    ### Calculate kappa with different k-mesh densities
-    ###
+    ## Calculate kappa with different k-mesh densities
     if calc_kappa:
-        
         if scph == 0 and four == 0:
             calc_type = "cubic"
         elif scph == 0 and four == 1:
@@ -357,6 +350,7 @@ def analyze_harmonic_with_larger_supercells(
                 commands=almcalc_orig.commands,
                 verbosity=almcalc_orig.verbosity,
                 yamlfile_for_outdir=almcalc_orig.yamlfile_for_outdir,
+                dim=almcalc_orig.dim,
                 )
         
         start_larger_supercell(almcalc_new)
@@ -370,6 +364,7 @@ def analyze_harmonic_with_larger_supercells(
                 primitive_matrix=almcalc_orig.primitive_matrix,
                 scell_matrix=sc_mat,
                 command=almcalc_orig.commands["vasp"],
+                mater_dim=almcalc_orig.dim,
                 )
         calc_force = apdb.get_calculator('force', kpts=kpts)
         
@@ -580,8 +575,7 @@ def calculate_thermal_conductivities(
     for kdensity in kdensities:
         
         kpts = get_automatic_kmesh(
-                almcalc.primitive, reciprocal_density=kdensity)
-        
+                almcalc.primitive, reciprocal_density=kdensity, dim=almcalc.dim)
         kpts_suffix = "_%dx%dx%d" % (int(kpts[0]), int(kpts[1]), int(kpts[2]))
         
         if calc_type == "cubic":
@@ -602,7 +596,9 @@ def calculate_thermal_conductivities(
                 raise ValueError(" Error: 'frac_kdensity_4ph' option must be given for 4-phonon calculation.")
             
             kpts_4ph = get_automatic_kmesh(
-                almcalc.primitive, reciprocal_density=int(kdensity * frac_kdensity_4ph + 0.5))
+                almcalc.primitive, 
+                reciprocal_density=int(kdensity * frac_kdensity_4ph + 0.5),
+                dim=almcalc.dim)
             kwargs['kmesh_coarse'] = kpts_4ph
         
         almcalc.write_alamode_input(
