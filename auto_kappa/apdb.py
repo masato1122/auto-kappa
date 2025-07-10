@@ -300,10 +300,12 @@ class ApdbVasp():
                 **merged_params_mod,
                 )
         
-        calc.command = '%s -n %d %s' % (
-                self.command['mpirun'], 
-                self.command['nprocs'],
-                self.command['vasp'])
+        calc.command = f"{self.command['mpirun']} -n {self.command['nprocs']} "
+        if list(kpts) == [1, 1, 1]:
+            calc.command += f"{self.command['vasp_gam']}"
+        else:
+            calc.command += f"{self.command['vasp']}"
+        
         return calc
     
     def run_relaxation(
@@ -664,13 +666,12 @@ class ApdbVasp():
             logger.info(msg)
         
         else:
-            
             #### ver.1 relax with one shot
             calc = self.get_calculator(
                     mode.lower(), directory=directory, kpts=kpts, **args
                     )
             
-            ###
+            ### set structure
             if structure is None:
                 structure = self.primitive
             

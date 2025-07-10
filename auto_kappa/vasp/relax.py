@@ -540,7 +540,10 @@ def relaxation_with_different_volumes(
         
         mpirun = command.get('mpirun', 'mpirun')
         nprocs = command.get('nprocs', 1)
-        vasp = command.get('vasp', 'vasp')
+        if list(kpts) == [1, 1, 1]:
+            vasp = command.get('vasp_gam')
+        else:
+            vasp = command.get('vasp', 'vasp')
         calc.command = f"{mpirun} -n {nprocs} {vasp}"
         
         ### run VASP

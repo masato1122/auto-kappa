@@ -10,6 +10,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
+import shutil
 from optparse import OptionParser
 
 import logging
@@ -20,67 +21,75 @@ def get_parser():
     parser = OptionParser()
     
     ### parameters that need to be modified for each calculation
-    parser.add_option("-d", "--directory", dest="directory", type="string",
-            default=None, help=""
-            "Directory name for data of Phonondb "
-            "where POSCAR-unitcell, phonopy.conf, KPOINTS-**, etc. "
-            "are located. "
-            "``--directory`` or ``--file_structure`` must be given. "
-            "When both of them are given, ``--directory`` takes "
-            "priority over ``--file_structure``."
-            )
-     
-    parser.add_option("--file_structure", dest="file_structure", type="string",
-            default=None, 
-            help="Structure file name. Different kinds of format such as "
-            "POSCAR and cif file can be read by ``Structure.from_file`` module "
-            "in ``Pymatgen.core.structure``.")
+    parser.add_option(
+        "-d", "--directory", dest="directory", type="string",
+        default=None, help=""
+        "Directory name for data of Phonondb "
+        "where POSCAR-unitcell, phonopy.conf, KPOINTS-**, etc. "
+        "are located. "
+        "``--directory`` or ``--file_structure`` must be given. "
+        "When both of them are given, ``--directory`` takes "
+        "priority over ``--file_structure``."
+        )
+    parser.add_option(
+        "--file_structure", dest="file_structure", type="string", default=None, 
+        help="Structure file name. Different kinds of format such as "
+        "POSCAR and cif file can be read by ``Structure.from_file`` module "
+        "in ``Pymatgen.core.structure``.")
     
-    parser.add_option("--material_name", dest="material_name", type="string", default=None,
-            help="This options is not used any more. See --outdir option. ")
-    parser.add_option("--outdir", dest="outdir", type="string", default="./out", 
-            help="Output directory name [./out]")
+    parser.add_option(
+        "--material_name", dest="material_name", type="string", default=None,
+        help="This options is not used any more. See --outdir option. ")
+    parser.add_option(
+        "--outdir", dest="outdir", type="string", default="./out", 
+        help="Output directory name [./out]")
     
-    parser.add_option("--material_dimension", dest="mater_dim", type="int", default=3, 
-            help="Material dimension [3]")
+    parser.add_option(
+        "--material_dimension", dest="mater_dim", type="int", default=3, 
+        help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
-    parser.add_option("--ncores", dest="ncores", type="int", default=None, help=
-                      "Number of cores used for the calculation "
-                      "(This option is not used any more, please use 'nprocs' instead.)")
-    parser.add_option("-n", "--nprocs", dest="nprocs", type="int",
-            default=2, help="Number of processes for the calculation [2]")
+    parser.add_option(
+        "--ncores", dest="ncores", type="int", default=None, 
+        help="Number of cores used for the calculation "
+        "(This option is not used any more, please use 'nprocs' instead.)")
+    parser.add_option(
+        "-n", "--nprocs", dest="nprocs", type="int", default=2, 
+        help="Number of processes for the calculation [2]")
     
-    parser.add_option("--anphon_para", 
-            dest="anphon_para", type="string", default="mpi", 
-            help=(
-                "[This option may not be supported in future.] "
-                "Parallel mode for \"anphon\". "
-                "Input value should be \"mpi\" for MPI and "
-                "\"omp\" for OpenMP [mpi]. "
-                "While \"mpi\", which is the default value, is "
-                "faster for most cases, "
-                "if the system is complex and requires a large memory, "
-                "it is recommended to use \"omp\". "))
+    parser.add_option(
+        "--anphon_para", 
+        dest="anphon_para", type="string", default="mpi", 
+        help=""
+        "[This option may not be supported in future.] "
+        "Parallel mode for \"anphon\". "
+        "Input value should be \"mpi\" for MPI and "
+        "\"omp\" for OpenMP [mpi]. "
+        "While \"mpi\", which is the default value, is "
+        "faster for most cases, "
+        "if the system is complex and requires a large memory, "
+        "it is recommended to use \"omp\". ")
      
-    parser.add_option("--mpirun", dest="mpirun", type="string",
-            default="mpirun", help="MPI command [mpirun]")
+    parser.add_option(
+        "--mpirun", dest="mpirun", type="string",
+        default="mpirun", help="MPI command [mpirun]")
     
     parser.add_option("--command_vasp", 
             dest="command_vasp", type="string", default="vasp", 
             help="Command to run vasp [vasp]")
-    
+    parser.add_option("--command_vasp_gam", 
+            dest="command_vasp_gam", type="string", default="vasp_gam", 
+            help="Command to run vasp_gam [vasp_gam]")
     parser.add_option("--command_alm", 
             dest="command_alm", type="string", default="alm", 
             help="Command to run alm [alm]")
-    
     parser.add_option("--command_anphon", 
             dest="command_anphon", type="string", default="anphon", 
             help="Command to run anphon [anphon]")
-    
     parser.add_option("--command_anphon_ver2",
             dest="command_anphon_ver2", type="string", default="anphon.2.0",
             help="Command to run anphon for 4-phonon scattering [anphon.2.0]")
+    
     
     parser.add_option("--nonanalytic", 
             dest="nonanalytic", type="int", default=2, 
@@ -119,9 +128,9 @@ def get_parser():
             default=-0.001, help="threshold of negative frequency [-0.001]")
             
     parser.add_option("--volume_relaxation", 
-            dest="volume_relaxation", type="int", default=0,
+            dest="volume_relaxation", type="int", default=1,
             help="strict relaxation with the relation between energy and "
-            "volume (0.off or 1.on) [0]")
+            "volume (0.off or 1.on) [1]")
     
     parser.add_option("--relaxed_cell", 
             dest="relaxed_cell", type="string", default=None,
@@ -303,17 +312,56 @@ def get_parser():
     #options.mater_dim = 3
     #### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
-    ### deprecated option names
-    if options.ncores is not None:
-        options.nprocs = options.ncores
-        logger.warning("The option --ncores is not used any more. "
-                       "Please use --nprocs instead.")
-    if options.material_name is not None:
-        options.outdir = options.material_name
-        logger.warning("The option --material_name is not used any more. "
-                       "Please use --outdir instead.")
     return options
 
+def _check_deprecated_options(options):
+    """ Check deprecated option names and set new option names."""
+    params = eval(str(options))
+    ## --ncores
+    if params.get('ncores') is not None:
+        options.nprocs = params['ncores']    
+        logger.warning("\n The option --ncores is not used any more. "
+                       "Please use --nprocs instead.")
+    ## --material_name
+    if params.get('material_name') is not None:
+        options.outdir = params['material_name']
+        logger.warning("\n The option --material_name is not used any more. "
+                       "Please use --outdir instead.")
+
+def _check_command_options(options):
+    """ Check the command options. """
+    params = eval(str(options))
+    for name, cmd in params.items():
+        if name.startswith("command_") == False:
+            continue
+        exists = shutil.which(cmd) is not None
+        if not exists:
+            if name == 'command_vasp_gam':
+                options.command_vasp_gam = options.command_vasp
+                msg = (
+                    f"\n Warning : '{cmd}' command does not exist. "
+                    f"--command_vasp_gam is set to '{options.command_vasp}'.")
+                logger.warning(msg)
+            
+            elif name == 'command_anphon_ver2' and options.four == 0:
+                options.command_anphon_ver2 = options.command_anphon
+                msg = "\n Note : '{cmd}' command does not exist which is used when options.four == 1."
+                logger.info(msg)
+            
+            elif name == 'command_dfc2' and options.scph == 0:
+                msg = f"\n Note : '{cmd}' does not exist which is used when options.scph == 1."
+                logger.info(msg)
+            
+            else:
+                msg = f"\n Error : '{cmd}' does not exist in the PATH."
+                logger.error(msg)
+                sys.exit()
+    
+def check_ak_options(options):
+    """ Check the auto-kappa options. """
+    _check_deprecated_options(options)
+    _check_command_options(options)
+    
 def parse_vasp_params(params_string):
     """
     Parameters
@@ -361,4 +409,3 @@ def parse_vasp_params(params_string):
         params_dict[name] = val
     
     return params_dict
-

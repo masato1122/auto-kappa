@@ -179,7 +179,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._commands = {
                 'vasp':{
                     'mpirun': 'mpirun', "nprocs": 1, "nthreads": 1, 
-                    'vasp': 'vasp'
+                    'vasp': 'vasp', 'vasp_gam': 'vasp_gam'
                     },
                 'alamode':{
                     'mpirun': 'mpirun', 'anphon_para': 1, 'nprocs': 2,

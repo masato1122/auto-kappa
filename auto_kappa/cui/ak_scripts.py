@@ -71,22 +71,25 @@ def _stop_symmetry_error(out):
 def main():
     
     ### Parse given parameters
-    from auto_kappa.cui.ak_parser import get_parser, parse_vasp_params
+    from auto_kappa.cui.ak_parser import get_parser, check_ak_options, parse_vasp_params
     options = get_parser()
-    ak_params = eval(str(options))
-    vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
-    ### Get the name of the base directory
-    base_dir = get_base_directory_name(ak_params['outdir'], restart=ak_params['restart'])
+    ### Prepare the base directory
+    base_dir = get_base_directory_name(options.outdir, restart=options.restart)
     os.makedirs(base_dir, exist_ok=True)
     
-    ### set logger
+    ### Set logger
     logfile = os.path.join(base_dir, 'ak.log')
     ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
     
     ### Start auto-kappa
     ak_log.start_autokappa()
     #ak_log.print_machine_info()
+    
+    ### Set auto-kappa options
+    check_ak_options(options)
+    ak_params = eval(str(options))
+    vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Set output directories
     out_dirs = _set_outdirs(base_dir)
@@ -188,6 +191,7 @@ def main():
             'nprocs': ak_params['nprocs'], 
             'nthreads': 1, 
             'vasp': ak_params['command_vasp'],
+            'vasp_gam': ak_params['command_vasp_gam'],
             }
     
     ### Set ApdbVasp object
