@@ -23,9 +23,9 @@ import glob
 import logging
 logger = logging.getLogger(__name__)
 
-def plot_fitting_result(
-        bm, figname='fig.png', color='black',
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.6, lw=0.5, ms=2.3):
+def plot_bm_result(
+        bm, dim=3, modulus_info=None, figname='fig.png', color='black',
+        dpi=600, fontsize=7, fig_width=2.5, aspect=0.7, lw=0.5, ms=2.3):
     
     set_matplot(fontsize=fontsize)
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
@@ -63,11 +63,13 @@ def plot_fitting_result(
     ax.set_ylim(ymax=ymax)
     
     ### show text
-    text = "Minimum energy = %.2f eV" % (bm.e0)
-    text += "\nMinimum or reference volume = %.2f eV" % (bm.v0)
-    text += "\nBulk modulus = %.2f ${\\rm eV/\\AA^3}$ GPa" % (bm.b0_GPa.real)
+    text = "Min. energy = %.2f eV" % (bm.e0)
+    text += "\nMin. volume = %.2f eV" % (bm.v0)
+    text += "\nBulk modulus = %.2f %s" % (modulus_info['value'], modulus_info['unit'])
+    if dim == 2:
+        text += "\nThickness = %.2f ${\\rm \\AA}$" % (modulus_info['thickness'])
     text += "\nDerivative of bulk modulus wrt pressure = %.2f" % (bm.b1)
-    ax.text(0.03, 0.97, text, fontsize=4, transform=ax.transAxes,
+    ax.text(0.03, 0.95, text, fontsize=4, transform=ax.transAxes,
             horizontalalignment="left", verticalalignment="top",
             bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=0.0))
     
@@ -76,4 +78,3 @@ def plot_fitting_result(
     msg = " Output %s" % figname
     logger.info(msg)
     return fig
-

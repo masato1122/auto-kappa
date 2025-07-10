@@ -100,3 +100,28 @@ def estimate_supercell_matrix_2d(struct_orig, max_num_atoms=120):
         scale_factor = int(np.floor(np.sqrt(max_num_atoms / n_atoms)))
         sc_mat = np.diag([scale_factor, scale_factor, 1])
     return sc_mat
+
+def get_thickness(structure, norm_idx=2):
+    """ Calculate the thickness of a 2D structure.
+    
+    Parameters:
+        structure : pymatgen.Structure object or ase.Atoms object
+        out_idx (int): Index of the out-of-plane direction (default is 2 for z-axis)
+    
+    Returns:
+        float: Thickness of the structure
+    """
+    from mendeleev import element
+    struct = change_structure_format(structure, format='pmg-structure')
+    chemical_symbols = [str(s) for s in struct.species]
+    z_positions = struct.cart_coords[:, norm_idx]
+    
+    imax = np.argmax(z_positions)
+    imin = np.argmin(z_positions)
+    
+    vdw_rad_max = element(chemical_symbols[imax]).vdw_radius * 0.01 # Convert to Angstrom
+    vdw_rad_min = element(chemical_symbols[imin]).vdw_radius * 0.01 # Convert to Angstrom
+    
+    thickness = z_positions[imax] - z_positions[imin] + vdw_rad_max + vdw_rad_min
+    
+    return thickness

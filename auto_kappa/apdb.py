@@ -19,8 +19,8 @@ import numpy as np
 import glob
 
 import ase.io
-from ase.calculators.vasp import Vasp
-from ase.calculators.vasp.create_input import GenerateVaspInput
+# from ase.calculators.vasp import Vasp
+# from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from phonopy.structure.cells import get_supercell
 
@@ -514,11 +514,10 @@ class ApdbVasp():
                 structure = self.unitcell
             
             init_struct = change_structure_format(structure, format='pmg')
-            relax = StrictRelaxation(init_struct, outdir=outdir, mater_dim=self.mater_dim)
+            relax = StrictRelaxation(init_struct, outdir=outdir, dim=self.mater_dim)
             Vs, Es = relax.with_different_volumes(
-                    kpts=kpts, 
-                    command=self.command,
-                    params_mod=self.params_mod
+                    kpts=kpts, command=self.command, params_mod=self.params_mod,
+                    initial_strain_range=[-0.03, 0.05], nstrains=15
                     )
             
             ### output figure
@@ -528,7 +527,7 @@ class ApdbVasp():
             ### print results
             relax.print_results()
             
-            ### output structure file
+            ### output optimized structure file
             struct_opt = relax.get_optimal_structure()
             
             outfile = outdir + "/POSCAR.opt"
@@ -546,7 +545,7 @@ class ApdbVasp():
                 unitcell = struct_ase.copy()
             
             self.update_structures(unitcell)
-        
+            
         ### Check the crystal symmetry before and after the relaxation
         spg_after = get_spg_number(self.primitive)
         
@@ -561,7 +560,7 @@ class ApdbVasp():
         ### output structures (>= ver.0.4.0)
         outdir = directory + "/structures"
         os.makedirs(outdir, exist_ok=True)
-        logger.info("\n")
+        logger.info("")
         for key in self.structures.keys():
             fn = outdir.replace(os.getcwd(), ".") + "/POSCAR.%s" % key
             ase.io.write(fn, self.structures[key], format='vasp', direct=True, vasp5=True, sort=True)

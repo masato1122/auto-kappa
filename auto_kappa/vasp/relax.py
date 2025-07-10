@@ -16,11 +16,10 @@ import sys
 import os.path
 import math
 import numpy as np
+import pandas as pd
 import ase
-# import glob
 import yaml
 
-# import ase.io
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
@@ -28,6 +27,7 @@ from auto_kappa.io.vasp import wasfinished
 from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
 from auto_kappa.structure import (
     change_structure_format, get_out_of_plane_direction)
+from auto_kappa.structure.two import get_thickness
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
@@ -40,13 +40,22 @@ logger = logging.getLogger(__name__)
 
 class StrictRelaxation():
 
-    def __init__(self, initial_structure, mater_dim=3, outdir="./volume"):
+    def __init__(self, initial_structure, dim=3, outdir="./volume"):
+        """
+        Args
+        ----
+        initial_structure : pymatgen Structure or ASE Atoms object
+            Initial structure to be relaxed
+        """
+        if isinstance(initial_structure, Structure) == False:
+            initial_structure = change_structure_format(
+                initial_structure, format='pmg-Structure')
         
         self.initial_structure = initial_structure
         self.outdir = outdir
-        self._optimal_volume = None
         self.outfile_yaml = outdir + "/result.yaml"
-        self._mater_dim = mater_dim
+        self._optimal_volume = None
+        self._dim = dim
         
         self._volumes = None
         self._energies = None
@@ -76,18 +85,40 @@ class StrictRelaxation():
             logger.warning(msg)
     
     @property
-    def mater_dim(self):
-        return self._mater_dim
+    def dim(self):
+        return self._dim
     
     def with_different_volumes(self, 
-            initial_strain_range=[-0.01, 0.05], nstrains=11,
-            tol_frac_ediff=0.5,
+            initial_strain_range=[-0.03, 0.05], nstrains=15, tol_strain=None, 
             kpts=[2,2,2],
             command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
             encut_factor=1.3, 
             verbosity=1,
-            params_mod=None
+            params_mod=None,
             ):
+        """ Run VASP jobs for different volumes and calculate the energy.
+        
+        Args
+        ----
+        strain_range : list of float
+            The range of strain to explore (min, max)
+        nstrains : int
+            The number of strain points to calculate
+        max_strain : float
+            The maximum strain from the minimum energy point
+        kpts : list of int
+            The k-point grid for VASP calculations
+        command : dict
+            The command to run VASP
+        encut_factor : float
+            The factor to scale the plane-wave cutoff energy
+        verbosity : int
+            The verbosity level for logging
+        params_mod : dict
+            A dictionary of parameters to modify in the VASP input
+        """
+        if tol_strain is None:
+            tol_strain = (initial_strain_range[1] - initial_strain_range[0]) / nstrains / 2.
         
         ### Run VASP jobs for different volumes
         line = " Strict structure optimization"
@@ -95,82 +126,176 @@ class StrictRelaxation():
         msg += "\n " + "=" * len(line)
         if verbosity > 0:
             logger.info(msg)
-         
-        ### get the strain interval
-        strain_interval = (
-                (initial_strain_range[1] - initial_strain_range[0]) /
-                (nstrains - 1)
-                )
         
-        ### calculate energies with the initial setting
-        Vs0, Es0 = relaxation_with_different_volumes(
-                self.initial_structure,
+        ### get the strain interval
+        # strain_interval = (initial_strain_range[1] - initial_strain_range[0]) / (nstrains - 1)
+        
+        init_vol = get_volume(self.initial_structure, dim=self.dim)
+        
+        ###
+        max_iterations = 3
+        flag = False
+        count = 0
+        while flag == False:
+            
+            ## Check the number of iterations
+            if count == max_iterations:
+                msg = "\n Number of iterations reached the limit (%d)." % count
+                logger.warning(msg)
+                break
+            
+            if count == 0:
+                verbosity = 2
+                strains = np.linspace(initial_strain_range[0], initial_strain_range[1], nstrains)
+            else:
+                verbosity = 1
+            
+            df_results = relaxation_with_different_volumes(
+                self.initial_structure, strains,
                 base_directory=self.outdir,
-                strain_range=initial_strain_range,
-                nstrains=nstrains,
+                tol_strain=tol_strain,
+                # tol_strain=1.0,
                 #
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
-                verbosity=2,
                 params_mod=params_mod,
-                mater_dim=self.mater_dim
-                )
-        
-        def _get_energy_info(energies):
-            emin = np.min(energies)
-            emax = np.max(energies)
-            de_tot = emax - emin
-            return emin, emax, de_tot
-        
-        ### analyze smaller or larger strains
-        emin, emax, de_tot = _get_energy_info(Es0)
-        flag = False
-        if Es0[0] - emin < de_tot * tol_frac_ediff:
-            direction = 'smaller'
-        elif Es0[-1] - emin < de_tot * tol_frac_ediff:
-            direction = 'larger'
-        else:
-            flag = True
-        
-        strain_range = initial_strain_range
-        while flag == False:
+                verbosity=verbosity,
+                dim=self.dim
+            )
+            df_results = df_results.sort_values(by='strain')
             
-            n = 2
-            if direction == 'smaller':
-                s0 = strain_range[0] - strain_interval * n
-                s1 = strain_range[0] - strain_interval
+            if len(df_results) < nstrains:
+                msg = "\n Caution: Not all the strains were calculated."
+                logger.warning(msg)
+                count += 1
+                continue
+            
+            ## Get the optimal volume
+            opt_vol = get_optimal_volume(df_results['volume'].values, df_results['energy'].values)
+            
+            if opt_vol is None:
+                msg = "\n Caution: Optimal volume is not found."
+                logger.warning(msg)
+            
             else:
-                s0 = strain_range[1] + strain_interval
-                s1 = strain_range[1] + strain_interval * n
-            
-            strain_range = [s0, s1]
-            Vs, Es = relaxation_with_different_volumes(
-                    self.initial_structure,
-                    base_directory=self.outdir,
-                    strain_range=strain_range,
-                    nstrains=n,
-                    #
-                    kpts=kpts, encut_factor=encut_factor,
-                    command=command,
-                    verbosity=1,
-                    params_mod=params_mod,
-                    mater_dim=self.mater_dim
-                    )
-            
-            ### check energies
-            emin, emax, de_tot = _get_energy_info(Es)
-            if direction == 'smaller':
-                if Es[0] - emin > tol_frac_ediff * de_tot:
+                min_vol = opt_vol * (1. + initial_strain_range[0])
+                max_vol = opt_vol * (1. + initial_strain_range[1])
+                s0 = (min_vol - init_vol) / init_vol
+                s1 = (max_vol - init_vol) / init_vol
+                strains = []
+                for new_str in np.linspace(s0, s1, nstrains):
+                    if np.min(abs(df_results['strain'].values - new_str)) > tol_strain:
+                        strains.append(float(new_str))
+                
+                if len(strains) == 0:
                     flag = True
-            elif direction == 'larger':
-                if Es[1] - emin > tol_frac_ediff * de_tot:
-                    flag = True
+                    logger.info("\n Optimal volume was found properly.")
+                    break
+                
+            count += 1
+            
+        # print("<<<<<<<<<<<<<<<<<<<")
+        # sys.exit()
+        
+        # ### calculate energies with the initial setting
+        # df_results = relaxation_with_different_volumes(
+        #         self.initial_structure,
+        #         base_directory=self.outdir,
+        #         strain_range=strain_range,
+        #         nstrains=nstrains,
+        #         tol_strain=tol_strain,
+        #         #
+        #         kpts=kpts, encut_factor=encut_factor,
+        #         command=command,
+        #         params_mod=params_mod,
+        #         verbosity=2,
+        #         dim=self.dim
+        #         )
+        
+        # df_results = df_results.sort(by='strain')
+        # strains = df_results['strain'].values
+        # # Vs = df_results['volume'].values
+        # # Es = df_results['energy'].values
+        
+        # # def _get_energy_info(energies):
+        # #     emin = np.min(energies)
+        # #     emax = np.max(energies)
+        # #     de_tot = emax - emin
+        # #     return emin, emax, de_tot
+        
+        # ### analyze smaller or larger strains
+        # min_strain, max_strain = np.min(strains), np.max(strains)
+        # flag = False
+        # if min_strain > strain_range[0]:
+        #     direction = 'smaller'
+        # elif max_strain < strain_range[1]:
+        #     direction = 'larger'
+        # else:
+        #     flag = True
+        
+        # # emin, emax, de_tot = _get_energy_info(Es0)
+        # # flag = False
+        # # if Es0[0] - emin < de_tot * tol_frac_ediff:
+        # #     direction = 'smaller'
+        # # elif Es0[-1] - emin < de_tot * tol_frac_ediff:
+        # #     direction = 'larger'
+        # # else:
+        # #     flag = True
+        
+        # # strain_range = initial_strain_range
+        # while flag == False:
+            
+        #     n = 2
+        #     if direction == 'smaller':
+        #         s0 = strain_range[0] - strain_interval * n
+        #         s1 = strain_range[0] - strain_interval
+        #     else:
+        #         s0 = strain_range[1] + strain_interval
+        #         s1 = strain_range[1] + strain_interval * n
+            
+        #     strain_range = [s0, s1]
+        #     df_results = relaxation_with_different_volumes(
+        #             self.initial_structure,
+        #             base_directory=self.outdir,
+        #             strain_range=strain_range,
+        #             nstrains=n,
+        #             tol_strain=tol_strain,
+        #             #
+        #             kpts=kpts, encut_factor=encut_factor,
+        #             command=command,
+        #             params_mod=params_mod,
+        #             verbosity=1,
+        #             dim=self.dim
+        #             )
+        #     df_results = df_results.sort(by='strain')
+        #     strains = df_results['strain'].values
+        #     # Vs = df_results['volume'].values
+        #     # Es = df_results['energy'].values
+            
+        #     ### check energies
+        #     # emin, emax, de_tot = _get_energy_info(Es)
+        #     # if direction == 'smaller':
+        #     #     if Es[0] - emin > tol_frac_ediff * de_tot:
+        #     #         flag = True
+        #     # elif direction == 'larger':
+        #     #     if Es[1] - emin > tol_frac_ediff * de_tot:
+        #     #         flag = True
         
         ###
         Vs, Es = self.get_calculated_volumes_and_energies()
-        self._fit()
         self._volumes = Vs
         self._energies = Es
+        
+        self._fit()
+        vol_strains = (Vs - self.optimal_volume) / self.optimal_volume
+        min_strain = np.min(vol_strains)
+        max_strain = np.max(vol_strains)
+        if abs(min_strain) < 0.005 or abs(max_strain) < 0.005:
+            msg = "\n Error: The applied strains are too small."
+            msg += "\n Please check the result of the volume relaxation."
+            logger.error(msg)
+            sys.exit()
+        
         self.output_structures()
         return Vs, Es
     
@@ -189,17 +314,19 @@ class StrictRelaxation():
         logger.info(msg)
     
     def get_calculated_volumes_and_energies(self):
-        Vs, Es = _get_calculated_volumes_and_energies(self.outdir)
-        self._volumes = Vs
-        self._energies = Es
-        return Vs, Es
+        init_cell = self.initial_structure.lattice.matrix
+        df = _get_calculated_results(self.outdir, cell_pristine=init_cell, dim=self.dim)
+        df_sort = df.sort_values(by='volume')
+        self._volumes = df_sort['volume'].values
+        self._energies = df_sort['energy'].values
+        return self._volumes, self._energies
      
     def _fit(self):
         Vs, Es = self.get_calculated_volumes_and_energies()
         bm = BirchMurnaghan(Vs, Es)
         bm.fit()
         self._optimal_volume = bm.v0
-    
+        
     def get_fitting_error(self, type='mae'):
         bm = BirchMurnaghan(self.volumes, self.energies)
         bm.fit()
@@ -210,7 +337,7 @@ class StrictRelaxation():
             logger.error(" Not yet supported.")
             sys.exit()
         return mae
-
+    
     def plot_bm(self, figname='fig_bm.png'):
         """ Plot a result of fitting with Birch-Murnaghan EOS
         """
@@ -218,20 +345,39 @@ class StrictRelaxation():
         bm = BirchMurnaghan(Vs, Es)
         bm.fit()
         
-        from auto_kappa.plot.fitting import plot_fitting_result
-        fig = plot_fitting_result(bm, figname=figname)
-    
+        if self.dim == 3:
+            thickness = None
+            modulus = bm.b0_GPa # GPa
+            modulus_unit = "GPa"
+        elif self.dim == 2:
+            opt_struct = self.get_optimal_structure(format='pmg')
+            thickness = get_thickness(opt_struct, norm_idx=2) # Angstrom
+            modulus = bm.b0_GPa * thickness * 0.1 # N/m
+            modulus_unit = "N/m"
+        modulus_info = {'value': float(modulus), 'unit': modulus_unit, 'thickness': thickness}
+        
+        from auto_kappa.plot.fitting import plot_bm_result
+        plot_bm_result(bm, figname=figname, dim=self.dim, modulus_info=modulus_info)
+        
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
         """
-        return math.pow((s_vol + 1.), 1/self.mater_dim) - 1
+        return math.pow((s_vol + 1.), 1 / self.dim) - 1
     
     def get_optimal_structure(self, format='pmg'):
-        vinit = get_volume(self.initial_structure, dim=self.mater_dim)
+        vinit = get_volume(self.initial_structure, dim=self.dim)
         s_vol = (self.optimal_volume - vinit) / vinit
         s_len = self._strain_volume2length(s_vol)
         struct_opt = get_strained_structure(
-                self.initial_structure, s_len, format=format, mater_dim=self.mater_dim)
+                self.initial_structure, s_len, format=format, dim=self.dim)
+        
+        vol_opt = get_volume(struct_opt, dim=self.dim)
+        if abs(vol_opt - self.optimal_volume) > 1e-4:
+            msg = "\n Error: There is a discrepancy in the optimal volumes."
+            msg += "\n Volume 1: %.4f, volume 2: %.4f" % (self.optimal_volume, vol_opt)
+            logger.error(msg)
+            sys.exit()
+        
         return struct_opt
         
     def print_results(self):
@@ -240,39 +386,49 @@ class StrictRelaxation():
         bm = BirchMurnaghan(Vs, Es)
         bm.fit()
         
-        vinit= self.initial_structure.volume
+        # vinit= self.initial_structure.volume
+        vinit = get_volume(self.initial_structure, dim=self.dim)
         s_vol = (vinit - self.optimal_volume) / self.optimal_volume
         s_len = self._strain_volume2length(s_vol)
         mae = self.get_fitting_error()
         
         msg = "\n"
         msg += " Minimum energy : %8.3f eV\n" % bm.e0
-        msg += " Bulk modulus   : %8.3f GPa\n" % bm.b0_GPa
+        if self.dim == 3:
+            modulus = bm.b0_GPa # GPa
+            modulus_unit = "GPa"
+        elif self.dim == 2:
+            opt_struct = self.get_optimal_structure(format='pmg')
+            thickness = get_thickness(opt_struct, norm_idx=2)
+            modulus = bm.b0_GPa * thickness * 0.1 # N/m
+            modulus_unit = "N/m"
+        msg += " Bulk modulus   : %8.3f %s\n" % (modulus, modulus_unit)
         msg += " Optimal volume : %8.3f A^3\n" % self.optimal_volume
         msg += " Initial volume : %8.3f A^3\n" % vinit
         msg += " Initial strain : %8.3f\n" % (s_len)
         msg += " Error (MAE)    : %8.5f eV" % (mae)
-        if self.mater_dim == 2:
+        if self.dim == 2:
+            thickness = get_thickness(self.initial_structure, norm_idx=2)
             msg += "\n"
-            msg += " 2D thickness   : %8.3f A (temporal)" % (1.0)
+            msg += " 2D thickness   : %8.3f A" % (thickness)
         logger.info(msg)
         
         out = {}
         out['minimum_energy'] = [float(bm.e0), 'eV']
-        out['bulk_modulus'] = [float(bm.b0_GPa), 'GPa']
+        out['bulk_modulus'] = [float(modulus), modulus_unit]
         out['optimal_volume'] = [float(self.optimal_volume), 'A^3']
         out['initial_volume'] = [float(vinit), 'A^3']
         out['initial_strain'] = [float(s_len), '-']
         out['mae'] = [float(mae), 'eV']
-        if self.mater_dim == 2:
-            out['thickness'] = [float(1.0), 'A']
+        if self.dim == 2:
+            out['thickness'] = [float(thickness), 'A']
         
         with open(self.outfile_yaml, 'w') as f:
             yaml.dump(out, f)
             msg = "\n Output %s" % self.outfile_yaml.replace(os.getcwd(), ".")
             logger.info(msg)
-    
-def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
+        
+def _get_calculated_results(base_dir, cell_pristine=None, num_max=200, dim=3):
     """ Get all the results which have been already obtained.
     
     Args
@@ -314,19 +470,21 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=1000):
         
         ### Make strain.yaml if it doesn't exist and possible.
         file_yaml = diri + "/strain.yaml"
-        if os.path.exists(file_yaml) == False:
+        if os.path.exists(file_yaml) == False or dim == 2:
             try:
-                _make_strain_yaml(diri, cell_pristine=cell_pristine)
+                _make_strain_yaml(diri, cell_pristine=cell_pristine, dim=dim, verbosity=0)
             except Exception:
                 continue
         
         with open(file_yaml, 'r') as yml:
             data = yaml.safe_load(yml)
+            data['filename'] = "./" + os.path.relpath(file_xml, base_dir)
             all_results.append(data)
-        
-    return all_results
+    
+    df = pd.DataFrame(all_results)
+    return df
 
-def _make_strain_yaml(directory, cell_pristine=None):
+def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
     """ Make strain.yaml file """
     
     ### read file 
@@ -342,70 +500,81 @@ def _make_strain_yaml(directory, cell_pristine=None):
     ### get parameters
     out_data = {}
     out_data['strain'] = float(strain)
-    out_data['energy'] = [
-            float(vasprun.final_energy.real),
-            str(vasprun.final_energy.unit)]
-    out_data['volume'] = float(structure.volume)
+    out_data['energy'] = float(vasprun.final_energy.real)
+    out_data['energy_unit'] = str(vasprun.final_energy.unit)
+    out_data['volume'] = get_volume(structure, dim=dim)
+    if dim == 3:
+        out_data['volume_unit'] = 'A^3'
+    elif dim == 2:
+        out_data['volume_unit'] = 'A^2'
+    out_data['dim'] = dim
     
     ### output file
-    outfile = directory + "/strain.yaml"
+    outfile = f"{directory}/strain.yaml"
     with open(outfile, "w") as f:
         yaml.dump(out_data, f)
-        msg = "\n Output %s" % outfile
-        logger.info(msg)
+        if verbosity > 0:
+            msg = "\n Output ./%s" % os.path.relpath(outfile, os.getcwd())
+            logger.info(msg)
     
-    return 0
+    return out_data
 
-def _get_results_all(base_dir, keys=['strain'], cell_pristine=None):
-    
-    all_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine)
-    extracted_data = []
-    for each in all_results:
-        try:
-            values = []
-            for key in keys:
-                values.append(each[key])
-            extracted_data.append(values)
-        except Exception:
-            pass
-    return extracted_data
+# def _get_results_all(base_dir, keys=['strain'], cell_pristine=None, dim=3):
+#     all_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
+#     extracted_data = []
+#     for each in all_results:
+#         try:
+#             values = []
+#             for key in keys:
+#                 values.append(each.get(key, None))
+#             extracted_data.append(values)
+#         except Exception:
+#             pass
+#     return extracted_data
 
-def _get_calculated_strains(
-        base_dir, key='strain', cell_pristine=None, tol_strain=1e-9):
-    """ Get list of strains for which the energy has been already calculated. 
-    """
-    value_tmp = _get_results_all(base_dir, keys=[key], cell_pristine=cell_pristine)
+# def _get_calculated_strains(base_dir, cell_pristine=None, dim=3):
+#     """ Get list of strains for which the energy has been already calculated. 
+#     """
+#     df_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
     
-    if len(value_tmp) == 0:
-        return []
-    else:
-        strains_all = np.sort(np.asarray(value_tmp)[:,0])
+#     if len(df_results) == 0:
+#         return []
+#     else:
+#         strains_all = np.sort(df_results['strain'].values)
+#         return strains_all
         
-        ### remove duplicative data
-        strains = []
-        for i in range(len(strains_all)):
-            if i == 0:
-                strains.append(strains_all[0])
-            else:
-                if strains_all[i] - strains_all[i-1] > tol_strain:
-                    strains.append(strains_all[i])
-        strains = np.asarray(strains)
-        return strains
+#         # ### remove duplicative data
+#         # strains = []
+#         # for i in range(len(strains_all)):
+#         #     if i == 0:
+#         #         strains.append(strains_all[0])
+#         #     else:
+#         #         if strains_all[i] - strains_all[i-1] > tol_strain:
+#         #             strains.append(strains_all[i])
+#         # strains = np.asarray(strains)
+#         # return strains
 
-def _get_calculated_volumes_and_energies(base_dir, keys=['volume', 'energy'], cell_pristine=None):
+# def _get_calculated_volumes_and_energies(
+#     base_dir, keys=['volume', 'energy', 'filename'], cell_pristine=None, dim=3):
+#     """ Read info from strain.yaml files and return a DataFrame. """
+#     value_tmp = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
     
-    value_tmp = _get_results_all(base_dir, keys=keys, cell_pristine=cell_pristine)
+#     dump = []
+#     for each in value_tmp:
+#         dump.append([])
+#         for i, name in enumerate(keys):
+#             if name == 'energy':
+#                 val = each[i][0]
+#             else:
+#                 val = each[i]
+#             dump[-1].append(val)
     
-    Vs = []
-    Es = []
-    for each in value_tmp:
-        Vs.append(each[0])
-        Es.append(each[1][0])
+#     df = pd.DataFrame(dump, columns=keys)
+#     df = df.sort_values(by='volume')
     
-    isort = np.argsort(Vs)
-    return np.asarray(Vs)[isort], np.asarray(Es)[isort]
+#     return df
 
-def get_strained_structure(structure0, strain, format='pmg', mater_dim=3):
+def get_strained_structure(structure0, strain, format='pmg', dim=3):
     """
     Args
     ----
@@ -430,25 +599,25 @@ def get_strained_structure(structure0, strain, format='pmg', mater_dim=3):
         symbols.append(el.name)
     
     ### prepare a strained structure
-    if mater_dim == 3:
+    if dim == 3:
         s = (1. + np.array(strain)) * np.eye(3)
-    elif mater_dim == 2:
+    elif dim == 2:
         normal_vec = get_out_of_plane_direction(structure0)
         normal_idx = np.argmax(normal_vec)
         s = (1. + np.array(strain)) * np.eye(3)
         s[normal_idx, normal_idx] = 1.0
     else:
-        logger.error(f" mater_dim == {mater_dim} is not supported.")
+        logger.error(f" dim == {dim} is not supported.")
         sys.exit()
     
     cell = np.dot(cell0.T, s).T
     
-    if format.lower() == 'pmg' or format.lower() == 'pymatgen':
+    if format.lower().startswith('pmg') or format.lower() == 'pymatgen':
         ## pymatgen
         structure = Structure(
                 lattice=cell,
                 species=symbols,
-                coords=scaled_positions,
+                coords=scaled_positions
                 )
     elif format.lower() == 'ase':
         ## ASE
@@ -457,34 +626,43 @@ def get_strained_structure(structure0, strain, format='pmg', mater_dim=3):
                 scaled_positions=scaled_positions,
                 symbols=symbols,
                 )
-    
     return structure
 
+def get_optimal_volume(volumes, energies, min_num_data=5):
+    if len(volumes) >= min_num_data:
+        bm = BirchMurnaghan(volumes, energies)
+        bm.fit()
+        return bm.v0
+    else:
+        return None
+
 def relaxation_with_different_volumes(
-        struct_init, strain_range=[-0.01, 0.05], nstrains=11, kpts=[2,2,2],
-        base_directory='./volume', encut_factor=1.3, 
+        struct_init, strains,
+        base_directory='./volume',
+        tol_strain=1e-5,
+        kpts=[2,2,2], encut_factor=1.3, 
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
-        tol_strain=1e-5, verbosity=1, mater_dim=3,
-        params_mod=None
+        params_mod=None,
+        verbosity=1, dim=3,
         ):
     """ Structure relaxation with the Birch-Murnaghan equation of state
     Args
     ----
-    struct_init : pymatgen Structure
-    
-    strain_range : array of float, shape=(2), unit=[-]
+    strains : array of float, shape=(nstrains), unit=[-]
+        strain values to be applied to the initial structure
     
     nstrains : integer
         number of strains to be applied
     """
-    ### list of strains to be analyzed
-    strains = np.linspace(strain_range[0], strain_range[1], nstrains)
-    
     ### get the calculated strains
-    calculated_strains = _get_calculated_strains(
-            base_directory, 
-            cell_pristine=struct_init.lattice.matrix,
-            tol_strain=tol_strain*0.1)
+    ## ver.1
+    # calculated_strains = _get_calculated_strains(
+    #     base_directory, cell_pristine=struct_init.lattice.matrix, dim=dim)
+    #
+    ## ver.2
+    df_results = _get_calculated_results(
+        base_directory, cell_pristine=struct_init.lattice.matrix, dim=dim)
+    calculated_strains = np.sort(df_results['strain'].values)
     
     ### print already-analyzed-strains
     if len(calculated_strains) > 0:
@@ -525,8 +703,7 @@ def relaxation_with_different_volumes(
                 outdir.replace(os.getcwd(), ".")))
         
         #### prepare a strained structure
-        #structure = get_strained_structure(struct_init, strain, format='pmg')
-        atoms = get_strained_structure(struct_init, strain, format='ase', mater_dim=mater_dim)
+        atoms = get_strained_structure(struct_init, strain, format='ase', dim=dim)
         
         ### set calculator object
         calc = get_vasp_calculator(
@@ -549,29 +726,30 @@ def relaxation_with_different_volumes(
         ### run VASP
         run_vasp(calc, atoms, method='custodian')
         
-        ### output data
-        vasprun = Vasprun(outdir + "/vasprun.xml", parse_potcar_file=False)
-        
-        volume = get_volume(atoms, dim=mater_dim)
-        energy = float(vasprun.final_energy.real)
-        out_data = {}
-        out_data['strain'] = float(strain)
-        out_data['energy'] = [energy, str(vasprun.final_energy.unit)]
-        out_data['volume'] = float(volume)
-        out_data['dim'] = int(mater_dim)
-        
-        ### output yamle file
-        outfile = outdir + "/strain.yaml"
-        with open(outfile, "w") as f:
-            yaml.dump(out_data, f)
+        ### Get each result
+        out_data = _make_strain_yaml(outdir, cell_pristine=struct_init.lattice.matrix, dim=dim)
+        volume = out_data['volume']
+        vol_unit = out_data['volume_unit']
+        energy = out_data['energy']
+        ene_unit = out_data['energy_unit']
         
         if verbosity > 0:
-            msg = f" strain(%): {strain*100:.3f}   volume(A^3): {volume:.3f}   energy(eV): {energy:.3f}"
+            msg = (
+                f" strain(%): {strain*100:.3f}   "
+                f"volume({vol_unit}): {volume:.3f}   "
+                f"energy({ene_unit}): {energy:.3f}")
             logger.info(msg)
     
     ###
-    Vs, Es = _get_calculated_volumes_and_energies(base_directory)
-    return Vs, Es
+    init_cell = struct_init.lattice.matrix
+    df_results = _get_calculated_results(base_directory, cell_pristine=init_cell, dim=dim)
+    
+    outfile = base_directory + "/volume_energy.csv"
+    df_results.to_csv(outfile, index=False)
+    msg = "\n Output %s" % outfile.replace(os.getcwd(), ".")
+    logger.info(msg)
+    
+    return df_results
 
 def get_volume(struct, dim=3):
     
@@ -583,8 +761,10 @@ def get_volume(struct, dim=3):
         return vol
     elif dim == 2:
         norm_vec = get_out_of_plane_direction(struct_pmg)
-        height = np.linalg.norm(cell @ norm_vec)
-        area = vol / height
+        norm_idx = np.argmax(norm_vec)
+        thickness = get_thickness(struct_pmg, norm_idx=norm_idx)
+        cell_height = cell[norm_idx, norm_idx]
+        area = vol * thickness / cell_height
         return float(area)
 
 #from pymatgen.io.vasp import Poscar
