@@ -1,4 +1,14 @@
 
+# Ver. 1.1.1 ()
+
+## New
+
+- Add 'command_vasp_gam' for Gamma point calculation.
+
+- Modify the structure relaxation with EOS. (Set the maximum number of iteration and strain range.)
+
+- Read the previously-obtained relaxed structure for the volume relaxation (strict optimization).
+
 # Ver. 1.1.0 (July 8, 2025)
 
 ## New
