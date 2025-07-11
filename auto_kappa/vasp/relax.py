@@ -154,7 +154,6 @@ class StrictRelaxation():
                 self.initial_structure, strains,
                 base_directory=self.outdir,
                 tol_strain=tol_strain,
-                # tol_strain=1.0,
                 #
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
@@ -481,8 +480,10 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=200, dim=3):
             data['filename'] = "./" + os.path.relpath(file_xml, base_dir)
             all_results.append(data)
     
-    df = pd.DataFrame(all_results)
-    return df
+    if len(all_results) == 0:
+        return None
+    else:
+        return pd.DataFrame(all_results)
 
 def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
     """ Make strain.yaml file """
@@ -516,7 +517,6 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
         if verbosity > 0:
             msg = "\n Output ./%s" % os.path.relpath(outfile, os.getcwd())
             logger.info(msg)
-    
     return out_data
 
 # def _get_results_all(base_dir, keys=['strain'], cell_pristine=None, dim=3):
@@ -662,7 +662,10 @@ def relaxation_with_different_volumes(
     ## ver.2
     df_results = _get_calculated_results(
         base_directory, cell_pristine=struct_init.lattice.matrix, dim=dim)
-    calculated_strains = np.sort(df_results['strain'].values)
+    if df_results is None:
+        calculated_strains = []
+    else:
+        calculated_strains = np.sort(df_results['strain'].values)
     
     ### print already-analyzed-strains
     if len(calculated_strains) > 0:

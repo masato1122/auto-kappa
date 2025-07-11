@@ -753,8 +753,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         ### error
         if all_disps is None:
             msg = "\n Error: Failed to obtain displacement patterns."
-            msg += "\n The structures used in the current calculation may be "
-            msg += "incompatible with the ones used in the previous calculation."
+            msg += "\n The optimal structure might slightly changed from the previous one."
+            msg += "\n Please removed the previous output directory and try again."
             logger.error(msg)
             if can_return_none:
                 return None

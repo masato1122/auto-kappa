@@ -19,18 +19,20 @@ import numpy as np
 import glob
 
 import ase.io
+from pymatgen.core.structure import Structure
 # from ase.calculators.vasp import Vasp
 # from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
-        get_standardized_structure_spglib,
-        change_structure_format,
-        )
+    get_primitive_structure_spglib,
+    get_standardized_structure_spglib,
+    change_structure_format,
+    get_spg_number,
+    )
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
-from auto_kappa.structure.crystal import get_spg_number
 from auto_kappa.cui import ak_log
 #from auto_kappa.io.files import write_output_yaml
 from auto_kappa.vasp.params import reflect_previous_jobs, get_amin_parameter
@@ -194,7 +196,7 @@ class ApdbVasp():
             prim = change_structure_format(phonon.primitive , format=format) 
             sc   = change_structure_format(phonon.supercell , format=format)
         except Exception:
-            from auto_kappa.structure.crystal import get_primitive_structure_spglib
+            
             unit = change_structure_format(unitcell , format=format) 
             prim = get_primitive_structure_spglib(unitcell)
             prim = change_structure_format(prim, format=format)
@@ -505,6 +507,7 @@ class ApdbVasp():
         
         ### strict relaxation with Birch-Murnaghan EOS
         if volume_relaxation:
+            
             from auto_kappa.vasp.relax import StrictRelaxation
             outdir = directory + "/volume" 
             
@@ -514,21 +517,27 @@ class ApdbVasp():
                 structure = self.unitcell
             
             init_struct = change_structure_format(structure, format='pmg')
-            relax = StrictRelaxation(init_struct, outdir=outdir, dim=self.mater_dim)
-            Vs, Es = relax.with_different_volumes(
-                    kpts=kpts, command=self.command, params_mod=self.params_mod,
-                    initial_strain_range=[-0.03, 0.05], nstrains=15
-                    )
             
-            ### output figure
-            figname = outdir + '/fig_bm.png'
-            relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+            ### check the previous optimal structure
+            struct_opt = _get_previous_optimal_structure(
+                directory, prim_matrix=self.primitive_matrix, to_primitive=to_primitive)
             
-            ### print results
-            relax.print_results()
-            
-            ### output optimized structure file
-            struct_opt = relax.get_optimal_structure()
+            if struct_opt is None:
+                relax = StrictRelaxation(init_struct, outdir=outdir, dim=self.mater_dim)
+                Vs, Es = relax.with_different_volumes(
+                        kpts=kpts, command=self.command, params_mod=self.params_mod,
+                        initial_strain_range=[-0.03, 0.05], nstrains=15
+                        )
+                
+                ### output figure
+                figname = outdir + '/fig_bm.png'
+                relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+                
+                ### print results
+                relax.print_results()
+                
+                ### output optimized structure file
+                struct_opt = relax.get_optimal_structure()
             
             outfile = outdir + "/POSCAR.opt"
             struct_opt.to(filename=outfile.replace(os.getcwd(), "."))
@@ -787,3 +796,35 @@ def _get_nsw_parameter(directory, nsw_init=200, nsw_diff=10, nsw_min=20):
     nsw = max(nsw_min, nsw_init - nsw_diff * num_errors)
     return nsw
 
+def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True):
+    
+    format = 'pmg'
+    
+    filenames = [
+        f"{outdir}/volume/POSCAR.opt",
+        # f"{outdir}/../harm/force/prist/POSCAR",
+    ]
+    
+    mat_p2u = np.linalg.inv(prim_matrix)
+    mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    
+    for i, fn in enumerate(filenames):
+        if os.path.exists(fn):
+            struct = Structure.from_file(fn)
+            prim = get_primitive_structure_spglib(struct)
+            
+            relpath = os.path.relpath(fn, os.getcwd())
+            msg = f"\n Read the previous optimal structure: ./{relpath}"
+            logger.info(msg)
+            
+            if to_primitive:
+                opt_struct = change_structure_format(prim, format=format)
+            else:
+                unitcell = get_supercell(
+                    change_structure_format(prim, format='phonopy'),
+                    mat_p2u)
+                unitcell = change_structure_format(unitcell, format=format)
+                opt_struct = unitcell
+            
+            return opt_struct
+    return None

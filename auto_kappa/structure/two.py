@@ -11,6 +11,9 @@
 #
 #
 import numpy as np
+from pathlib import Path
+import json
+
 from ase import Atoms
 from ase.build import rotate
 
@@ -111,17 +114,33 @@ def get_thickness(structure, norm_idx=2):
     Returns:
         float: Thickness of the structure
     """
-    from mendeleev import element
     struct = change_structure_format(structure, format='pmg-structure')
     chemical_symbols = [str(s) for s in struct.species]
-    z_positions = struct.cart_coords[:, norm_idx]
     
+    ## Prepare van der Waals radii as a dictionary
+    try:
+        current_path = Path(__file__).parent
+        file_vdw_radius = current_path / "elements_vdw_radii.json"
+        with open(file_vdw_radius, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            vdw_radii_dict = {
+                symbol: data[symbol]['vdw_radius_ang'] 
+                for symbol in chemical_symbols if symbol in data}
+    except FileNotFoundError:
+        from mendeleev import element
+        vdw_radii_dict = {}
+        for symbol in chemical_symbols:
+            if symbol not in vdw_radii_dict:
+                try:
+                    vdw_radii_dict[symbol] = element(symbol).vdw_radius * 0.01  # Convert to Angstrom
+                except Exception as e:
+                    logger.warning(f"Could not get vdw radius for {symbol}: {e}")
+    
+    z_positions = struct.cart_coords[:, norm_idx]
     imax = np.argmax(z_positions)
     imin = np.argmin(z_positions)
-    
-    vdw_rad_max = element(chemical_symbols[imax]).vdw_radius * 0.01 # Convert to Angstrom
-    vdw_rad_min = element(chemical_symbols[imin]).vdw_radius * 0.01 # Convert to Angstrom
+    vdw_rad_max = vdw_radii_dict.get(chemical_symbols[imax], 0)  # Default to 0 if not found
+    vdw_rad_min = vdw_radii_dict.get(chemical_symbols[imin], 0)  # Default to 0 if not found
     
     thickness = z_positions[imax] - z_positions[imin] + vdw_rad_max + vdw_rad_min
-    
     return thickness
