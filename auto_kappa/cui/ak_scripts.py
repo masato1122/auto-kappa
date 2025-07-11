@@ -13,6 +13,7 @@ import sys
 import os
 import os.path
 import datetime
+import json
 
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
@@ -89,6 +90,10 @@ def main():
     ### Set auto-kappa options
     check_ak_options(options)
     ak_params = eval(str(options))
+    outfile = ak_params['outdir'] + "/ak_parameters.json"
+    with open(outfile, 'w', encoding='utf-8') as f:
+        json.dump(ak_params, f, indent=4, ensure_ascii=False)
+    
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     
     ### Set output directories

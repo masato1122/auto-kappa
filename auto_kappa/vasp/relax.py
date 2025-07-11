@@ -503,12 +503,13 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
     out_data['strain'] = float(strain)
     out_data['energy'] = float(vasprun.final_energy.real)
     out_data['energy_unit'] = str(vasprun.final_energy.unit)
-    out_data['volume'] = get_volume(structure, dim=dim)
-    if dim == 3:
-        out_data['volume_unit'] = 'A^3'
-    elif dim == 2:
-        out_data['volume_unit'] = 'A^2'
-    out_data['dim'] = dim
+    out_data['volume'] = float(get_volume(structure, dim=dim))
+    out_data['volume_unit'] = 'A^3'
+    out_data['dim'] = int(dim)
+    if dim == 2:
+        thickness = get_thickness(structure, norm_idx=2)
+        out_data['thickness'] = float(thickness)
+        out_data['thick_unit'] = 'A'
     
     ### output file
     outfile = f"{directory}/strain.yaml"
@@ -760,15 +761,14 @@ def get_volume(struct, dim=3):
     vol = struct_pmg.volume
     cell = struct_pmg.lattice.matrix
     
-    if dim == 3:
-        return vol
-    elif dim == 2:
+    if dim == 2:
         norm_vec = get_out_of_plane_direction(struct_pmg)
         norm_idx = np.argmax(norm_vec)
         thickness = get_thickness(struct_pmg, norm_idx=norm_idx)
         cell_height = cell[norm_idx, norm_idx]
-        area = vol * thickness / cell_height
-        return float(area)
+        vol = vol * thickness / cell_height
+    
+    return vol
 
 #from pymatgen.io.vasp import Poscar
 #

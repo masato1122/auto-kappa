@@ -1,5 +1,3 @@
-# from distutils.core import setup
-# import shutil
 import pathlib
 from setuptools import setup, find_packages
 
@@ -22,23 +20,6 @@ def _get_version():
         return "x.x"
 
 def main(build_dir):
-    
-    #packages_autokappa = [
-    #        'auto_kappa',
-    #        'auto_kappa.alamode',
-    #        'auto_kappa.calculators',
-    #        'auto_kappa.alamode.tools',
-    #        'auto_kappa.alamode.analyzer',
-    #        'auto_kappa.cui',
-    #        'auto_kappa.io',
-    #        'auto_kappa.io.alamode',
-    #        'auto_kappa.math',
-    #        'auto_kappa.plot',
-    #        'auto_kappa.plot.alamode',
-    #        'auto_kappa.structure',
-    #        'auto_kappa.vasp',
-    #        'auto_kappa.utils',
-    #        ]
     
     scripts_autokappa = [
             'scripts/akrun',
