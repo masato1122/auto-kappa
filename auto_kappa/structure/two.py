@@ -22,37 +22,65 @@ from auto_kappa.structure.crystal import change_structure_format
 import logging
 logger = logging.getLogger(__name__)
 
-def get_out_of_plane_direction(structure) -> np.ndarray:
-    """ Infer the out-of-plane direction from a structure.
+def get_vacuum_direction_by_gap(struct_orig) -> int:
+    """ Estimate the vacuum direction by analyzing the real space gaps in a structure.
     
-    Parameters:
-    - structure (Structure): pymatgen.Structure object
-    - min_atoms (int): Minimum number of atoms to consider for out-of-plane direction inference.
-
     Returns:
-    - array (float): Normal vector of the out-of-plane direction.
+        int: Index of the direction with the largest vacuum gap (0 for x, 1 for y, 2 for z).
     """
-    from sklearn.decomposition import PCA
-    struct = structure.copy()
-    struct = change_structure_format(struct, format='pmg-structure')
+    structure = change_structure_format(struct_orig, format='pmg-structure')
+    coords = np.array([site.coords for site in structure.sites])
+    lattice = structure.lattice
+    vacuum_gaps = []
     
-    # Make a supercell to ensure enough atoms for PCA
-    struct.make_supercell([5, 5, 1])
+    for axis, vec in enumerate(lattice.matrix):
+        unit_vec = vec / np.linalg.norm(vec)
+        projections = coords @ unit_vec
+        min_p, max_p = np.min(projections), np.max(projections)
+        used = max_p - min_p
+        total = np.linalg.norm(vec)
+        gap = total - used
+        vacuum_gaps.append(float(gap))
     
-    # Get atomic Cartesian coordinates
-    coords = struct.cart_coords
-    
-    # Use PCA to find the out-of-plane direction (thinnest axis)
-    pca = PCA(n_components=3)
-    pca.fit(coords)
-    
-    normal_vec = pca.components_[-1]  # Get the last component (thinnest axis)
-    
-    if np.argmax(np.abs(normal_vec)) != 2:
-        msg = "\n Warning: The out-of-plane direction is not the z-axis.\n"
-        logger.warning(msg)
-    
+    return int(np.argmax(vacuum_gaps))
+
+def get_out_of_plane_direction(structure) -> np.ndarray:
+    norm_idx = get_vacuum_direction_by_gap(structure)
+    normal_vec = np.zeros(3)
+    normal_vec[norm_idx] = 1.0
     return normal_vec
+    
+# def get_out_of_plane_direction_old(structure) -> np.ndarray:
+#     """ Infer the out-of-plane direction from a structure.
+    
+#     Parameters:
+#     - structure (Structure): pymatgen.Structure object
+#     - min_atoms (int): Minimum number of atoms to consider for out-of-plane direction inference.
+
+#     Returns:
+#     - array (float): Normal vector of the out-of-plane direction.
+#     """
+#     from sklearn.decomposition import PCA
+#     struct = structure.copy()
+#     struct = change_structure_format(struct, format='pmg-structure')
+    
+#     # Make a supercell to ensure enough atoms for PCA
+#     struct.make_supercell([5, 5, 1])
+    
+#     # Get atomic Cartesian coordinates
+#     coords = struct.cart_coords
+    
+#     # Use PCA to find the out-of-plane direction (thinnest axis)
+#     pca = PCA(n_components=3)
+#     pca.fit(coords)
+    
+#     normal_vec = pca.components_[-1]  # Get the last component (thinnest axis)
+    
+#     if np.argmax(np.abs(normal_vec)) != 2:
+#         msg = "\n Warning: The out-of-plane direction is not the z-axis.\n"
+#         logger.warning(msg)
+    
+#     return normal_vec
 
 def align_to_z_axis(atoms: Atoms) -> Atoms:
     """ Rotate the atoms to align the out-of-plane direction with the z-axis.
