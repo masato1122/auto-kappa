@@ -169,27 +169,27 @@ class StrictRelaxation():
                 count += 1
                 continue
             
-            ## Get the optimal volume
-            opt_vol = get_optimal_volume(df_results['volume'].values, df_results['energy'].values)
-            
-            if opt_vol is None:
-                msg = "\n Caution: Optimal volume is not found."
-                logger.warning(msg)
-            
+            ## Get the volume minimizing the energy
+            if len(df_results) != 0:
+                imin = np.argmin(df_results['energy'].values)
+                opt_vol = df_results['volume'].values[imin]
             else:
-                min_vol = opt_vol * (1. + initial_strain_range[0])
-                max_vol = opt_vol * (1. + initial_strain_range[1])
-                s0 = (min_vol - init_vol) / init_vol
-                s1 = (max_vol - init_vol) / init_vol
-                strains = []
-                for new_str in np.linspace(s0, s1, nstrains):
-                    if np.min(abs(df_results['strain'].values - new_str)) > tol_strain:
-                        strains.append(float(new_str))
-                
-                if len(strains) == 0:
-                    flag = True
-                    logger.info("\n Optimal volume was found properly.")
-                    break
+                opt_vol = init_vol
+            
+            ## Set the next strain list
+            min_vol = opt_vol * (1. + initial_strain_range[0])
+            max_vol = opt_vol * (1. + initial_strain_range[1])
+            s0 = (min_vol - init_vol) / init_vol
+            s1 = (max_vol - init_vol) / init_vol
+            strains = []
+            for new_str in np.linspace(s0, s1, nstrains):
+                if np.min(abs(df_results['strain'].values - new_str)) > tol_strain:
+                    strains.append(float(new_str))
+            
+            if len(strains) == 0:
+                flag = True
+                logger.info("\n Optimal volume was found properly.")
+                break
                 
             count += 1
             
