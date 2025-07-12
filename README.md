@@ -99,5 +99,5 @@ References
 To Do
 ------
 
-- Iterative calculation using ShengBTE
+- Iterative calculation using ShengBTE <= Convert FC format from ALAMODE to ShengBTE
 
