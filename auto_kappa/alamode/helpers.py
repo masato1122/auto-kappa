@@ -579,7 +579,6 @@ class NameHandler():
         
         return workdir
 
-
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     """ 
     Args

@@ -1376,10 +1376,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             job_output = self.run_alamode(
                     propt=propt, neglect_log=neg_log, outdir=outdir)
             
-            if job_output.get('rerun', None) is not None:
-                if job_output['rerun'] == False:
-                    # print(job_output)
-                    break
+            try:
+                if job_output.get('rerun', None) is not None:
+                    if job_output['rerun'] == False:
+                        break
+            except Exception:
+                pass
             
             count += 1
             

@@ -223,4 +223,17 @@ def adjust_vacuum_size(orig_structure, scell_matrix) -> Structure:
     msg += f"\n from {c[2]:.2f} to {diag_length * 1.2:.2f} Angstrom."
     logger.info(msg)
     return new_structure
+
+def suggest_fc2_cutoff(orig_sc, buffer=0.1) -> float:
+    """ Suggest a cutoff for harmonic force constants based on the structure's diagonal length.
     
+    Returns:
+        float: Suggested cutoff value in Angstrom.
+    """
+    supercell = change_structure_format(orig_sc, format='pmg-structure')
+    cell = supercell.lattice.matrix
+    diag_length = np.sqrt(cell[0, 0]**2 + cell[1, 1]**2)
+    
+    # Suggest a cutoff based on the diagonal length
+    cutoff_harm = diag_length + buffer
+    return cutoff_harm

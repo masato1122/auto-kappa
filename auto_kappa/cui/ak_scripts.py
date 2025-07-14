@@ -14,6 +14,7 @@ import os
 import os.path
 import datetime
 import json
+import numpy as np
 
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
@@ -222,6 +223,15 @@ def main():
             nsw_params=ak_params["nsw_params"],
             )
     
+    ## Modify the cutoff for harmonic force constants
+    if ak_params['mater_dim'] == 2:
+        from auto_kappa.structure.two import suggest_fc2_cutoff
+        cutoff_harm = suggest_fc2_cutoff(apdb.structures['super'])
+        msg = "\n The FC2 cutoff is set to %.2f Angstrom for 2D system." % cutoff_harm
+        logger.info(msg)
+    else:
+        cutoff_harm = -1
+    
     ### Stop the calculation because of the symmetry error
     if out < 0:
         _stop_symmetry_error(out)
@@ -268,7 +278,7 @@ def main():
             restart=ak_params['restart'],
             primitive_matrix=trans_matrices['primitive'],
             scell_matrix=trans_matrices['supercell'],
-            cutoff2=-1,
+            cutoff2=cutoff_harm,
             cutoff3=ak_params['cutoff_cubic'],
             magnitude=ak_params['mag_harm'],
             magnitude2=ak_params['mag_cubic'],
