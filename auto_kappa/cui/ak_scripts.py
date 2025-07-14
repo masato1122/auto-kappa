@@ -227,7 +227,7 @@ def main():
     if ak_params['mater_dim'] == 2:
         from auto_kappa.structure.two import suggest_fc2_cutoff
         cutoff_harm = suggest_fc2_cutoff(apdb.structures['super'])
-        msg = "\n The FC2 cutoff is set to %.2f Angstrom for 2D system." % cutoff_harm
+        msg = "\n The FC2 cutoff is set to %.2f Angstrom for the 2D system." % cutoff_harm
         logger.info(msg)
     else:
         cutoff_harm = -1

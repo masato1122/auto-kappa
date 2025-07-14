@@ -219,7 +219,7 @@ def adjust_vacuum_size(orig_structure, scell_matrix) -> Structure:
     ## Calculate the new lattice parameters based on the supercell matrix
     new_structure = set_vacuum_to_2d_structure(orig_structure, vacuum_thickness=diag_length * 1.2)
     
-    msg = "\n Modify the vacuum size to be larger than the diagonal length of the in-plane structure:"
+    msg = "\n Adjust the vacuum size to be larger than the in-plane structural diagonal:"
     msg += f"\n from {c[2]:.2f} to {diag_length * 1.2:.2f} Angstrom."
     logger.info(msg)
     return new_structure
