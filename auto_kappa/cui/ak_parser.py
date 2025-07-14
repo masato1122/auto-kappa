@@ -353,11 +353,11 @@ def _check_command_options(options):
             
             elif name == 'command_anphon_ver2' and options.four == 0:
                 options.command_anphon_ver2 = options.command_anphon
-                msg = "\n Note : '{cmd}' command does not exist which is used when options.four == 1."
+                msg = f"\n Note : '{cmd}' command does not exist although it is used when options.four == 1."
                 logger.info(msg)
             
             elif name == 'command_dfc2' and options.scph == 0:
-                msg = f"\n Note : '{cmd}' does not exist which is used when options.scph == 1."
+                msg = f"\n Note : '{cmd}' does not exist although it is used when options.scph == 1."
                 logger.info(msg)
             
             else:
