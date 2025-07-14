@@ -85,6 +85,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             verbosity=0,
             yamlfile_for_outdir=None,
             dim=3,
+            calculate_forces=True,
             ):
         """ This class helps to manage ALAMODE calculations including force
         calculations with VASP.
@@ -296,11 +297,17 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._harm_dfset = None
         self._cube_dfset = None
         self._higher_dfset = None
+        self._calculate_forces = calculate_forces
     
     @property
     def dim(self):
         """ Dimension of the structure """
         return self._dim
+    
+    @property
+    def calculate_forces(self):
+        """ Whether forces are calculated or not """
+        return self._calculate_forces
     
     def _get_previous_nac(self):
         """ Get previously used NAC option """
@@ -611,8 +618,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         """ Read minimum frequencies from log files for band (band.log) and DOS
         (dos.log) calculations and return the value
         """
-        #from auto_kappa.alamode.log_parser import (
-        #        get_minimum_frequency_from_logfile)
+        if self.calculate_forces == False:
+            return 0.
         
         if which == "both":
             properties = ["band", "dos"]
@@ -623,6 +630,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         for propt in properties:
             
             logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+            if logfile.startswith("/"):
+                logfile = "./" + os.path.relpath(logfile, os.getcwd())
+            
+            if os.path.exists(logfile) == False:
+                msg = "\n Warning: %s does not exist." % logfile
+                logger.warning(msg)
             
             try:
                 out = get_minimum_frequency_from_logfile(logfile)
@@ -733,6 +746,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 self.run_alamode(propt=propt)
             
             file_evec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
+            
+            if os.path.exists(file_evec) == False:
+                msg = f"\n Error: '{disp_mode}' mode requires eigen vectors at commensurate points."
+                msg += f"\n Please calculate at least harmonic properties."
+                logger.error(msg)
+                sys.exit()
+            
             all_disps = self._get_displacements(
                     disp_mode,
                     file_evec=file_evec,
@@ -745,16 +765,16 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                     disp_mode,
                     number_of_displacements=number_of_displacements,
                     )
-         
         else:
             logger.error(f"\n Error: displacement mode {disp_mode} is not supported")
             sys.exit()
         
         ### error
         if all_disps is None:
+            print(all_disps, disp_mode)
             msg = "\n Error: Failed to obtain displacement patterns."
             msg += "\n The optimal structure might slightly changed from the previous one."
-            msg += "\n Please removed the previous output directory and try again."
+            msg += "\n Please remove the previous output directory and try again."
             logger.error(msg)
             if can_return_none:
                 return None
@@ -807,8 +827,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                     verbosity=self.verbosity
                     )
         except:
-            ## error which may due to the incompatible structures for 
-            ## the structure used and the one used in previous calculations
             almdisp = None
         
         if almdisp is None:
@@ -864,7 +882,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def calc_forces(self, order: None, calculator=None, 
             nmax_suggest=100, frac_nrandom=10., 
             temperature=500., classical=False,
-            calculate_forces=True, 
             output_dfset=None,
             amin_params={},
             # max_limit_of_estimated_time=24.*30.,
@@ -909,11 +926,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         # super().__init__()
         
         if output_dfset is not None:
-            msg = " Caution: \"output_dfset\" option is no loger used."
+            msg = " Caution: \"output_dfset\" option is no longer used."
         
         self._nmax_suggest = nmax_suggest
         
-        self._start_force_calculation(order, calculate_forces)
+        self._start_force_calculation(order, self.calculate_forces)
         
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
@@ -992,7 +1009,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         for ii, key in enumerate(struct_keys):
             self._job_for_each_structure(
                 ii, structures, outdir0, order, calculator, 
-                calculate_forces=calculate_forces, **amin_params_set)
+                calculate_forces=self.calculate_forces, **amin_params_set)
             
         ### output DFSET
         nsuggest =  len(structures)
@@ -1228,6 +1245,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             (num_neg) is less than ``tol_neg_frqc * num_kpt``, the optimal NAC
             option will be searched. 
         """
+        if self.calculate_forces == False:
+            return None
         
         nac_orig = self.nac
         
@@ -1314,7 +1333,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def analyze_harmonic_property(
             self, propt,
             outdir=None, max_num_corrections=None, neglect_log=None,
-            deltak=None, reciprocal_density=None, **kwargs):
+            deltak=None, reciprocal_density=None, 
+            **kwargs):
         """ Analyze each harmonic property (why not anharmonic?) 
         
         Args
@@ -1329,6 +1349,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._write_alamode_input_harmonic(
             propt, outdir=outdir, deltak=deltak, 
             reciprocal_density=reciprocal_density, **kwargs)
+        
+        if self.calculate_forces == False:
+            return None
         
         ### get log file name
         if propt == "fc2":
@@ -1350,8 +1373,14 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 neg_log = 1
             
             ### calculate phonon property
-            self.run_alamode(
+            job_output = self.run_alamode(
                     propt=propt, neglect_log=neg_log, outdir=outdir)
+            
+            if job_output.get('rerun', None) is not None:
+                if job_output['rerun'] == False:
+                    # print(job_output)
+                    break
+            
             count += 1
             
             ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1430,6 +1459,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             conducted while, if True, anphon will be run forecely.
         
         """
+        if propt not in ['suggest'] and self.calculate_forces == False:
+            logger.info("\n Note: ALAMODE job is not run because forces were not calculated.")
+            return None
+        
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
         
@@ -1476,8 +1509,23 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 command=self.commands['alamode'][alamode_type],
                 )
         
+        ## Read log file
+        filename = f"{workdir}/{logfile}"
+        last_line = open(filename, 'r').readlines()[-1]
+        
         if val == -1:
             logger.info(f" {propt} has already been calculated.")
+            return {'return': False, 'last_line': last_line}
+        
+        elif "ERROR in openfiles  MESSAGE: cannot open DFSET file" in last_line:
+            logger.info(f"{last_line}")
+            return {'rerun': False, 'last_line': last_line}
+        elif "ERROR in parse_general_vars  MESSAGE: The following variable is not found in &general input region: FCSXML" in last_line:
+            logger.info(f"{last_line}")
+            return {'rerun': False, 'last_line': last_line}
+        elif "ERROR in load_system_info_from_XML  MESSAGE: Cannot open file FCSXML" in last_line:
+            logger.info(f"{last_line}")
+            return {'rerun': False, 'last_line': last_line}
         elif val == 1:
             msg = "\n Error : ALAMODE job did not finish properly, possibly due to insufficient memory."
             msg += "\n Stop the calculation."
@@ -1533,10 +1581,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         ##
         if os.path.exists(fn1) == False:
-            
             msg = ' %s does not exist.' % self.get_relative_path(fn1)
             logger.info(msg)
-        
         else:
             if os.path.exists(fn2):
                 msg = "\n"

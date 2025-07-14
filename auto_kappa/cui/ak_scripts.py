@@ -278,6 +278,7 @@ def main():
             verbosity=ak_params['verbosity'],
             yamlfile_for_outdir=yaml_outdir,
             dim=ak_params['mater_dim'],
+            calculate_forces=ak_params['calculate_forces'],
             )
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation

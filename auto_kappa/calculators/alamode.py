@@ -40,7 +40,7 @@ def analyze_phonon_properties(
         scph=0, disp_temp=500., frac_nrandom_higher=0.34,
         temps_scph=100*np.arange(1,11),
         ## 4-phonon
-        four=0, frac_kdensity_4ph=0.2
+        four=0, frac_kdensity_4ph=0.2,
         ):
     """ Analyze phonon properties
     
@@ -98,7 +98,7 @@ def analyze_phonon_properties(
             params_nac=params_nac)
     
     ### Check negative frequency
-    if almcalc.minimum_frequency < negative_freq:
+    if almcalc.minimum_frequency < negative_freq and almcalc.calculate_forces:
         
         ### If negative frequencies were found,
         log = AkLog(base_dir)
@@ -122,7 +122,8 @@ def analyze_phonon_properties(
             almcalc, calc_force,
             nmax_suggest=nmax_suggest, 
             frac_nrandom=frac_nrandom, 
-            neglect_log=neglect_log)
+            neglect_log=neglect_log
+            )
     
     ## Calculate high-order FCs using LASSO
     if scph or four:
@@ -206,10 +207,11 @@ def analyze_phonon_properties(
             calc_type=calc_type,
             frac_kdensity_4ph=frac_kdensity_4ph,
             **params_kappa)
-    
-    ### output log.yaml 
-    log = AkLog(base_dir)
-    log.write_yaml()
+        
+    ### output log.yaml
+    if almcalc.calculate_forces:
+        log = AkLog(base_dir)
+        log.write_yaml()
     
     return 0
 
@@ -221,7 +223,7 @@ def analyze_phonon_properties_with_larger_supercells(
     nmax_suggest=100, frac_nrandom=1.0, frac_nrandom_higher=0.34,
     random_disp_temperature=500.,
     four=0, frac_kdensity_4ph=0.13,
-    pes=0,
+    pes=0
     ):
     
     almcalc_large = analyze_harmonic_with_larger_supercells(
@@ -252,7 +254,7 @@ def analyze_phonon_properties_with_larger_supercells(
                 almcalc, calc_force,
                 nmax_suggest=nmax_suggest, 
                 frac_nrandom=frac_nrandom, 
-                neglect_log=neglect_log
+                neglect_log=neglect_log,
                 )
         
         almcalc_large._fc3_type = almcalc.fc3_type
@@ -303,7 +305,6 @@ def analyze_harmonic_with_larger_supercells(
         k_length=20,
         negative_freq=-1e-3,
         neglect_log=False,
-        #
         restart=1,
         ):
     """ Analyze harmonic properties with larger supercell(s) """
@@ -351,6 +352,7 @@ def analyze_harmonic_with_larger_supercells(
                 verbosity=almcalc_orig.verbosity,
                 yamlfile_for_outdir=almcalc_orig.yamlfile_for_outdir,
                 dim=almcalc_orig.dim,
+                calculate_forces=almcalc_orig.calculate_forces,
                 )
         
         start_larger_supercell(almcalc_new)
@@ -393,10 +395,10 @@ def analyze_harmonic_properties(
         neglect_log=False, max_num_corrections=5,
         deltak=0.01, reciprocal_density=1500,
         negative_freq=-1e-3,
-        params_nac={'apdb': None, 'kpts': None}
+        params_nac={'apdb': None, 'kpts': None},
         ):
     """ Analyze harmonic FCs and phonon properties.
-
+    
     Args
     =====
     almcalc : AlamodeCalc obj
@@ -421,16 +423,15 @@ def analyze_harmonic_properties(
     
     _nprocs_orig = almcalc.commands['alamode']['nprocs']
     _para_orig = almcalc.commands['alamode']['anphon_para']
-
+    
     nac_orig = almcalc.nac
-    for propt in ["fc2", "band", "dos"]:
-        
+    for propt in ["fc2", "band", "dos"]:    
         ### analyze harmonic properties 
         almcalc.analyze_harmonic_property(
                 propt, 
                 max_num_corrections=max_num_corrections,
                 deltak=deltak, 
-                reciprocal_density=reciprocal_density
+                reciprocal_density=reciprocal_density,
                 )
     
     ### optimize NAC option
@@ -509,7 +510,8 @@ def analyze_harmonic_properties(
     almcalc.commands['alamode']['anphon_para'] = _para_orig
     
     ### plot band and DOS
-    almcalc.plot_bandos()
+    if almcalc.calculate_forces:
+        almcalc.plot_bandos()
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
@@ -518,7 +520,7 @@ def analyze_harmonic_properties(
 
 def calculate_cubic_force_constants(
         almcalc, calculator,
-        nmax_suggest=None, frac_nrandom=None, neglect_log=False
+        nmax_suggest=None, frac_nrandom=None, neglect_log=False,
         ):
     """ Calculate cubic force constants
     """
@@ -604,6 +606,9 @@ def calculate_thermal_conductivities(
         almcalc.write_alamode_input(
                 propt=propt, order=None, kpts=kpts, outdir=outdir, **kwargs)
         
+        if almcalc.calculate_forces == False:
+            continue
+        
         almcalc.run_alamode(
                 propt=propt, neglect_log=neglect_log, outdir=outdir,
                 logfile=f"{propt}.log")
@@ -622,7 +627,10 @@ def calculate_thermal_conductivities(
             almcalc.run_alamode(
                     propt=propt, neglect_log=neglect_log, 
                     outdir=outdir, **kwargs)
-        
+    
+    if almcalc.calculate_forces == False:
+        return None
+    
     ### analyze phonons
     msg = "\n"
     msg += " Plot anharmonic properties:\n"
@@ -635,7 +643,7 @@ def calculate_thermal_conductivities(
     
     ###
     if calc_type == "cubic":
-        
+
         try:
             for T in temperatures_for_spectral.split(':'):
                 almcalc.write_lifetime_at_given_temperature(temperature=float(T))

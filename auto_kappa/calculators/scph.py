@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def calculate_high_order_force_constants(
-        almcalc, calculator, order=5, frac_nrandom=None, disp_temp=500):
+        almcalc, calculator, order=5, frac_nrandom=None, disp_temp=500,):
     """ Calculate high-order (up to 6th-order) force constants finally to
     calculate 4th order FCs for phonon renormalization.
     """

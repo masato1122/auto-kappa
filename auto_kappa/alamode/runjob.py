@@ -83,8 +83,9 @@ def run_alamode(
                 break
             
             ###
-            msg = "\n Processes per node : %d => %d" % (ppn_prev, ppn_i)
-            #msg += "\n %s " % ("./" + os.path.relpath(os.getcwd(), dir_init))
+            if count == 1:
+                logger.info("")
+            msg = " Processes per node : %d => %d" % (ppn_prev, ppn_i)
             logger.info(msg)
         
         ### set number of parallelization
@@ -169,22 +170,13 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
 
             except Exception:
                 pass
-
+            
+            # lines = open(logfile, 'r').readlines()
+            # last_line = lines[-1] if len(lines) > 0 else "No output yet."
+            
             waiting_time = min(10, count)
             time.sleep(waiting_time)
             count += 1
-        
-        # if mem_max > 0.:
-        #     msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
-        #     logger.info(msg)
-        
-        ##if mem_info is not None:
-        ##    try:
-        ##        msg = "\n Memory usage (GB) : %.3f (VMS), %.3f (RSS) " % (
-        ##                mem_info.vms/1e9, mem_info.rss/1e9)
-        ##        logger.info(msg)
-        ##    except Exception:
-        ##        pass
             
         status = proc.poll()
     

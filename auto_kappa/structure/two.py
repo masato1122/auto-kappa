@@ -16,6 +16,7 @@ import json
 
 from ase import Atoms
 from ase.build import rotate
+from pymatgen.core import Structure, Lattice
 
 from auto_kappa.structure.crystal import change_structure_format
 
@@ -172,3 +173,54 @@ def get_thickness(structure, norm_idx=2):
     
     thickness = z_positions[imax] - z_positions[imin] + vdw_rad_max + vdw_rad_min
     return thickness
+
+def set_vacuum_to_2d_structure(struct_orig, vacuum_thickness: float = 20.0) -> Structure:
+    """ Add vacuum to a 2D structure by modifying the c-axis length. """
+    
+    structure = change_structure_format(struct_orig, format='pmg-structure')
+    a, b, c = structure.lattice.matrix
+    
+    ## Get the z-coordinates of the atoms
+    z_coords = structure.cart_coords[:, 2]
+    z_center = np.mean(z_coords)
+    material_thickness = get_thickness(structure, norm_idx=2)
+    new_c_length = material_thickness + vacuum_thickness
+    
+    ## Calculate offset to center atoms in the z-direction
+    offset = new_c_length / 2. - z_center
+    
+    ## Adjust atomic coordinates in the z-direction (cartesian coordinates)
+    new_cart_coords = structure.cart_coords.copy()
+    new_cart_coords[:, 2] += offset
+    
+    ## Create new Structure
+    new_lattice = Lattice([a, b, [0, 0, new_c_length]])
+    new_structure = Structure(
+        lattice=new_lattice,
+        species=structure.species,
+        coords=new_cart_coords,
+        coords_are_cartesian=True
+    )
+    return new_structure
+
+def adjust_vacuum_size(orig_structure, scell_matrix) -> Structure:
+    """ Modify the vacuum size of a 2D structure so that the c-axis length 
+    is larger than the in-plane dimensions.
+    """
+    structure = change_structure_format(orig_structure, format='pmg-structure')
+    
+    ##
+    scell = structure.make_supercell(scell_matrix)
+    
+    ## Get the current lattice parameters
+    a, b, c = scell.lattice.matrix
+    diag_length = np.linalg.norm([a[0], b[1]])  # In-plane diagonal length
+    
+    ## Calculate the new lattice parameters based on the supercell matrix
+    new_structure = set_vacuum_to_2d_structure(orig_structure, vacuum_thickness=diag_length * 1.2)
+    
+    msg = "\n Modify the vacuum size to be larger than the diagonal length of the in-plane structure:"
+    msg += f"\n from {c[2]:.2f} to {diag_length * 1.2:.2f} Angstrom."
+    logger.info(msg)
+    return new_structure
+    

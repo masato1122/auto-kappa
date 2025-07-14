@@ -198,6 +198,14 @@ def get_parser():
     ##            "VASP job.")
     ##        )
     
+    parser.add_option("--calculate_forces", dest="calculate_forces", type="int",
+            default=1, 
+            help=""
+            "Calculate forces (1) or not (0) [1]. "
+            "If this option is set to 1, the forces are calculated "
+            "If this option is set to 0, the forces are not calculated, but"
+            "the displacement structures are generated. ")
+    
     #### calculate potential energy sruface
     parser.add_option("--pes", dest="pes",
             type="int", default=0, 

@@ -549,7 +549,7 @@ def read_log_forces(directory, mode, fc3_type=None):
 
     if os.path.exists(dir1) == False:
         return None
-        
+      
     ##
     out = {}
     fmaxes = []
@@ -563,6 +563,8 @@ def read_log_forces(directory, mode, fc3_type=None):
         
         ### read vasprun.xml
         dir_vasp = dir1 + '/' + prefix
+        if dir_vasp.startswith("/"):
+            dir_vasp = "." + os.path.relpath(dir_vasp, os.getcwd())
         
         if os.path.exists(dir_vasp) == False:
             break
@@ -883,7 +885,6 @@ def get_kpath(filename):
             break
     
     return kpaths
-
 
 def get_ak_logs(directory):
     """ Return diffent information in log files

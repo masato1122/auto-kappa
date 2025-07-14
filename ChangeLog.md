@@ -9,6 +9,9 @@
 
 - Read the previously-obtained relaxed structure for the volume relaxation (strict optimization).
 
+- Add 'calculate_forces' option. When this option is set to be "0", forces are not calculate but structure with displacement patterns are prepared.
+
+
 # Ver. 1.1.0 (July 8, 2025)
 
 ## New

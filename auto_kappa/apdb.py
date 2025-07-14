@@ -31,6 +31,7 @@ from auto_kappa.structure.crystal import (
     change_structure_format,
     get_spg_number,
     )
+from auto_kappa.structure.two import adjust_vacuum_size
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.cui import ak_log
@@ -506,7 +507,7 @@ class ApdbVasp():
         self.update_structures(self.unitcell, standardization=True)
         
         ### strict relaxation with Birch-Murnaghan EOS
-        if volume_relaxation:
+        if volume_relaxation or self.mater_dim < 3:
             
             from auto_kappa.vasp.relax import StrictRelaxation
             outdir = directory + "/volume" 
@@ -553,6 +554,9 @@ class ApdbVasp():
             else:
                 unitcell = struct_ase.copy()
             
+            if self.mater_dim < 3:
+                unitcell = adjust_vacuum_size(unitcell, self.scell_matrix)
+                    
             self.update_structures(unitcell)
             
         ### Check the crystal symmetry before and after the relaxation
