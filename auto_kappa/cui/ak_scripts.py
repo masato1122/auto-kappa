@@ -124,7 +124,7 @@ def main():
             ak_params['relaxed_cell'] = "unitcell"
         elif ak_params['relaxed_cell'].lower()[0] == "p":
             ak_params['relaxed_cell'] = "primitive"
-     
+    
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
         get_required_parameters(

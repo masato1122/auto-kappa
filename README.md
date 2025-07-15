@@ -101,3 +101,4 @@ To Do
 
 - Iterative calculation using ShengBTE <= Convert FC format from ALAMODE to ShengBTE
 
+- Bug: spglib.standardize_cell in "auto_kappa.suggest.get_unitcell_and_primitive_matrix"

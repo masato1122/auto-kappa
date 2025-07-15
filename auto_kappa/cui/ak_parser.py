@@ -338,32 +338,40 @@ def _check_deprecated_options(options):
 
 def _check_command_options(options):
     """ Check the command options. """
+    
     params = eval(str(options))
+    count = 0
     for name, cmd in params.items():
         if name.startswith("command_") == False:
             continue
         exists = shutil.which(cmd) is not None
         if not exists:
-            if name == 'command_vasp_gam':
-                options.command_vasp_gam = options.command_vasp
-                msg = (
-                    f"\n Warning : '{cmd}' command does not exist. "
-                    f"--command_vasp_gam is set to '{options.command_vasp}'.")
-                logger.warning(msg)
+            if count == 0:
+                logger.info("")
             
-            elif name == 'command_anphon_ver2' and options.four == 0:
-                options.command_anphon_ver2 = options.command_anphon
-                msg = f"\n Note : '{cmd}' command does not exist while it is used only when options.four == 1."
-                logger.info(msg)
-            
-            elif name == 'command_dfc2' and options.scph == 0:
-                msg = f"\n Note : '{cmd}' does not exist while it is used only when options.scph == 1."
-                logger.info(msg)
-            
-            else:
-                msg = f"\n Error : '{cmd}' does not exist in the PATH!"
-                logger.error(msg)
-                ##sys.exit()
+            msg = f" Warning : '{cmd}' does not exist in the PATH!"
+            logger.error(msg)
+            #if name == 'command_vasp_gam':
+            #    options.command_vasp_gam = options.command_vasp
+            #    msg = (
+            #        f" Warning : '{cmd}' command does not exist. "
+            #        f"--command_vasp_gam is set to '{options.command_vasp}'.")
+            #    logger.warning(msg)
+            #
+            #elif name == 'command_anphon_ver2' and options.four == 0:
+            #    options.command_anphon_ver2 = options.command_anphon
+            #    msg = f" Note : '{cmd}' command does not exist while it is used only when options.four == 1."
+            #    logger.info(msg)
+            #
+            #elif name == 'command_dfc2' and options.scph == 0:
+            #    msg = f" Note : '{cmd}' does not exist while it is used only when options.scph == 1."
+            #    logger.info(msg)
+            #
+            #else:
+            #    msg = f" Error : '{cmd}' does not exist in the PATH!"
+            #    logger.error(msg)
+            #    ##sys.exit()
+            count += 1
     
 def check_ak_options(options):
     """ Check the auto-kappa options. """

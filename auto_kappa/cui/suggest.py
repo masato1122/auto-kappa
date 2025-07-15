@@ -18,7 +18,7 @@ import spglib
 from pymatgen.core.structure import Structure
 from phonopy.structure.cells import get_supercell, get_primitive
 
-from auto_kappa.structure.crystal import change_structure_format
+from auto_kappa.structure.crystal import change_structure_format, get_spg_number
 from auto_kappa.structure.supercell import estimate_supercell_matrix
 
 import logging
@@ -57,9 +57,12 @@ def suggest_structures_and_kmeshes(
         ## Align the out-of-plane direction to the z-axis
         from auto_kappa.structure.two import align_to_z_axis
         struct_ase = align_to_z_axis(struct_ase)
-    
+        
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
+    # print(get_spg_number(struct_ase))
+    # print(get_spg_number(unitcell))
+    # exit()
     
     ### get the supercell matrix and supercell for FC2
     if dim == 3:
@@ -140,20 +143,16 @@ def get_unitcell_and_primitive_matrix(structure):
     
     """
     ### structure preparation
-    cell = (
-            structure.cell,
-            structure.get_scaled_positions(),
-            structure.numbers
-            )
-
+    cell = (structure.cell, structure.get_scaled_positions(), structure.numbers)
+    
     ### get the unitcell
     # ver.1
     cell_std = spglib.standardize_cell(cell, to_primitive=False)
     unitcell = ase.Atoms(
             cell=cell_std[0], pbc=True,
             scaled_positions=cell_std[1],
-            numbers=cell_std[2]
-            )
+            numbers=cell_std[2])
+    
     # ver.2
     # from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as spg_analyzer
     # spg = spg_analyzer(change_structure_format(structure, 'pmg'))
@@ -164,11 +163,9 @@ def get_unitcell_and_primitive_matrix(structure):
     
     ### primitive matrix
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
-    
     primitive_matrix = np.dot(cell_prim[0], np.linalg.inv(cell_std[0])).T
     
     return unitcell, primitive_matrix
-    
 
 ### Copy from phonopy/structure/grid_points.py in Phonopy
 def klength2mesh(length, lattice, rotations=None):
