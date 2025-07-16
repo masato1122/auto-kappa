@@ -320,6 +320,11 @@ def get_parser():
     #options.mater_dim = 3
     #### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
+    ### Check and modify the output directory if necessary
+    params = eval(str(options))
+    if params.get('material_name') is not None:
+        options.outdir = params['material_name']
+    
     return options
 
 def _check_deprecated_options(options):
@@ -425,3 +430,4 @@ def parse_vasp_params(params_string):
         params_dict[name] = val
     
     return params_dict
+
