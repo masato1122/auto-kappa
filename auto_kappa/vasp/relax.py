@@ -23,11 +23,10 @@ import yaml
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
-from auto_kappa.io.vasp import wasfinished
+# from auto_kappa.io.vasp import wasfinished
 from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
-from auto_kappa.structure import (
-    change_structure_format, get_out_of_plane_direction)
-from auto_kappa.structure.two import get_thickness
+from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.two import get_thickness, get_normal_index
 
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
@@ -88,14 +87,15 @@ class StrictRelaxation():
     def dim(self):
         return self._dim
     
-    def with_different_volumes(self, 
-            initial_strain_range=[-0.03, 0.05], nstrains=15, tol_strain=None, 
-            kpts=[2,2,2],
-            command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
-            encut_factor=1.3, 
-            verbosity=1,
-            params_mod=None,
-            ):
+    def with_different_volumes(
+        self, 
+        initial_strain_range=[-0.03, 0.05], nstrains=15, tol_strain=None, 
+        kpts=[2,2,2],
+        command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
+        encut_factor=1.3, 
+        verbosity=1,
+        params_mod=None
+        ):
         """ Run VASP jobs for different volumes and calculate the energy.
         
         Args
@@ -127,12 +127,10 @@ class StrictRelaxation():
         if verbosity > 0:
             logger.info(msg)
         
-        ### get the strain interval
-        # strain_interval = (initial_strain_range[1] - initial_strain_range[0]) / (nstrains - 1)
-        
+        ## volume of the initial structure
         init_vol = get_volume(self.initial_structure, dim=self.dim)
         
-        ###
+        ##
         max_iterations = 3
         flag = False
         count = 0
@@ -192,95 +190,8 @@ class StrictRelaxation():
                 break
                 
             count += 1
-            
-        # print("<<<<<<<<<<<<<<<<<<<")
-        # sys.exit()
         
-        # ### calculate energies with the initial setting
-        # df_results = relaxation_with_different_volumes(
-        #         self.initial_structure,
-        #         base_directory=self.outdir,
-        #         strain_range=strain_range,
-        #         nstrains=nstrains,
-        #         tol_strain=tol_strain,
-        #         #
-        #         kpts=kpts, encut_factor=encut_factor,
-        #         command=command,
-        #         params_mod=params_mod,
-        #         verbosity=2,
-        #         dim=self.dim
-        #         )
-        
-        # df_results = df_results.sort(by='strain')
-        # strains = df_results['strain'].values
-        # # Vs = df_results['volume'].values
-        # # Es = df_results['energy'].values
-        
-        # # def _get_energy_info(energies):
-        # #     emin = np.min(energies)
-        # #     emax = np.max(energies)
-        # #     de_tot = emax - emin
-        # #     return emin, emax, de_tot
-        
-        # ### analyze smaller or larger strains
-        # min_strain, max_strain = np.min(strains), np.max(strains)
-        # flag = False
-        # if min_strain > strain_range[0]:
-        #     direction = 'smaller'
-        # elif max_strain < strain_range[1]:
-        #     direction = 'larger'
-        # else:
-        #     flag = True
-        
-        # # emin, emax, de_tot = _get_energy_info(Es0)
-        # # flag = False
-        # # if Es0[0] - emin < de_tot * tol_frac_ediff:
-        # #     direction = 'smaller'
-        # # elif Es0[-1] - emin < de_tot * tol_frac_ediff:
-        # #     direction = 'larger'
-        # # else:
-        # #     flag = True
-        
-        # # strain_range = initial_strain_range
-        # while flag == False:
-            
-        #     n = 2
-        #     if direction == 'smaller':
-        #         s0 = strain_range[0] - strain_interval * n
-        #         s1 = strain_range[0] - strain_interval
-        #     else:
-        #         s0 = strain_range[1] + strain_interval
-        #         s1 = strain_range[1] + strain_interval * n
-            
-        #     strain_range = [s0, s1]
-        #     df_results = relaxation_with_different_volumes(
-        #             self.initial_structure,
-        #             base_directory=self.outdir,
-        #             strain_range=strain_range,
-        #             nstrains=n,
-        #             tol_strain=tol_strain,
-        #             #
-        #             kpts=kpts, encut_factor=encut_factor,
-        #             command=command,
-        #             params_mod=params_mod,
-        #             verbosity=1,
-        #             dim=self.dim
-        #             )
-        #     df_results = df_results.sort(by='strain')
-        #     strains = df_results['strain'].values
-        #     # Vs = df_results['volume'].values
-        #     # Es = df_results['energy'].values
-            
-        #     ### check energies
-        #     # emin, emax, de_tot = _get_energy_info(Es)
-        #     # if direction == 'smaller':
-        #     #     if Es[0] - emin > tol_frac_ediff * de_tot:
-        #     #         flag = True
-        #     # elif direction == 'larger':
-        #     #     if Es[1] - emin > tol_frac_ediff * de_tot:
-        #     #         flag = True
-        
-        ###
+        ##
         Vs, Es = self.get_calculated_volumes_and_energies()
         self._volumes = Vs
         self._energies = Es
@@ -350,7 +261,7 @@ class StrictRelaxation():
             modulus_unit = "GPa"
         elif self.dim == 2:
             opt_struct = self.get_optimal_structure(format='pmg')
-            thickness = get_thickness(opt_struct, norm_idx=2) # Angstrom
+            thickness = get_thickness(opt_struct) # Angstrom
             modulus = bm.b0_GPa * thickness * 0.1 # N/m
             modulus_unit = "N/m"
         modulus_info = {'value': float(modulus), 'unit': modulus_unit, 'thickness': thickness}
@@ -398,7 +309,7 @@ class StrictRelaxation():
             modulus_unit = "GPa"
         elif self.dim == 2:
             opt_struct = self.get_optimal_structure(format='pmg')
-            thickness = get_thickness(opt_struct, norm_idx=2)
+            thickness = get_thickness(opt_struct)
             modulus = bm.b0_GPa * thickness * 0.1 # N/m
             modulus_unit = "N/m"
         msg += " Bulk modulus   : %8.3f %s\n" % (modulus, modulus_unit)
@@ -407,7 +318,7 @@ class StrictRelaxation():
         msg += " Initial strain : %8.3f\n" % (s_len)
         msg += " Error (MAE)    : %8.5f eV" % (mae)
         if self.dim == 2:
-            thickness = get_thickness(self.initial_structure, norm_idx=2)
+            thickness = get_thickness(self.initial_structure)
             msg += "\n"
             msg += " 2D thickness   : %8.3f A" % (thickness)
         logger.info(msg)
@@ -507,7 +418,7 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
     out_data['volume_unit'] = 'A^3'
     out_data['dim'] = int(dim)
     if dim == 2:
-        thickness = get_thickness(structure, norm_idx=2)
+        thickness = get_thickness(structure)
         out_data['thickness'] = float(thickness)
         out_data['thick_unit'] = 'A'
     
@@ -594,7 +505,7 @@ def get_strained_structure(structure0, strain, format='pmg', dim=3):
         structure0 = change_structure_format(structure0, format='pmg-Structure')
     
     cell0 = structure0.lattice.matrix.copy()
-    scaled_positions = structure0.frac_coords
+    positions = structure0.cart_coords
     symbols = []
     for el in structure0.species:
         symbols.append(el.name)
@@ -603,8 +514,7 @@ def get_strained_structure(structure0, strain, format='pmg', dim=3):
     if dim == 3:
         s = (1. + np.array(strain)) * np.eye(3)
     elif dim == 2:
-        normal_vec = get_out_of_plane_direction(structure0)
-        normal_idx = np.argmax(normal_vec)
+        normal_idx = get_normal_index(structure0, base='xyz')
         s = (1. + np.array(strain)) * np.eye(3)
         s[normal_idx, normal_idx] = 1.0
     else:
@@ -612,21 +522,27 @@ def get_strained_structure(structure0, strain, format='pmg', dim=3):
         sys.exit()
     
     cell = np.dot(cell0.T, s).T
+    positions = np.dot(positions, s.T)
     
     if format.lower().startswith('pmg') or format.lower() == 'pymatgen':
         ## pymatgen
         structure = Structure(
                 lattice=cell,
                 species=symbols,
-                coords=scaled_positions
+                coords=positions,
+                coords_are_cartesian=True
                 )
     elif format.lower() == 'ase':
         ## ASE
         structure = ase.Atoms(
                 cell=cell, pbc=True,
-                scaled_positions=scaled_positions,
+                positions=positions,
                 symbols=symbols,
                 )
+    else:
+        logger.error("\n Error: Structure format {} is not supported".format(format))
+        sys.exit()
+    
     return structure
 
 def get_optimal_volume(volumes, energies, min_num_data=5):
@@ -655,12 +571,7 @@ def relaxation_with_different_volumes(
     nstrains : integer
         number of strains to be applied
     """
-    ### get the calculated strains
-    ## ver.1
-    # calculated_strains = _get_calculated_strains(
-    #     base_directory, cell_pristine=struct_init.lattice.matrix, dim=dim)
-    #
-    ## ver.2
+    ### get results in previous calculations
     df_results = _get_calculated_results(
         base_directory, cell_pristine=struct_init.lattice.matrix, dim=dim)
     if df_results is None:
@@ -762,10 +673,20 @@ def get_volume(struct, dim=3):
     cell = struct_pmg.lattice.matrix
     
     if dim == 2:
-        norm_vec = get_out_of_plane_direction(struct_pmg)
-        norm_idx = np.argmax(norm_vec)
-        thickness = get_thickness(struct_pmg, norm_idx=norm_idx)
-        cell_height = cell[norm_idx, norm_idx]
+        norm_idx_abc = get_normal_index(struct_pmg, base='abc')
+        # norm_idx_xyz = get_normal_index(struct_pmg, base='xyz')
+        thickness = get_thickness(struct_pmg)
+        cell_height = np.linalg.norm(cell[norm_idx_abc])
+        
+        ## Check cell angles
+        angles = struct_pmg.lattice.angles
+        angles = np.delete(angles, norm_idx_abc)
+        if all(abs(angle - 90.0) < 1e-5 for angle in angles) == False:
+            msg = "\n Error: The angles of the cell are not 90 degrees."
+            msg += "\n Please check the structure."
+            logger.error(msg)
+            sys.exit()
+        
         vol = vol * thickness / cell_height
     
     return vol

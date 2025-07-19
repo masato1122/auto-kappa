@@ -17,7 +17,7 @@ import pandas as pd
 import ase.io
 from ase.geometry import get_distances
 
-from auto_kappa.structure.crystal import change_structure_format
+from auto_kappa.structure import change_structure_format
 from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_outcar, print_vasp_params
 from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
@@ -37,7 +37,7 @@ class AlamodeForceCalculator():
             line = f"Force calculation (order: {order})"
         else:
             line = f"Generate displacement structures (order: {order})"
-        msg = "\n\n " + line
+        msg = "\n " + line
         msg += "\n " + "=" * (len(line))
         logger.info(msg)
         
@@ -174,7 +174,7 @@ class AlamodeForceCalculator():
                 self._counter_done += 1
                 return
             else:
-                out = backup_vasp(outdir)
+                backup_vasp(outdir)
         
         ## set output directory
         calculator.directory = outdir
@@ -185,12 +185,26 @@ class AlamodeForceCalculator():
         
         structure = structures[key].copy()
         
+        ## Prepare the structure for VASP. This part is for 2D systems.
+        if self.dim == 3:
+            struct4vasp = structure.copy()
+        elif self.dim == 2:
+            from auto_kappa.structure.two import set_vacuum_to_2d_structure
+            struct_mod = set_vacuum_to_2d_structure(structure, vacuum_thickness=25.0)
+            struct4vasp = change_structure_format(struct_mod, format='ase')
+            if job_idx == 0:
+                logger.info("\n Modify vacuum space for 2D structure.")
+        else:
+            msg = " Error: dim must be 2 or 3."
+            logger.error(msg)
+            sys.exit()
+        
         ### set AMIN
         try:
             amin = prev_params["AMIN"]
         except Exception:
             amin = get_amin_parameter(
-                calculator.directory, structure.cell.array, **amin_params_set)
+                calculator.directory, struct4vasp.cell.array, **amin_params_set)
         
         if amin is not None:
             calculator.set(amin=amin)
@@ -201,11 +215,11 @@ class AlamodeForceCalculator():
         ### Calculate forces with Custodian
         if os.path.exists(calculator.directory) == False:
             os.makedirs(calculator.directory, exist_ok=True)
-            calculator.write_input(structure)
+            calculator.write_input(struct4vasp)
             
         if calculate_forces:
             self._calculate_forces_for_each(
-                calculator, structure, method='custodian', max_num_try=3)
+                calculator, struct4vasp, method='custodian', max_num_try=3)
             self._counter_done += 1
             
         ### print log
@@ -228,7 +242,7 @@ class AlamodeForceCalculator():
     def _calculate_forces_for_each(
         self, calculator, structure, method='custodian', max_num_try=3):
         count = 0
-        while True:    
+        while True:
             run_vasp(calculator, structure, method=method)
             
             ### check forces
@@ -398,7 +412,7 @@ class AlamodeInputWriter():
             inp.set_primitive(
                 change_structure_format(
                     self.primitive, format="pymatgen-structure"))
-            
+        
         elif alamode_type == 'alm':
             inp = AlmInput.from_structure(
                     self.supercell,
@@ -409,13 +423,14 @@ class AlamodeInputWriter():
                     nonanalytic=self.nac, 
                     borninfo=borninfo
                 )
+        inp.dim = self.dim
         return inp
     
     def _set_parameters_for_property(
         self, inp, propt=None, deltak=None, kpts=None, order=None):
         
         if propt == 'band':
-            inp.set_kpoint(deltak=deltak, dim=self.dim)
+            inp.set_kpoint(deltak=deltak, dim=self.dim, norm_idx=self.norm_idx_xyz)
         
         elif propt == 'dos':
             if self.frequency_range is not None:
@@ -433,7 +448,8 @@ class AlamodeInputWriter():
         
         elif propt == 'evec_commensurate':
             from auto_kappa.alamode.parameters import set_parameters_evec
-            set_parameters_evec(inp, self.primitive_matrix, self.scell_matrix, dim=self.dim)
+            set_parameters_evec(
+                inp, self.primitive_matrix, self.scell_matrix, dim=self.dim)
         
         elif propt.startswith('kappa'):
             from auto_kappa.alamode.parameters import set_parameters_kappa
@@ -442,8 +458,7 @@ class AlamodeInputWriter():
         elif propt == "scph":
             from auto_kappa.calculators.scph import set_parameters_scph
             set_parameters_scph(
-                    inp, primitive=self.primitive, deltak=deltak,
-                    kdensities=[30, 10], dim=self.dim)
+                inp, primitive=self.primitive, deltak=deltak, kdensities=[30, 10])
             
         elif propt in ['cv', 'lasso', 'fc2', 'fc3', 'suggest']:
             """
@@ -660,7 +675,7 @@ def should_rerun_band(filename):
     else:
         return True
 
-def read_kappa(dir_kappa, prefix, dim=3):
+def read_kappa(dir_kappa, prefix, dim=3, norm_idx=None, kappa_scale=1.0):
     """ Read .kl and .kl_coherent files and return pandas.DataFrame object
     
     Args
@@ -669,6 +684,13 @@ def read_kappa(dir_kappa, prefix, dim=3):
         directory in which .kl and .kl_coherent should exist.
     
     prefix : string
+    
+    dim : int
+        dimension of the system, 2 or 3.
+    
+    norm_idx : int or None
+        The out-of-plane direction index for 2D systems.
+        If dim == 2, norm_idx must be given.
     
     """
     fn_kp = dir_kappa + '/' + prefix + '.kl'
@@ -691,46 +713,58 @@ def read_kappa(dir_kappa, prefix, dim=3):
             msg = " Warning: temperatures are incompatible."
             logger.warning(msg)
     
+    ## Prepare direction keys
+    dirs = ['x', 'y', 'z']
+    if dim == 2:
+        if norm_idx is None:
+            msg = "\n Warning: norm_idx must be given for 2D systems."
+            msg += "\n Thermal conductivity may is not calculated properly."
+            logger.error(msg)
+            norm_idx = 2
+        dirs = [dirs[i] for i in range(3) if i != norm_idx]
+    
     nt = len(data)
     df['temperature'] = data[:,0]
-    dirs = [['x', 'y', 'z'][i] for i in range(dim)]
     for i1 in range(dim):
         d1 = dirs[i1]
         
         if data2 is not None:
             dd = dirs[i1]
             lab2 = 'kc_%s%s' % (dd, dd)
-            df[lab2] = data2[:,i1+1]
+            df[lab2] = data2[:,i1+1] * kappa_scale
         
         for i2 in range(dim):
             d2 = dirs[i2]
             num = i1*3 + i2 + 1
             lab = 'kp_%s%s' % (d1, d2)
-            df[lab] = data[:,num]
+            df[lab] = data[:,num] * kappa_scale
     
-    kave = df['kp_xx'].values / dim
-    for i in range(1, dim):
-        kave += df['kp_%s%s' % (dirs[i], dirs[i])].values / dim
-    
+    kave = np.zeros(nt)
+    for i in range(dim):
+        key = 'kp_%s%s' % (dirs[i], dirs[i])
+        kave += df[key].values / dim
     df['kp_ave'] = kave
     
-    if data2 is not None:
-        if dim == 3:
-            kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
-        elif dim == 2:
-            kave = (df['kc_xx'].values + df['kc_yy'].values) / 2.
+    ### If coherent contribution is available
+    if data2 is not None:    
+        ## Coherent contribution
+        if dim >= 2:
+            kave = np.zeros(nt)
+            for idim in range(dim):
+                key = 'kc_%s%s' % (dirs[idim], dirs[idim])
+                kave += df[key].values / dim
         else:
             msg = "\n Error: dim=%d is not supported." % dim
             logger.error(msg)
             sys.exit()
-        
         df['kc_ave'] = kave
         
-        for pre in ['xx', 'yy', 'zz', 'ave']:
-            if dim == 2 and pre == 'zz':
+        ## Total thermal conductivity (kp + kc)
+        for idir, pre in enumerate(['xx', 'yy', 'zz', 'ave']):
+            if dim == 2 and idir == norm_idx:
                 continue
             key = 'ksum_%s' % pre
-            df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
+            df[key] = df[f'kp_{pre}'].values + df[f'kc_{pre}'].values
     
     return df
 

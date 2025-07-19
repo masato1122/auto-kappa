@@ -25,8 +25,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def _plot_kappa_each(
-        ax, df, col='black', kappa_label=None, kappa_min=None, 
-        show_label=False, dim=3):
+        ax, df, col='black', kappa_label=None, kappa_min=None, show_label=False, 
+        dim=3):
     """ plot kappa for each condition (k-mesh) """
     markers = ['+', 'x', '_', 'o']
     
@@ -86,8 +86,9 @@ def _plot_kappa_each(
             ax.plot(xdat, ydat, linestyle='-', lw=lw, 
                     marker=None, c=col, label=label)
     
-def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, dim=3):
+def plot_kappa(
+    dfs, figname='fig_kappa.png', kappa_min=1e-7,
+    dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, dim=3):
     """ plot thermal conductivity """
     
     cmap = plt.get_cmap("tab10")

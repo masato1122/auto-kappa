@@ -10,7 +10,6 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import sys
-import math
 import numpy as np
 
 import ase
@@ -18,7 +17,7 @@ import spglib
 from pymatgen.core.structure import Structure
 from phonopy.structure.cells import get_supercell, get_primitive
 
-from auto_kappa.structure.crystal import change_structure_format, get_spg_number
+from auto_kappa.structure import change_structure_format
 from auto_kappa.structure.supercell import estimate_supercell_matrix
 
 import logging
@@ -52,11 +51,10 @@ def suggest_structures_and_kmeshes(
     else:
         struct_ase = change_structure_format(structure, format='ase')
     
-    ### 2D
-    if dim == 2:
-        ## Align the out-of-plane direction to the z-axis
-        from auto_kappa.structure.two import align_to_z_axis
-        struct_ase = align_to_z_axis(struct_ase)
+    ### 2D: align the out-of-plane direction to the z-axis
+    # if dim == 2:
+    #     from auto_kappa.structure.two import set_out_of_plane_direction
+    #     struct_ase = set_out_of_plane_direction(struct_ase)
         
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
@@ -146,7 +144,10 @@ def get_unitcell_and_primitive_matrix(structure):
     cell = (structure.cell, structure.get_scaled_positions(), structure.numbers)
     
     ### get the unitcell
-    # ver.1
+    ##
+    ## Caution: spglib.standardize_cell() may change the out-of-plane 
+    ## direction of 2D structures.
+    ##
     cell_std = spglib.standardize_cell(cell, to_primitive=False)
     unitcell = ase.Atoms(
             cell=cell_std[0], pbc=True,

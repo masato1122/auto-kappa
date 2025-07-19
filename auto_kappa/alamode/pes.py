@@ -64,8 +64,9 @@ def calculate_evec(
             fcsxml=os.path.relpath(fcsxml),
             nonanalytic=nac,
             borninfo=borninfo)
+    inp.dim = dim
     inp.update({"printevec": 1})
-    inp.set_kpoint(kpoints=[kpoint], dim=dim)
+    inp.set_kpoint(kpoints=[kpoint])
     inp.to_file(filename=file_anphon)
     
     ### run anphon

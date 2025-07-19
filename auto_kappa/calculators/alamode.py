@@ -126,18 +126,16 @@ def analyze_phonon_properties(
             )
     
     ## Calculate high-order FCs using LASSO
-    if scph or four:
-        
+    if scph or four:    
         from auto_kappa.calculators.scph import (
-                calculate_high_order_force_constants,
-                conduct_scph_calculation)
+            calculate_high_order_force_constants,
+            conduct_scph_calculation)
         
         ### calculate forces for SCPH
         calculate_high_order_force_constants(
                 almcalc, calc_force,
                 frac_nrandom=frac_nrandom_higher,
-                disp_temp=disp_temp,
-                )
+                disp_temp=disp_temp)
         
         ### Perform SCPH calculation
         if scph:
@@ -154,7 +152,9 @@ def analyze_phonon_properties(
         elif scph == 1 and four == 1:
             calc_type = "scph_4ph"
         else:
-            raise ValueError("Unknown combination of scph and four: %d, %d" % (scph, four))
+            msg = f"\n Unknown combination of scph and four: {scph}, {four}"
+            logger.error(msg)
+            sys.exit()
         
         ## k-mesh densities for thermal conductivity
         if kdensities_for_kappa is None:
@@ -162,7 +162,7 @@ def analyze_phonon_properties(
                 kdensities_for_kappa = [1500]
             else:
                 kdensities_for_kappa = [500, 1000, 1500]
-
+        
         ## temperatures for spectral analysis
         temp_kappa_scph = 300
         if scph == 0:
@@ -207,7 +207,7 @@ def analyze_phonon_properties(
             calc_type=calc_type,
             frac_kdensity_4ph=frac_kdensity_4ph,
             **params_kappa)
-        
+    
     ### output log.yaml
     if almcalc.calculate_forces:
         log = AkLog(base_dir)
@@ -412,8 +412,6 @@ def analyze_harmonic_properties(
         resolution of DOS
     
     """
-    # from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
-    
     ### suggest and creat structures for the harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
     almcalc.run_alamode(propt='suggest', order=1, neglect_log=True)
@@ -517,7 +515,7 @@ def analyze_harmonic_properties(
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
     
-
+    
 def calculate_cubic_force_constants(
         almcalc, calculator,
         nmax_suggest=None, frac_nrandom=None, neglect_log=False,

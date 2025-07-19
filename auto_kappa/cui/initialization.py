@@ -16,11 +16,13 @@ import os.path
 import numpy as np
 import glob
 
+import ase.io
+
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa import output_directories
 from auto_kappa.cui.suggest import klength2mesh
-from auto_kappa.structure.crystal import change_structure_format
-from auto_kappa.structure.crystal import get_primitive_structure_spglib
+from auto_kappa.structure import change_structure_format
+# from auto_kappa.structure.crystal import get_primitive_structure_spglib
 
 import logging
 logger = logging.getLogger(__name__)
@@ -53,9 +55,7 @@ def _get_celltype4relaxation(ctype_input, base_dir, natoms_prim=None):
     natoms_prim : int
         number of atoms in the primitive cell
     """
-    import os.path
-    import ase.io
-    from auto_kappa.structure.crystal import get_standardized_structure_spglib
+    # from auto_kappa.structure.crystal import get_standardized_structure_spglib
     
     cell_type = None
     

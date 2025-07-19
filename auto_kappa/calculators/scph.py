@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def calculate_high_order_force_constants(
-        almcalc, calculator, order=5, frac_nrandom=None, disp_temp=500,):
+    almcalc, calculator, order=5, frac_nrandom=None, disp_temp=500,):
     """ Calculate high-order (up to 6th-order) force constants finally to
     calculate 4th order FCs for phonon renormalization.
     """
@@ -93,7 +93,7 @@ def _create_effective_harmonic_fcs(
     return 0
 
 def set_parameters_scph(
-        inp, primitive=None, deltak=0.01, kdensities=[30, 10], dim=3, **kwargs):
+        inp, primitive=None, deltak=0.01, kdensities=[30, 10], **kwargs):
     """ Set ALAMODE parameters for SCPH calculation.
     
     Args
@@ -123,15 +123,15 @@ def set_parameters_scph(
             "tol_scph": 1e-10,    ## default
             }
     
-    inp.set_kpoint(deltak=deltak, dim=dim)
+    inp.set_kpoint(deltak=deltak)
     
     ### kmesh_scph
     kmesh_scph = get_automatic_kmesh(
-            primitive, reciprocal_density=kdensities[0], dim=dim)
+            primitive, reciprocal_density=kdensities[0], dim=inp.dim)
     
     ### kmesh_interpolate
     kmesh_int = get_automatic_kmesh(
-            primitive, reciprocal_density=kdensities[1], dim=dim)
+            primitive, reciprocal_density=kdensities[1], dim=inp.dim)
     
     ### kmesh_scph should be equal to or a multiple of the number of
     ### kmesh_interpolate in the same direction.

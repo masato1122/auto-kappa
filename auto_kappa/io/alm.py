@@ -12,15 +12,14 @@
 #from typing import Any, Dict, List, Optional, Union
 from typing import Dict
 from monty.json import MSONable
-# import sys
+import sys
 import warnings
-# import re
 import math
 import numpy as np
-# import pymatgen
 
 from pymatgen.io.vasp import Poscar
-# from ase import Atoms
+from ase.data import atomic_masses as atomic_masses_ase
+from ase.data import atomic_numbers
 
 from auto_kappa.units import AToBohr
 from auto_kappa.structure.crystal import (
@@ -28,9 +27,7 @@ from auto_kappa.structure.crystal import (
         change_structure_format, 
         get_primitive_structure_spglib
         )
-
-from ase.data import atomic_masses as atomic_masses_ase
-from ase.data import atomic_numbers
+from auto_kappa.structure.two import get_normal_index
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,7 +37,36 @@ try:
 except ImportError:
     f90nml = None
 
-class AlmInput(MSONable, dict):
+class AlamodeInput(MSONable, dict):
+    def __init__(self, dim=3):
+        pass
+        
+    def as_dict(self):
+        return dict(self)
+    
+    @property
+    def dim(self):
+        return self._dim
+    
+    @dim.setter
+    def dim(self, value):
+        if value not in [2, 3]:
+            msg = "\n Error: dim must be 2 or 3."
+            logger.error(msg)
+            sys.exit()
+        self._dim = value
+    
+    @classmethod
+    def from_dict(cls, alm_dict: Dict):
+        """ parameters """
+        return cls(**alm_dict)
+    
+    @classmethod
+    def from_file(cls, filename: str=None):
+        inp_dict = _read_alamode_input(filename)
+        return cls(**inp_dict)
+
+class AlmInput(AlamodeInput):
     """ Class for writing and reading alm input file.
     See the following URL for more detailed description.
     https://alamode.readthedocs.io/en/latest/almdir/inputalm.html
@@ -144,15 +170,9 @@ class AlmInput(MSONable, dict):
     @property
     def primitive(self):
         return self.get_primitive()
-
+    
     def get_primitive(self):
         return get_primitive_structure_spglib(self.structure)
-
-    @classmethod
-    def from_dict(cls, alm_dict: Dict):
-        """ Write a ALM input file
-        """
-        return cls(**alm_dict)
     
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
@@ -302,14 +322,14 @@ class AlmInput(MSONable, dict):
         with open(filename, "w") as file:
             file.write(alm_str)
     
-    @classmethod
-    def from_file(cls, filename: str=None):
-        inp_dict = _read_alamode_input(filename)
-        return cls(**inp_dict)
+    # @classmethod
+    # def from_file(cls, filename: str=None):
+    #     inp_dict = _read_alamode_input(filename)
+    #     return cls(**inp_dict)
     
-    def as_dict(self):
-        return dict(self)
-    
+    # def as_dict(self):
+    #     return dict(self)
+
 
 ## This part should be modified (rewrite).
 def _get_subdict(master_dict, subkeys):
@@ -431,7 +451,7 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     return params
 
-class AnphonInput(MSONable, dict):
+class AnphonInput(AlamodeInput):
     """ Class for writing and reading anphon input file.
     See the following URL for more detailed description.
     https://alamode.readthedocs.io/en/latest/anphondir/inputanphon.html
@@ -569,7 +589,7 @@ class AnphonInput(MSONable, dict):
     ### atomic massses which are not included in default setting of ALAMODE
     atoms_no_mass = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Np", "Pu"]
     
-    def __init__(self, **kwargs):
+    def __init__(self, dim=None, **kwargs):
         """
         Args
         ------
@@ -578,11 +598,15 @@ class AnphonInput(MSONable, dict):
             - mode
         """
         super().__init__()
+        
+        self._dim = dim
+        self._norm_idx = None
+        
         self.update(kwargs)
         self._primitive = None
     
-    def as_dict(self):
-        return dict(self)
+    # def as_dict(self):
+    #     return dict(self)
     
     @property
     def primitive(self):
@@ -592,7 +616,7 @@ class AnphonInput(MSONable, dict):
     
     def set_primitive(self, structure):
         self._primitive = structure
-
+    
     def get_primitive(self):
         
         ### ver.1
@@ -603,15 +627,13 @@ class AnphonInput(MSONable, dict):
         #prim = struct_pmg.get_primitive_structure()
         #
         ### ver.3
-        prim = get_primitive_structure_spglib(self.structure, format='ase')
-        
+        prim = get_primitive_structure_spglib(self.structure, format='ase')    
         return prim
     
-    @classmethod
-    def from_dict(cls, alm_dict: Dict):
-        """ Write a ALM input file
-        """
-        return cls(**alm_dict)
+    def norm_idx(self):
+        if self._norm_idx is None:
+            self._norm_idx = get_normal_index(self.primitive)
+        return self._norm_idx
     
     @classmethod
     def from_structure_file(cls, filename, **kwargs):
@@ -665,7 +687,7 @@ class AnphonInput(MSONable, dict):
         
         return AnphonInput(**anp_dict)
     
-    def set_kpoint(self, dim=3, **kwargs):
+    def set_kpoint(self, **kwargs):
         """ Set suggeted k-point parameters. This module may not well written.
         
         ## kpoint_keys = ['kpmode', 'kpoints', 'kpath', 'kpts', 'deltak']
@@ -718,7 +740,7 @@ class AnphonInput(MSONable, dict):
             if 'kpath' not in self.keys():
                 msg = "\n kpath is set automatically."
                 logger.info(msg)
-                self['kpath'] = get_kpoint_path(self.primitive, deltak=self['deltak'], dim=dim)
+                self['kpath'] = get_kpoint_path(self.primitive, deltak=self['deltak'], dim=self.dim)
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []
@@ -871,10 +893,10 @@ class AnphonInput(MSONable, dict):
         with open(filename, "w") as file:
             file.write(anp_str)
     
-    @classmethod
-    def from_file(cls, filename: str=None):
-        inp_dict = _read_alamode_input(filename)
-        return cls(**inp_dict)
+    # @classmethod
+    # def from_file(cls, filename: str=None):
+    #     inp_dict = _read_alamode_input(filename)
+    #     return cls(**inp_dict)
 
 def get_mass_info(elements):
     """ get mass info 
@@ -1008,17 +1030,6 @@ def _check_dict_contents(dictionary, key, message=True):
                 )
     return flag
 
-# def modify_kapath_for_2d(kpath_orig):
-#     """ Modify k-path for 2D calculations
-#     """
-#     print(kpath_orig)
-#     # kpath_mod = []
-#     # for kk in kpath_orig:
-#     #     print(kk)
-#     exit()
-    
-#     return kpath_mod
-
 def get_kpoint_path(primitive, deltak=0.01, dim=3):
     """
     Args
@@ -1046,13 +1057,22 @@ def get_kpoint_path(primitive, deltak=0.01, dim=3):
             ]
     kpath = seekpath.get_path(structure, with_time_reversal=True, recipe='hpkot')
     
+    ##
+    if dim == 2:
+        norm_idx = get_normal_index(prim_pmg, base='xyz')
+    else:
+        norm_idx = None
+    
     ## extract required data
     kpoints = []
     for each in kpath['path']:
         k1 = np.asarray(kpath['point_coords'][each[1]])
         k0 = np.asarray(kpath['point_coords'][each[0]])
-        if dim == 2 and (abs(k1[2]) > 1e-3 or abs(k0[2]) > 1e-3):
-            continue
+        
+        if dim == 2:
+            if abs(k1[norm_idx]) > 1e-3 or abs(k0[norm_idx]) > 1e-3:
+                continue
+        
         kvec = k1 - k0
         kleng = np.linalg.norm(kvec)
         nk = max(int(np.ceil(kleng / deltak)), 3)

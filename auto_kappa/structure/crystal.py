@@ -16,31 +16,21 @@ import numpy as np
 # from phonopy.structure.cells import get_primitive as get_primitive_phonopy
 import spglib 
 import ase, ase.data
-from ase.data import atomic_numbers, chemical_symbols
 
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Kpoints
-from phonopy.structure.atoms import PhonopyAtoms
+
+from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.two import get_normal_index
 
 import logging
 logger = logging.getLogger(__name__)
 
-#def make_supercell(atoms0, P):
-#    """ Make a supercell of the given structure
-#    Args
-#    ------
-#    atoms0 : 
-#        structure
-#    
-#    P : float, shape=(3,3)
-#    """
-#    return ase.build.make_supercell(atoms0, P)
-
 def get_automatic_kmesh(
     struct_init, 
     reciprocal_density=1500, 
-    grid_density=0.01,
+    # grid_density=0.01,
     method='reciprocal_density', dim=3):
     
     structure = change_structure_format(struct_init, format='pmg')
@@ -50,9 +40,11 @@ def get_automatic_kmesh(
         vol = structure.lattice.reciprocal_lattice.volume           ### A^3
         kppa = reciprocal_density * vol * structure.num_sites       ### grid density
         kpts = Kpoints.automatic_density(structure, kppa, force_gamma=force_gamma).kpts[0]
-        if dim == 2:
+        
+        if dim == 2:            
+            norm_idx_xyz = get_normal_index(structure, base='xyz')
             kpts = np.array(kpts)
-            kpts[2] = 1
+            kpts[norm_idx_xyz] = 1
             kpts = kpts.tolist()
     
     #elif method == 'grid_density':
@@ -121,8 +113,7 @@ def get_primitive_structure_spglib(structure, format='ase'):
 
     return prim
 
-def get_standardized_structure_spglib(
-        struct_orig, to_primitive=False, format='ase'):
+def get_standardized_structure_spglib(struct_orig, to_primitive=False, format='ase'):
     """ Get a standardized cell shape with spglib and return its structure
     
     Args
@@ -136,12 +127,12 @@ def get_standardized_structure_spglib(
     """
     structure = change_structure_format(struct_orig, format='phonopy')
     
-    ### Both should provide the exactly same result.
+    ## Both should provide the exactly same result.
     try:
-        ### for new verison of spglib
+        ## for new verison of spglib
         out = spglib.standardize_cell(structure, to_primitive=to_primitive)
     except Exception:
-        ### PhonopyAtom => tuple
+        ## PhonopyAtom => tuple
         cell = (
                 structure.get_cell(),
                 structure.get_scaled_positions(),
@@ -149,13 +140,8 @@ def get_standardized_structure_spglib(
                 )
         out = spglib.standardize_cell(cell, to_primitive=to_primitive)
     
-    ### make the structure with the given format
-    atoms = ase.Atoms(
-            cell=out[0], pbc=True,
-            scaled_positions=out[1],
-            numbers=out[2],
-            )
-    
+    ## make the structure with the given format
+    atoms = ase.Atoms(cell=out[0], pbc=True, scaled_positions=out[1], numbers=out[2])
     return change_structure_format(atoms, format=format)
 
 def get_standardized_structure(struct_orig, 
@@ -234,78 +220,6 @@ def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
         atoms_new.center()
     return atoms_new
 
-
-def change_structure_format(structure, format='pymatgen-IStructure'):
-    """ Convert from arbitrary crystal format to an arbitrary crystal format
-
-    Args
-    -------
-    structure (Structure object):
-
-    Return
-    -------
-    pymatgen's IStructure object
-    """
-    if (isinstance(structure, str_pmg.Structure) or
-            isinstance(structure, str_pmg.IStructure)):
-        
-        ## from pymatgen's (I)Structure object
-        lattice = structure.lattice.matrix
-        all_symbols = []
-        for specie in structure.species:
-            all_symbols.append(specie.name)
-        coords = structure.frac_coords
-    
-    elif (isinstance(structure, ase.Atoms) or
-            isinstance(structure, PhonopyAtoms)):
-        
-        ## from ase's Atoms and phonopy's PhonopyAtoms
-        lattice = structure.cell
-        all_symbols = structure.get_chemical_symbols()
-        coords = structure.get_scaled_positions()
-        
-    else:
-        logger.error(" Structure type {} is not supported".format(
-            type(structure)))
-        exit()
-    
-    ## set atomic numbers
-    numbers = []
-    for name in all_symbols:
-        numbers.append(atomic_numbers[name])
-    
-    ## return the structure
-    form = format.lower()
-    if 'pymatgen' in form or 'pmg' in form:
-        
-        if format == 'pymatgen-structure' or format == 'pmg-structure':
-            return str_pmg.Structure(lattice, all_symbols, coords)
-        else:
-            return str_pmg.IStructure(lattice, all_symbols, coords)
-        
-    elif form == 'ase' or form == 'atoms':
-        
-        return ase.Atoms(
-            cell=lattice,
-            scaled_positions=coords,
-            numbers=numbers,
-            pbc=True
-            )
-    
-    elif form == 'phonopyatoms' or form == 'phonopy':
-        
-        return PhonopyAtoms(
-            cell=lattice,
-            symbols=all_symbols,
-            scaled_positions=coords,
-            pbc=True
-            )
-    else:
-        
-        logger.warning(" Structure type '{}' is not supported. "\
-                "The structure type did not changed.".format(format))
-        return structure
-
 def get_formula(str_orig):    
     structure = change_structure_format(str_orig, format='pmg-istructure')
     return structure.composition.reduced_formula
@@ -319,4 +233,8 @@ def get_spg_number(str_orig):
             atoms.get_scaled_positions(),
             atoms.numbers)
     dataset = spglib.get_symmetry_dataset(cell)
-    return dataset['number']
+    try:
+        return dataset.number
+    except:    
+        return dataset['number']
+

@@ -17,6 +17,7 @@ import re
 import tarfile
 import glob
 
+import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
 
@@ -52,13 +53,27 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     ##, UnconvergedErrorHandler()]
     
     vjob = VaspJob(calc.command.split(), auto_npar=True)
-    
     c = Custodian(handlers, [vjob], max_errors=max_errors)
     c.run()
     
     ### return to the initial directory
     os.chdir(cwd)
+    
+    ### check the final structure
+    file_vasprun = f"{outdir}/vasprun.xml"
+    if os.path.exists(file_vasprun):
+        final_atoms = ase.io.read(file_vasprun, index=-1)
+        if _same_structures(atoms, final_atoms) == False:
+            msg = "\n Error: the final structure is different from the initial one."
+            logger.info(msg)
+            sys.exit()
+    
     return 1
+
+def _same_structures(atoms1, atoms2, rtol=0.001, atol=0.01):
+    cell1 = atoms1.cell.array.copy()
+    cell2 = atoms2.cell.array.copy()
+    return np.allclose(cell1, cell2, rtol=rtol, atol=atol)
 
 def run_vasp(calc, atoms, method='custodian', max_errors=10):
     """ Run a VASP job 
@@ -78,32 +93,26 @@ def run_vasp(calc, atoms, method='custodian', max_errors=10):
     
     """
     if calc.directory is None:
-        msg = " WARNING: output directory is not set in the calculator."
+        msg = "\n Error: output directory is not set in the calculator."
         logger.warning(msg)
         sys.exit()
     
     if 'ase' in method.lower():
-        
         atoms.calc = calc
         atoms.get_potential_energy()
         return 1
-    
     elif 'custodian' in method.lower():
-        
-        value = run_vasp_with_custodian(
-                calc, atoms, max_errors=max_errors)
+        value = run_vasp_with_custodian(calc, atoms, max_errors=max_errors)
         return value
-    
     else:
-        msg = " Error: method %s is not supported." % (method)
+        msg = "\n Error: method %s is not supported." % (method)
         logger.error(msg)
         sys.exit()
 
-def get_vasp_calculator(mode, atoms=None, directory=None, kpts=None,
-        encut_scale_factor=1.3,
-        setups='recommended', xc='pbesol',
-        **args,
-        ):
+def get_vasp_calculator(
+    mode, atoms=None, directory=None, kpts=None,
+    encut_scale_factor=1.3, setups='recommended', xc='pbesol', **args
+    ):
     """ Get VASP parameters for the given mode. Parameters are similar to those
     used for phonondb.
     
@@ -208,7 +217,7 @@ def get_enmax(ppp_list):
         line = [l for l in lines if 'ENMAX' in l]
         if len(line) == 0:
             logger.error(" Error")
-            return 300.
+            return 500.
         data = re.split(r'\s+|;|=', line[0])
         data2 = [d for d in data if d != '']
         enmaxes.append(float(data2[1]))
@@ -217,11 +226,11 @@ def get_enmax(ppp_list):
     return np.max(enmaxes)
 
 def backup_vasp(
-        directory,
-        filenames = {
-            "INCAR", "KPOINTS", "POSCAR", "OUTCAR", "CONTCAR", "OSZICAR",
-            "vasprun.xml", "vasp.out", "std_err.txt"},
-        prefix="error", delete_files=False):
+    directory,
+    filenames = {
+        "INCAR", "KPOINTS", "POSCAR", "OUTCAR", "CONTCAR", "OSZICAR",
+        "vasprun.xml", "vasp.out", "std_err.txt"},
+    prefix="error", delete_files=False):
     """
     Backup files to a tar.gz file. Used, for example, in backing up the
     files of an errored run before performing corrections.

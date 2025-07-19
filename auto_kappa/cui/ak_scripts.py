@@ -92,13 +92,17 @@ def main():
     ak_log.start_autokappa()
     #ak_log.print_machine_info()
     
-    ### Set auto-kappa options
+    ### Auto-kappa parmaeters
     check_ak_options(options)
     ak_params = eval(str(options))
     outfile = ak_params['outdir'] + "/parameters.json"
     _store_parameters(outfile, ak_params)
-    
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
+    
+    ## Note for the 2D system
+    if ak_params['mater_dim'] == 2:
+        from auto_kappa.structure.two import print_2d_system_notation
+        print_2d_system_notation()
     
     ### Set output directories
     out_dirs = _set_outdirs(base_dir)
@@ -167,11 +171,7 @@ def main():
     ### write file
     os.makedirs(out_dirs["result"], exist_ok=True)
     filename = out_dirs["result"] + "/parameters.yaml"
-    ak_log.write_parameters(
-            filename,
-            structures["unitcell"], 
-            cell_types, trans_matrices, kpts_used, nac
-            )
+    ak_log.write_parameters(filename, structures["unitcell"], cell_types, trans_matrices, kpts_used, nac)
     
     try:
         fn_print = filename.replace(os.getcwd(), ".")
@@ -223,20 +223,19 @@ def main():
             nsw_params=ak_params["nsw_params"],
             )
     
-    ## Modify the cutoff for harmonic force constants
-    if ak_params['mater_dim'] == 2:
-        from auto_kappa.structure.two import suggest_fc2_cutoff
-        cutoff_harm = suggest_fc2_cutoff(apdb.structures['super'])
-        msg = "\n The FC2 cutoff is set to %.2f Angstrom for the 2D system." % cutoff_harm
-        logger.info(msg)
-    else:
-        cutoff_harm = -1
-    
     ### Stop the calculation because of the symmetry error
     if out < 0:
         _stop_symmetry_error(out)
     
-    ### output yaml file
+    ## Modify the cutoff for harmonic force constants
+    if ak_params['mater_dim'] == 2:
+        from auto_kappa.structure.two import suggest_fc2_cutoff, print_length_info
+        cutoff_harm = suggest_fc2_cutoff(apdb.structures['super'])
+        print_length_info(apdb.structures['super'])
+    else:
+        cutoff_harm = -1
+    
+    ## output yaml file
     info = {
             "directory": out_dirs["relax"].replace(base_dir, "."), 
             "kind": "others",
@@ -250,7 +249,13 @@ def main():
     ### Calculate Born effective charge
     if nac:
         mode = 'nac'
-        apdb.run_vasp(mode, out_dirs[mode], kpts_used["nac"], print_params=True)
+        if ak_params['mater_dim'] == 2:
+            vaccum_thickness = 20.
+        else:
+            vaccum_thickness = None
+        
+        apdb.run_vasp(mode, out_dirs[mode], kpts_used["nac"], 
+                      print_params=True, vaccum_thickness=vaccum_thickness)
         
         ### output yaml file
         info = {

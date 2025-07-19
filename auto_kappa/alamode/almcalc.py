@@ -25,7 +25,8 @@ import ase.io
 from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
-from auto_kappa.structure.crystal import change_structure_format, get_formula
+from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.crystal import get_formula
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AnphonInput
@@ -44,10 +45,10 @@ import auto_kappa.alamode.helpers as helper
 from auto_kappa.alamode.helpers import AlamodeForceCalculator, AlamodeInputWriter, NameHandler
 from auto_kappa.utils import get_version
 from auto_kappa.units import BohrToA, AToBohr
+from auto_kappa.structure.two import get_normal_index, get_thickness
 
 import logging
 logger = logging.getLogger(__name__)
-
 
 class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     
@@ -243,6 +244,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._supercell = None
         #self._supercell3 = None
         self._dim = dim
+        self._norm_idx_abc = None
+        self._norm_idx_xyz = None
+        self._thickness = None
         
         self._set_structures(unit_pp)
         
@@ -417,14 +421,28 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         self._primitive = change_structure_format(prim_pp, format=format)
         
         ### supercell for harmonic FCs
-        xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        try:
-            sc = ase.io.read(xml, format='vasp-xml')
-        except Exception:
+        if self.dim == 3:
+            xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+            try:
+                sc = ase.io.read(xml, format='vasp-xml')
+                
+                if xml.startswith('/'):
+                    path = self.get_relative_path(xml)
+                else:
+                    path = xml
+                msg = f"\n Supercell is read from vasprun.xml: {path}"
+                logger.info(msg)
+            except Exception:
+                sc = get_supercell(unit_pp, self.scell_matrix)
+        elif self.dim == 2:
             sc = get_supercell(unit_pp, self.scell_matrix)
+        else:
+            msg = "\n Error: dim must be 2 or 3."
+            logger.error(msg)
+            sys.exit()
         
         self._supercell = change_structure_format(sc, format=format)
-        
+    
     @property
     def magnitude(self):
         return self._magnitude
@@ -588,6 +606,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         else:
             return self._supercell
 
+    @property
+    def norm_idx_abc(self):
+        """ Index of the out-of-plane direction for 2D structure """
+        if self._norm_idx_abc is None:
+            self._norm_idx_abc = get_normal_index(self.unitcell)
+        return self._norm_idx_abc
+    @property
+    def norm_idx_xyz(self):
+        """ Index of the out-of-plane direction for 2D structure """
+        if self._norm_idx_xyz is None:
+            self._norm_idx_xyz = get_normal_index(self.unitcell)
+        return self._norm_idx_xyz
+    @property
+    def thickness(self):
+        """ Thickness of the 2D structure """
+        if self._thickness is None:
+            self._thickness = get_thickness(self.unitcell)
+        return self._thickness
+    
     #@property
     #def supercell3(self):
     #    """
@@ -771,7 +808,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         ### error
         if all_disps is None:
-            print(all_disps, disp_mode)
+            # print(all_disps, disp_mode)
             msg = "\n Error: Failed to obtain displacement patterns."
             msg += "\n The optimal structure might slightly changed from the previous one."
             msg += "\n Please remove the previous output directory and try again."
@@ -923,10 +960,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             If 2, output DFSET file even when it exists.
         
         """
-        # super().__init__()
-        
         if output_dfset is not None:
-            msg = " Caution: \"output_dfset\" option is no longer used."
+            msg = " Warning: \"output_dfset\" option is no longer used."
+            # logger.warning(msg)
         
         self._nmax_suggest = nmax_suggest
         
@@ -1013,10 +1049,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             
         ### output DFSET
         nsuggest =  len(structures)
-        # if num_done == len(structures) and output_dfset:
         if self._counter_done == len(structures):
             self._make_dfset_file(order, nsuggest, outdir0)
-            
         logger.info("")
     
     def _write_alamode_input_harmonic(
@@ -1073,6 +1107,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         out = self._get_alamodetype_mode(propt)
         if out is None:
             msg = "\n Error: %s is not supported yet.\n" % propt
+            logger.error(msg)
+            sys.exit()
         
         alamode_type = out[0]
         mode = out[1]
@@ -1159,6 +1195,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         if '4ph' in propt:
             params = self.modify_parameters_for_4ph(inp.as_dict())
             inp = AnphonInput.from_dict(params)
+            inp.dim = self.dim
         
         ## Check if the tolerance was changed
         ## Settting of "tolerance" was added from ver.0.4.0.
@@ -1898,6 +1935,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
         keys = dirs_kappa.keys()
         
+        ## Scale of kappa for 2D systems
+        if self.dim == 2:
+            c_len = np.linalg.norm(self.unitcell.cell[self.norm_idx_abc])
+            kappa_scale = c_len / self.thickness
+        else:
+            kappa_scale = 1.0
+        
         dfs = {}
         logger.info("")
         for i, key in enumerate(keys):
@@ -1905,7 +1949,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 dir1 = self.get_relative_path(dirs_kappa[key])
                 msg = " Read %s" % (dir1)
                 logger.info(msg)
-                dfs[key] = helper.read_kappa(dirs_kappa[key], self.prefix, dim=self.dim)
+                dfs[key] = helper.read_kappa(
+                    dirs_kappa[key], self.prefix, dim=self.dim, 
+                    norm_idx=self.norm_idx_xyz, kappa_scale=kappa_scale)
             except Exception:
                 continue
         
@@ -1914,6 +1960,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             figname = self.out_dirs['result'] + '/fig_kappa.png'
         logger.info("")
         plot_kappa(dfs, figname=self.get_relative_path(figname), dim=self.dim)
+        
         return 0
     
     def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
