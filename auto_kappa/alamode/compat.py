@@ -25,6 +25,7 @@ from ase.geometry import get_distances
 
 from auto_kappa.io import AlmInput
 from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.two import get_normal_index
 
 import logging
 logger = logging.getLogger(__name__)
@@ -41,10 +42,20 @@ def _get_previously_suggested_structures(outdir):
             structures[key] = ase.io.read(fn)
         except:
             continue
-    return structures
+    
+    def _custom_sort_key(item):
+        key = item[0]
+        if key == 'prist':
+            return (0, 0)
+        try:
+            numeric_key = int(key)
+            return (1, numeric_key)
+        except (ValueError, TypeError):
+            return (2, str(key))
+    
+    return dict(sorted(structures.items(), key=_custom_sort_key))
 
-def adjust_keys_of_suggested_structures(
-    new_structures, outdir, prist_structure=None, tolerance=1e-3, mag=None):
+def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, dim=3):
     """ Sort the suggested structures and their displacement patterns 
     to align with those from the previous version.
     
@@ -64,31 +75,14 @@ def adjust_keys_of_suggested_structures(
     """
     prev_structures = _get_previously_suggested_structures(outdir)
     
-    if len(new_structures) == len(prev_structures):
-        return prev_structures
-    
-    ## Get the pristine structure
-    if prist_structure is not None:
-        struct_prist = prist_structure
-    elif 'prist' in prev_structures.keys():
-        struct_prist = prev_structures['prist']
-    else:
-        struct_prist = None
-    
     ## Get index mapping from new to previous
     map_new2prev = {}
     for new_key, new_structure in new_structures.items():
-        # p1 = new_structure.get_positions()
         for prev_key, prev_structure in prev_structures.items():
-            # p2 = prev_structure.get_positions()
             
             same = same_structures(
-                new_structure, 
-                prev_structure,
-                pristine=struct_prist if struct_prist else None,
-                mag=mag,
-                tolerance=tolerance,
-                pbc=new_structure.pbc)
+                new_structure, prev_structure, 
+                tolerance=tolerance, dim=dim)
             
             if same:
                 map_new2prev[new_key] = prev_key
@@ -100,7 +94,6 @@ def adjust_keys_of_suggested_structures(
     # avail_keys = [str(key) for key in list(new_structures.keys())]
     adjusted_key_structures = {}
     for new_key, prev_key in map_new2prev.items():
-        # print(f" new {new_key} -> prev {prev_key}")
         adjusted_key_structures[prev_key] = new_structures[new_key]
         
     ## maximum key in prev_structures
@@ -124,17 +117,7 @@ def adjust_keys_of_suggested_structures(
             
             adjusted_key_structures[key] = new_structure
     
-    # print(adjusted_key_structures.keys())        
-    # sys.exit()
-    
-    # if 'cube' in outdir:
-    #     ## remove the structures that are not in the previous version
-    #     print(prev_structures.keys())
-    #     print(adjusted_key_structures.keys())
-    #     sys.exit()
-    
     return adjusted_key_structures
-
 
 def min_cost_assignment(matrix):
     from scipy.optimize import linear_sum_assignment
@@ -144,10 +127,7 @@ def min_cost_assignment(matrix):
     selected_elements = list(zip(row_ind, col_ind))
     return selected_elements, min_total_cost
 
-
-def same_structures(
-    struct1, struct2, pristine=None, pbc=[True, True, True],
-    tolerance=1e-3, mag=None):
+def same_structures(struct1, struct2, tolerance=1e-7, dim=3):
     """ Check whether the two structures are the same.
     
     Args
@@ -170,31 +150,59 @@ def same_structures(
     mag : float
         The magnitude of the atom displacement.
     """
+    ## Check cell size
+    cell1 = struct1.cell.array
+    cell2 = struct2.cell.array
+    cell_diff = np.abs(cell1 - cell2)
+    
+    pbc = [True, True, True]
+    if dim == 2:
+        norm_idx = get_normal_index(struct1)
+        cell_diff = np.delete(cell_diff, norm_idx, axis=1)
+        pbc[norm_idx] = False
+    else:
+        norm_idx = None
+    
+    if np.amax(abs(cell_diff)) > tolerance:
+        # print("Cell size is different.")
+        return False
+    
+    ## Check displacements
+    pos1 = struct1.get_positions()
+    pos2 = struct2.get_positions()
     D, D_len = get_distances(
-        struct1.get_positions(), 
-        struct2.get_positions(),
+        pos1 - np.mean(pos1, axis=0),
+        pos2 - np.mean(pos2, axis=0),
         cell=struct1.cell, 
         pbc=pbc)
     
     ## Check the distance between atoms in the two structures
     selected_elements, min_total_cost = min_cost_assignment(D_len)
     
-    dists = []
+    n_atoms = len(struct1)
+    displacements = np.zeros((n_atoms, 3))
+    
     for i, j in selected_elements:
-        dists.append(D_len[i, j])
-    dists = np.array(dists)
-    
-    if np.all(dists < tolerance):
+        ## Check symbols of the atoms
+        if struct1[i].symbol != struct2[j].symbol:
+            # print("symbol is different.")
+            return False
         
-        ## Check chemical species
-        for i, j in selected_elements:
-            if struct1[i].symbol != struct2[j].symbol:
-                return False
-        
-        return True
+        ## Check the displacement
+        disp = D[i, j]
+        displacements[i, :] = disp[:]
     
-    return False
-
+    ## Check the displacement
+    ## Translational displacement is allowed
+    for j in range(3):
+        vmin = np.min(displacements[:, j])
+        vmax = np.max(displacements[:, j])
+        if vmax - vmin > tolerance:
+            # print("displacement is different.", j, vmax -vmin)
+            return False
+    
+    return True
+    
 def check_directory_name_for_pristine(path_force, pristine):
     """ Check the directory name for the pristine structure.
     

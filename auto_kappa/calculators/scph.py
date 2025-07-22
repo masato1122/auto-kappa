@@ -9,11 +9,14 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-# import sys
+import sys
 import os
 import os.path
 import numpy as np
 import subprocess
+
+from auto_kappa.io.fcs import FCSxml
+from auto_kappa.plot import make_figure, get_customized_cmap
 
 import logging
 logger = logging.getLogger(__name__)
@@ -58,6 +61,53 @@ def conduct_scph_calculation(almcalc, order=6, temperatures=100*np.arange(1,11))
     ### Create effectvie harmonic FCs
     for temp in temperatures:
         _create_effective_harmonic_fcs(almcalc, temperature=temp)
+
+    try:
+        plot_scph_force_constants(almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures)
+    except Exception as e:
+        logger.error(f"\n Failed to plot SCPH force constants: {e}")
+
+def plot_scph_force_constants(dir_work, prefix, temperatures, dpi=400):
+    """ Plot effective harmonic force constants obtained from SCPH calculation.
+    """
+    fig, axes = make_figure(1, 1, fontsize=7, fig_width=2.5, aspect=0.9)
+    ax = axes[0][0]
+    
+    cmap = get_customized_cmap(len(temperatures))
+    
+    for it, temp in enumerate(temperatures):
+        file_xml = f"{dir_work}/{prefix}_{int(temp)}K.xml"
+        if not os.path.exists(file_xml):
+            logger.warning(f" File {file_xml} does not exist. Skipping plotting.")
+            continue
+        
+        fcs = FCSxml(file_xml)
+        
+        xlabel = None
+        ylabel = None
+        if it == 0:    
+            show_legend = True
+        else:
+            show_legend = False
+        
+        fcs.plot_fc2(ax, xlabel=xlabel, ylabel=ylabel, color=cmap(it), show_legend=show_legend)
+
+    xlabel = 'Distance (${\\rm \\AA}$)'
+    ylabel = 'Effective harm. FC (${\\rm eV/\\AA^2}$)'
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    text = f"{temperatures[0]}K - {temperatures[-1]}K"
+    text += "\n ${\\rm \\Delta T = %dK}$" % (temperatures[1] - temperatures[0])
+    ax.text(0.95, 0.95, text, transform=ax.transAxes,
+            horizontalalignment='right', verticalalignment='top', fontsize=6)
+    
+    ## Save the figure
+    figname = f"{dir_work}/fig_scph_fc2.png"
+    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    if figname.startswith("/"):
+        figname = "./" + os.path.relpath(figname, os.getcwd())
+    logger.info(f" Force constants were plotted in {figname}")
 
 def _create_effective_harmonic_fcs(
         almcalc, temperature=300, workdir=None):

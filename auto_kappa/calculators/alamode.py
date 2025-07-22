@@ -25,6 +25,8 @@ from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
 from auto_kappa.calculators.compat import remove_old_kappa_data
 from auto_kappa.calculators.scph import calculate_high_order_force_constants
+from auto_kappa.io.fcs import FCSxml
+from auto_kappa.plot import make_figure
 
 import logging
 logger = logging.getLogger(__name__)

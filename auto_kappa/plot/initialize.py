@@ -19,7 +19,26 @@ import matplotlib.ticker as tick
 from matplotlib.ticker import *
 import matplotlib.gridspec as gridspec
 
-#---------- Start matplot -------------#
+def make_figure(nrows, ncols, fontsize=7, fig_width=2.5, aspect=0.9, hspace=0.15, wspace=0.1):
+    """ Make a figure with a grid of subplots.
+    """
+    set_matplot(fontsize=fontsize)
+    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+    plt.subplots_adjust()
+    
+    gs_main = gridspec.GridSpec(1, 1, figure=fig)    
+    gs_sub = gridspec.GridSpecFromSubplotSpec(
+        nrows, ncols, subplot_spec=gs_main[0], wspace=wspace, hspace=hspace)    
+    
+    axes = []
+    for ir in range(nrows):
+        axes.append([])
+        for ic in range(ncols):        
+            ax = plt.Subplot(fig, gs_sub[ir, ic])
+            fig.add_subplot(ax)
+            axes[ir].append(ax)
+    return fig, axes
+
 def set_matplot(fontsize=9):
     lw_bor = 0.5
     plt.rcParams["font.size"] = fontsize
@@ -128,4 +147,10 @@ def set_second_axis(ax):
     ax.tick_params(labelright=False, right=False, which='both')
     ax2.tick_params(labelleft=False, left=False, which='both')
     return ax2
+
+def get_customized_cmap(nbins, color1='blue', color2='red'):
+    from matplotlib.colors import LinearSegmentedColormap
+    colors = [color1, color2]
+    cm = LinearSegmentedColormap.from_list('mylist', colors, N=nbins)
+    return cm
 

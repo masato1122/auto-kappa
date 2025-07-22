@@ -18,12 +18,14 @@ from pymatgen.io.vasp.outputs import Vasprun
 from phonopy.interface.vasp import read_vasp
 from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
+
 from auto_kappa.units import BohrToA, RyToEv
+from auto_kappa.structure.two import get_normal_index
 
 import logging
 logger = logging.getLogger(__name__)
 
-def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
+def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     """ Get dataset of displacements and forces from many vasprun.xml files.
     
     Args
@@ -41,6 +43,9 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     nset : int
         Number of data set. If not given, all data will be read.
     
+    fd2d : bool
+        If True, the displacement method was finite difference for 2D systems.
+        The translational displacement is allowed along the out-of-plane direction.
     """
     from ase.geometry import get_distances
     
@@ -66,6 +71,11 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
     forces0 = atoms0.get_forces()
     positions0 = atoms0.get_positions()
     
+    if fd2d:
+        norm_idx = get_normal_index(atoms0)
+    else:
+        norm_idx = None
+    
     ## 
     def _get_diagonal_elements(flarge):
         n = len(flarge)
@@ -88,18 +98,27 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
                 positions0, p2=atoms1.get_positions(),
                 cell=atoms0.cell, pbc=True)
         displacements = _get_diagonal_elements(disp_large) / BohrToA  ## Bohr
-        forces = (atoms1.get_forces() - forces0) \
-                * BohrToA / RyToEv                         ## Bohr/Ry
+        forces = (atoms1.get_forces() - forces0) * BohrToA / RyToEv   ## Bohr/Ry
+        
+        if fd2d:
+            displacements = _adjust_displacements_with_trans_disp(
+                displacements, normal_index=norm_idx)
         
         ene = atoms1.get_potential_energy()
         all_energies.append(ene)     ## eV
         
         all_disps.append(displacements)
         all_forces.append(forces)
-
+        
+        ##
+        if fn.startswith('/'):
+            rel_path = './' + os.path.relpath(fn, os.getcwd())
+        else:
+            rel_path = fn
+        
         ## get lines
         all_lines.append("# Filename: %s, Snapshot: %d, E_pot (eV): %.7f" % (
-            fn, ii+1, ene))
+            rel_path, ii+1, ene))
         for (d, f) in zip(displacements, forces):
             line = "%16.13f " * 3 % tuple(d)
             line += "  "
@@ -124,6 +143,46 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None):
         logger.info(msg)
 
     return [all_disps, all_forces]
+
+def _adjust_displacements_with_trans_disp(displacements, normal_index=None, tolerance=1e-8):
+    """ Adjust displacements with translational displacement.
+    The translational displacement is allowed along the normal direction.
+    
+    Args
+    -----
+    displacements : ndarray
+        Displacement matrix of shape (nset, natoms, 3)
+    
+    normal_index : int or None
+        If not None, the index of the normal direction.
+        The translational displacement is allowed along this direction.
+    """
+    if normal_index is None:
+        return displacements
+    
+    disps_norm = displacements[:, normal_index]
+    
+    vmin = np.min(disps_norm)
+    vmax = np.max(disps_norm)
+    if vmax - vmin < 1e-7:
+        return displacements
+    
+    ## Gest the best shift with the tolerance
+    from collections import Counter
+    shift_candidates = - disps_norm
+    rounded = np.round(shift_candidates / tolerance) * tolerance
+    count = Counter(rounded)
+    best_shift, max_zeros = count.most_common(1)[0]
+    
+    ## Gest the exact best shift
+    imin = np.argmin(abs(disps_norm + best_shift))
+    best_shift = - disps_norm[imin]
+    
+    ## Make new displacements
+    disp_new = displacements.copy()
+    disp_new[:, normal_index] += best_shift
+    return disp_new
+    
 
 def read_dfset(filename, natoms=None, nstructures=None):
     """ Read DFSET with Alamode format and return displacements and forces.

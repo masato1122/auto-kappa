@@ -105,7 +105,7 @@ class AlamodeForceCalculator():
         if order == 2:
             ## FC3 is obtained with random-displacement method
             ## with a fixed displacement magnitude
-            structures = self.get_suggested_structures(
+            structures, displacements = self.get_suggested_structures(
                     order, 
                     disp_mode='random',
                     number_of_displacements=ngenerated,
@@ -114,14 +114,14 @@ class AlamodeForceCalculator():
         elif order > 2:
             ## High order FCs are obtained with
             ## a random-displacment based on normal coordinate
-            structures = self.get_suggested_structures(
+            structures, displacements = self.get_suggested_structures(
                     order, 
                     disp_mode='random_normalcoordinate',
                     number_of_displacements=ngenerated,
                     temperature=temperature,
                     classical=classical
                     )
-        return structures
+        return structures, displacements
     
     def _check_structures_identity(self, struct_this, struct_prev, tolerance=1e-3, key=None):
         _, D_len = get_distances(
@@ -270,7 +270,7 @@ class AlamodeForceCalculator():
         logger.info(msg)
         return time
         
-    def _make_dfset_file(self, order, nsuggest, base_dir):
+    def _make_dfset_file(self, order, nsuggest, base_dir, fd2d=False):
         
         if order == 1:
             fn0 = self.outfiles['harm_dfset']
@@ -287,8 +287,8 @@ class AlamodeForceCalculator():
         out = get_dfset(
             base_dir, offset_xml=offset_xml,
             outfile=self.get_relative_path(outfile),
-            nset=nsuggest-1)
-        
+            nset=nsuggest-1, fd2d=fd2d)
+
         return out
 
 class AlamodeInputWriter():
@@ -351,13 +351,13 @@ class AlamodeInputWriter():
             else:
                 dfset = self.higher_dfset
                 fc3xml = self.fc3xml
-                if os.path.exists(fc3xml) == False:
+                if os.path.exists(fc3xml) == False and self.calculate_forces:
                     logger.error("\n Error: FC3 has not been calculated.")
                     sys.exit()
             fc2xml = self.fc2xml
-            if os.path.exists(fc2xml) == False:
+            if os.path.exists(fc2xml) == False and self.calculate_forces:
                 logger.error("\n Error: FC2 has not been calculated.")
-                sys.exit()
+                # sys.exit()
         elif propt == 'fc2':
             dfset = self.harm_dfset
             fc2xml = None

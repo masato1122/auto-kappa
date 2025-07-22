@@ -355,7 +355,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def fc2xml(self):
         if self._fc2xml is None:
             self._fc2xml = self.out_dirs['harm']['force'] + f"/{self.prefix}.xml"
-        if os.path.exists(self._fc2xml) == False:
+        if os.path.exists(self._fc2xml) == False and self.calculate_forces:
             self._fc2xml = None
         return self._fc2xml
     
@@ -370,7 +370,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                 raise ValueError(
                     f"\n Error: fc3_type must be 'fd' or 'lasso' but not '{self.fc3_type}'. "
                     "If you want to use the default, set fc3_type='df'.")
-        if os.path.exists(self._fc3xml) == False:
+        if os.path.exists(self._fc3xml) == False and self.calculate_forces:
             self._fc3xml = None
         return self._fc3xml
     
@@ -378,7 +378,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def higher_fcsxml(self):
         if self._higher_fcsxml is None:
             self._higher_fcsxml = self.out_dirs['higher']['lasso'] + f"/{self.prefix}.xml"
-        if os.path.exists(self._higher_fcsxml) == False:
+        if os.path.exists(self._higher_fcsxml) == False and self.calculate_forces:
             self._higher_fcsxml = None
         return self._higher_fcsxml
     
@@ -386,7 +386,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def fcsxml(self):
         # if self._fcsxml is None:
         #     self._fcsxml = self.out_dirs["result"] + "/FCS.xml"
-        if os.path.exists(self._fcsxml) == False:
+        if os.path.exists(self._fcsxml) == False and self.calculate_forces:
             self._fcsxml = None
         return self._fcsxml
     
@@ -823,12 +823,14 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         structures['prist'] = structure.copy()
         
         ## set calculator for each pattern
+        disps_all = {}
         for i, displacements in enumerate(all_disps):
             scell = structure.copy()
             scell.translate(displacements)
             structures[i+1] = scell
+            disps_all[i+1] = displacements
         
-        return structures
+        return structures, disps_all
     
     def _get_displacements(
             self, displacement_mode: None,
@@ -1012,19 +1014,17 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             fc_type = 'lasso'
         
         if fc_type == 'lasso':
-            structures = self._get_suggested_structures_for_lasso(
+            structures, _ = self._get_suggested_structures_for_lasso(
                 order, nfcs, natoms, frac_nrandom, nmax_suggest,
                 temperature=temperature, classical=classical)
         else:
             ## if order == 1 or (order == 2 and self.fc3_type == 'fd'):
-            structures_tmp = self.get_suggested_structures(order, disp_mode='fd')
+            structures_tmp, _ = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
             structures = adjust_keys_of_suggested_structures(
-                structures_tmp, outdir0, 
-                prist_structure=self.supercell,
-                mag=mag)
-        
+                structures_tmp, outdir0, tolerance=1e-5, dim=self.dim)
+            
         ### If something wrong, return None
         if structures is None:
             return None
@@ -1046,11 +1046,15 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             self._job_for_each_structure(
                 ii, structures, outdir0, order, calculator, 
                 calculate_forces=self.calculate_forces, **amin_params_set)
-            
+        
         ### output DFSET
         nsuggest =  len(structures)
         if self._counter_done == len(structures):
-            self._make_dfset_file(order, nsuggest, outdir0)
+            if fc_type == 'fd' and self.dim == 2:
+                fd2d = True
+            else:
+                fd2d = False
+            self._make_dfset_file(order, nsuggest, outdir0, fd2d=fd2d)
         logger.info("")
     
     def _write_alamode_input_harmonic(
@@ -1552,6 +1556,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         filename = f"{workdir}/{logfile}"
         last_line = open(filename, 'r').readlines()[-1]
         
+        ## Plot force constants
+        if propt in ['fc2', 'fc3', 'lasso'] and self.calculate_forces:
+            orders = {'fc2': 1, 'fc3': 2, 'lasso': 3}
+            self.plot_force_constants(
+                outdir=workdir, 
+                order=orders.get(propt) if order is None else min(order, 3))
+        
         if val == -1:
             logger.info(f" {propt} has already been calculated.")
             return {'return': False, 'last_line': last_line}
@@ -1578,7 +1589,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             
             if propt in ['lasso']:
                 self._plot_cvsets(order=order)
-
+            
     def _copy_generated_fcsfiles(self, propt=None, order=None):
         """ Copyr a FCs file into the "result" directory.
         """
@@ -1632,6 +1643,51 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             logger.info(msg)
             shutil.copy(fn1, fn2)
     
+    def plot_force_constants(self, outdir=None, order=None, dpi=400):
+        """ Plot force constants from the ALAMODE output file. """
+        from auto_kappa.plot import make_figure
+        from auto_kappa.io.fcs import FCSxml
+        
+        if self.calculate_forces == False:
+            return None
+        
+        file_fcs = f"{outdir}/{self.prefix}.xml"
+        if os.path.exists(file_fcs) == False:
+            msg = "\n Error: %s does not exist." % file_fcs
+            logger.error(msg)
+            sys.exit()
+            return None
+        
+        try:
+            fcs = FCSxml(file_fcs)
+            fig, axes = make_figure(order, 1, aspect=0.5*order, fig_width=2.5, hspace=0.2)
+            
+            fcs.plot_fc2(axes[0][0], xlabel=None)
+            
+            if order > 1:
+                if order == 2:
+                    xlabel = 'Distance (${\\rm \\AA}$)'
+                else:
+                    xlabel = None
+                fcs.plot_fc3(axes[1][0], xlabel=xlabel)
+            
+            if order > 2:
+                if order == 3:
+                    xlabel = 'Distance (${\\rm \\AA}$)'
+                else:
+                    xlabel = None
+                fcs.plot_fc4(axes[2][0], xlabel=xlabel)
+            
+            figname = os.path.dirname(file_fcs) + f"/fig_fc{order+1}.png"
+            fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+            if figname.startswith("/"):
+                figname = "./" + os.path.relpath(figname, os.getcwd())
+            logger.info(f" Force constants were plotted in {figname}")
+            
+        except Exception:
+            logger.warning("\n Warning: the figure of force constants was not created properly.")
+            # sys.exit()
+        
     #@property
     #def file_result(self):
     #    return self._file_result
@@ -2075,4 +2131,4 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         ### move back to the initial directory
         os.chdir(dir_init)
-
+        sys.exit()
