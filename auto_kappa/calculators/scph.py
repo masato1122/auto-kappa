@@ -16,7 +16,7 @@ import numpy as np
 import subprocess
 
 from auto_kappa.io.fcs import FCSxml
-from auto_kappa.plot import make_figure, get_customized_cmap
+from auto_kappa.plot import make_figure, get_customized_cmap, set_axis
 
 import logging
 logger = logging.getLogger(__name__)
@@ -63,25 +63,41 @@ def conduct_scph_calculation(almcalc, order=6, temperatures=100*np.arange(1,11))
         _create_effective_harmonic_fcs(almcalc, temperature=temp)
 
     try:
-        plot_scph_force_constants(almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures)
+        plot_scph_force_constants(
+            almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures,
+            file_fc2_0K=almcalc.fc2xml)
     except Exception as e:
         logger.error(f"\n Failed to plot SCPH force constants: {e}")
+        sys.exit()
 
-def plot_scph_force_constants(dir_work, prefix, temperatures, dpi=400):
+def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, dpi=600):
     """ Plot effective harmonic force constants obtained from SCPH calculation.
     """
-    fig, axes = make_figure(1, 1, fontsize=7, fig_width=2.5, aspect=0.9)
+    fig, axes = make_figure(1, 1, fontsize=7, fig_width=2.5, aspect=0.7)
     ax = axes[0][0]
     
-    cmap = get_customized_cmap(len(temperatures))
+    nt = len(temperatures)
+    cmap = get_customized_cmap(nt)
     
-    for it, temp in enumerate(temperatures):
-        file_xml = f"{dir_work}/{prefix}_{int(temp)}K.xml"
-        if not os.path.exists(file_xml):
-            logger.warning(f" File {file_xml} does not exist. Skipping plotting.")
-            continue
+    ## plot effective FC2
+    for it in range(nt+1):    
         
-        fcs = FCSxml(file_xml)
+        if it == nt: # FC2 at 0K 
+            temp = 0.
+            file_xml = file_fc2_0K
+            color = 'grey'
+            lw = 0.2
+        else: # effective FC2 at finite temperatures
+            temp = temperatures[it]
+            file_xml = f"{dir_work}/{prefix}_{int(temp)}K.xml"
+            color = cmap(it)
+            lw = 0.4
+        
+        try:
+            fcs = FCSxml(file_xml)
+        except Exception as e:
+            logger.error(f" Failed to read {file_xml}: {e}")
+            continue
         
         xlabel = None
         ylabel = None
@@ -90,15 +106,20 @@ def plot_scph_force_constants(dir_work, prefix, temperatures, dpi=400):
         else:
             show_legend = False
         
-        fcs.plot_fc2(ax, xlabel=xlabel, ylabel=ylabel, color=cmap(it), show_legend=show_legend)
-
+        fcs.plot_fc2(ax, xlabel=xlabel, ylabel=ylabel, 
+                     color=color, lw=lw, show_legend=show_legend)
+    
     xlabel = 'Distance (${\\rm \\AA}$)'
     ylabel = 'Effective harm. FC (${\\rm eV/\\AA^2}$)'
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     
-    text = f"{temperatures[0]}K - {temperatures[-1]}K"
-    text += "\n ${\\rm \\Delta T = %dK}$" % (temperatures[1] - temperatures[0])
+    text  = "${\\rm T_{min} = %d K}$ (blue)" % temperatures[0]
+    text += "\n${\\rm T_{max} = %d K}$ (red)" % temperatures[-1]
+    text += "\n${\\rm \\Delta T = %dK}$" % (temperatures[1] - temperatures[0])
+    if file_fc2_0K is not None:
+        if os.path.exists(file_fc2_0K):
+            text += "\n0K (grey)"
     ax.text(0.95, 0.95, text, transform=ax.transAxes,
             horizontalalignment='right', verticalalignment='top', fontsize=6)
     

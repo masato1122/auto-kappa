@@ -77,8 +77,12 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
     
     ## Get index mapping from new to previous
     map_new2prev = {}
+    assigned_keys = []
     for new_key, new_structure in new_structures.items():
         for prev_key, prev_structure in prev_structures.items():
+            
+            if prev_key in assigned_keys:
+                continue
             
             same = same_structures(
                 new_structure, prev_structure, 
@@ -86,6 +90,7 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
             
             if same:
                 map_new2prev[new_key] = prev_key
+                assigned_keys.append(prev_key)
                 break
     
     ### Make a dict of structures with adjusted keys

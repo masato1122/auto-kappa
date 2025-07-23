@@ -450,8 +450,8 @@ def analyze_harmonic_properties(
                     params_nac["kpts"],
                     print_params=True
                     )
-        except:
-            msg = "\n Warning: cannot get parameters for NAC."
+        except Exception as e:
+            msg = f"\n Warning: cannot get parameters for NAC: {e}"
             logger.warning(msg)
     
     ### get optimal NONANALYTICAL option for Alamode
@@ -585,12 +585,15 @@ def calculate_thermal_conductivities(
         elif calc_type in ["scph", "4ph", "scph_4ph"]:
             outdir = almcalc.out_dirs['higher'][f"kappa_{calc_type}"] + kpts_suffix
         else:
-            raise ValueError("Unknown calc_type: %s" % calc_type)
+            msg = f"\n Unknown calc_type: %s" % calc_type
+            logger.error(msg)
+            sys.exit()
         
         ##
         propt = 'kappa'
         if 'scp' in calc_type:
             propt += '_scph'
+        
         if '4ph' in calc_type:
             propt += '_4ph'  ## anphon >= ver.1.9    
             
@@ -612,6 +615,8 @@ def calculate_thermal_conductivities(
         almcalc.run_alamode(
                 propt=propt, neglect_log=neglect_log, outdir=outdir,
                 logfile=f"{propt}.log")
+        
+        _print_rt_kappa(outdir, almcalc.prefix, calc_type)
         
         ### check output file for kappa
         kappa_log = f"{outdir}/{propt}.log"
@@ -647,31 +652,86 @@ def calculate_thermal_conductivities(
         try:
             for T in temperatures_for_spectral.split(':'):
                 almcalc.write_lifetime_at_given_temperature(temperature=float(T))
-        except:
-            logger.warning("\n Warning: lifetime was not written properly.")
+        except Exception as e:
+            msg = f"\n Warning: lifetime was not written properly. {e}"
+            logger.warning(msg)
         
         try:
             almcalc.plot_lifetime(
                     temperatures=temperatures_for_spectral, calc_type=calc_type)
-        except Exception:
-            logger.warning("\n Warning: the figure of lifetime was not created properly.")
+        except Exception as e:
+            msg = f"\n Warning: the figure of lifetime was not created properly. {e}"
+            logger.warning(msg)
         
         try:
             almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-        except Exception:
-            logger.warning("\n Warning: the figure of scattering rate was not created properly.")
-        
+        except Exception as e:
+            msg = f"\n Warning: the figure of scattering rate was not created properly. {e}"
+            logger.warning(msg)
+
         try:
             almcalc.plot_cumulative_kappa(
                     temperatures=temperatures_for_spectral, 
                     wrt='frequency', xscale='linear')
-        except Exception:
-            logger.warning("\n Warning: the figure of cumulative thermal conductivity was not created properly.")
-        
+        except Exception as e:
+            msg = f"\n Warning: the figure of cumulative thermal conductivity was not created properly. {e}"
+            logger.warning(msg)
+
         try:
             almcalc.plot_cumulative_kappa(
                     temperatures=temperatures_for_spectral, 
                     wrt='mfp', xscale='log')
-        except Exception:
-            logger.warning("\n Warning: the figure of cummulative TCs was not created properly.")
+        except Exception as e:
+            msg = f"\n Warning: the figure of cumulative TCs was not created properly. {e}"
+            logger.warning(msg)
 
+def _print_rt_kappa(outdir, prefix, calc_type, rt=300):
+    
+    ks = {'kp': {}, 'kc': {}}
+    ktypes = ['kp', 'kc']
+    for ik, ktype in enumerate(ktypes):
+        
+        if ik == 0:
+            extension = 'kl' if '4ph' not in calc_type else 'kl4'
+        else:
+            extension = 'kl_coherent'
+        
+        file_kappa = f"{outdir}/{prefix}.{extension}"
+        if os.path.exists(file_kappa) == False:
+            return 0
+            
+        dump = np.genfromtxt(file_kappa)
+        if dump.ndim == 1:
+            dump = dump.reshape((1, -1))
+        
+        idx_rt = np.where(abs(dump[:,0] - rt) < 1)[0][0]
+        if abs(dump[idx_rt, 0] - rt) > 1.0:
+            continue
+        
+        if ik == 0:
+            istep = 4
+        elif ik == 1:
+            istep = 1
+        kxx = dump[idx_rt, 1]
+        kyy = dump[idx_rt, 1 + istep]
+        kzz = dump[idx_rt, 1 + 2 * istep]
+        kave = (kxx + kyy + kzz) / 3.0
+        
+        ks[ktype]['xx'] = kxx
+        ks[ktype]['yy'] = kyy
+        ks[ktype]['zz'] = kzz
+        ks[ktype]['ave'] = kave
+        
+        if 'kl' not in ks:
+            ks['kl'] = {'xx': 0.0, 'yy': 0.0, 'zz': 0.0, 'ave': 0.0}
+        ks['kl']['xx'] += kxx
+        ks['kl']['yy'] += kyy
+        ks['kl']['zz'] += kzz
+        ks['kl']['ave'] += kave
+    
+    msg = f"\n Thermal conductivity at {rt}K:"
+    for ktype in ks:
+        msg += "\n "
+        for key in ks[ktype]:
+            msg += f"{ktype}_{key}: {ks[ktype][key]:.3f}  "
+    logger.info(msg)

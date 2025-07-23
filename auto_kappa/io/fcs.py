@@ -20,7 +20,6 @@ from ase.units import Rydberg, Bohr
 import ase
 import matplotlib.pyplot as plt
 
-
 from auto_kappa.plot import set_axis, set_legend
 
 import logging
@@ -276,7 +275,8 @@ class FCSxml():
     
     def plot_fc2(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
-                 ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)'):
+                 ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)',
+                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -289,7 +289,6 @@ class FCSxml():
         
         ###
         fcs = self.fc2
-        markers = ['o', 's', 'D', '^', 'v', 'x']
         for iel1, el1 in enumerate(symbol_list):
             indices1_prim = [i for i, s in enumerate(symbols_prim) if s == el1] # indices in primitive cell
             for iel2, el2 in enumerate(symbol_list):
@@ -309,13 +308,15 @@ class FCSxml():
                                 xdat[i1, i2, j1, j2] = dmax
                                 ydat[i1, i2, j1, j2] = fcs[iat1_prim, iat2_sc, j1, j2]
                 
-                _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
         
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        set_axis(ax, xticks=xticks, mxticks=mxticks)
 
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
-                 ylabel='Cubic FC (${\\rm eV/\\AA^3}$)'):
+                 ylabel='Cubic FC (${\\rm eV/\\AA^3}$)',
+                 lw=0.3, ms=2.3, xticks=1, mxticks=10):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -328,7 +329,6 @@ class FCSxml():
         
         ##
         fcs = self.fc3
-        markers = ['o', 's', 'D', '^', 'v', 'x']
         for iel1, el1 in enumerate(symbol_list):
             indices1_prim = [i for i, s in enumerate(symbols_prim) if s == el1] # indices in primitive cell
             for iel2, el2 in enumerate(symbol_list):
@@ -353,13 +353,15 @@ class FCSxml():
                                     xdat[i1, i2, i3, j1, j2, j3] = dmax
                                     ydat[i1, i2, i3, j1, j2, j3] = fcs[iat1_prim, iat2_sc, iat3_sc, j1, j2, j3]
                     
-                    _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                    _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
         
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        set_axis(ax, xticks=xticks, mxticks=mxticks)
     
     def plot_fc4(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
-                 ylabel='Quartic FC (${\\rm eV/\\AA^4}$)'):
+                 ylabel='Quartic FC (${\\rm eV/\\AA^4}$)',
+                 lw=0.3, ms=2.3, xticks=1, mxticks=10):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -373,7 +375,6 @@ class FCSxml():
         
         ##
         fcs = self.fc4
-        markers = ['o', 's', 'D', '^', 'v', 'x']
         for iel1, el1 in enumerate(symbol_list):
             indices1_prim = [i for i, s in enumerate(symbols_prim) if s == el1] # indices in primitive cell
             nat1 = len(indices1_prim)
@@ -410,18 +411,18 @@ class FCSxml():
                                             ydat[i1, i2, i3, i4, j1, j2, j3, j4] = \
                                                 fcs[iat1_prim, iat2_sc, iat3_sc, iat4_sc, j1, j2, j3, j4]
                         
-                        _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                        _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
         
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
-    
+        set_axis(ax, xticks=xticks, mxticks=mxticks)
 
-def _set_frame(ax, title, xlabel, ylabel, show_legend=True):
+def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5):
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     set_axis(ax)
     if show_legend:
-        set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=6, alpha=0.5)
+        set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=fontsize, alpha=0.5)
 
 def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=2.3):
     cmap = plt.get_cmap('tab10')

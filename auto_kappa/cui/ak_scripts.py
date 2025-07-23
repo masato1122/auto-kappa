@@ -331,27 +331,27 @@ def main():
     ##  Larger supercell  ##
     ########################
     ### calculate phonon properties with larger supercells
-    if (almcalc.minimum_frequency < ak_params['negative_freq'] and ak_params["analyze_with_largersc"] == 1):
-        
-        from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
-        analyze_phonon_properties_with_larger_supercells(
-            base_dir, almcalc, calc_force,
-            max_natoms=ak_params['max_natoms'],
-            delta_max_natoms=ak_params['delta_max_natoms'],
-            max_loop_for_largesc=ak_params['max_loop_for_largesc'],
-            k_length=ak_params['k_length'],
-            negative_freq=ak_params['negative_freq'],
-            neglect_log=neglect_log,
-            restart=ak_params['restart'],
-            harmonic_only=ak_params['harmonic_only'],
-            nmax_suggest=ak_params['nmax_suggest'],
-            frac_nrandom=ak_params['frac_nrandom'],
-            frac_nrandom_higher=ak_params['frac_nrandom_higher'],
-            random_disp_temperature=ak_params['random_disp_temperature'],
-            four=ak_params['four'],
-            frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
-            pes=ak_params['pes'],
-        )
+    if ak_params["analyze_with_largersc"]:
+        if almcalc.minimum_frequency < ak_params['negative_freq'] or ak_params['calculate_forces'] == False:
+            from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
+            analyze_phonon_properties_with_larger_supercells(
+                base_dir, almcalc, calc_force,
+                max_natoms=ak_params['max_natoms'],
+                delta_max_natoms=ak_params['delta_max_natoms'],
+                max_loop_for_largesc=ak_params['max_loop_for_largesc'],
+                k_length=ak_params['k_length'],
+                negative_freq=ak_params['negative_freq'],
+                neglect_log=neglect_log,
+                restart=ak_params['restart'],
+                harmonic_only=ak_params['harmonic_only'],
+                nmax_suggest=ak_params['nmax_suggest'],
+                frac_nrandom=ak_params['frac_nrandom'],
+                frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+                random_disp_temperature=ak_params['random_disp_temperature'],
+                four=ak_params['four'],
+                frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
+                pes=ak_params['pes'],
+                )
     
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times

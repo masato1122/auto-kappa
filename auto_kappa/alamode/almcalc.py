@@ -1024,7 +1024,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             ## Adjust keys of structures
             structures = adjust_keys_of_suggested_structures(
                 structures_tmp, outdir0, tolerance=1e-5, dim=self.dim)
-            
+
         ### If something wrong, return None
         if structures is None:
             return None
@@ -1662,7 +1662,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             fcs = FCSxml(file_fcs)
             fig, axes = make_figure(order, 1, aspect=0.5*order, fig_width=2.5, hspace=0.2)
             
-            fcs.plot_fc2(axes[0][0], xlabel=None)
+            if order == 1:
+                xlabel = 'Distance (${\\rm \\AA}$)'
+            else:
+                xlabel = None
+            fcs.plot_fc2(axes[0][0], xlabel=xlabel)
             
             if order > 1:
                 if order == 2:
