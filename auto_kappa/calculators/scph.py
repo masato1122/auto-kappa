@@ -129,15 +129,12 @@ def plot_scph_force_constants(
             logger.error(f" Failed to read {file_xml}: {e}")
             continue
         
-        xlabel = None
-        ylabel = None
-        if it == 0:    
+        if it == 0:
             show_legend = True
         else:
             show_legend = False
         
-        fcs.plot_fc2(ax, xlabel=xlabel, ylabel=ylabel, 
-                     color=color, lw=lw, show_legend=show_legend)
+        fcs.plot_fc2(ax, xlabel=None, ylabel=None, color=color, lw=lw, show_legend=show_legend)
     
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
