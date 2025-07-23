@@ -423,14 +423,15 @@ def _set_frame(ax, title, xlabel, ylabel, show_legend=True):
     if show_legend:
         set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=6, alpha=0.5)
 
-def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=2.0):
+def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=2.3):
     cmap = plt.get_cmap('tab10')
     markers = ['o', '^', 's', 'D', 'v', 'x']
     xdat = xdat.flatten()
     ydat = ydat.flatten()
-    idx_nonzero = np.where(abs(ydat) > tolerance)[0]
+    idx_nonzero = [i for i in range(len(xdat)) if xdat[i] > tolerance and ydat[i] > tolerance]
     xdat = xdat[idx_nonzero]
     ydat = ydat[idx_nonzero]
+    ax.axhline(0, linestyle='-', color='grey', lw=lw)
     if len(xdat) > 0 and len(ydat) > 0:
         ax.plot(xdat, ydat, marker=markers[pair_idx % len(markers)],
                 ms=ms, linestyle='None', mew=lw,
