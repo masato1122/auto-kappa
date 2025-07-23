@@ -61,14 +61,15 @@ def conduct_scph_calculation(almcalc, order=6, temperatures=100*np.arange(1,11))
     ### Create effectvie harmonic FCs
     for temp in temperatures:
         _create_effective_harmonic_fcs(almcalc, temperature=temp)
-
-    try:
-        plot_scph_force_constants(
-            almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures,
-            file_fc2_0K=almcalc.fc2xml)
-    except Exception as e:
-        logger.error(f"\n Failed to plot SCPH force constants: {e}")
-        sys.exit()
+    
+    if almcalc.calculate_forces:
+        try:
+            plot_scph_force_constants(
+                almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures,
+                file_fc2_0K=almcalc.fc2xml)
+        except Exception as e:
+            logger.error(f"\n Failed to plot SCPH force constants: {e}")
+            sys.exit()
 
 def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, dpi=600):
     """ Plot effective harmonic force constants obtained from SCPH calculation.
