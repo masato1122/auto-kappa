@@ -273,7 +273,7 @@ def analyze_phonon_properties_with_larger_supercells(
         if four == 0:
             kdensities = [500, 1000, 1500]
             calc_type = 'cubic'
-            xml_files = {'fc2xml': almcalc.fc2xml, 'fcsxml': almcalc.fc3xml}
+            xml_files = {'fc2xml': almcalc_large.fc2xml, 'fcsxml': almcalc.fc3xml}
         else:
             kdensities = [1500]
             calc_type = '4ph'
