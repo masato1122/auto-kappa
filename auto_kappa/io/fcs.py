@@ -274,14 +274,6 @@ class FCSxml():
         logger.warning(msg)
         return None
     
-    def _set_frame(self, ax, title, xlabel, ylabel, show_legend=True):
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        set_axis(ax)
-        if show_legend:
-            set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=6, alpha=0.5)
-    
     def plot_fc2(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
                  ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)'):
@@ -317,9 +309,9 @@ class FCSxml():
                                 xdat[i1, i2, j1, j2] = dmax
                                 ydat[i1, i2, j1, j2] = fcs[iat1_prim, iat2_sc, j1, j2]
                 
-                self._plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
         
-        self._set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
 
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
@@ -332,7 +324,6 @@ class FCSxml():
         
         ## Create a mapping of symbol pairs to indices
         index_map = _make_symbol_pair_index([symbol_list, symbol_list, symbol_list])
-        
         distances = self.supercell.get_all_distances(mic=True)
         
         ##
@@ -362,24 +353,9 @@ class FCSxml():
                                     xdat[i1, i2, i3, j1, j2, j3] = dmax
                                     ydat[i1, i2, i3, j1, j2, j3] = fcs[iat1_prim, iat2_sc, iat3_sc, j1, j2, j3]
                     
-                    self._plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                    _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
         
-        self._set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
-    
-    def _plot_fcs(self, ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=1.8):
-        cmap = plt.get_cmap('tab10')
-        markers = ['o', '^', 's', 'D', 'v', 'x']
-        xdat = xdat.flatten()
-        ydat = ydat.flatten()
-        idx_nonzero = np.where(abs(ydat) > tolerance)[0]
-        xdat = xdat[idx_nonzero]
-        ydat = ydat[idx_nonzero]
-        if len(xdat) > 0 and len(ydat) > 0:
-            ax.plot(xdat, ydat, marker=markers[pair_idx % len(markers)],
-                    ms=ms, linestyle='None', mew=lw,
-                    mec=color if color is not None else cmap(pair_idx % 10),
-                    mfc='none', label=label)
-    
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
     
     def plot_fc4(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
@@ -434,9 +410,32 @@ class FCSxml():
                                             ydat[i1, i2, i3, i4, j1, j2, j3, j4] = \
                                                 fcs[iat1_prim, iat2_sc, iat3_sc, iat4_sc, j1, j2, j3, j4]
                         
-                        self._plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
+                        _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label)
         
-        self._set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+    
+
+def _set_frame(ax, title, xlabel, ylabel, show_legend=True):
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    set_axis(ax)
+    if show_legend:
+        set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=6, alpha=0.5)
+
+def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=2.0):
+    cmap = plt.get_cmap('tab10')
+    markers = ['o', '^', 's', 'D', 'v', 'x']
+    xdat = xdat.flatten()
+    ydat = ydat.flatten()
+    idx_nonzero = np.where(abs(ydat) > tolerance)[0]
+    xdat = xdat[idx_nonzero]
+    ydat = ydat[idx_nonzero]
+    if len(xdat) > 0 and len(ydat) > 0:
+        ax.plot(xdat, ydat, marker=markers[pair_idx % len(markers)],
+                ms=ms, linestyle='None', mew=lw,
+                mec=color if color is not None else cmap(pair_idx % 10),
+                mfc='none', label=label)
 
 # def main():
 #     fname_xml = sys.argv[1]

@@ -377,11 +377,33 @@ def _check_command_options(options):
             #    logger.error(msg)
             #    ##sys.exit()
             count += 1
+
+def _check_alamode_version(options):
     
+    from auto_kappa.utils.version import get_version
+    from packaging.version import Version
+    
+    ## 'alm' command is not supported.
+    ##if options.command_alm is not None:
+    ##    ver = get_version(options.command_alm)
+    if options.command_anphon is not None:
+        ver = get_version(options.command_anphon)
+        if ver is not None:
+            if Version(ver) >= Version("1.6.0"):
+                msg = f"\n Anphon ver.{ver} for command_anphon may not be too old. Please check the anphon version."
+                logger.error(msg)
+    if options.command_anphon_ver2 is not None:
+        ver = get_version(options.command_anphon_ver2)
+        if ver is not None:
+            if Version(ver) < Version("1.9.0"):
+                msg = f"\n Anphon ver.{ver} for command_anphon_ver2 may be too old. Please check the anphon version."
+                logger.error(msg)
+
 def check_ak_options(options):
     """ Check the auto-kappa options. """
     _check_deprecated_options(options)
     _check_command_options(options)
+    _check_alamode_version(options)
     
 def parse_vasp_params(params_string):
     """
