@@ -16,7 +16,9 @@ import numpy as np
 import subprocess
 
 from auto_kappa.io.fcs import FCSxml
-from auto_kappa.plot import make_figure, get_customized_cmap, set_axis
+from auto_kappa.plot import make_figure, get_customized_cmap, set_axis, set_legend
+from auto_kappa.plot.bandos import plot_bands, set_xticks_labels
+from auto_kappa.plot.alamode.band import get_symmetry_points_from_file, get_scph_bands
 
 import logging
 logger = logging.getLogger(__name__)
@@ -63,25 +65,52 @@ def conduct_scph_calculation(almcalc, order=6, temperatures=100*np.arange(1,11))
         _create_effective_harmonic_fcs(almcalc, temperature=temp)
     
     if almcalc.calculate_forces:
+        
+        logger.info("")
+        dir_scph = almcalc.out_dirs['higher']['scph']
+        fig_width = 2.8
+        aspect = 0.5
+        
+        ## Plot band & DOS
+        figname = f"{dir_scph}/fig_scph_bands.png"
+        logfile = f"{dir_scph}/scph.log"
+        try:
+            file_scph_bands = f"{dir_scph}/{almcalc.prefix}.scph_bands"
+            _plot_scph_bands(file_scph_bands, figname=figname, logfile=logfile, 
+                             fig_width=fig_width, aspect=aspect, dpi=600)
+        except Exception as e:
+            logger.error(f"\n Failed to plot SCPH bands: {e}")
+        
+        ## Plot effective force constants
         try:
             plot_scph_force_constants(
-                almcalc.out_dirs['higher']['scph'], almcalc.prefix, temperatures,
-                file_fc2_0K=almcalc.fc2xml)
+                dir_scph, almcalc.prefix, temperatures, file_fc2_0K=almcalc.fc2xml, 
+                fig_width=fig_width, aspect=aspect, dpi=600)
         except Exception as e:
             logger.error(f"\n Failed to plot SCPH force constants: {e}")
-            sys.exit()
 
-def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, dpi=600):
+def plot_scph_force_constants(
+    dir_work, prefix, temperatures, file_fc2_0K=None, 
+    xlabel='Distance (${\\rm \\AA}$)', 
+    ylabel='Eff. harm. FC (${\\rm eV/\\AA^2}$)',
+    fig_width=2.8, aspect=0.5, dpi=600):
     """ Plot effective harmonic force constants obtained from SCPH calculation.
     """
-    fig, axes = make_figure(1, 1, fontsize=7, fig_width=2.5, aspect=0.7)
+    fig, axes = make_figure(1, 1, fontsize=7, fig_width=fig_width, aspect=aspect)
     ax = axes[0][0]
+    
+    try:
+        availabilities = get_availabilities(f"{dir_work}/scph.log")
+        idx_ua = [i for i, t in enumerate(temperatures) if availabilities.get(int(t), True) == False]
+        temperatures = np.delete(temperatures, idx_ua)
+    except:
+        availabilities = None
     
     nt = len(temperatures)
     cmap = get_customized_cmap(nt)
     
     ## plot effective FC2
-    for it in range(nt+1):    
+    for it in range(nt+1):
         
         if it == nt: # FC2 at 0K 
             temp = 0.
@@ -93,7 +122,7 @@ def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, 
             file_xml = f"{dir_work}/{prefix}_{int(temp)}K.xml"
             color = cmap(it)
             lw = 0.4
-        
+            
         try:
             fcs = FCSxml(file_xml)
         except Exception as e:
@@ -110,8 +139,6 @@ def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, 
         fcs.plot_fc2(ax, xlabel=xlabel, ylabel=ylabel, 
                      color=color, lw=lw, show_legend=show_legend)
     
-    xlabel = 'Distance (${\\rm \\AA}$)'
-    ylabel = 'Effective harm. FC (${\\rm eV/\\AA^2}$)'
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     
@@ -129,10 +156,9 @@ def plot_scph_force_constants(dir_work, prefix, temperatures, file_fc2_0K=None, 
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     if figname.startswith("/"):
         figname = "./" + os.path.relpath(figname, os.getcwd())
-    logger.info(f" Force constants were plotted in {figname}")
+    logger.info(f"\n Force constants were plotted in {figname}")
 
-def _create_effective_harmonic_fcs(
-        almcalc, temperature=300, workdir=None):
+def _create_effective_harmonic_fcs(almcalc, temperature=300, workdir=None):
     """ Create effective harmonic FCs """
     
     prefix = almcalc.prefix
@@ -221,4 +247,86 @@ def set_parameters_scph(
     
     ### update!
     inp.update(scph_params) 
+
+def get_availabilities(logfile):
+    """ Check if SCPH calculation is available for each temperature.
     
+    Args
+    =====
+    
+    logfile : str
+        Log file of SCPH calculation.
+
+    Returns
+    =======
+
+    bool
+        True if SCPH calculation is available, False otherwise.
+    """
+    if not os.path.exists(logfile):
+        return None
+    
+    with open(logfile, 'r') as f:
+        lines = f.readlines()
+    
+    availabilities = {}
+    for line in lines:
+        if "not converged" in line:
+            temp = int(float(line.split()[2]))
+            availabilities[temp] = False
+        elif "convergence achieved" in line:
+            temp = int(float(line.split()[2]))
+            availabilities[temp] = True
+    
+    return availabilities
+
+def _plot_scph_bands(filename, figname='fig_scph_bands.png', logfile=None,
+                     fig_width=4.0*3/4, aspect=0.5*4/3, dpi=600):
+    if os.path.exists(filename) == False:
+        return None    
+    fig, axes = make_figure(fig_width=fig_width, aspect=aspect, nrows=1, ncols=1)
+    ax = axes[0][0]
+    plot_scph_bands(ax, filename, logfile=logfile)
+    fig.savefig(figname, bbox_inches='tight', dpi=dpi)
+    if figname.startswith("/"):
+        figname = "./" + os.path.relpath(figname, os.getcwd())
+    msg = "\n SCPH bands were plotted in %s" % figname
+    logger.info(msg)
+    return fig, ax
+
+def plot_scph_bands(ax, filename, logfile=None):
+    """ Plot the phonon band structure from a given file.
+    
+    Parameters:
+    ax : matplotlib.axes.Axes
+        The axes on which to plot the band structure.
+    filename : str
+        .scph_bands file generated by Alamode.
+    """
+    ## Read the phonon band structure data
+    temps, kpoints_list, frequencies_list = get_scph_bands(filename, logfile=logfile)
+    
+    ## Get symmetry points and labels
+    sym_labels, sym_kpoints = get_symmetry_points_from_file(filename)
+    nt = len(temps)
+    cmap = get_customized_cmap(nt)
+    
+    ## Plot the band structure
+    for it in range(nt):
+        kpoints = kpoints_list[it]
+        frequencies = frequencies_list[it]
+        
+        if len(kpoints) == 0 or len(frequencies) == 0:
+            continue
+        
+        if it == 0 or it == nt - 1:
+            lab = '%dK' % temps[it]
+        else:
+            lab = None
+        
+        plot_bands(ax, kpoints, frequencies, col=cmap(it), label=lab)
+    
+    ax.set_ylabel('Frequency (${\\rm cm^{-1}}$)')
+    set_xticks_labels(ax, kpoints_list[0][-1], sym_kpoints, sym_labels)
+    set_axis(ax)
+    set_legend(ax, loc='lower left', loc2=[0.0, 1.0], fs=6, ncol=2, alpha=0.5)

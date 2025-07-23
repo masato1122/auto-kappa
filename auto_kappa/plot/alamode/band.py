@@ -10,7 +10,11 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
+import os
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Band():
     def __init__(self, filename=None):
@@ -54,7 +58,7 @@ class Band():
         self.nk, self.nbands = get_nk_nbands(bfile)
     
     def set_symmetry_points(self, bfile):
-        self.label, self.ksym = get_symmetry_points_from_filename(bfile)
+        self.label, self.ksym = get_symmetry_points_from_file(bfile)
     
     def set_eigen(self, bfile):
         """ Read band file crated by ALAMODE """
@@ -69,8 +73,8 @@ class Band():
             self.kpoints = out[1]
             self.frequencies = out[2]
         else:
-            print(" Error:")
-            sys.exit()
+            logger.error("\n Error")
+            return None
     
     def read_bfile(self, bfile):
         """Read band file
@@ -101,7 +105,7 @@ def get_nk_nbands(bfile):
     nbands = len(data) - 1
     return nk, nbands
 
-def get_symmetry_points_from_filename(bfile):
+def get_symmetry_points_from_file(bfile):
     """Read symmetry points from band file
     
     Returns
@@ -193,7 +197,7 @@ def get_normal_bands(filename):
     frequencies = dump[:,1:]
     return [kpoints, frequencies]
 
-def get_scph_bands(filename, tol=0.1):
+def get_scph_bands(filename, logfile=None, tol=0.1):
     """ Read .scph_bands file and return array of dictionary for each 
     temperature.
     """
@@ -211,46 +215,31 @@ def get_scph_bands(filename, tol=0.1):
     temperatures = np.asarray(temperatures)
     
     ###
-    kpoints = []
-    frequencies = []
+    kpoints_list = []
+    frequencies_list = []
     for temp in temperatures:
         idx = np.where(abs(dump[:,0] - temp) < tol)[0]
-        kpoints.append(dump[idx,1])
-        frequencies.append(dump[idx,2:])
-        
-    return [temperatures, kpoints, frequencies]
+        kpoints_list.append(dump[idx,1])
+        frequencies_list.append(dump[idx,2:])
+    
+    ## Delete data at unavailable temperatures
+    from auto_kappa.calculators.scph import get_availabilities
+    availabilities = None
+    if logfile is None:
+        logfile = os.path.dirname(filename) + "/scph.log"
+    if os.path.exists(logfile):
+        availabilities = get_availabilities(logfile)
+        for temp, flag in availabilities.items():
+            if flag == False:
+                logger.info(f" Not converged for {temp}K.")
+    
+    if availabilities is not None:
+        idx_na = []
+        for it, temp in enumerate(temperatures):
+            if availabilities[int(temp)] == False:
+                idx_na.append(it)
+        temperatures = np.delete(temperatures, idx_na)
+        kpoints_list = [np.delete(kpoints, idx_na, axis=0) for kpoints in kpoints_list]
+        frequencies_list = [np.delete(frequencies, idx_na, axis=0) for frequencies in frequencies_list]
 
-#def get_eigen(bfile, nk, nbands):
-#    """Get kpoints and eigenvalues from band file
-#    Parameters
-#    ----------
-#    bfile : string
-#        band file name
-#    nk, nbnads : integer
-#        # of kpoints and bands
-#    Returns
-#    --------
-#    kpoints : float, shape=(nk)
-#        k-points
-#    freqs : float, shape=(nk, nbands)
-#        frequencies
-#    """
-#    ifs = open(bfile, "r")
-#    nline = sum(1 for line in open(bfile))
-#    kpoints = np.zeros(nk)
-#    freqs = np.zeros((nk, nbands))
-#    count = 0
-#    for il in range(nline):
-#        line = ifs.readline()
-#        data = line.split()
-#        if len(data) == 0:
-#            continue
-#        if line[0] == "#":
-#            continue
-#        kpoints[count] = float(data[0])
-#        for ib in range(nbands):
-#            freqs[count,ib] = float(data[1+ib])
-#        count += 1
-#    ifs.close()
-#    return kpoints, freqs
-
+    return [temperatures, kpoints_list, frequencies_list]
