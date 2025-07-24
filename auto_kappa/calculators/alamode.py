@@ -40,7 +40,7 @@ def analyze_phonon_properties(
         kdensities_for_kappa=None,
         ## SCPH
         scph=0, disp_temp=500., frac_nrandom_higher=0.34,
-        temps_scph=100*np.arange(1,11),
+        scph_temperatures={'scph': 100*np.arange(1, 11), 'kappa': 300},
         ## 4-phonon
         four=0, frac_kdensity_4ph=0.2,
         ):
@@ -82,7 +82,7 @@ def analyze_phonon_properties(
     frac_nrandom_higher : float, 0.34
         fractional number of random displacement patterns for high-order FCs
     
-    temps_scph : float, [100, 200, ..., 1000]
+    scph_temperatures : float, [100, 200, ..., 1000]
         temperatures for SCPH
     
     Return
@@ -96,8 +96,7 @@ def analyze_phonon_properties(
     ### Calculate harmonic FCs and harmonic phonon properties
     ###
     analyze_harmonic_properties(
-            almcalc, calc_force, negative_freq=negative_freq, 
-            params_nac=params_nac)
+        almcalc, calc_force, negative_freq=negative_freq, params_nac=params_nac)
     
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq and almcalc.calculate_forces:
@@ -113,7 +112,7 @@ def analyze_phonon_properties(
         ### If SCPH is not used and negative frequencies were found, return -1.
         if scph == 0:
             return -1
-    
+        
     if harmonic_only:
         msg = "\n Harmonic properties have been calculated.\n"
         logger.info(msg)
@@ -130,8 +129,7 @@ def analyze_phonon_properties(
     ## Calculate high-order FCs using LASSO
     if scph or four:    
         from auto_kappa.calculators.scph import (
-            calculate_high_order_force_constants,
-            conduct_scph_calculation)
+            calculate_high_order_force_constants, conduct_scph_calculation)
         
         ### calculate forces for SCPH
         calculate_high_order_force_constants(
@@ -141,7 +139,19 @@ def analyze_phonon_properties(
         
         ### Perform SCPH calculation
         if scph:
-            conduct_scph_calculation(almcalc, temperatures=temps_scph)
+            
+            conduct_scph_calculation(almcalc, temperatures=scph_temperatures['scph'])
+            
+            fmin_scph = almcalc.get_fmin_scph(temperature=scph_temperatures['kappa'])
+            try:
+                if fmin_scph < negative_freq:
+                    msg = f"\n Imaginary frequency was found at {scph_temperatures['kappa']}K: {fmin_scph:.3f} cm^-1"
+                    logger.warning(msg)
+                    calc_kappa = False
+            except Exception as e:
+                msg = f"\n Warning: cannot get SCPH minimum frequency: {e}"
+                logger.warning(msg)
+                calc_kappa = False
     
     ## Calculate kappa with different k-mesh densities
     if calc_kappa:
@@ -166,7 +176,7 @@ def analyze_phonon_properties(
                 kdensities_for_kappa = [500, 1000, 1500]
         
         ## temperatures for spectral analysis
-        temp_kappa_scph = 300
+        temp_kappa_scph = scph_temperatures['kappa']
         if scph == 0:
             temperatures_for_spectral = "300:500"
         else:
@@ -217,6 +227,20 @@ def analyze_phonon_properties(
     
     return 0
 
+def _back_to_initial_sc_size(sc_matrix):
+    """ Print message: Back to the initial supercell size """
+    main_msg = "Analysis using the supercell of initial size"
+    n_tot = len(main_msg) + 6
+    msg  = "\n " + "#" * n_tot
+    msg += "\n ##" + " " * (n_tot - 4) + "##"
+    msg += "\n ## %s ##" % main_msg
+    line_size = "Supercell size : %d x %d x %d" % (
+        sc_matrix[0][0], sc_matrix[1][1], sc_matrix[2][2])
+    msg += "\n ## %s " % line_size + " " * (len(main_msg) - len(line_size)) + "##"
+    msg += "\n ##" + " " * (n_tot - 4) + "##"
+    msg += "\n " + "#" * n_tot
+    logger.info(msg)
+
 def analyze_phonon_properties_with_larger_supercells(
     base_dir, almcalc, calc_force,
     max_natoms=300, delta_max_natoms=50, max_loop_for_largesc=2,
@@ -243,13 +267,13 @@ def analyze_phonon_properties_with_larger_supercells(
     ### plot band and DOS
     from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
     figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
-    plot_bandos_for_different_sizes(
-            almcalc_large, almcalc, figname=figname)
+    plot_bandos_for_different_sizes(almcalc_large, almcalc, figname=figname)
     
     ### If negative frequencies could be removed, calculate cubic FCs with
     ### the supercell of initial size
-    if (almcalc_large.minimum_frequency > negative_freq and 
-            harmonic_only == 0):
+    if (almcalc_large.minimum_frequency > negative_freq and harmonic_only == 0):
+        
+        _back_to_initial_sc_size(almcalc.scell_matrix)
         
         ### calculate cubic force constants
         calculate_cubic_force_constants(
@@ -295,7 +319,6 @@ def analyze_phonon_properties_with_larger_supercells(
             almcalc_large.calculate_pes(
                     negative_freq=negative_freq)
             sys.exit()
-
 
 def analyze_harmonic_with_larger_supercells(
         almcalc_orig, base_dir=None,
@@ -504,7 +527,7 @@ def analyze_harmonic_properties(
                         reciprocal_density=reciprocal_density,
                         neglect_log=neg_log,
                         )
-    
+            
     ###
     almcalc.commands['alamode']['nprocs'] = _nprocs_orig
     almcalc.commands['alamode']['anphon_para'] = _para_orig
@@ -733,5 +756,5 @@ def _print_rt_kappa(outdir, prefix, calc_type, rt=300):
     for ktype in ks:
         msg += "\n "
         for key in ks[ktype]:
-            msg += f"{ktype}_{key}: {ks[ktype][key]:.3f}  "
+            msg += f"{ktype}_{key}: {ks[ktype][key]:8.3f}  "
     logger.info(msg)

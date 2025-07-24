@@ -197,7 +197,7 @@ def get_normal_bands(filename):
     frequencies = dump[:,1:]
     return [kpoints, frequencies]
 
-def get_scph_bands(filename, logfile=None, tol=0.1):
+def get_scph_bands(filename, logfile=None, tol=0.1, verbose=True):
     """ Read .scph_bands file and return array of dictionary for each 
     temperature.
     """
@@ -230,9 +230,10 @@ def get_scph_bands(filename, logfile=None, tol=0.1):
     if os.path.exists(logfile):
         availabilities = get_availabilities(logfile)
         for temp, flag in availabilities.items():
-            if flag == False:
+            if flag == False and verbose:
                 logger.info(f" Not converged for {temp}K.")
     
+    ## Delete unavailable data
     if availabilities is not None:
         idx_na = []
         for it, temp in enumerate(temperatures):

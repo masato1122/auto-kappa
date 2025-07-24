@@ -651,6 +651,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
     def minimum_frequency(self):
         return self.get_minimum_frequency(which="both")
     
+    def get_fmin_scph(self, temperature=None):
+        from auto_kappa.calculators.scph import get_fmin_scph
+        filename = self.out_dirs['higher']['scph'] + f"/{self.prefix}.scph_bands"
+        return get_fmin_scph(filename, temperature=temperature)
+        
     def get_minimum_frequency(self, which="both"):
         """ Read minimum frequencies from log files for band (band.log) and DOS
         (dos.log) calculations and return the value
@@ -919,12 +924,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         return all_disps 
     
     def calc_forces(self, order: None, calculator=None, 
-            nmax_suggest=100, frac_nrandom=10., 
-            temperature=500., classical=False,
-            output_dfset=None,
-            amin_params={},
-            # max_limit_of_estimated_time=24.*30.,
-            ):
+                    nmax_suggest=100, frac_nrandom=10., 
+                    temperature=500., classical=False,
+                    output_dfset=None,
+                    amin_params={},
+                    # max_limit_of_estimated_time=24.*30.,
+                    ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
         
@@ -1346,9 +1351,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
                         max_num_corrections=max_num_corrections,
                         deltak=deltak,
                         reciprocal_density=reciprocal_density,
-                        fcsxml=fcsxml,
-                        )
-            
+                        fcsxml=fcsxml)
+                
             ### log file names
             log_band = outdir + "/band.log"
             log_dos = outdir + "/dos.log"
@@ -1488,7 +1492,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             msg += "\n Abort the job."
             logger.error(msg)
             sys.exit()
-    
+        
     def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None):
         """ Run anphon
         
@@ -1943,7 +1947,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         ### set figure name
         if 'figname' not in kwargs.keys():
-            figname = self.out_dirs['result'] + '/fig_bandos.png'
+            # figname = self.out_dirs['result'] + '/fig_bandos.png'
+            figname = self.out_dirs['harm']['bandos'] + '/fig_bandos.png'
         else:
             figname = kwargs['figname']
         
@@ -1956,8 +1961,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         logger.info(msg)
         
         fig = plot_bandos(
-                directory=self.get_relative_path(
-                    self.out_dirs['harm']['bandos']), 
+                directory=self.get_relative_path(self.out_dirs['harm']['bandos']),
                 prefix=self.prefix, 
                 figname=self.get_relative_path(figname),
                 **kwargs

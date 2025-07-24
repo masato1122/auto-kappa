@@ -437,9 +437,7 @@ def conv_unit(unit, band, dos):
         dos.frequencies *= unit_conv
     return unit_conv, ylabel
 
-def plot_bandos_for_different_sizes(
-        almcalc1, almcalc2, figname="fig_bandos.png"
-        ):
+def plot_bandos_for_different_sizes(almcalc1, almcalc2, figname="fig_bandos.png"):
     """ Plot phonon dispersions and DOS for different supercell sizes
     
     Args

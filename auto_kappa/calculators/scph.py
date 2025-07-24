@@ -327,3 +327,32 @@ def plot_scph_bands(ax, filename, logfile=None):
     set_xticks_labels(ax, kpoints_list[0][-1], sym_kpoints, sym_labels)
     set_axis(ax)
     set_legend(ax, loc='lower left', loc2=[0.0, 1.0], fs=6, ncol=2, alpha=0.5)
+
+def get_fmin_scph(filename, logfile=None, temperature=None):
+    """ Get the minimum frequency from SCPH bands.
+    If temperature is specified, return the minimum frequency at that temperature.
+    If temperature is not specified, return a dictionary with temperatures as keys
+    and minimum frequencies as values.
+    
+    Args
+    ------
+    filename : str
+        The filename of the SCPH bands file. (.scph_bands file)
+    logfile : str, optional
+        The logfile of the SCPH calculation. If None, it will look for 'scph
+    """
+    temps, _, fs_list = get_scph_bands(filename, logfile=logfile, verbose=False)
+    fmins = {}
+    for it, temp in enumerate(temps):
+        fs = fs_list[it]
+        fmin = np.amin(fs)
+        fmins[int(temp)] = float(fmin)
+        if temperature is not None:
+            if abs(temp - temperature) < 0.1:
+                return fmin
+    
+    if temperature is not None:
+        msg = f"\n Temperature {temperature}K not found in the SCPH bands file."
+        logger.warning(msg)
+    
+    return fmins
