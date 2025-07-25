@@ -111,8 +111,7 @@ def _get_kind_of_time(relative_path):
             kind = _get_kind_of_time_eachstructure(data2)
             kind += "(SC:%s)" % label_sc_mat
         except Exception:
-            print("")
-            print(" Error with", data2)
+            #print(" Error with", data2)
             kind = "others"
         
     if kind is None:

@@ -31,7 +31,8 @@ def print_2d_system_notation():
     msg += "\n    due to the way VASP handles crystal symmetry."
     msg += "\n 2. Vacuum spacing is added along the out-of-plane direction."
     msg += "\n 3. The size of the vacuum spacing (t_vac) differs between VASP and ALAMODE calculations."
-    msg += "\n    For ALAMODE, t_vac is set to be larger than the maximum atomic distance in the in-plane direction."
+    msg += "\n    For ALAMODE, t_vac is set to be larger than the maximum atomic distance "
+    msg += "\n    in the in-plane direction of the supercell."
     msg += "\n    For VASP, t_vac is set to 20-30 Angstrom."
     logger.info(msg)
 
