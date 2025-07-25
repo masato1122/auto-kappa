@@ -1549,12 +1549,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             _nthreads = self.commands['alamode']['nprocs']
         
         val = run_alamode(filename, logfile, workdir=workdir, 
-                neglect_log=neglect_log,
-                mpirun=self.commands['alamode']['mpirun'], 
-                nprocs=_nprocs,
-                nthreads=_nthreads,
-                command=self.commands['alamode'][alamode_type],
-                )
+                          neglect_log=neglect_log,
+                          mpirun=self.commands['alamode']['mpirun'], 
+                          nprocs=_nprocs,
+                          nthreads=_nthreads,
+                          command=self.commands['alamode'][alamode_type])
         
         ## Read log file
         filename = f"{workdir}/{logfile}"
@@ -1570,7 +1569,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         if val == -1:
             logger.info(f" {propt} has already been calculated.")
             return {'return': False, 'last_line': last_line}
-        
         elif "ERROR in openfiles  MESSAGE: cannot open DFSET file" in last_line:
             logger.info(f"{last_line}")
             return {'rerun': False, 'last_line': last_line}
@@ -1647,7 +1645,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             logger.info(msg)
             shutil.copy(fn1, fn2)
     
-    def plot_force_constants(self, outdir=None, order=None, dpi=400):
+    def plot_force_constants(self, outdir=None, order=None, dpi=600):
         """ Plot force constants from the ALAMODE output file. """
         from auto_kappa.plot import make_figure
         from auto_kappa.io.fcs import FCSxml

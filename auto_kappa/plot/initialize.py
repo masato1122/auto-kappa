@@ -2,7 +2,7 @@
 #
 # initialize.py
 #
-# Useful functions to generate figures with matplotlib
+# Useful functions to generate figures using matplotlib
 #
 # Copyright (c) 2022 Masato Ohnishi
 #
@@ -39,31 +39,27 @@ def make_figure(nrows, ncols, fontsize=7, fig_width=2.5, aspect=0.9, hspace=0.15
             axes[ir].append(ax)
     return fig, axes
 
-def set_matplot(fontsize=9):
-    lw_bor = 0.5
+def set_matplot(fontsize=9, lw=0.5):
     plt.rcParams["font.size"] = fontsize
     plt.rcParams["mathtext.fontset"] = 'dejavusans'
-    plt.rcParams['axes.linewidth'] = lw_bor
-    plt.rcParams['xtick.major.width'] = lw_bor
-    plt.rcParams['xtick.minor.width'] = lw_bor
-    plt.rcParams['ytick.major.width'] = lw_bor
-    plt.rcParams['ytick.minor.width'] = lw_bor 
+    plt.rcParams['axes.linewidth'] = lw
+    plt.rcParams['xtick.major.width'] = lw
+    plt.rcParams['xtick.minor.width'] = lw
+    plt.rcParams['ytick.major.width'] = lw
+    plt.rcParams['ytick.minor.width'] = lw 
 
-def set_spaces(plt,
-        left=0.14, bottom=0.14, right=0.98, top=0.98, ratio=1.0,
-        wspace=0., hspace=0.
-        ):
+def set_spaces(plt, left=0.14, bottom=0.14, right=0.98, top=0.98, ratio=1.0,
+               wspace=0., hspace=0.):
     plt.subplots_adjust(
             left=left, bottom=bottom,
             right=right, top=top, wspace=wspace, hspace=hspace)
 
 def set_axis(ax, xscale="linear", yscale="linear", 
-        xticks=None, mxticks=None, yticks=None, myticks=None,
-        labelbottom=None, length=2.4, width=0.5):
-    ax.tick_params(axis='both', which='major', 
-            direction='in', length=length, width=width)
-    ax.tick_params(axis='both', which='minor',
-            direction='in', length=length*0.6, width=width)
+             xticks=None, mxticks=None, yticks=None, myticks=None,
+             labelbottom=None, length=2.4, width=0.5):
+    
+    ax.tick_params(axis='both', which='major', direction='in', length=length, width=width)
+    ax.tick_params(axis='both', which='minor', direction='in', length=length*0.6, width=width)
     ax.xaxis.set_ticks_position('both')
     ax.yaxis.set_ticks_position('both')
     
@@ -99,15 +95,18 @@ def get_both_axis(ratio="2:1"):
     return ax1, ax2 
 
 def set_legend(plt, ncol=1, fs=7, loc="best", loc2=None,
-        alpha=1.0, lw=0.2, length=1.0, labelspacing=0.3, borderpad=None,
-        title=None, edgecolor='black', facecolor='white'):
+               alpha=1.0, lw=0.2, length=1.0, labelspacing=0.3, borderpad=None,
+               title=None, edgecolor='black', facecolor='white'):
+    
     leg = plt.legend(
             loc=loc, ncol=ncol, fontsize=fs, fancybox=False, 
             facecolor=facecolor, edgecolor=edgecolor, handletextpad=0.4,
             handlelength=length, labelspacing=labelspacing,
             borderpad=borderpad, title=title)
+    
     if loc2 is not None:
         leg.set_bbox_to_anchor([loc2[0], loc2[1]])
+    
     leg.get_frame().set_alpha(alpha)
     leg.get_frame().set_linewidth(lw)	
     return leg
@@ -153,4 +152,3 @@ def get_customized_cmap(nbins, color1='blue', color2='red'):
     colors = [color1, color2]
     cm = LinearSegmentedColormap.from_list('mylist', colors, N=nbins)
     return cm
-

@@ -71,7 +71,7 @@ A more flexible way is as follows:
     band = Band(file_band)
     plot_bands_with_symmetry_points(ax, band)
 
-    fig.savefig('fig_band.png', dpi=300, bbox_inches='tight')
+    fig.savefig('fig_band.png', dpi=600, bbox_inches='tight')
     
 ..
 

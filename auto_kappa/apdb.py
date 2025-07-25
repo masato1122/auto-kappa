@@ -626,7 +626,7 @@ class ApdbVasp():
 
         force : bool, default=False
             If it's True, the calculation will be done forcelly even if it had
-            already been finished.
+            already finished.
         
         vaccum_thickness : float, default=None
             If the material dimension is 2 and this parameter is given,

@@ -316,7 +316,7 @@ class FCSxml():
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
                  ylabel='Cubic FC (${\\rm eV/\\AA^3}$)',
-                 lw=0.3, ms=2.3, xticks=1, mxticks=10):
+                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -361,7 +361,7 @@ class FCSxml():
     def plot_fc4(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
                  ylabel='Quartic FC (${\\rm eV/\\AA^4}$)',
-                 lw=0.3, ms=2.3, xticks=1, mxticks=10):
+                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -429,7 +429,8 @@ def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, 
     markers = ['o', '^', 's', 'D', 'v', 'x']
     xdat = xdat.flatten()
     ydat = ydat.flatten()
-    idx_nonzero = [i for i in range(len(xdat)) if xdat[i] > tolerance and ydat[i] > tolerance]
+    # idx_nonzero = [i for i in range(len(xdat)) if abs(xdat[i]) > tolerance and abs(ydat[i]) > tolerance]
+    idx_nonzero = [i for i in range(len(xdat)) if abs(ydat[i]) > tolerance]
     xdat = xdat[idx_nonzero]
     ydat = ydat[idx_nonzero]
     ax.axhline(0, linestyle='-', color='grey', lw=lw)
@@ -438,7 +439,8 @@ def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, 
                 ms=ms, linestyle='None', mew=lw,
                 mec=color if color is not None else cmap(pair_idx % 10),
                 mfc='none', label=label)
-
+    ax.minorticks_on()
+    
 # def main():
 #     fname_xml = sys.argv[1]
 #     fcs = FCSxml(filename=fname_xml)
@@ -446,7 +448,7 @@ def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, 
 #     fig, axes = make_figure(2, 1, aspect=1.3, fig_width=2.5)
 #     fcs.plot_fc2(axes[0][0], ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)', xlabel=None)
 #     fcs.plot_fc3(axes[1][0], ylabel='Cubic FC (${\\rm eV/\\AA^3}$)', xlabel='Distance (${\\rm \\AA}$)')
-#     fig.savefig('fig_fcs.png', dpi=400, bbox_inches='tight')
+#     fig.savefig('fig_fcs.png', dpi=600, bbox_inches='tight')
 #
 # if __name__ == '__main__':
 #     main()
