@@ -82,6 +82,7 @@ logger = logging.getLogger(__name__)
 def wasfinished_alamode(logfile, tar=None):
     """ Check the ALAMODE job has finished or not with the log file.
     """
+    out = {"value": None, "last_line": None}
     try:
         if tar is None:
             lines = open(logfile, 'r').readlines()
@@ -96,9 +97,8 @@ def wasfinished_alamode(logfile, tar=None):
                 num_fin += 1
         ###
         if num_fin > 1:
-            msg = "\n Warning: ALAMODE was not compiled properly."
-            msg += "\n Please check %s " % logfile
-            msg += "and compile ALAMODE again."
+            msg  = "\n Warning: ALAMODE was not compiled properly."
+            msg += f"\n Please check {logfile} and compile ALAMODE again."
             logger.error(msg)
             sys.exit()
         return num_fin

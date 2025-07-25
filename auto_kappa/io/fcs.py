@@ -312,7 +312,7 @@ class FCSxml():
         
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
-
+    
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
                  ylabel='Cubic FC (${\\rm eV/\\AA^3}$)',

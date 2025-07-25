@@ -77,7 +77,6 @@ def check_unexpected_errors(logfile, dir_base=None):
         ### FCs could not be deteremined uniquely
         if err_messages["numfcs"].lower() in line.lower():
             _print_error_message(logfile, line)
-            #flag += _solve_version_incompatibility(dir_base, logfile)
             
             msg = "\n Error: Rank deficient"
             msg += "\n Stop the calculation."

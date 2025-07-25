@@ -64,7 +64,7 @@ def plot_bm_result(
     
     ### show text
     text = "Min. energy = %.2f eV" % (bm.e0)
-    text += "\nMin. volume = %.2f eV" % (bm.v0)
+    text += "\nOpt. volume = %.2f eV" % (bm.v0)
     text += "\nBulk modulus = %.2f %s" % (modulus_info['value'], modulus_info['unit'])
     if dim == 2:
         text += "\nThickness = %.2f ${\\rm \\AA}$" % (modulus_info['thickness'])
