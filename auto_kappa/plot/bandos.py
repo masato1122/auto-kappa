@@ -20,8 +20,7 @@ from auto_kappa.plot.alamode.dos import Dos
 from auto_kappa.plot.alamode.participation import Participation
 from auto_kappa.plot.initialize import (
         set_matplot, set_axis, set_spaces, 
-        get_both_axis, set_legend
-        )
+        get_both_axis, set_legend)
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -159,12 +158,6 @@ def plot_bandos(
     """
     ### anphon file names
     filenames = _get_band_files(directory, prefix)
-    
-    ### check keys
-    #for key in params:
-    #    if key not in _get_default_figure_parameters():
-    #        msg = " Attention: %s is not defined." % key
-    #        logger.debug(msg)
     
     ### get band
     from auto_kappa.plot.alamode.band import Band
@@ -357,23 +350,6 @@ def plot_bandos(
     
     return fig
 
-
-def plot_bands_with_symmetry_points(
-    ax, band,
-    col='blue', lw=0.5, zorder=10, label=None, 
-    linestyle="-", marker="None", ms=1, mfc='none',
-    yticks=None, myticks=None,
-    **args):
-    
-    plot_bands(ax, band.kpoints, band.frequencies, 
-               col=col, lw=lw, zorder=zorder, label=label,
-               linestyle=linestyle, marker=marker, ms=ms, mfc=mfc,
-               **args)
-    
-    set_xticks_labels(ax, band.kpoints[-1], band.ksym, band.label)
-    ax = set_axis(ax, yticks=yticks, myticks=myticks)
-
-
 def plot_bands(ax, ks_tmp, frequencies,
         col='blue', lw=0.5, zorder=10, label=None, 
         linestyle="-", marker="None", ms=1, mfc='none',
@@ -485,6 +461,7 @@ def set_xticks_labels(ax, kmax, ksym, labels):
                     num = i + 1
                 dk_each = ksym[num] - ksym[i]
                 fw_each = dk_each / dk_all
+                
                 if "|" in label and fw_each < 0.1:
                     names = lab.split('|')
                     lab = "^{%s}/_{%s}" % (names[0], names[1])
@@ -495,5 +472,4 @@ def set_xticks_labels(ax, kmax, ksym, labels):
     ###
     ax.set_xticks(ksym)
     ax.set_xticklabels(label_mod)
-
 

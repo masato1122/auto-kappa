@@ -243,6 +243,7 @@ class FCSxml():
         return self._distances
     
     def get_distances(self):
+        """ Calculate the distances between atoms in the primitive cell and atoms in supercell. """
         natom_prim = self.natom_prim
         natom_super = self.natom_super
         self._distances = np.zeros((natom_prim, natom_super), dtype=float)

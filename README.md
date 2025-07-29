@@ -99,6 +99,6 @@ References
 To Do
 ------
 
-- Iterative calculation using ShengBTE <= Convert FC format from ALAMODE to ShengBTE
+- Iterative calculation
 
-- Bug: spglib.standardize_cell in "auto_kappa.suggest.get_unitcell_and_primitive_matrix"
+- Cell size for 2D systems: fix cell size for VASP calculations

@@ -63,6 +63,8 @@ class AkLog():
         with open(outfile, "w") as f:
             yaml.dump(self.out, f)
             
+            if outfile.startswith("/"):
+                outfile = "./" + os.path.relpath(outfile, os.getcwd())
             msg = "\n Output " + outfile
             logger.info(msg)
 

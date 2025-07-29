@@ -94,12 +94,14 @@ def get_both_axis(ratio="2:1"):
     ax2.yaxis.set_major_formatter(NullFormatter())
     return ax1, ax2 
 
-def set_legend(plt, ncol=1, fs=7, loc="best", loc2=None,
+def set_legend(plt, ncol=1, fontsize=6, fs=None, loc="best", loc2=None,
                alpha=1.0, lw=0.2, length=1.0, labelspacing=0.3, borderpad=None,
                title=None, edgecolor='black', facecolor='white'):
     
+    fontsize = fs if fs is not None else fontsize
+    
     leg = plt.legend(
-            loc=loc, ncol=ncol, fontsize=fs, fancybox=False, 
+            loc=loc, ncol=ncol, fontsize=fontsize, fancybox=False,
             facecolor=facecolor, edgecolor=edgecolor, handletextpad=0.4,
             handlelength=length, labelspacing=labelspacing,
             borderpad=borderpad, title=title)

@@ -12,6 +12,7 @@
 #
 import os
 import numpy as np
+from auto_kappa.plot.initialize import get_customized_cmap, set_legend, set_axis
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,8 +40,10 @@ class Band():
             # of symmetry points
         """
         self.unit = "cm^1"
-        self.nk = None
-        self.nbands = None
+        self._ntemps = None
+        self._nk = None
+        self._nbands = None
+        self._kmax = None
         
         ### eigenvalues and vectors
         self.band_type = None
@@ -54,8 +57,24 @@ class Band():
         if filename is not None:
             self.read_bfile(filename)
     
-    def set_nk_nbands(self, bfile):
-        self.nk, self.nbands = get_nk_nbands(bfile)
+    @property
+    def nk(self):
+        return self._nk
+    @property
+    def nbands(self):
+        return self._nbands
+    @property
+    def ntemps(self):
+        return self._ntemps
+    
+    @property
+    def kmax(self):
+        if self._kmax is None:
+            if self.band_type == 'normal':
+                self._kmax = self.kpoints[-1]
+            elif self.band_type == 'scph':
+                self._kmax = self.kpoints[0][-1]
+        return self._kmax
     
     def set_symmetry_points(self, bfile):
         self.label, self.ksym = get_symmetry_points_from_file(bfile)
@@ -67,11 +86,18 @@ class Band():
             self.band_type = "normal"
             self.kpoints = out[0]
             self.frequencies = out[1]
+            #
+            self._nk = len(self.kpoints)
+            self._nbands = len(self.frequencies[0])
         elif len(out) == 3:
             self.band_type = "scph"
             self.temperatures = out[0]
             self.kpoints = out[1]
             self.frequencies = out[2]
+            #
+            self._ntemps = len(self.temperatures)
+            self._nk = len(self.kpoints[0])
+            self._nbands = len(self.frequencies[0][0])
         else:
             logger.error("\n Error")
             return None
@@ -79,10 +105,90 @@ class Band():
     def read_bfile(self, bfile):
         """Read band file
         """
-        self.set_nk_nbands(bfile)
+        # self.set_nk_nbands(bfile)
         self.set_symmetry_points(bfile)
         self.set_eigen(bfile)
     
+    def plot_bands(self, ax, color=None, lw=0.3, linestyle='-',
+                   ylabel="Frequency (${\\rm cm^{-1}}$)", 
+                   temperature=None, label=None, set_xticks=True):
+        """ Plot band structure
+        
+        Args
+        ----
+        ax : matplotlib.axes.Axes
+            Axes to plot
+        
+        color : string, optional
+            Color of the lines. Default is None, which means blue for normal band and customized 
+            colormap for scph band. If temperature and color are both specified for scph band, 
+            the given color is used.
+        
+        lw : float, optional
+            Line width. Default is 0.3.
+        
+        linestyle : string, optional
+            Line style. Default is '-'. 
+        
+        ylabel : string, optional
+            Label for y-axis. Default is "Frequency (${\\rm cm^{-1}}$)"
+            
+        temperature : float, optional
+            Temperature to plot for scph band. Default is None, which means all temperatures are plotted.
+            If specified, only the band structure at the given temperature is plotted.
+        
+        label : string, optional
+            Label for the first band. Default is None, which means no label.
+        
+        show_label : bool, optional
+            Whether to show the legend. Default is False.
+        
+        """
+        
+        from auto_kappa.plot.bandos import set_xticks_labels
+        
+        if self.band_type == 'scph':
+            cmap = get_customized_cmap(len(self.temperatures))
+        else:
+            col = color if color is not None else 'blue'
+            
+        if self.band_type == "normal":
+            for ib in range(self.nbands):
+                lab = label if ib == 0 else None
+                ax.plot(self.kpoints, self.frequencies[:, ib], color=col,
+                        lw=lw, linestyle=linestyle, label=lab)
+        
+        elif self.band_type == "scph":
+            for it, temp in enumerate(self.temperatures):
+                
+                if temperature is not None:
+                    if abs(temp - temperature) > 0.1:
+                        continue
+                
+                for ib in range(self.nbands):
+                    if temperature is None:
+                        if ib == 0 and (it == 0 or it == len(self.temperatures) - 1 or temperature is not None):
+                            lab = "%dK" % int(temp)
+                        else:
+                            lab = None
+                        col = cmap(it)
+                    else:
+                        lab = label if ib == 0 else None
+                        col = color if color is not None else cmap(it)
+                    ax.plot(self.kpoints[it], self.frequencies[it][:, ib], 
+                            c=col, linestyle=linestyle, lw=lw, label=lab)
+        
+        ## set x-axis
+        if set_xticks:
+            set_xticks_labels(ax, self.kmax, self.ksym, self.label)
+        
+        ax.set_ylabel(ylabel)
+        
+        set_axis(ax)
+        
+        if ax.get_legend() is not None:
+            set_legend(ax, fs=7, loc='lower left', loc2=(0.0, 1.03))
+        
 
 def get_nk_nbands(bfile):
     """Get nk and nbands from band file
