@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # apdb.py
 #
@@ -15,12 +14,10 @@
 import os.path
 import os
 import sys
-import numpy as np
 import glob
 
 import ase.io
 from pymatgen.core.structure import Structure
-
 from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
@@ -34,8 +31,7 @@ from auto_kappa.structure.two import adjust_vacuum_size
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.cui import ak_log
-#from auto_kappa.io.files import write_output_yaml
-from auto_kappa.vasp.params import reflect_previous_jobs, get_amin_parameter
+from auto_kappa.vasp.params import reflect_previous_jobs
 from auto_kappa.compat import get_previously_used_structure
 
 import logging
@@ -351,6 +347,8 @@ class ApdbVasp():
         ### For the old version, the xml file is located under ``directory``.
         if volume_relaxation == 0 and wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
+            if filename.startswith("/"):
+                filename = "./" + os.path.relpath(filename, os.getcwd())
             prim = ase.io.read(filename, format='vasp-xml')
             unitcell = convert_primitive_to_unitcell(prim, self.primitive_matrix)
             self.update_structures(unitcell)
