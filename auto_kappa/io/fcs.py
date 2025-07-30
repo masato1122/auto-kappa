@@ -417,7 +417,7 @@ class FCSxml():
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
 
-def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5):
+def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5, yscale='linear'):
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -437,11 +437,13 @@ def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5):
         set_legend(ax, ncol=ncol, loc='upper left', loc2=[1.0, 1.0], fs=fontsize, alpha=0.5)
     
     ###
-    set_axis(ax, yscale='log')
-    ymin, ymax = ax.get_ylim()
-    ymin = max(ymin, ymax * 1e-4)
-    ax.set_ylim([ymin, ymax])
-
+    if yscale == 'log':
+        set_axis(ax, yscale='log')
+        ymin, ymax = ax.get_ylim()
+        ymin = max(ymin, ymax * 1e-4)
+        ax.set_ylim([ymin, ymax])
+    else:
+        set_axis(ax)
 
 def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tol_y=1e-7, lw=0.3, ms=2.3):
     cmap = plt.get_cmap('tab10')
