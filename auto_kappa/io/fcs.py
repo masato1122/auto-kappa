@@ -421,17 +421,35 @@ def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5):
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    set_axis(ax)
     if show_legend:
-        set_legend(ax, loc='upper left', loc2=[1.0, 1.0], fs=fontsize, alpha=0.5)
+        
+        try:
+            valid_labels = set(
+                    line.get_label()
+                    for line in ax.get_lines()
+                    if not line.get_label().startswith("_")
+                    )
+            n_legend = len(valid_labels)
+            ncol = int(n_legend / 13) + 1
+        except Exception:
+            ncol = 1
 
-def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tolerance=1e-7, lw=0.3, ms=2.3):
+        set_legend(ax, ncol=ncol, loc='upper left', loc2=[1.0, 1.0], fs=fontsize, alpha=0.5)
+    
+    ###
+    set_axis(ax, yscale='log')
+    ymin, ymax = ax.get_ylim()
+    ymin = max(ymin, ymax * 1e-4)
+    ax.set_ylim([ymin, ymax])
+
+
+def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tol_y=1e-7, lw=0.3, ms=2.3):
     cmap = plt.get_cmap('tab10')
     markers = ['o', '^', 's', 'D', 'v', 'x']
     xdat = xdat.flatten()
     ydat = ydat.flatten()
     # idx_nonzero = [i for i in range(len(xdat)) if abs(xdat[i]) > tolerance and abs(ydat[i]) > tolerance]
-    idx_nonzero = [i for i in range(len(xdat)) if abs(ydat[i]) > tolerance]
+    idx_nonzero = [i for i in range(len(xdat)) if abs(ydat[i]) > tol_y]
     xdat = xdat[idx_nonzero]
     ydat = ydat[idx_nonzero]
     ax.axhline(0, linestyle='-', color='grey', lw=lw)
