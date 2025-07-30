@@ -175,8 +175,7 @@ class ApdbVasp():
             unit cell structure
         """
         if standardization:
-            unitcell = get_standardized_structure_spglib(
-                    unitcell, to_primitive=False, format=format)
+            unitcell = get_standardized_structure_spglib(unitcell, to_primitive=False, format=format)
         ##
         structures = self.get_structures(unitcell, format=format)
         self._structures = structures
@@ -262,14 +261,12 @@ class ApdbVasp():
         merged_params_mod = self.params_mod.copy()
         merged_params_mod.update(args)
         
-        calc = get_vasp_calculator(
-                mode, 
-                directory=directory, 
-                atoms=structure,
-                kpts=kpts,
-                encut_scale_factor=self.encut_factor,
-                **merged_params_mod,
-                )
+        calc = get_vasp_calculator(mode, 
+                                   directory=directory, 
+                                   atoms=structure,
+                                   kpts=kpts,
+                                   encut_scale_factor=self.encut_factor,
+                                   **merged_params_mod)
         
         calc.command = f"{self.command['mpirun']} -n {self.command['nprocs']} "
         if list(kpts) == [1, 1, 1]:
@@ -364,10 +361,19 @@ class ApdbVasp():
         
         ### Read previously used structure
         base_dir = directory + "/.."
-        prev_prim = get_previously_used_structure(base_dir, tolerance=1e-5)
-        if prev_prim is not None:
-            unitcell = convert_primitive_to_unitcell(prev_prim, self.primitive_matrix)
+        prev_sc = get_previously_used_structure(base_dir, self.primitive_matrix, tolerance=1e-5)
+        if prev_sc is not None:
+            unitcell = convert_primitive_to_unitcell(prev_sc, self.primitive_matrix)
             self.update_structures(unitcell)
+            
+            # outdir = base_dir + "/check"
+            # os.makedirs(outdir, exist_ok=True)
+            # ase.io.write(outdir + "/POSCAR.prim", self.primitive, 
+            #              format='vasp', direct=True, vasp5=True, sort=True)
+            # ase.io.write(outdir + "/POSCAR.unit", self.unitcell, 
+            #              format='vasp', direct=True, vasp5=True, sort=True)
+            # ase.io.write(outdir + "/POSCAR.super", self.supercell, 
+            #              format='vasp', direct=True, vasp5=True, sort=True)
             return 0
         
         ### NSW parameters
@@ -519,11 +525,14 @@ class ApdbVasp():
             
             ### update structures
             if to_primitive:
-                _mat_p2u = np.linalg.inv(self.primitive_matrix)
-                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
-                unitcell = get_supercell(
-                        change_structure_format(struct_ase, format='phonopy'),
-                        _mat_p2u)
+                # _mat_p2u = np.linalg.inv(self.primitive_matrix)
+                # _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
+                # unitcell = get_supercell(
+                #         change_structure_format(struct_ase, format='phonopy'),
+                #         _mat_p2u)
+                
+                unitcell = convert_primitive_to_unitcell(struct_ase, self.primitive_matrix, format='ase')
+                
             else:
                 unitcell = struct_ase.copy()
             
@@ -714,11 +723,7 @@ class ApdbVasp():
             elif cell_type.startswith('prim'):
                 ### read primitive and transform it to the unit cell
                 new_prim = ase.io.read(vasprun, format='vasp-xml')
-                _mat_p2u = np.linalg.inv(self.primitive_matrix)
-                _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
-                new_unitcell = get_supercell(
-                        change_structure_format(new_prim, format='phonopy'),
-                        _mat_p2u)
+                new_unitcell = convert_primitive_to_unitcell(new_prim, self.primitive_matrix)
             else:
                 msg = "\n Error: cell_type must be primitive or conventional/unitcell."
                 logger.info(msg)
@@ -804,8 +809,8 @@ def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True)
         # f"{outdir}/../harm/force/prist/POSCAR",
     ]
     
-    mat_p2u = np.linalg.inv(prim_matrix)
-    mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    # mat_p2u = np.linalg.inv(prim_matrix)
+    # mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
     
     for i, fn in enumerate(filenames):
         if os.path.exists(fn):
@@ -819,10 +824,12 @@ def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True)
             if to_primitive:
                 opt_struct = change_structure_format(prim, format=format)
             else:
-                unitcell = get_supercell(
-                    change_structure_format(prim, format='phonopy'),
-                    mat_p2u)
-                unitcell = change_structure_format(unitcell, format=format)
+                # unitcell = get_supercell(
+                #     change_structure_format(prim, format='phonopy'),
+                #     mat_p2u)
+                # unitcell = change_structure_format(unitcell, format=format)
+                
+                unitcell = convert_primitive_to_unitcell(prim, prim_matrix, format=format)
                 opt_struct = unitcell
             
             return opt_struct

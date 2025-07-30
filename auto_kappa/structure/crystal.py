@@ -11,9 +11,7 @@
 #
 import sys
 import numpy as np
-#import warnings
-
-# from phonopy.structure.cells import get_primitive as get_primitive_phonopy
+from scipy.optimize import linear_sum_assignment
 import spglib 
 import ase, ase.data
 
@@ -202,7 +200,7 @@ def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
         mat_p2u)
     unitcell = change_structure_format(unitcell, format=format)
     return unitcell
-    
+
 def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
     """ Return an ase-Atoms object:
 

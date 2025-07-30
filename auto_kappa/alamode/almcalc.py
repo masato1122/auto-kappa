@@ -1231,6 +1231,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         else:
             fn = self.out_dirs['higher']['cv']+'/'+self.prefix+'.cvscore'
         
+        if fn.startswith('/'):
+            fn = "./" + os.path.relpath(fn, os.getcwd())
+        
         try:
             lines = open(fn, 'r').readlines()
             for ll in lines:
