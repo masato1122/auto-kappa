@@ -20,8 +20,6 @@ import glob
 
 import ase.io
 from pymatgen.core.structure import Structure
-# from ase.calculators.vasp import Vasp
-# from ase.calculators.vasp.create_input import GenerateVaspInput
 
 from phonopy.structure.cells import get_supercell
 
@@ -30,6 +28,7 @@ from auto_kappa.structure.crystal import (
     get_standardized_structure_spglib,
     change_structure_format,
     get_spg_number,
+    convert_primitive_to_unitcell
     )
 from auto_kappa.structure.two import adjust_vacuum_size
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
@@ -37,6 +36,7 @@ from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.cui import ak_log
 #from auto_kappa.io.files import write_output_yaml
 from auto_kappa.vasp.params import reflect_previous_jobs, get_amin_parameter
+from auto_kappa.compat import get_previously_used_structure
 
 import logging
 logger = logging.getLogger(__name__)
@@ -355,16 +355,19 @@ class ApdbVasp():
         if volume_relaxation == 0 and wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
             prim = ase.io.read(filename, format='vasp-xml')
-            mat_p2u = np.linalg.inv(self.primitive_matrix)
-            mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
-            unitcell = get_supercell(
-                    change_structure_format(prim, format='phonopy'),
-                    mat_p2u)
-            unitcell = change_structure_format(unitcell) 
+            unitcell = convert_primitive_to_unitcell(prim, self.primitive_matrix)
             self.update_structures(unitcell)
             msg = "\n Already finised with the old version (single full relaxation)"
             msg += "\n Read the structure from %s" % filename
             logger.info(msg)
+            return 0
+        
+        ### Read previously used structure
+        base_dir = directory + "/.."
+        prev_prim = get_previously_used_structure(base_dir, tolerance=1e-5)
+        if prev_prim is not None:
+            unitcell = convert_primitive_to_unitcell(prev_prim, self.primitive_matrix)
+            self.update_structures(unitcell)
             return 0
         
         ### NSW parameters

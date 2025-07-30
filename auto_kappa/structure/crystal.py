@@ -193,6 +193,16 @@ def get_standardized_structure(struct_orig,
     
     return change_structure_format(atoms, format=format)
 
+def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
+    from phonopy.structure.cells import get_supercell
+    mat_p2u = np.linalg.inv(primitive_matrix)
+    mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    unitcell = get_supercell(
+        change_structure_format(primitive, format='phonopy'),
+        mat_p2u)
+    unitcell = change_structure_format(unitcell, format=format)
+    return unitcell
+    
 def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
     """ Return an ase-Atoms object:
 
