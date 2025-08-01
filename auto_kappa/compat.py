@@ -87,19 +87,22 @@ def get_previously_used_structure(base_dir, prim_matrix, to_primitive=False, tol
         logger.info(msg)
         return struct_opt
     else:
-        if cells_equal(struct_opt.cell, struct_used.cell) == False:
-            msg  = "\n Caution: the optimized structure and previously used structure "
-            msg += "\n          have different cell parameters."
+        cell_opt = struct_opt.lattice.matrix
+        cell_used = struct_used.lattice.matrix
+        if cells_equal(cell_opt, cell_used) == False:
+            msg  = "\n ## Caution ##"
+            msg += "\n The optimized structure and previously used structure have "
+            msg += "\n different cell parameters."
             msg += "\n\n Lattice constant of the optimized structure:"
             msg += "\n (%s)" % files_opt['super']
-            msg += "\n\n %15.8f %15.8f %15.8f" % tuple(struct_opt.cell[0])
-            msg += "\n %15.8f %15.8f %15.8f" % tuple(struct_opt.cell[1])
-            msg += "\n %15.8f %15.8f %15.8f" % tuple(struct_opt.cell[2])
+            msg += "\n\n %15.8f %15.8f %15.8f" % tuple(cell_opt[0])
+            msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_opt[1])
+            msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_opt[2])
             msg += "\n\n Lattice constant of the previously used structure:"
             msg += "\n (%s)" % file_used
-            msg += "\n\n %15.8f %15.8f %15.8f" % tuple(struct_used.cell[0])
-            msg += "\n %15.8f %15.8f %15.8f" % tuple(struct_used.cell[1])
-            msg += "\n %15.8f %15.8f %15.8f" % tuple(struct_used.cell[2])
+            msg += "\n\n %15.8f %15.8f %15.8f" % tuple(cell_used[0])
+            msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_used[1])
+            msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_used[2])
         elif atoms_equal(struct_opt, struct_used, ignore_order=False):
             msg  = "\n Caution: the optimized structure and previously used structure do not match."
         
