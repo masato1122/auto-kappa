@@ -154,3 +154,4 @@ def get_customized_cmap(nbins, color1='blue', color2='red'):
     colors = [color1, color2]
     cm = LinearSegmentedColormap.from_list('mylist', colors, N=nbins)
     return cm
+

@@ -12,6 +12,11 @@
 #
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
 from auto_kappa.plot.initialize import get_customized_cmap, set_legend, set_axis
 
 import logging
@@ -109,7 +114,12 @@ class Band():
         self.set_symmetry_points(bfile)
         self.set_eigen(bfile)
     
-    def plot_bands(self, ax, color=None, lw=0.3, linestyle='-',
+    def plot_bands(self, **args):
+        msg = "\n Warning: plot_bands() will be deprecated. Use plot() method instead."
+        logger.warning(msg)
+        self.plot(**args)
+        
+    def plot(self, ax, color=None, lw=0.3, linestyle='-',
                    ylabel="Frequency (${\\rm cm^{-1}}$)", 
                    temperature=None, label=None, set_xticks=True):
         """ Plot band structure
@@ -144,7 +154,6 @@ class Band():
             Whether to show the legend. Default is False.
         
         """
-        
         from auto_kappa.plot.bandos import set_xticks_labels
         
         if self.band_type == 'scph':
@@ -181,14 +190,131 @@ class Band():
         ## set x-axis
         if set_xticks:
             set_xticks_labels(ax, self.kmax, self.ksym, self.label)
-        
         ax.set_ylabel(ylabel)
-        
         set_axis(ax)
         
         if ax.get_legend() is not None:
             set_legend(ax, fs=7, loc='lower left', loc2=(0.0, 1.03))
+    
+    def plot_with_weighted_colors(
+        self, ax, weights, lw=0.8, cmap='viridis', norm=None,
+        set_xticks=True, colorbar=True,
+        ylabel="Frequency (${\\rm cm^{-1}}$)",
+        clabel=None):
+        """ Plot band structure with color based on weights 
+        """
+        from auto_kappa.plot.bandos import set_xticks_labels
         
+        if self.band_type == 'scph':
+            msg = "\n Error: scph band is not supported yet."
+            logger.error(msg)
+            return None
+        
+        cmin_weight = weights.min()
+        cmax_weight = weights.max()
+
+        if norm is None:
+            cmin = cmin_weight
+            cmax = cmax_weight
+            norm = plt.Normalize(cmin, cmax)
+        else:
+            cmin = norm.vmin
+            cmax = norm.vmax
+        
+        x = self.kpoints
+        
+        for ib in range(self.nbands):
+            
+            y = self.frequencies[:, ib]
+            c = weights[:, ib]
+            
+            ##
+            points = np.array([x, y]).T.reshape(-1, 1, 2)
+            segments = np.concatenate([points[:-1], points[1:]], axis=1)
+            
+            lc = LineCollection(segments, cmap=cmap, norm=norm)
+            lc.set_array(c[:-1])
+            lc.set_linewidth(lw)
+            ax.add_collection(lc)
+        
+        # ax.autoscale()
+        y0 = self.frequencies.min()
+        y1 = self.frequencies.max()
+        ymin = y0 - 0.05 * (y1 - y0)
+        ymax = y1 + 0.05 * (y1 - y0)
+        ax.set_ylim(ymin, ymax)
+        
+        ax.axhline(0, color='grey', lw=lw*0.3, ls='-')
+        
+        if set_xticks:
+            set_xticks_labels(ax, self.kmax, self.ksym, self.label)
+        
+        ax.set_ylabel(ylabel)
+        set_axis(ax)
+        if ax.get_legend() is not None:
+            set_legend(ax, fs=7, loc='lower left', loc2=(0.0, 1.03))
+        
+        if colorbar:
+            dummy_lc = LineCollection([], cmap=cmap, norm=norm)
+            dummy_lc.set_array(np.linspace(cmin, cmax, 100))
+            cax, cbar = _add_colorbar(ax, dummy_lc, cbar_location='right')
+            set_axis(cax, yscale='linear')
+            cax.set_ylim([cmin_weight, cmax_weight])
+            cbar.set_label(clabel)
+
+def _add_colorbar(ax, lc, cbar_location='right', height=None, width=None):
+    """ Add colorbar to the given axes with LineCollection.
+    
+    Args
+    ----
+    ax : matplotlib.axes.Axes
+        Axes to add colorbar.
+        
+    lc : matplotlib.collections.LineCollection
+        LineCollection object to be used for colorbar.
+    
+    cbar_location : str, optional
+        Location of the colorbar. Can be 'right' or 'top'.
+    
+    height : str, optional
+        Height of the colorbar. Default is None, which means "100%" for 'right
+        
+    width : str, optional
+        Width of the colorbar. Default is None, which means "5%" for 'right
+    
+    """
+    cbar_pad = 0.1
+    if cbar_location == 'right':
+        location = 'right'
+        bbox_to_anchor = (0.1, 0.0, 1, 1)
+        height = "100%" if height is None else height
+        width = "5%" if width is None else width
+        orientation = "vertical"
+    
+    elif cbar_location == 'top':
+        location = 'upper right'
+        bbox_to_anchor = (0.0, 0.15, 1, 1)
+        height = "10%" if height is None else height
+        width = "50%" if width is None else width
+        orientation = "horizontal"
+    
+    else:
+        logger.error("\n Error: cbar_location must be 'right' or 'top'.")
+        return None, None
+        
+    cax = inset_axes(ax, width=width, height=height, loc=location,
+                     borderpad=cbar_pad,
+                     bbox_to_anchor=bbox_to_anchor,
+                     bbox_transform=ax.transAxes)
+    
+    cbar = ax.figure.colorbar(lc, cax=cax, orientation=orientation)
+    
+    if cbar_location == 'top':
+        cbar.ax.xaxis.set_ticks_position('top')
+        cbar.ax.xaxis.set_label_position('top')
+    
+    set_axis(cax)
+    return cax, cbar
 
 def get_nk_nbands(bfile):
     """Get nk and nbands from band file
