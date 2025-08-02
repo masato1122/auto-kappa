@@ -82,7 +82,7 @@ class GruAll:
         ax.set_ylabel(ylabel)
         set_axis(ax, xscale='linear', yscale='linear')
         if show_legend:
-            set_legend(ax, loc='upper right', fontsize=6, alpha=0.5)
+            set_legend(ax, loc='best', fontsize=6, alpha=0.5)
 
 class Gruneisen:
     def __init__(self, filename):

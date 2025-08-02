@@ -256,7 +256,7 @@ class Band():
         ax.set_ylabel(ylabel)
         set_axis(ax)
         if ax.get_legend() is not None:
-            set_legend(ax, fs=7, loc='lower left', loc2=(0.0, 1.03))
+            set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0))
         
         if colorbar:
             dummy_lc = LineCollection([], cmap=cmap, norm=norm)
