@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # bandos.py
 #
@@ -11,7 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import sys
+# import sys
 import os.path
 
 from auto_kappa.plot.initialize import set_legend
@@ -161,7 +160,7 @@ def set_xticks_labels(ax, kmax, ksym, labels):
 
 # def _get_pdos(dos):
 #     """ 
-#     dos : Dos object in mytool
+#     dos : Dos object
 #     """
 #     nene = len(dos.dos_atom)
 #     nel = len(dos.nat_el)

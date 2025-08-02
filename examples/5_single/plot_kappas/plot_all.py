@@ -9,7 +9,8 @@ import shutil
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from mytool.mpl.initialize import (set_matplot, set_axis, set_legend)
+
+from auto_kappa.plot import set_matplot, set_axis, set_legend
 
 all_dir = './all_data'
 

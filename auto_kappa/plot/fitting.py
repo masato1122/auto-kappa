@@ -11,14 +11,11 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import os
-import sys
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from .initialize import (set_matplot, set_axis, set_legend)
-import glob
+from auto_kappa.plot import set_matplot, set_axis
 
 import logging
 logger = logging.getLogger(__name__)

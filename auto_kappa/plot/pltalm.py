@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # pltalm.py
 #
@@ -18,7 +17,7 @@ import time
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from .initialize import (set_matplot, set_axis, set_legend)
+from auto_kappa.plot import set_matplot, set_axis, set_legend
 import glob
 
 import logging
