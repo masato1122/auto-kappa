@@ -137,7 +137,7 @@ class Dos():
             self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
         
         if show_legend:
-            set_legend(ax, fontsize=6, loc='best')
+            set_legend(ax, fontsize=6, loc='best', length=0.5)
         
     def plot_pdos(self, ax, lw=0.5, rotate=True):
         
