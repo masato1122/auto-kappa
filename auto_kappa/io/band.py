@@ -44,84 +44,92 @@ class Band():
         nsym : integer
             # of symmetry points
         """
+        self.band_type = 'normal'
         self.unit = "cm^1"
-        self._ntemps = None
-        self._nk = None
-        self._nbands = None
         self._kmax = None
         
         ### eigenvalues and vectors
-        self.band_type = None
-        self.temperatures = None
         self.kpoints = None
-        self.freqencies = None
+        self.frequencies = None
         
         ### symmetry points
-        self.label = None
-        self.ksym = None
+        self.symmetry_labels = None
+        self.symmetry_kpoints = None
         if filename is not None:
             self.read_bfile(filename)
     
     @property
     def nk(self):
-        return self._nk
+        if self.kpoints is None:
+            return None
+        return len(self.kpoints)
     @property
     def nbands(self):
-        return self._nbands
-    @property
-    def ntemps(self):
-        return self._ntemps
-    
+        if self.frequencies is None:
+            return None
+        return self.frequencies.shape[1]
+
     @property
     def kmax(self):
         if self._kmax is None:
-            if self.band_type == 'normal':
-                self._kmax = self.kpoints[-1]
-            elif self.band_type == 'scph':
-                self._kmax = self.kpoints[0][-1]
+            self._kmax = self.kpoints[-1]
         return self._kmax
     
     def set_symmetry_points(self, bfile):
-        self.label, self.ksym = get_symmetry_points_from_file(bfile)
+        self.symmetry_labels, self.symmetry_kpoints = get_symmetry_points_from_file(bfile)
     
-    def set_eigen(self, bfile):
+    def set_eigen_values(self, bfile):
         """ Read band file crated by ALAMODE """
         out = get_eigen(bfile)
-        if len(out) == 2:
-            self.band_type = "normal"
-            self.kpoints = out[0]
-            self.frequencies = out[1]
-            #
-            self._nk = len(self.kpoints)
-            self._nbands = len(self.frequencies[0])
-        elif len(out) == 3:
-            self.band_type = "scph"
-            self.temperatures = out[0]
-            self.kpoints = out[1]
-            self.frequencies = out[2]
-            #
-            self._ntemps = len(self.temperatures)
-            self._nk = len(self.kpoints[0])
-            self._nbands = len(self.frequencies[0][0])
-        else:
-            logger.error("\n Error")
+        if len(out) != 2:
+            logger.error("\n Error: The band file is not valid.")
             return None
-    
+        self.kpoints = out[0]
+        self.frequencies = out[1]
+        
     def read_bfile(self, bfile):
         """Read band file
         """
         # self.set_nk_nbands(bfile)
         self.set_symmetry_points(bfile)
-        self.set_eigen(bfile)
+        self.set_eigen_values(bfile)
     
     def plot_bands(self, **args):
         msg = "\n Warning: plot_bands() will be deprecated. Use plot() method instead."
         logger.warning(msg)
         self.plot(**args)
+    
+    def _get_indices_of_1st_and_2nd_gamma(self):
+        """Get indices of the first and second gamma points in kpoints and symmetry_kpoints.
+        If there are no gamma points, return 0 and nk-1.
         
-    def plot(self, ax, color=None, lw=0.3, linestyle='-',
-                   ylabel="Frequency (${\\rm cm^{-1}}$)", 
-                   temperature=None, label=None, set_xticks=True):
+        Returns
+        -------
+        idx_init : int
+            Index of the first gamma point.
+        idx_end : int
+            Index of the second gamma point.
+        itick_init : int
+            Index of the first gamma point in symmetry_kpoints.
+        itick_end : int
+            Index of the second gamma point in symmetry_kpoints.
+        """
+        gamma_kpoints = []
+        itick_gammas = []
+        for i, lab in enumerate(self.symmetry_labels):
+            if lab.startswith('G'):
+                gamma_kpoints.append(self.symmetry_kpoints[i])
+                itick_gammas.append(i)
+        if len(gamma_kpoints) >= 2:
+            idx_init = np.argmin(abs(self.kpoints - gamma_kpoints[0]))
+            idx_end = np.argmin(abs(self.kpoints - gamma_kpoints[1]))
+            return ((idx_init, idx_end), (itick_gammas[0], itick_gammas[1]))
+        else:
+            return ((0, self.nk - 1), (0, len(self.symmetry_labels) - 1))
+    
+    def plot(self, ax, color=None, lw=0.3, linestyle='-', plot_G2G=False,
+             ylabel="Frequency (${\\rm cm^{-1}}$)", 
+             label=None, show_legend=True, set_xticks=True):
         """ Plot band structure
         
         Args
@@ -143,72 +151,54 @@ class Band():
         ylabel : string, optional
             Label for y-axis. Default is "Frequency (${\\rm cm^{-1}}$)"
             
-        temperature : float, optional
-            Temperature to plot for scph band. Default is None, which means all temperatures are plotted.
-            If specified, only the band structure at the given temperature is plotted.
-        
         label : string, optional
             Label for the first band. Default is None, which means no label.
         
         show_label : bool, optional
-            Whether to show the legend. Default is False.
+            Whether to show the legend if it exists. Default is True.
         
         """
         from auto_kappa.plot.bandos import set_xticks_labels
         
-        if self.band_type == 'scph':
-            cmap = get_customized_cmap(len(self.temperatures))
-        else:
-            col = color if color is not None else 'blue'
-            
-        if self.band_type == "normal":
-            for ib in range(self.nbands):
-                lab = label if ib == 0 else None
-                ax.plot(self.kpoints, self.frequencies[:, ib], color=col,
-                        lw=lw, linestyle=linestyle, label=lab)
+        col = color if color is not None else 'blue'
         
-        elif self.band_type == "scph":
-            for it, temp in enumerate(self.temperatures):
-                
-                if temperature is not None:
-                    if abs(temp - temperature) > 0.1:
-                        continue
-                
-                for ib in range(self.nbands):
-                    if temperature is None:
-                        if ib == 0 and (it == 0 or it == len(self.temperatures) - 1 or temperature is not None):
-                            lab = "%dK" % int(temp)
-                        else:
-                            lab = None
-                        col = cmap(it)
-                    else:
-                        lab = label if ib == 0 else None
-                        col = color if color is not None else cmap(it)
-                    ax.plot(self.kpoints[it], self.frequencies[it][:, ib], 
-                            c=col, linestyle=linestyle, lw=lw, label=lab)
+        ## For partial plot (between the first and second gamma points)
+        idx_init = 0
+        idx_end = self.nk - 1
+        itick_init = 0
+        itick_end = len(self.symmetry_labels) - 1
+        if plot_G2G:
+            (idx_init, idx_end), (itick_init, itick_end) = self._get_indices_of_1st_and_2nd_gamma()
         
-        ## set x-axis
+        ## Plot each band
+        for ib in range(self.nbands):
+            lab = label if ib == 0 else None
+            x = self.kpoints[idx_init:idx_end+1]
+            y = self.frequencies[idx_init:idx_end+1, ib]
+            ax.plot(x, y, color=col, lw=lw, linestyle=linestyle, label=lab)
+        
+        ## set x-axis labels
         if set_xticks:
-            set_xticks_labels(ax, self.kmax, self.ksym, self.label)
+            set_xticks_labels(ax, self.symmetry_kpoints[itick_end], 
+                              self.symmetry_kpoints[itick_init:itick_end+1], 
+                              self.symmetry_labels[itick_init:itick_end+1])
+        
         ax.set_ylabel(ylabel)
         set_axis(ax)
         
-        if ax.get_legend() is not None:
-            set_legend(ax, fs=7, loc='lower left', loc2=(0.0, 1.03))
-    
+        if show_legend:
+            if ax.get_legend() is not None:
+                set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0))
+
     def plot_with_weighted_colors(
-        self, ax, weights, lw=0.8, cmap='viridis', norm=None,
-        set_xticks=True, colorbar=True,
+        self, ax, weights, plot_G2G=False,
+        lw=0.8, cmap='viridis', norm=None,
+        set_xticks=True, colorbar=True, cbar_location='right',
         ylabel="Frequency (${\\rm cm^{-1}}$)",
         clabel=None):
         """ Plot band structure with color based on weights 
         """
         from auto_kappa.plot.bandos import set_xticks_labels
-        
-        if self.band_type == 'scph':
-            msg = "\n Error: scph band is not supported yet."
-            logger.error(msg)
-            return None
         
         cmin_weight = weights.min()
         cmax_weight = weights.max()
@@ -221,14 +211,23 @@ class Band():
             cmin = norm.vmin
             cmax = norm.vmax
         
-        x = self.kpoints
+        ## Partial plot
+        ## if plot_G2G is True, plot only between the first and second gamma points
+        ## For partial plot (between the first and second gamma points)
+        idx_init = 0
+        idx_end = self.nk - 1
+        itick_init = 0
+        itick_end = len(self.symmetry_labels) - 1
+        if plot_G2G:
+            (idx_init, idx_end), (itick_init, itick_end) = self._get_indices_of_1st_and_2nd_gamma()
         
+        ## Plot each band with color based on weights
+        x = self.kpoints[idx_init:idx_end+1]
         for ib in range(self.nbands):
             
-            y = self.frequencies[:, ib]
-            c = weights[:, ib]
+            y = self.frequencies[idx_init:idx_end+1, ib]
+            c = weights[idx_init:idx_end+1, ib]
             
-            ##
             points = np.array([x, y]).T.reshape(-1, 1, 2)
             segments = np.concatenate([points[:-1], points[1:]], axis=1)
             
@@ -237,17 +236,22 @@ class Band():
             lc.set_linewidth(lw)
             ax.add_collection(lc)
         
-        # ax.autoscale()
-        y0 = self.frequencies.min()
-        y1 = self.frequencies.max()
-        ymin = y0 - 0.05 * (y1 - y0)
-        ymax = y1 + 0.05 * (y1 - y0)
-        ax.set_ylim(ymin, ymax)
+        ### ver.1
+        ax.autoscale()
+        #
+        # ### ver.2
+        # y0 = self.frequencies.min()
+        # y1 = self.frequencies.max()
+        # ymin = y0 - 0.05 * (y1 - y0)
+        # ymax = y1 + 0.05 * (y1 - y0)
+        # ax.set_ylim(ymin, ymax)
         
         ax.axhline(0, color='grey', lw=lw*0.3, ls='-')
         
         if set_xticks:
-            set_xticks_labels(ax, self.kmax, self.ksym, self.label)
+            set_xticks_labels(ax, self.symmetry_kpoints[itick_end], 
+                              self.symmetry_kpoints[itick_init:itick_end+1], 
+                              self.symmetry_labels[itick_init:itick_end+1])
         
         ax.set_ylabel(ylabel)
         set_axis(ax)
@@ -257,10 +261,88 @@ class Band():
         if colorbar:
             dummy_lc = LineCollection([], cmap=cmap, norm=norm)
             dummy_lc.set_array(np.linspace(cmin, cmax, 100))
-            cax, cbar = _add_colorbar(ax, dummy_lc, cbar_location='right')
+            cax, cbar = _add_colorbar(ax, dummy_lc, 
+                                      cbar_location=cbar_location)
             set_axis(cax, yscale='linear')
-            cax.set_ylim([cmin_weight, cmax_weight])
+            if cbar_location == 'right':
+                cax.set_ylim([cmin_weight, cmax_weight])
+            else:
+                cax.set_xlim([cmin_weight, cmax_weight])
             cbar.set_label(clabel)
+
+class SCPHBand(Band):
+    def __init__(self, filename=None):
+        super().__init__()
+        self.band_type = 'scph'
+        self.temperatures = None
+        if filename is not None:
+            self.read_bfile(filename)
+    
+    @property
+    def kmax(self): # for SCPH
+        if self._kmax is None:
+            self._kmax = self.kpoints[0][-1]
+        return self._kmax
+    @property
+    def nbands(self):
+        if self.frequencies is None:
+            return None
+        return self.frequencies.shape[2]
+    @property
+    def ntemps(self):
+        if self.temperatures is None:
+            return None
+        return len(self.temperatures)
+    
+    def set_eigen_values(self, bfile): # for SCPH
+        """ Read band file crated by ALAMODE """
+        out = get_eigen(bfile)
+        if len(out) != 3:
+            logger.error("\n Error: The band file is not valid.")
+            return None
+        self.temperatures = out[0]
+        self.kpoints = out[1]
+        self.frequencies = out[2]
+        
+    def plot(self, ax, color=None, lw=0.3, linestyle='-',
+             ylabel="Frequency (${\\rm cm^{-1}}$)", 
+             temperature=None, label=None, show_legend=True, set_xticks=True):
+        """ Plot SCPH band structure. See Band.plot for details.
+        """
+        from auto_kappa.plot.bandos import set_xticks_labels
+        
+        cmap = get_customized_cmap(len(self.temperatures))
+            
+        for it, temp in enumerate(self.temperatures):
+            
+            if temperature is not None:
+                if abs(temp - temperature) > 0.1:
+                    continue
+            
+            for ib in range(self.nbands):
+                if temperature is None:
+                    ## Only the first and last branches are labeled
+                    if ib == 0 and (it == 0 or it == len(self.temperatures) - 1 or temperature is not None):
+                        lab = "%dK" % int(temp)
+                    else:
+                        lab = None
+                    col = cmap(it)
+                else:
+                    lab = label if ib == 0 else None
+                    col = color if color is not None else cmap(it)
+                
+                ax.plot(self.kpoints[it], self.frequencies[it][:, ib], 
+                        c=col, linestyle=linestyle, lw=lw, label=lab)
+            
+        ## set x-axis
+        if set_xticks:
+            set_xticks_labels(ax, self.kmax, self.symmetry_kpoints, self.symmetry_labels)
+        ax.set_ylabel(ylabel)
+        set_axis(ax)
+        
+        if show_legend:
+            set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0), ncol=2)
+
 
 def _add_colorbar(ax, lc, cbar_location='right', height=None, width=None):
     """ Add colorbar to the given axes with LineCollection.
@@ -285,34 +367,35 @@ def _add_colorbar(ax, lc, cbar_location='right', height=None, width=None):
     """
     cbar_pad = 0.1
     if cbar_location == 'right':
-        location = 'right'
+        # location = 'right'
         bbox_to_anchor = (0.1, 0.0, 1, 1)
         height = "100%" if height is None else height
         width = "5%" if width is None else width
         orientation = "vertical"
     
-    elif cbar_location == 'top':
-        location = 'upper right'
-        bbox_to_anchor = (0.0, 0.15, 1, 1)
-        height = "10%" if height is None else height
+    elif 'upper' in cbar_location:
+        bbox_to_anchor = (0.0, 0.10, 1, 1)
+        height = "6%" if height is None else height
         width = "50%" if width is None else width
         orientation = "horizontal"
-    
+        
     else:
         logger.error("\n Error: cbar_location must be 'right' or 'top'.")
         return None, None
         
-    cax = inset_axes(ax, width=width, height=height, loc=location,
+    cax = inset_axes(ax, width=width, height=height, loc=cbar_location,
                      borderpad=cbar_pad,
                      bbox_to_anchor=bbox_to_anchor,
                      bbox_transform=ax.transAxes)
     
     cbar = ax.figure.colorbar(lc, cax=cax, orientation=orientation)
     
-    if cbar_location == 'top':
+    if 'upper' in cbar_location:
         cbar.ax.xaxis.set_ticks_position('top')
         cbar.ax.xaxis.set_label_position('top')
     
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label("Weight", fontsize=6)
     set_axis(cax)
     return cax, cbar
 
@@ -453,6 +536,8 @@ def get_scph_bands(filename, logfile=None, tol=0.1, verbose=True):
         idx = np.where(abs(dump[:,0] - temp) < tol)[0]
         kpoints_list.append(dump[idx,1])
         frequencies_list.append(dump[idx,2:])
+    kpoints = np.asarray(kpoints_list)
+    frequencies = np.asarray(frequencies_list)
     
     ## Delete data at unavailable temperatures
     from auto_kappa.calculators.scph import get_availabilities
@@ -463,7 +548,7 @@ def get_scph_bands(filename, logfile=None, tol=0.1, verbose=True):
         availabilities = get_availabilities(logfile)
         for temp, flag in availabilities.items():
             if flag == False and verbose:
-                logger.info(f" Not converged for {temp}K.")
+                logger.info(f" Not converged at {temp}K.")
     
     ## Delete unavailable data
     if availabilities is not None:
@@ -472,7 +557,9 @@ def get_scph_bands(filename, logfile=None, tol=0.1, verbose=True):
             if availabilities[int(temp)] == False:
                 idx_na.append(it)
         temperatures = np.delete(temperatures, idx_na)
-        kpoints_list = [np.delete(kpoints, idx_na, axis=0) for kpoints in kpoints_list]
-        frequencies_list = [np.delete(frequencies, idx_na, axis=0) for frequencies in frequencies_list]
-
-    return [temperatures, kpoints_list, frequencies_list]
+        kpoints = [np.delete(ks, idx_na, axis=0) for ks in kpoints]
+        frequencies = [np.delete(fs, idx_na, axis=0) for fs in frequencies]
+        kpoints = np.asarray(kpoints)
+        frequencies = np.asarray(frequencies)
+    
+    return [temperatures, kpoints, frequencies]

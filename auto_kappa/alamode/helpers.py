@@ -301,6 +301,8 @@ class AlamodeInputWriter():
             workdir = self.out_dirs['harm']['evec']
         elif propt == 'kappa':
             workdir = self.out_dirs['cube'][f'kappa_{self.fc3_type}']
+        elif propt.startswith('gruneisen'):
+            workdir = self.out_dirs['cube']['gruneisen']
         elif propt in ['kappa_4ph', 'kappa_scph', 'kappa_scph_4ph']:
             workdir = self.out_dirs['higher'][propt]
         elif propt in ['lasso', 'cv']:
@@ -340,7 +342,7 @@ class AlamodeInputWriter():
         if propt in ['band', 'dos', 'evec_commensurate']:
             # fcsxml = os.path.relpath(self.fc2xml, self.workdir)
             fcsxml = self.fc2xml
-        elif propt.startswith('kappa'):
+        elif propt.startswith('kappa') or propt.startswith('gruneisen'):
             if "fcsxml" in kwargs.keys():
                 fcsxml = kwargs["fcsxml"]
             else:
@@ -429,10 +431,12 @@ class AlamodeInputWriter():
     def _set_parameters_for_property(
         self, inp, propt=None, deltak=None, kpts=None, order=None):
         
-        if propt == 'band':
+        if propt == 'band' or propt.startswith('gruneisen_band'):
             inp.set_kpoint(deltak=deltak, dim=self.dim, norm_idx=self.norm_idx_xyz)
+            if propt == 'band':
+                inp.update({'printpr': 1})
         
-        elif propt == 'dos':
+        elif propt == 'dos' or propt.startswith('gruneisen_dos'):
             if self.frequency_range is not None:
                 diff = self.frequency_range[1] - self.frequency_range[0]
                 fmin = self.frequency_range[0] - diff * 0.05
@@ -450,7 +454,7 @@ class AlamodeInputWriter():
             from auto_kappa.alamode.parameters import set_parameters_evec
             set_parameters_evec(
                 inp, self.primitive_matrix, self.scell_matrix, dim=self.dim)
-        
+            
         elif propt.startswith('kappa'):
             from auto_kappa.alamode.parameters import set_parameters_kappa
             set_parameters_kappa(inp, kpts=kpts, nac=self.nac)
@@ -523,6 +527,11 @@ class AlamodeInputWriter():
         else:
             logger.error(" Error: %s is not supported." % propt)
             sys.exit()
+        
+        ## Add Grüneisen parameters
+        if propt.startswith('gruneisen'):
+            inp.update({'gruneisen': 1})
+
 
 class NameHandler():
     
@@ -554,6 +563,9 @@ class NameHandler():
             
         elif propt.startswith('kappa'):
             workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
+        
+        elif propt.startswith('gruneisen'):
+            workdir = self.out_dirs['cube']['gruneisen']
         
         elif propt == 'evec_commensurate':
             workdir = self.out_dirs['harm']['evec']

@@ -13,12 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from auto_kappa.plot import set_axis, set_legend
-from auto_kappa.plot.alamode.band import Band
+from auto_kappa.io.band import Band
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Gru_all():
+class GruAll:
     def __init__(self, filename):
         self._filename = filename
         self._kpoints = None
@@ -27,7 +27,8 @@ class Gru_all():
         try:
             self._read_file()
         except Exception as e:
-            print(f"Error reading data from {self._filename}: {e}") 
+            msg = f"\n Error reading data from {self._filename}: {e}"
+            logger.warning(msg)
 
     @property
     def filename(self):
@@ -49,7 +50,7 @@ class Gru_all():
         return self._gru_params
     
     def _read_file(self):
-        self._kpoints, self._frequencies, self._gru_params = read_gru_all(self.filename)
+        self._kpoints, self._frequencies, self._gru_params = parse_gru_all(self.filename)
 
     def plot(self, ax, ms=1.3, lw=0.3, cmap='tab10', show_legend=True,
              xlabel='Frequency (${\\rm cm^{-1}}$)', 
@@ -83,24 +84,26 @@ class Gru_all():
         if show_legend:
             set_legend(ax, loc='upper right', fontsize=6, alpha=0.5)
 
-class Gruneisen():
+class Gruneisen:
     def __init__(self, filename):
         if filename.startswith('/'):
             filename = os.path.relpath(filename, os.getcwd())
-        self._gru_file = filename
-        self._band_file = filename.replace('.gruneisen', '.bands')
+        self._file_gruneisen = filename
+        self._file_bands = filename.replace('.gruneisen', '.bands')
         self._kpoints = None
         self._gru_params = None
         self.band = None
         try:
             self._read_gruneisen_file()
         except Exception as e:
-            print(f"Error reading data from {self._gru_file}: {e}")
+            msg = f"\n Error reading data from {self._file_gruneisen}: {e}"
+            logger.error(msg)
         try:
             self._read_band_file()
         except Exception as e:
-            print(f"Error reading data from {self._band_file}: {e}")
-
+            msg = f"\n Error reading data from {self._file_bands}: {e}"
+            logger.error(msg)
+    
     @property
     def kpoints(self):
         if self._kpoints is None:
@@ -118,12 +121,12 @@ class Gruneisen():
         return self._gru_params
 
     def _read_gruneisen_file(self):
-        dump = np.loadtxt(self._gru_file, comments='#')
+        dump = np.loadtxt(self._file_gruneisen, comments='#')
         self._kpoints = dump[:,0]
         self._gru_params = dump[:,1:]
-
+    
     def _read_band_file(self):
-        self.band = Band(self._band_file)
+        self.band = Band(self._file_bands)
     
     def plot(self, ax, cmap='rainbow'):
         
@@ -136,7 +139,7 @@ class Gruneisen():
             ax, self.gru_params, cmap=cmap, norm=norm,
             clabel='Gr${\\rm \\ddot{u}}$neisen parameter')
 
-def read_gru_all(filepath):
+def parse_gru_all(filepath):
     """ Reads the Gruneisen parameter data from a file. 
     
     Args

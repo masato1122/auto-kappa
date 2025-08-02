@@ -20,7 +20,7 @@ output_directories = {
             'cv'   :       'cube/lasso',
             'lasso':       'cube/lasso',
             'kappa_lasso': 'cube/kappa_lasso',
-            #'kappa':       'cube/kappa',
+            'gruneisen': 'cube/gruneisen',
             },
         ### high-order FCs using LASSO and fixed harmonic and cubic FCs
         'higher':{

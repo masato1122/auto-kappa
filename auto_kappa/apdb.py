@@ -359,20 +359,25 @@ class ApdbVasp():
         
         ### Read previously used structure
         base_dir = directory + "/.."
-        prev_sc = get_previously_used_structure(base_dir, self.primitive_matrix, tolerance=1e-5)
-        if prev_sc is not None:
-            unitcell = convert_primitive_to_unitcell(prev_sc, self.primitive_matrix)
+        unitcell = get_previously_used_structure(base_dir, self.primitive_matrix, tolerance=1e-5)
+        if unitcell is not None:
             self.update_structures(unitcell)
-            
-            # outdir = base_dir + "/check"
-            # os.makedirs(outdir, exist_ok=True)
-            # ase.io.write(outdir + "/POSCAR.prim", self.primitive, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
-            # ase.io.write(outdir + "/POSCAR.unit", self.unitcell, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
-            # ase.io.write(outdir + "/POSCAR.super", self.supercell, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
             return 0
+        
+        # prev_sc = None
+        # if prev_sc is not None:
+        #     unitcell = convert_primitive_to_unitcell(prev_sc, self.primitive_matrix)
+        #     self.update_structures(unitcell)
+            
+        #     # outdir = base_dir + "/check"
+        #     # os.makedirs(outdir, exist_ok=True)
+        #     # ase.io.write(outdir + "/POSCAR.prim", self.primitive, 
+        #     #              format='vasp', direct=True, vasp5=True, sort=True)
+        #     # ase.io.write(outdir + "/POSCAR.unit", self.unitcell, 
+        #     #              format='vasp', direct=True, vasp5=True, sort=True)
+        #     # ase.io.write(outdir + "/POSCAR.super", self.supercell, 
+        #     #              format='vasp', direct=True, vasp5=True, sort=True)
+        #     return 0
         
         ### NSW parameters
         out = _parse_nsw_params(nsw_params)

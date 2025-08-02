@@ -43,6 +43,7 @@ from auto_kappa.alamode.compat import (
 )
 import auto_kappa.alamode.helpers as helper
 from auto_kappa.alamode.helpers import AlamodeForceCalculator, AlamodeInputWriter, NameHandler
+from auto_kappa.alamode.gruneisen import GruneisenCalculator
 from auto_kappa.utils import get_version
 from auto_kappa.units import BohrToA, AToBohr
 from auto_kappa.structure.two import get_normal_index, get_thickness
@@ -50,12 +51,13 @@ from auto_kappa.structure.two import get_normal_index, get_thickness
 import logging
 logger = logging.getLogger(__name__)
 
-class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
+class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, GruneisenCalculator):
     
     ### k1: alamode type, k2: mode, k3: propt
     propts_mode_type = {
             'anphon': {
-                'phonons': ['band', 'dos', 'evec_commensurate'],
+                'phonons': ['band', 'dos', 'evec_commensurate', 
+                            'gruneisen_band', 'gruneisen_dos'],
                 'rta':  ['kappa', 'kappa_scph'],
                 'scph': ['scph'],
                 },
@@ -921,7 +923,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         for i, each in enumerate(disp_list):
             all_disps[i] = np.dot(each, self.supercell.cell)
         
-        return all_disps 
+        return all_disps
     
     def calc_forces(self, order: None, calculator=None, 
                     nmax_suggest=100, frac_nrandom=10., 
@@ -1166,9 +1168,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         ## set kpmode
         kpmode = None
-        if propt in ['band', 'scph']:
+        if propt in ['band', 'scph', 'gruneisen_band']:
             kpmode = 1
-        elif propt in ['dos'] or propt.startswith('kappa'):
+        elif propt in ['dos', 'gruneisen_dos'] or propt.startswith('kappa'):
             kpmode = 2
         elif propt in ['evec_commensurate']:
             kpmode = 0
@@ -1389,7 +1391,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         -----
         propt : string
             "fc2", "band", or "dos"
-
+        
+        outdir : string
+            Output directory for the ALAMODE job. If None, the default output.
+            This option is given only when the output directory is not the default one.
+        
         kwargs : 
             Any ALAMODE parameters, including "fcsxml".
         """
@@ -1400,6 +1406,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         if self.calculate_forces == False:
             return None
+        
+        if propt == 'band':
+            file_band_pr = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.band.pr'
+            if os.path.exists(file_band_pr) == False:
+                neglect_log = True
         
         ### get log file name
         if propt == "fc2":
@@ -1496,7 +1507,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             logger.error(msg)
             sys.exit()
         
-    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None):
+    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None, verbose=True):
         """ Run anphon
         
         Args
@@ -1530,12 +1541,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
             workdir = outdir
         
         ### print title
-        msg = "\n"
-        line = "Run %s for %s:" % (alamode_type, propt)
-        msg += " " + line + "\n"
-        msg += " " + "-" * (len(line)) + "\n\n"
-        msg += " Working directory : " + self.get_relative_path(workdir)
-        logger.info(msg)
+        if verbose:
+            msg = "\n"
+            line = "Run %s for %s:" % (alamode_type, propt)
+            msg += " " + line + "\n"
+            msg += " " + "-" * (len(line)) + "\n\n"
+            msg += " Working directory : " + self.get_relative_path(workdir)
+            logger.info(msg)
         
         filename = f"{propt}.in"
         if logfile is None:
@@ -1944,29 +1956,107 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler):
         
         logger.info("")
     
-    def plot_bandos(self, **kwargs):
+    def plot_bandos(self, fontsize=7, fig_width=4.0, aspect=0.5, lw=0.5, plot_with_pr=True, plot_G2G=False):
+        """ Plot band structure and DOS. 
         
-        ### set figure name
-        if 'figname' not in kwargs.keys():
-            # figname = self.out_dirs['result'] + '/fig_bandos.png'
-            figname = self.out_dirs['harm']['bandos'] + '/fig_bandos.png'
-        else:
-            figname = kwargs['figname']
+        Args
+        -----    
+        fontsize : int
+            Font size for the plot.
         
-        from auto_kappa.plot.bandos import plot_bandos
-
-        ### output title
-        line = "Plot band and DOS:"
-        msg = "\n " + line + "\n"
-        msg += " " + "-" * len(line) + "\n"
+        fig_width : float
+            Width of the figure in inches.
+        
+        aspect : float
+            Aspect ratio of the figure.
+        
+        lw : float
+            Line width for the band and DOS plots.
+        
+        plot_with_pr : bool
+            If True, plot the band structure with participation ratio.
+        
+        plot_G2G : bool
+            If True, plot the band structure only between the first and second Gamma points.
+        
+        """
+        from auto_kappa.io.band import Band
+        from auto_kappa.io.participation import BandPR
+        from auto_kappa.io.dos import Dos
+        from auto_kappa.plot.initialize import prepare_bandos_axes
+        
+        fig, ax1, ax2 = prepare_bandos_axes(
+            fontsize=fontsize, fig_width=fig_width, aspect=aspect)
+        
+        ### File names
+        workdir = self.out_dirs['harm']['bandos']
+        if workdir.startswith('/'):
+            workdir = "./" + os.path.relpath(workdir, os.getcwd())
+        
+        file_band = workdir + "/" + self.prefix + ".bands"
+        file_band_pr = workdir + "/" + self.prefix + ".band.pr"
+        file_dos = workdir + "/" + self.prefix + ".dos"
+        figname = workdir + "/fig_bandos_pr.png"
+        
+        ### Plot band structure
+        if plot_with_pr: # plot band with participation ratio
+            try:
+                pr = BandPR(file_band_pr)
+                pr.plot(ax1, lw=lw, cbar_location='upper left', plot_G2G=plot_G2G)
+            except Exception as e:
+                msg = "\n Warning: cannot plot band participation ratio. %s" % str(e)
+                logger.warning(msg)
+                pr = None
+        else: # plot band without participation ratio
+            try:
+                band = Band(file_band)
+                band.plot(ax1, lw=lw, plot_G2G=plot_G2G)
+            except Exception as e:
+                msg = "\n Warning: cannot plot band structure. %s" % str(e)
+                logger.warning(msg)
+                band = None
+        
+        ### Plot DOS
+        try:
+            dos = Dos(file_dos)
+            dos.plot(ax2, xlabel=None, lw=lw*1.3, frac_lw=0.7)
+        except Exception as e:
+            msg = "\n Warning: cannot plot DOS. %s" % str(e)
+            logger.warning(msg)
+            dos = None
+        
+        ## Set ylim
+        ymin = min(ax1.get_ylim()[0], ax2.get_ylim()[0])
+        ymax = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
+        ax1.set_ylim(ymin, ymax)
+        ax2.set_ylim(ymin, ymax)
+        
+        fig.savefig(figname, dpi=600, bbox_inches='tight')
+        msg = "\n Plot band structure and DOS: %s" % figname
         logger.info(msg)
         
-        fig = plot_bandos(
-                directory=self.get_relative_path(self.out_dirs['harm']['bandos']),
-                prefix=self.prefix, 
-                figname=self.get_relative_path(figname),
-                **kwargs
-                )
+        
+    # def plot_bandos(self, **kwargs):
+    #     ### set figure name
+    #     if 'figname' not in kwargs.keys():
+    #         figname = self.out_dirs['harm']['bandos'] + '/fig_bandos.png'
+    #     else:
+    #         figname = kwargs['figname']
+        
+    #     from auto_kappa.plot.bandos import plot_bandos
+        
+    #     ### output title
+    #     line = "Plot band and DOS:"
+    #     msg = "\n " + line + "\n"
+    #     msg += " " + "-" * len(line) + "\n"
+    #     logger.info(msg)
+        
+    #     fig = plot_bandos(
+    #             directory=self.get_relative_path(self.out_dirs['harm']['bandos']),
+    #             prefix=self.prefix, 
+    #             figname=self.get_relative_path(figname),
+    #             **kwargs
+    #             )
     
     def get_kappa_directories(self, calc_type="cubic"):
         

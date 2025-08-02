@@ -25,8 +25,8 @@ from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
 from auto_kappa.calculators.compat import remove_old_kappa_data
 from auto_kappa.calculators.scph import calculate_high_order_force_constants
-from auto_kappa.io.fcs import FCSxml
-from auto_kappa.plot import make_figure
+# from auto_kappa.io.fcs import FCSxml
+# from auto_kappa.plot import make_figure
 
 import logging
 logger = logging.getLogger(__name__)
@@ -125,6 +125,9 @@ def analyze_phonon_properties(
             frac_nrandom=frac_nrandom, 
             neglect_log=neglect_log
             )
+    
+    ## Calculate Grüneisen parameters
+    almcalc.calculate_gruneisen_parameters()
     
     ## Calculate high-order FCs using LASSO
     if scph or four:    
@@ -267,6 +270,7 @@ def analyze_phonon_properties_with_larger_supercells(
     ### plot band and DOS
     from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
     figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
+    # figname = almcalc_large.out_dirs['harm']['bandos'] + '/fig_bandos.png'
     plot_bandos_for_different_sizes(almcalc_large, almcalc, figname=figname)
     
     ### If negative frequencies could be removed, calculate cubic FCs with

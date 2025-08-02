@@ -56,7 +56,7 @@ def _make_symbol_pair_index(symbol_lists):
             next_index += 1
     
     return index_map
-    
+
 class FCSxml():
     def __init__(self, filename: str=None):
         

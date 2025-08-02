@@ -19,6 +19,9 @@ import matplotlib.ticker as tick
 from matplotlib.ticker import *
 import matplotlib.gridspec as gridspec
 
+import logging
+logger = logging.getLogger(__name__)
+
 def make_figure(nrows, ncols, fontsize=7, fig_width=2.5, aspect=0.9, hspace=0.15, wspace=0.1):
     """ Make a figure with a grid of subplots.
     """
@@ -84,6 +87,17 @@ def set_axis(ax, xscale="linear", yscale="linear",
     return ax
 
 def get_both_axis(ratio="2:1"):
+    logger.info("\n 'get_both_axis' will be deprecated in the future version.")
+    return prepare_two_axes(ratio=ratio)
+
+def prepare_bandos_axes(ratio='3:1', fontsize=7, fig_width=4.0, aspect=0.5):
+    set_matplot(fontsize=fontsize)
+    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+    plt.subplots_adjust(wspace=0.05)
+    ax1, ax2 = prepare_two_axes(ratio='3:1')
+    return fig, ax1, ax2
+
+def prepare_two_axes(ratio="2:1"):
     w1 = int(ratio.split(':')[0])
     w2 = int(ratio.split(':')[1])
     gs = gridspec.GridSpec(1,w1+w2)
