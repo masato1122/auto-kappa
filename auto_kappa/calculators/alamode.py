@@ -544,7 +544,6 @@ def analyze_harmonic_properties(
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
     
-    
 def calculate_cubic_force_constants(
         almcalc, calculator,
         nmax_suggest=None, frac_nrandom=None, neglect_log=False,
@@ -566,7 +565,7 @@ def calculate_cubic_force_constants(
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt, order=2)
             almcalc.run_alamode(propt, order=2, neglect_log=neglect_log)
-    else: 
+    else:
         ## ver.1 : with ALM library
         ##almcalc.calc_anharm_force_constants()
         ## ver.2: with alm command

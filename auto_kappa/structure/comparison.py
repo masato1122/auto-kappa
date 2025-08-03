@@ -13,6 +13,19 @@
 import numpy as np
 import ase
 from auto_kappa.structure import change_structure_format
+from pymatgen.core import Structure
+from pymatgen.analysis.structure_matcher import StructureMatcher
+
+def match_structures(struct1, struct2, ltol=1e-3, stol=1e-3, angle_tol=0.5):
+    """ Check if two structures are the same using pymatgen's StructureMatcher.
+    """
+    if isinstance(struct1, Structure) == False:
+        struct1 = change_structure_format(struct1, format='pmg-structure')
+    if isinstance(struct2, Structure) == False:
+        struct2 = change_structure_format(struct2, format='pmg-structure')
+    matcher = StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol, scale=False)
+    match = matcher.fit(struct1, struct2)
+    return match
 
 def cells_equal(cell1, cell2, tol=1e-5):
     """ Check if two cells are equal within a tolerance. """

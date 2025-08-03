@@ -13,17 +13,15 @@
 # 
 import os
 import ase.io
-from pymatgen.core import Structure
-from pymatgen.analysis.structure_matcher import StructureMatcher
 
-from auto_kappa.structure import change_structure_format
+# from auto_kappa.structure import change_structure_format
 from auto_kappa.structure.crystal import get_primitive_structure_spglib, convert_primitive_to_unitcell
-from auto_kappa.structure.comparison import cells_equal, atoms_equal
+from auto_kappa.structure.comparison import match_structures, cells_equal, atoms_equal
 
 import logging
 logger = logging.getLogger(__name__)
 
-def get_previously_used_structure(base_dir, prim_matrix, to_primitive=False, tolerance=1e-5):
+def get_previously_used_structure(base_dir, prim_matrix):
     """ Compare the optimized structure and the previously used structure
     
     Args
@@ -65,21 +63,17 @@ def get_previously_used_structure(base_dir, prim_matrix, to_primitive=False, tol
     structures_used['unit'] = convert_primitive_to_unitcell(structures_used['prim'], prim_matrix)
     
     ## Compare two structures using StructureMatcher
-    type = 'unit'
+    type = 'super'
     struct_opt = structures_opt[type]
     struct_used = structures_used[type]
     
-    if isinstance(struct_opt, Structure) == False:
-        struct_opt = change_structure_format(struct_opt, format='pmg-structure')
-    if isinstance(struct_used, Structure) == False:
-        struct_used = change_structure_format(struct_used, format='pmg-structure')
-
-    matcher = StructureMatcher(
-        ltol=1e-3, stol=1e-3, angle_tol=1.0,
-        primitive_cell=to_primitive,
-        scale=False)
     
-    match = matcher.fit(struct_opt, struct_used)
+    match = match_structures(struct_opt, struct_used)
+    
+    # print(match)
+    # print(struct_opt.cell)
+    # print(struct_used.cell)
+    # exit()
     
     if match:
         ## Good! The optimized structure matches the previously used structure.
@@ -87,9 +81,9 @@ def get_previously_used_structure(base_dir, prim_matrix, to_primitive=False, tol
         logger.info(msg)
         return struct_opt
     else:
-        cell_opt = struct_opt.lattice.matrix
-        cell_used = struct_used.lattice.matrix
-        if cells_equal(cell_opt, cell_used) == False:
+        cell_opt = struct_opt.cell
+        cell_used = struct_used.cell
+        if cells_equal(cell_opt, cell_used, tol=1e-5) == False:
             msg  = "\n ## Caution ##"
             msg += "\n The optimized structure and previously used structure have "
             msg += "\n different cell parameters."

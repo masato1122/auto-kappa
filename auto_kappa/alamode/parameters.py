@@ -31,7 +31,8 @@ def set_parameters_evec(inp, primitive_matrix, scell_matrix, dim=3):
     inp.set_kpoint(kpoints=comm_pts, dim=dim)
 
 def set_parameters_kappa(
-    inp, kpts=None, nac=None, isotope=2, kappa_coherent=1, 
+    inp, kpts=None, nac=None, isotope=2, 
+    kappa_coherent=1, kappa_spec=1,
     tmin=50, tmax=1000, dt=50, **kwargs):
     """ Set parameters for kappa calculation. """
     params = {
@@ -39,6 +40,7 @@ def set_parameters_kappa(
             "nac": nac,
             "isotope": isotope,
             "kappa_coherent": kappa_coherent,
+            "kappa_spec": kappa_spec,
             "tmin": tmin,
             "tmax": tmax,
             "dt": dt,

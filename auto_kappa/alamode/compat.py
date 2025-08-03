@@ -14,18 +14,17 @@
 #
 import os
 import sys
-import numpy as np
-import pandas as pd
 import glob
 import subprocess
 import shutil
 
 import ase.io
-from ase.geometry import get_distances
+# from ase.geometry import get_distances
 
 from auto_kappa.io import AlmInput
 from auto_kappa.structure import change_structure_format
-from auto_kappa.structure.two import get_normal_index
+# from auto_kappa.structure.two import get_normal_index
+from auto_kappa.structure.comparison import match_structures
 
 import logging
 logger = logging.getLogger(__name__)
@@ -84,15 +83,17 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
             if prev_key in assigned_keys:
                 continue
             
-            same = same_structures(
-                new_structure, prev_structure, 
-                tolerance=tolerance, dim=dim)
+            # same = same_structures(
+            #     new_structure, prev_structure,
+            #     tolerance=tolerance, dim=dim)
+            #
+            same = match_structures(new_structure, prev_structure)
             
             if same:
                 map_new2prev[new_key] = prev_key
                 assigned_keys.append(prev_key)
                 break
-    
+            
     ### Make a dict of structures with adjusted keys
     
     ## structures contained in prev_structures
@@ -124,89 +125,86 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
     
     return adjusted_key_structures
 
-def min_cost_assignment(matrix):
-    from scipy.optimize import linear_sum_assignment
-    cost_matrix = np.array(matrix)
-    row_ind, col_ind = linear_sum_assignment(cost_matrix)
-    min_total_cost = cost_matrix[row_ind, col_ind].sum()
-    selected_elements = list(zip(row_ind, col_ind))
-    return selected_elements, min_total_cost
+# def min_cost_assignment(matrix):
+#     from scipy.optimize import linear_sum_assignment
+#     cost_matrix = np.array(matrix)
+#     row_ind, col_ind = linear_sum_assignment(cost_matrix)
+#     min_total_cost = cost_matrix[row_ind, col_ind].sum()
+#     selected_elements = list(zip(row_ind, col_ind))
+#     return selected_elements, min_total_cost
 
-def same_structures(struct1, struct2, tolerance=1e-7, dim=3):
-    """ Check whether the two structures are the same.
+# def same_structures(struct1, struct2, tolerance=1e-7, dim=3):
+#     """ Check whether the two structures are the same.
     
-    Args
-    ------
-    struct1 : ase.Atoms
-        The first structure.
+#     Args
+#     ------
+#     struct1 : ase.Atoms
+#         The first structure.
     
-    struct2 : ase.Atoms
-        The second structure.
+#     struct2 : ase.Atoms
+#         The second structure.
     
-    # cell : np.ndarray
-    #     The cell of the structure.
+#     # cell : np.ndarray
+#     #     The cell of the structure.
     
-    pristine : ase.Atoms
-        The pristine structure.
+#     pristine : ase.Atoms
+#         The pristine structure.
     
-    tolerance : float
-        The tolerance for the distance between the two structures.
+#     tolerance : float
+#         The tolerance for the distance between the two structures.
     
-    mag : float
-        The magnitude of the atom displacement.
-    """
-    ## Check cell size
-    cell1 = struct1.cell.array
-    cell2 = struct2.cell.array
-    cell_diff = np.abs(cell1 - cell2)
+#     mag : float
+#         The magnitude of the atom displacement.
+#     """
+#     ## Check cell size
+#     cell1 = struct1.cell.array
+#     cell2 = struct2.cell.array
+#     cell_diff = np.abs(cell1 - cell2)
     
-    pbc = [True, True, True]
-    if dim == 2:
-        norm_idx = get_normal_index(struct1)
-        cell_diff = np.delete(cell_diff, norm_idx, axis=1)
-        pbc[norm_idx] = False
-    else:
-        norm_idx = None
+#     pbc = [True, True, True]
+#     if dim == 2:
+#         norm_idx = get_normal_index(struct1)
+#         cell_diff = np.delete(cell_diff, norm_idx, axis=1)
+#         pbc[norm_idx] = False
+#     else:
+#         norm_idx = None
     
-    if np.amax(abs(cell_diff)) > tolerance:
-        # print("Cell size is different.")
-        return False
+#     if np.amax(abs(cell_diff)) > tolerance:
+#         # print("Cell size is different.")
+#         return False
     
-    ## Check displacements
-    pos1 = struct1.get_positions()
-    pos2 = struct2.get_positions()
-    D, D_len = get_distances(
-        pos1 - np.mean(pos1, axis=0),
-        pos2 - np.mean(pos2, axis=0),
-        cell=struct1.cell, 
-        pbc=pbc)
+#     ## Check positions
+#     pos1 = struct1.get_positions()
+#     pos2 = struct2.get_positions()
+#     D, D_len = get_distances(pos1, pos2, cell=struct1.cell, pbc=pbc)
     
-    ## Check the distance between atoms in the two structures
-    selected_elements, min_total_cost = min_cost_assignment(D_len)
+#     ## Check the distance between atoms in the two structures
+#     selected_elements, min_total_cost = min_cost_assignment(D_len)
     
-    n_atoms = len(struct1)
-    displacements = np.zeros((n_atoms, 3))
+#     n_atoms = len(struct1)
+#     displacements = np.zeros((n_atoms, 3))
     
-    for i, j in selected_elements:
-        ## Check symbols of the atoms
-        if struct1[i].symbol != struct2[j].symbol:
-            # print("symbol is different.")
-            return False
+#     for i, j in selected_elements:
+#         ## Check symbols of the atoms
+#         if struct1[i].symbol != struct2[j].symbol:
+#             print("symbol is different. (%s != %s)" % 
+#                   (struct1[i].symbol, struct2[j].symbol))
+#             return False
         
-        ## Check the displacement
-        disp = D[i, j]
-        displacements[i, :] = disp[:]
+#         ## Check the displacement
+#         disp = D[i, j]
+#         displacements[i, :] = disp[:]
     
-    ## Check the displacement
-    ## Translational displacement is allowed
-    for j in range(3):
-        vmin = np.min(displacements[:, j])
-        vmax = np.max(displacements[:, j])
-        if vmax - vmin > tolerance:
-            # print("displacement is different.", j, vmax -vmin)
-            return False
+#     ## Check the displacement
+#     ## Translational displacement is allowed
+#     for j in range(3):
+#         vmin = np.min(displacements[:, j])
+#         vmax = np.max(displacements[:, j])
+#         if vmax - vmin > tolerance:
+#             # print("displacement is different.", j, vmax -vmin)
+#             return False
     
-    return True
+#     return True
     
 def check_directory_name_for_pristine(path_force, pristine):
     """ Check the directory name for the pristine structure.
@@ -241,7 +239,8 @@ def check_directory_name_for_pristine(path_force, pristine):
     for lab in labels:
         fn = os.path.join(path_force, lab, "POSCAR")
         structure = ase.io.read(fn)
-        if same_structures(structure, pristine):
+        # if same_structures(structure, pristine):
+        if match_structures(structure, pristine):
             if lab != 'prist':
                 dir1 = os.path.join(path_force, lab)
                 msg = (
@@ -250,6 +249,7 @@ def check_directory_name_for_pristine(path_force, pristine):
                 logger.info(msg)
                 os.rename(dir1, dir_prist)
                 return 1
+    
     return 0
     
     

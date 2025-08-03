@@ -77,7 +77,7 @@ def _store_parameters(outfile, params):
 def main():
     
     ### Parse given parameters
-    from auto_kappa.cui.ak_parser import get_parser, check_ak_options, parse_vasp_params
+    from auto_kappa.cui.ak_parser import get_parser
     options = get_parser()
     
     ### Prepare the base directory
@@ -93,6 +93,7 @@ def main():
     #ak_log.print_machine_info()
     
     ### Auto-kappa parmaeters
+    from auto_kappa.cui.compat import check_ak_options, parse_vasp_params
     check_ak_options(options)
     ak_params = eval(str(options))
     outfile = ak_params['outdir'] + "/parameters.json"

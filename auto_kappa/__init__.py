@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 
 output_directories = {
         'relax': 'relax',

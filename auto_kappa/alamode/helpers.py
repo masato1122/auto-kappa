@@ -443,8 +443,7 @@ class AlamodeInputWriter():
                 fmax = self.frequency_range[1] + diff * 0.05
                 
                 npoints = 301
-                inp.update({'emin': fmin})
-                inp.update({'emax': fmax})
+                inp.update({'emin': fmin, 'emax': fmax})
                 inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
             
             inp.update({'kpts': kpts})
@@ -458,6 +457,14 @@ class AlamodeInputWriter():
         elif propt.startswith('kappa'):
             from auto_kappa.alamode.parameters import set_parameters_kappa
             set_parameters_kappa(inp, kpts=kpts, nac=self.nac)
+            
+            diff = self.frequency_range[1] - self.frequency_range[0]
+            fmin = self.frequency_range[0] - diff * 0.05
+            fmax = self.frequency_range[1] + diff * 0.05
+            
+            npoints = 301
+            inp.update({'emin': fmin, 'emax': fmax})
+            inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
             
         elif propt == "scph":
             from auto_kappa.calculators.scph import set_parameters_scph

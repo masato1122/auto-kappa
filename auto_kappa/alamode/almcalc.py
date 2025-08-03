@@ -1737,7 +1737,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             kpts = np.asarray([int(d) for d in data])
             if np.sum(kpts) > ksum:
                 dir_kappa = dirs_kappa[lab]
-                lab_kpts = lab
+                # lab_kpts = lab
                 ksum = np.sum(kpts)
         
         ### file check
