@@ -54,7 +54,7 @@ def _get_previously_suggested_structures(outdir):
     
     return dict(sorted(structures.items(), key=_custom_sort_key))
 
-def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, dim=3):
+def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
     """ Sort the suggested structures and their displacement patterns 
     to align with those from the previous version.
     
@@ -74,10 +74,20 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
     """
     prev_structures = _get_previously_suggested_structures(outdir)
     
+    if dim == 2:
+        msg = "\n Not supported for 2D structures yet."
+        logger.error(msg)
+        sys.exit()
+    
+    logger.info("\n Check previous structures (Previous: %d, New: %d)", 
+                len(prev_structures), len(new_structures))
+
     ## Get index mapping from new to previous
     map_new2prev = {}
     assigned_keys = []
+    count = 0
     for new_key, new_structure in new_structures.items():
+        count += 1
         for prev_key, prev_structure in prev_structures.items():
             
             if prev_key in assigned_keys:
@@ -93,9 +103,8 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, tolerance=1e-5, 
                 map_new2prev[new_key] = prev_key
                 assigned_keys.append(prev_key)
                 break
-            
-    ### Make a dict of structures with adjusted keys
     
+    ### Make a dict of structures with adjusted keys
     ## structures contained in prev_structures
     # avail_keys = [str(key) for key in list(new_structures.keys())]
     adjusted_key_structures = {}

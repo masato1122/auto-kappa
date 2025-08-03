@@ -1029,9 +1029,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             structures_tmp, _ = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
-            structures = adjust_keys_of_suggested_structures(
-                structures_tmp, outdir0, tolerance=1e-5, dim=self.dim)
-
+            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0, dim=self.dim)
+        
         ### If something wrong, return None
         if structures is None:
             return None

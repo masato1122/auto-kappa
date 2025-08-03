@@ -9,11 +9,9 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import sys
 import os
 import glob
 import fnmatch
-import shutil
 import subprocess
 
 # from auto_kappa import output_files

@@ -11,16 +11,12 @@ import os
 import numpy as np
 import datetime
 import yaml
-import time
 
 import logging
 logger = logging.getLogger(__name__)
 
-def set_logging(
-        filename='log.txt',
-        level=logging.DEBUG,
-        format=" %(levelname)8s : %(message)s"
-        ):
+def set_logging(filename='log.txt', level=logging.DEBUG,
+                format=" %(levelname)8s : %(message)s"):
     
     ### file handler
     fh = logging.FileHandler(filename=filename, mode='w')
