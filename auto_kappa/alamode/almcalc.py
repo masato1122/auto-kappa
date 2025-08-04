@@ -1583,14 +1583,18 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             sys.exit()
     
     def print_fc_error(self, propt, threshold=10.0):
-        if propt == 'fc2':
-            filename = self.out_dirs['harm']['force'] + '/fc2.log'
-        elif propt == 'fc3':
-            filename = self.out_dirs['cube']['force'] + '/fc3.log'
-        elif propt == 'lasso':
-            filename = self.out_dirs['cube']['lasso'] + '/lasso.log'
-        else:
-            logger.error(f" Error: {propt} is not supported for printing force constant error.")
+        try:
+            if propt == 'fc2':
+                filename = self.out_dirs['harm']['force'] + '/fc2.log'
+            elif propt == 'fc3':
+                filename = self.out_dirs['cube']['force_fd'] + '/fc3.log'
+            elif propt == 'lasso':
+                filename = self.out_dirs['cube']['lasso'] + '/lasso.log'
+            else:
+                logger.error(f" Error: {propt} is not supported for printing force constant error.")
+                return
+        except Exception:
+            logger.error(f" Error: Cannot find the log file for {propt}.")
             return
         
         try:
