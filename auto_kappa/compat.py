@@ -84,7 +84,7 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
         cell_opt = struct_opt.cell
         cell_used = struct_used.cell
         msg = ""
-        if cells_equal(cell_opt, cell_used, tol=1e-5) == False:
+        if cells_equal(cell_opt, cell_used) == False:
             msg = "\n *** Caution ***"
             msg += "\n The optimized structure and previously used structure have "
             msg += "\n different cell parameters."
