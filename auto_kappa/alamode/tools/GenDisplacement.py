@@ -190,9 +190,9 @@ class AlamodeDisplace(object):
             if self._verbosity > 0:
                 print(" Displacement mode              : Random displacement\n")
                 print(" %d randomly-displaced configurations are generated from\n"
-                      " the original supercell structure" % number_of_displacements)
+                      " the original supercell structure." % number_of_displacements)
                 print(" The direction of displacement is random, but the displacement\n"
-                      " magnitude of each atom is fixed to %.2f Angstrom" % self._displacement_magnitude)
+                      " magnitude of each atom is fixed to %.2f Angstrom." % self._displacement_magnitude)
                 print("")
 
             disp_random = self._get_random_displacements(number_of_displacements,

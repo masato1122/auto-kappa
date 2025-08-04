@@ -30,6 +30,16 @@ from auto_kappa.structure.comparison import match_structures
 import logging
 logger = logging.getLogger(__name__)
 
+def _custom_sort_key(item):
+    key = item[0]
+    if key == 'prist':
+        return (0, 0)
+    try:
+        numeric_key = int(key)
+        return (1, numeric_key)
+    except (ValueError, TypeError):
+        return (2, str(key))
+
 def _get_previously_suggested_structures(outdir):
     """ Read the previously suggested structures and their displacement patterns 
     to align with those from the previous version.
@@ -41,18 +51,7 @@ def _get_previously_suggested_structures(outdir):
             key = fn.split("/")[-2]
             structures[key] = ase.io.read(fn)
         except:
-            continue
-    
-    def _custom_sort_key(item):
-        key = item[0]
-        if key == 'prist':
-            return (0, 0)
-        try:
-            numeric_key = int(key)
-            return (1, numeric_key)
-        except (ValueError, TypeError):
-            return (2, str(key))
-    
+            continue    
     return dict(sorted(structures.items(), key=_custom_sort_key))
 
 def _match_wrapper(args):
@@ -182,7 +181,8 @@ def get_previously_calculated_structure(dir_forces, include_pristine=True):
             continue
         if wasfinished_vasp(dirname):
             structures[key] = ase.io.read(fn, format='vasp-xml')
-    return structures
+    
+    return dict(sorted(structures.items(), key=_custom_sort_key))
 
 def get_number_of_same_structures(structures1, structures2):
     """ Get the number of same structures.

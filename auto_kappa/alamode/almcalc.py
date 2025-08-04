@@ -953,6 +953,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                     temperature=500., classical=False,
                     output_dfset=None,
                     amin_params={},
+                    calculate_both_old_new_structures=False
                     # max_limit_of_estimated_time=24.*30.,
                     ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
@@ -991,6 +992,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             If 1, output DFSET file only when it doesn't exist.
             If 2, output DFSET file even when it exists.
         
+        calculate_both_old_new_structures : bool, default=False
+            This options is used when the number of the unique structures
+            suggested in previous and current calculations exceeds ``nmax_suggest``.
+            If False, previous calculations are trusted.
+            If True, both old and new structures are calculated.
         """
         if output_dfset is not None:
             msg = " Warning: \"output_dfset\" option is no longer used."
@@ -1043,6 +1049,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         else:
             fc_type = 'lasso'
         
+        prev_structures = None
         calculated_every_structure = False
         if fc_type == 'lasso':
             structures, _ = self._get_suggested_structures_for_lasso(
@@ -1060,6 +1067,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             ### Check the number of already calculated structures
             prev_structures = get_previously_calculated_structure(outdir0, include_pristine=True)
             if len(prev_structures) >= nsuggest + 1:
+                ## The number of calculated structures is larger than the
+                ## number of suggested structures.
                 logger.info('\n Get number of same structures...')
                 num_same = get_number_of_same_structures(structures, prev_structures)                
                 msg  = "\n Number of structures (including the pristine structure):"
@@ -1070,7 +1079,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                     msg += "\n Suggested structures were changed from the previous calculation "
                     msg += "\n while this does not cause an error."
                 logger.info(msg)
-                calculated_every_structure = True
+                calculated_every_structure = not calculate_both_old_new_structures
         
         ### If something wrong, return None
         if structures is None:
@@ -1084,19 +1093,39 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                     pp[key] = amin_params[key]
         amin_params_set = pp.copy()
         
-        ### start the force calculation
+        ### Calculate atomic forces
         if calculated_every_structure == False:
-            self._counter_done = 0
-            # self._counter_calc = 0
-            struct_keys = list(structures.keys())
-            logger.info("")
-            for ii, key in enumerate(struct_keys):
-                self._job_for_each_structure(
-                    ii, structures, outdir0, order, calculator, 
-                    calculate_forces=self.calculate_forces, **amin_params_set)
+            target_structures = structures.copy()
         else:
-            self._counter_done = len(prev_structures)
+            target_structures = prev_structures.copy()
         
+        self._counter_done = 0
+        self._counter_calc = 0
+        for ii, key in enumerate(target_structures):
+            if ii == 0:
+                logger.info("")
+            
+            self._job_for_each_structure(
+                ii, target_structures, outdir0, order, calculator, 
+                calculate_forces=self.calculate_forces, **amin_params_set)
+        
+        # if calculated_every_structure == False:
+        #     self._counter_done = 0
+        #     struct_keys = list(structures.keys())
+        #     logger.info("")
+        #     for ii, key in enumerate(struct_keys):
+        #         self._job_for_each_structure(
+        #             ii, structures, outdir0, order, calculator, 
+        #             calculate_forces=self.calculate_forces, **amin_params_set)
+        # else:
+        #     self._counter_done = 0
+        #     if prev_structures is not None:
+        #         for i, key in enumerate(prev_structures):
+        #             self._job_for_each_structure(
+        #                 i, prev_structures, outdir0, order, calculator,
+        #                 calculate_forces=self.calculate_forces, **amin_params_set)
+        #     self._counter_done = len(structures)
+            
         ### output DFSET
         nsuggest =  len(structures)
         if self._counter_done >= len(structures):
@@ -1553,7 +1582,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             logger.error(msg)
             sys.exit()
     
-    def print_fc_error(self, propt):
+    def print_fc_error(self, propt, threshold=10.0):
         if propt == 'fc2':
             filename = self.out_dirs['harm']['force'] + '/fc2.log'
         elif propt == 'fc3':
@@ -1570,6 +1599,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 if out.get(key, None) is not None:
                     name = key.capitalize().replace('_', ' ')
                     msg = f"\n {name}: {out[key]['value']} {out[key]['unit']}"
+                    if out[key]['value'] > threshold:
+                        msg += "\n Warning: Force constant error may contain too large!!"
                     logger.info(msg)
         except Exception as e:
             msg = "\n Warning: Cannot read the error from %s." % filename
