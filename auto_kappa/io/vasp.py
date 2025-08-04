@@ -50,13 +50,16 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     from ase.geometry import get_distances
     
     line = directory + '/*/vasprun.xml'
-    all_dirs = glob.glob(line)
+    all_files = glob.glob(line)
     
     ## get keys
     all_keys = []
-    for dd in all_dirs:
-        key = dd.split('/')[-2]
+    for fn in all_files:
+        dirname = os.path.dirname(fn)
+        key = fn.split('/')[-2]
         if key == 'prist':
+            continue
+        if not wasfinished(dirname):
             continue
         all_keys.append(key)
     all_keys = sorted(all_keys, key=int)
@@ -89,7 +92,7 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     all_forces = []
     all_energies = []
     all_lines = []
-    count = 0
+    # count = 0
     for ii, key in enumerate(all_keys):
         fn = "%s/%s/vasprun.xml" % (directory, key)
         atoms1 = ase.io.read(fn, format='vasp-xml')
@@ -125,10 +128,10 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
             line += "%20.13e " * 3 % tuple(f)
             all_lines.append(line)
         ##
-        count += 1
-        if nset is not None:
-            if count == nset:
-                break
+        # count += 1
+        # if nset is not None:
+        #     if count == nset:
+        #         break
     ##
     all_disps = np.asarray(all_disps)
     all_forces = np.asarray(all_forces)

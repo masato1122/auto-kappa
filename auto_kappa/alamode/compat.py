@@ -17,6 +17,7 @@ import sys
 import glob
 import subprocess
 import shutil
+import multiprocessing as mp
 
 import ase.io
 # from ase.geometry import get_distances
@@ -54,7 +55,40 @@ def _get_previously_suggested_structures(outdir):
     
     return dict(sorted(structures.items(), key=_custom_sort_key))
 
-def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
+def _match_wrapper(args):
+    new_key, new_structure, prev_structures = args
+    for prev_key, prev_structure in prev_structures.items():
+        match = match_structures(new_structure, prev_structure,
+                                 ignore_order=False, verbose=False)
+        if match:
+            return (new_key, prev_key)
+    return None
+
+def _parallel_structure_match(new_structures, prev_structures, nprocs=1):
+    map_new2prev = {}
+    assigned_keys = set()
+    
+    ## Each task will check if the new structure matches any of the previous structures
+    tasks = [
+        (new_key, new_structure, {
+            k: v for k, v in prev_structures.items() if k not in assigned_keys
+        })
+        for new_key, new_structure in new_structures.items()
+    ]
+
+    with mp.Pool(processes=nprocs) as pool:
+        results = pool.map(_match_wrapper, tasks)
+
+    for res in results:
+        if res:
+            new_key, prev_key = res
+            if prev_key not in assigned_keys:
+                map_new2prev[new_key] = prev_key
+                assigned_keys.add(prev_key)
+
+    return map_new2prev
+
+def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3, nprocs=None):
     """ Sort the suggested structures and their displacement patterns 
     to align with those from the previous version.
     
@@ -79,28 +113,33 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
         logger.error(msg)
         sys.exit()
     
-    logger.info("\n Check previous structures (Previous: %d, New: %d)", 
+    logger.info("\n Check previous structures (Previous: %d, New: %d)...", 
                 len(prev_structures), len(new_structures))
     
-    ## Get index mapping from new to previous
-    map_new2prev = {}
-    assigned_keys = []
-    count = 0
-    for new_key, new_structure in new_structures.items():
-        count += 1
-        for prev_key, prev_structure in prev_structures.items():
+    ### Get index mapping from new to previous
+    ## ver.1: Serial
+    # map_new2prev = {}
+    # assigned_keys = []
+    # count = 0
+    # for new_key, new_structure in new_structures.items():
+    #     count += 1
+    #     for prev_key, prev_structure in prev_structures.items():
             
-            if prev_key in assigned_keys:
-                continue
+    #         if prev_key in assigned_keys:
+    #             continue
             
-            match = match_structures(new_structure, prev_structure,
-                                     ignore_order=False, verbose=False)
+    #         match = match_structures(new_structure, prev_structure,
+    #                                  ignore_order=False, verbose=False)
             
-            ## Found the same structure in the previous calculation
-            if match:
-                map_new2prev[new_key] = prev_key
-                assigned_keys.append(prev_key)
-                break
+    #         ## Found the same structure in the previous calculation
+    #         if match:
+    #             map_new2prev[new_key] = prev_key
+    #             assigned_keys.append(prev_key)
+    #             break
+    #
+    ## ver.2: Parallel
+    nprocs = nprocs if nprocs is not None else mp.cpu_count()
+    map_new2prev = _parallel_structure_match(new_structures, prev_structures, nprocs=nprocs)
     
     ### Make a dict of structures with adjusted keys
     ## structures contained in prev_structures
@@ -121,98 +160,56 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
     key_cur = prev_key_max + 1
     for new_key, new_structure in new_structures.items():
         if new_key not in map_new2prev:
-            
             if new_key == 'prist':
                 key = 'prist'
             else:
                 key = str(key_cur)
                 key_cur += 1
-            
             adjusted_key_structures[key] = new_structure
-    
     return adjusted_key_structures
 
-# def min_cost_assignment(matrix):
-#     from scipy.optimize import linear_sum_assignment
-#     cost_matrix = np.array(matrix)
-#     row_ind, col_ind = linear_sum_assignment(cost_matrix)
-#     min_total_cost = cost_matrix[row_ind, col_ind].sum()
-#     selected_elements = list(zip(row_ind, col_ind))
-#     return selected_elements, min_total_cost
+def get_previously_calculated_structure(dir_forces, include_pristine=True):
+    """ Get already calculated structures
+    """
+    from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
+    line = f"{dir_forces}/*/vasprun.xml"
+    fns = glob.glob(line)
+    structures = {}
+    for fn in fns:
+        dirname = os.path.dirname(fn)
+        key = dirname.split("/")[-1]
+        if key == 'prist' and include_pristine == False:
+            continue
+        if wasfinished_vasp(dirname):
+            structures[key] = ase.io.read(fn, format='vasp-xml')
+    return structures
 
-# def same_structures(struct1, struct2, tolerance=1e-7, dim=3):
-#     """ Check whether the two structures are the same.
+def get_number_of_same_structures(structures1, structures2):
+    """ Get the number of same structures.
     
-#     Args
-#     ------
-#     struct1 : ase.Atoms
-#         The first structure.
-    
-#     struct2 : ase.Atoms
-#         The second structure.
-    
-#     # cell : np.ndarray
-#     #     The cell of the structure.
-    
-#     pristine : ase.Atoms
-#         The pristine structure.
-    
-#     tolerance : float
-#         The tolerance for the distance between the two structures.
-    
-#     mag : float
-#         The magnitude of the atom displacement.
-#     """
-#     ## Check cell size
-#     cell1 = struct1.cell.array
-#     cell2 = struct2.cell.array
-#     cell_diff = np.abs(cell1 - cell2)
-    
-#     pbc = [True, True, True]
-#     if dim == 2:
-#         norm_idx = get_normal_index(struct1)
-#         cell_diff = np.delete(cell_diff, norm_idx, axis=1)
-#         pbc[norm_idx] = False
-#     else:
-#         norm_idx = None
-    
-#     if np.amax(abs(cell_diff)) > tolerance:
-#         # print("Cell size is different.")
-#         return False
-    
-#     ## Check positions
-#     pos1 = struct1.get_positions()
-#     pos2 = struct2.get_positions()
-#     D, D_len = get_distances(pos1, pos2, cell=struct1.cell, pbc=pbc)
-    
-#     ## Check the distance between atoms in the two structures
-#     selected_elements, min_total_cost = min_cost_assignment(D_len)
-    
-#     n_atoms = len(struct1)
-#     displacements = np.zeros((n_atoms, 3))
-    
-#     for i, j in selected_elements:
-#         ## Check symbols of the atoms
-#         if struct1[i].symbol != struct2[j].symbol:
-#             print("symbol is different. (%s != %s)" % 
-#                   (struct1[i].symbol, struct2[j].symbol))
-#             return False
-        
-#         ## Check the displacement
-#         disp = D[i, j]
-#         displacements[i, :] = disp[:]
-    
-#     ## Check the displacement
-#     ## Translational displacement is allowed
-#     for j in range(3):
-#         vmin = np.min(displacements[:, j])
-#         vmax = np.max(displacements[:, j])
-#         if vmax - vmin > tolerance:
-#             # print("displacement is different.", j, vmax -vmin)
-#             return False
-    
-#     return True
-    
+    Args
+    ------
+    structures1 : dict
+        The first set of structures.
+
+    structures2 : dict
+        The second set of structures.
+    """
+    count = 0
+    for key1, struct1 in structures1.items():
+        if key1 in structures2:
+            struct2 = structures2[key1]
+            if match_structures(struct1, struct2, ignore_order=False, verbose=False):
+                count += 1
+        else:
+            for key2, struct2 in structures2.items():
+                if key2 == key1:
+                    continue
+                if match_structures(struct1, struct2, ignore_order=False, verbose=False):
+                    count += 1
+                    break
+    return count
+
 def check_directory_name_for_pristine(path_force, pristine):
     """ Check the directory name for the pristine structure.
     
@@ -258,7 +255,6 @@ def check_directory_name_for_pristine(path_force, pristine):
                 return 1
     
     return 0
-    
     
 def was_primitive_changed(struct_tmp, tol_prev, tol_new):
     """ Check whether the primitive cell was changed.

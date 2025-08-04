@@ -63,7 +63,7 @@ class AlamodeInput(MSONable, dict):
     
     @classmethod
     def from_file(cls, filename: str=None):
-        inp_dict = _read_alamode_input(filename)
+        inp_dict = read_alamode_input(filename)
         return cls(**inp_dict)
 
 class AlmInput(AlamodeInput):
@@ -324,7 +324,7 @@ class AlmInput(AlamodeInput):
     
     # @classmethod
     # def from_file(cls, filename: str=None):
-    #     inp_dict = _read_alamode_input(filename)
+    #     inp_dict = read_alamode_input(filename)
     #     return cls(**inp_dict)
     
     # def as_dict(self):
@@ -895,7 +895,7 @@ class AnphonInput(AlamodeInput):
     
     # @classmethod
     # def from_file(cls, filename: str=None):
-    #     inp_dict = _read_alamode_input(filename)
+    #     inp_dict = read_alamode_input(filename)
     #     return cls(**inp_dict)
 
 def get_mass_info(elements):
@@ -1079,7 +1079,36 @@ def get_kpoint_path(primitive, deltak=0.01, dim=3):
         kpoints.append([{each[0]: k0}, {each[1]: k1}, nk])
     return kpoints
 
-def _read_alamode_input(filename):
+def read_structure_from_file(filename):
+    """ Read alamode input file and return an ASE Atoms object.
+    """
+    params = read_alamode_input(filename)
+    
+    ## Check if required keys are present
+    required_keys = ['cell', 'position', 'kd']
+    for key in required_keys:
+        if key not in params:
+            return None
+    
+    ## Make symbol and position list
+    symbols = []
+    scaled_positions = []
+    for data in params['position']:
+        symbol_idx = data[0] - 1
+        symbols.append(params['kd'][symbol_idx])
+        scaled_positions.append(data[1:4])
+    
+    ## Make ASE Atoms object
+    from ase import Atoms
+    atoms = Atoms(
+        cell=params['cell'] / AToBohr,
+        symbols=symbols,
+        scaled_positions=scaled_positions,
+        pbc=True
+    )
+    return atoms
+
+def read_alamode_input(filename):
     """ Read alamode input file and output a dictionary
     """
     with open(filename, 'r') as f:
@@ -1104,7 +1133,6 @@ def _read_alamode_input(filename):
     ##
     params = {}
     for sec in lines_alamode:
-
         if sec == 'cell':
             params.update(_parse_cell_lines(lines_alamode[sec]))
         elif sec == 'kpoint':
@@ -1189,14 +1217,23 @@ def _parse_normal_lines(lines):
     """
     params = {}
     for line in lines:
-        data = line.split()
-        ll = ""
-        for i in range(len(data)-2):
-            if i != 0:
-                ll += " "
-            ll += data[2+i]
-        val = proc_val(data[0], ll)
-        params[data[0]] = val
+        
+        # ## ver.1
+        # data = line.split()
+        # ll = ""
+        # for i in range(len(data)-2):
+        #     if i != 0:
+        #         ll += " "
+        #     ll += data[2+i]
+        # val = proc_val(data[0], ll)
+        # params[data[0]] = val
+        #
+        ## ver.2
+        name = line.split("=")[0].strip()
+        data_line = line.split("=")[1].strip()
+        val = proc_val(name, data_line)
+        params[name] = val
+        
     return params
 
 def proc_val(key, val):
@@ -1209,7 +1246,6 @@ def proc_val(key, val):
             'fc3xml',         # None,  string
             'fcsxml',         # None,  string
             ## alm
-            'kd',            # None, array of strings
             'fcsym_basis',   # Lattice, string
             'lmodel',         # least-squares, string
             'dfset',          # None,  string
@@ -1227,7 +1263,7 @@ def proc_val(key, val):
     
     int_keys = (
             ## shared
-            'nkd',          # None, integer
+            'nkd',            # None, integer
             'norder',
             'printsym',       # 0,    integer
             ## alm

@@ -16,10 +16,13 @@ import sys
 import numpy as np
 import pandas as pd
 import shutil
+
 import ase.io
 from ase.geometry import get_distances
+from pymatgen.io.vasp.inputs import Incar
 
 from auto_kappa import output_directories
+from auto_kappa.structure import match_structures
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +32,8 @@ def check_ak_options(options):
     _check_deprecated_options(options)
     _check_command_options(options)
     _check_alamode_version(options)
-    adjust_displacement_magnitude(options)
+    _adjust_displacement_magnitude(options)
+    check_previous_structures(options)
 
 def _check_deprecated_options(options):
     """ Check deprecated option names and set new option names."""
@@ -93,14 +97,16 @@ def _check_alamode_version(options):
     if options.command_anphon is not None:
         ver = get_version(options.command_anphon)
         if ver is not None:
-            if Version(ver) >= Version("1.6.0"):
-                msg = f"\n Anphon ver.{ver} for command_anphon may not be too old. Please check the anphon version."
+            if Version(ver) >= Version("1.8.0"):
+                msg = f"\n Warning: Anphon ver.{ver} for command_anphon may not be too old."
+                msg += "\n Please check the anphon version for --command_anphon."
                 logger.error(msg)
     if options.command_anphon_ver2 is not None:
         ver = get_version(options.command_anphon_ver2)
         if ver is not None:
             if Version(ver) < Version("1.9.0"):
-                msg = f"\n Anphon ver.{ver} for command_anphon_ver2 may be too old. Please check the anphon version."
+                msg = f"\n Warning: Anphon ver.{ver} for command_anphon_ver2 may be too old."
+                msg += "\n Please check the anphon version for --command_anphon_ver2."
                 logger.error(msg)
 
 def parse_vasp_params(params_string):
@@ -122,8 +128,6 @@ def parse_vasp_params(params_string):
     if params_string is None:
         return None
 
-    from pymatgen.io.vasp.inputs import Incar
-
     ### parse each parameter
     params_dict = {}
     list_params_mod = params_string.split(",")
@@ -133,7 +137,7 @@ def parse_vasp_params(params_string):
 
         ### check format
         if len(data) != 2:
-            msg = f"\n Error : vasp_parameters is not given properly ({each})"
+            msg = f"\n Error: vasp_parameters is not given properly ({each})"
             logger.error(msg)
         
         name = data[0].replace(" ", "").upper()
@@ -142,7 +146,7 @@ def parse_vasp_params(params_string):
         try:
             val = Incar.proc_val(name, data[1])
         except Exception:
-            msg = f"\n Error : vasp_parameters may not given properly."
+            msg = f"\n Error: vasp_parameters may not given properly."
             msg += f"\n {name} may not exist for VASP parameter."
             logger.error(msg)
             sys.exit()
@@ -151,21 +155,25 @@ def parse_vasp_params(params_string):
     
     return params_dict
 
-def adjust_displacement_magnitude(options, tolerance=1e-5):
+def _adjust_displacement_magnitude(options, tolerance=1e-5):
     """ Adjust the displacement magnitude for harmonic and cubic force calculations.
     """
+    ## Order is important: harmonic, cubic_fd -> cubic_lasso
+    ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
     dirs_tobe_checked = [
         options.outdir + "/" + output_directories['harm']['force'],
         options.outdir + "/" + output_directories['cube']['force_fd'],
         options.outdir + "/" + output_directories['cube']['force_lasso']
     ]
-    orders = ['harm', 'cube_fd', 'cue_lasso']
+    orders = ['harm', 'cube_fd', 'cube_lasso']
     
     for i, dir_force in enumerate(dirs_tobe_checked):
+        
         file0 = dir_force + "/prist/POSCAR"
         file1 = dir_force + "/1/POSCAR"
         if not os.path.exists(file0) or not os.path.exists(file1):
             continue
+        
         try:
             atoms0 = ase.io.read(file0)
             atoms1 = ase.io.read(file1)
@@ -178,21 +186,36 @@ def adjust_displacement_magnitude(options, tolerance=1e-5):
         ## The displacement magnitude is evaluated from
         ## the displacement along each direction (mag_comp) for FD method,
         ## the maximum displacement magnitude (mag_disp) for Lasso method,
+        adjusted = False
         if orders[i] == 'harm':
             if abs(mag_comp - options.mag_harm) > tolerance:
-                msg = f"\n Adjust 'mag_harm' option from {options.mag_harm} to {mag_comp}."
-                logger.info(msg)
-                options.mag_harm = mag_comp
+                mag_orig = options.mag_harm
+                mag_mod = mag_comp
+                options.mag_harm = mag_mod
+                adjusted = True    
         elif orders[i] == 'cube_fd':
             if abs(mag_comp - options.mag_cubic) > tolerance:
-                msg = f"\n Adjust 'mag_cubic' option from {options.mag_cubic} to {mag_comp}."
-                logger.info(msg)
+                mag_orig = options.mag_cubic
+                mag_mod = mag_comp
                 options.mag_cubic = mag_comp
+                adjusted = True
         elif orders[i] == 'cube_lasso':
             if abs(mag_disp - options.mag_cubic) > tolerance:
-                msg = f"\n Adjust 'mag_cubic' option from {options.mag_cubic} to {mag_disp}."
-                logger.info(msg)
+                mag_orig = options.mag_cubic
+                mag_mod = mag_disp
                 options.mag_cubic = mag_disp
+                adjusted = True
+        else:
+            msg = f"\n Error: Unknown order '{orders[i]}' in adjust_displacement_magnitude."
+            logger.error(msg)
+        
+        if adjusted:
+            opt_name = 'mag_harm' if orders[i].startswith('harm') else 'mag_cubic'
+            msg = f"\n *** Warning ***"
+            msg += f"\n Adjust '{opt_name}' option from {mag_orig:.3f} to {mag_mod:.3f}."
+            msg += f"\n If you want to use '{opt_name}={mag_orig:.3f}', "
+            msg += f"\n please run the job with another output directory name (--outdir)."
+            logger.info(msg)
     
 def _get_displacement_magnitude(atoms0, atoms1):
     """ Calculate the displacement magnitude between two ASE atoms objects.
@@ -221,4 +244,48 @@ def _get_displacement_magnitude(atoms0, atoms1):
     
     mag = np.max(np.diag(D_len))
     return disp_comp, mag
-    
+
+def check_previous_structures(options):
+    """ Adjust the displacement magnitude for harmonic and cubic force calculations.
+    """
+    ## Order is important: harmonic, cubic_fd -> cubic_lasso
+    ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
+    structure_files = {
+        'opt_unit'  : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
+        'opt_super' : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.super",
+        'nac'       : "./" + options.outdir + "/" + output_directories['nac'] + "/POSCAR",
+        'harm'      : "./" + options.outdir + "/" + output_directories['harm']['force'] + "/prist/POSCAR",
+        'cube_fd'   : "./" + options.outdir + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
+        'cube_lasso': "./" + options.outdir + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
+    }
+    structures = {}
+    for key, file in structure_files.items():
+        try:
+            structures[key] = ase.io.read(file) if os.path.exists(file) else None
+        except Exception as e:
+            pass
+    nstruct = len(structures)
+    first_output = True
+    for i1 in range(nstruct):
+        for i2 in range(i1 + 1, nstruct):
+            key1, key2 = list(structures.keys())[i1], list(structures.keys())[i2]
+            struct1, struct2 = structures[key1], structures[key2]
+            if struct1 is None or struct2 is None:
+                continue
+            
+            if key1 in ['nac', 'opt_unit'] or key2 in ['nac', 'opt_unit']:
+                primitive_cell = True
+            else:
+                primitive_cell = False
+            
+            ## Use the strict conditions
+            ## StructureMatcher may sometimes be instable.
+            match = match_structures(struct1, struct2, primitive_cell=primitive_cell, 
+                                     ltol=1e-7, stol=1e-7, ignore_order=True, verbose=False)
+            
+            if not match:
+                if first_output:
+                    logger.info("\n The following structures are not matched:")
+                    first_output = False
+                msg = f" - %s and %s" % (structure_files[key1], structure_files[key2])
+                logger.info(msg)

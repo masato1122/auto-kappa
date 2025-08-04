@@ -204,22 +204,6 @@ class ApdbVasp():
                     self.scell_matrix)
             sc = change_structure_format(sc, format=format)
         
-        # ## Check the previously used supercell
-        # if check_previous:
-        #     from auto_kappa.structure import match_structures
-        #     file_prev_sc = self.base_directory + "/harm/force/prist/POSCAR"
-        #     if os.path.exists(file_prev_sc):
-        #         sc_prev = ase.io.read(file_prev_sc, format='vasp')
-        #         if not match_structures(sc_prev, sc, ignore_order=True):
-        #             logger.warning("\n The previously used structure is different from the current one.")
-        #             logger.warning(" Please check the structure in %s" % file_prev_sc)
-        #             sys.exit()
-        #         elif not match_structures(sc_prev, sc, ignore_order=False):
-        #             if file_prev_sc.startswith('/'):
-        #                 file_prev_sc = "./" + os.path.relpath(file_prev_sc, os.getcwd())
-        #             logger.warning("\n The supercell structure is read from %s" % file_prev_sc)
-        #             sc = change_structure_format(sc_prev, format=format)
-        
         structures = {"unit": unit, "prim": prim, "super": sc}
         return structures
     

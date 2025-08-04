@@ -62,25 +62,31 @@ class GruneisenCalculator:
                 suffix = 'gru_all'
                 GruObj = GruAll
             
-            ### Make the working directory, write input file, and run the job
-            self.write_alamode_input(propt=f'gruneisen_{mode}', **kwargs)
-            self.run_alamode(propt=f'gruneisen_{mode}', ignore_log=False, verbose=False)
+            try:
+                ### Make the working directory, write input file, and run the job
+                self.write_alamode_input(propt=f'gruneisen_{mode}', **kwargs)
+                self.run_alamode(propt=f'gruneisen_{mode}', ignore_log=False, verbose=False)
+                
+                ### Plot
+                fig, axes = make_figure(ncols=1, nrows=1, fig_width=fig_width, aspect=aspect)
+                ax = axes[0][0]
+                
+                ## file and figure names
+                workdir = self.out_dirs['cube']['gruneisen']
+                if workdir.startswith('/'):
+                    workdir = os.path.relpath(workdir, os.getcwd())
+                filename = f"{workdir}/{self.prefix}.{suffix}"
+                figname = f"{workdir}/fig_{suffix}.png"
+                
+                obj = GruObj(filename)
+                obj.plot(ax)
+                fig.savefig(figname, dpi=600, bbox_inches='tight')
+                
+                msg = " Output : %s" % figname
+                logger.info(msg)
             
-            ### Plot
-            fig, axes = make_figure(ncols=1, nrows=1, fig_width=fig_width, aspect=aspect)
-            ax = axes[0][0]
-            
-            ## file and figure names
-            workdir = self.out_dirs['cube']['gruneisen']
-            if workdir.startswith('/'):
-                workdir = os.path.relpath(workdir, os.getcwd())
-            filename = f"{workdir}/{self.prefix}.{suffix}"
-            figname = f"{workdir}/fig_{suffix}.png"
-            
-            obj = GruObj(filename)
-            obj.plot(ax)
-            fig.savefig(figname, dpi=600, bbox_inches='tight')
-            
-            msg = " Output : %s" % figname
-            logger.info(msg)
+            except Exception as e:
+                msg = f" Failed to calculate or plot Grüneisen parameters for {mode} mode."
+                logger.error(msg)
+                logger.exception(e)
 

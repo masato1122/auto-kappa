@@ -15,13 +15,14 @@ import os
 import os.path
 import numpy as np
 
-import ase
 import shutil
 import pandas as pd
 import glob
 import itertools
 
+import ase
 import ase.io
+from ase.geometry import get_distances
 from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
@@ -39,7 +40,9 @@ from auto_kappa.alamode.compat import (
     was_primitive_changed,
     was_tolerance_changed,
     backup_previous_results,
-    adjust_keys_of_suggested_structures
+    adjust_keys_of_suggested_structures,
+    get_previously_calculated_structure,
+    get_number_of_same_structures
 )
 import auto_kappa.alamode.helpers as helper
 from auto_kappa.alamode.helpers import AlamodeForceCalculator, AlamodeInputWriter, NameHandler
@@ -430,12 +433,18 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 ## Check previously used supercell
                 file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
                 sc2 = ase.io.read(file_xml, format='vasp-xml')
+                
                 if not match_structures(sc, sc2, ignore_order=True):
+                    ##
+                    ## This error may occur when StructureMatcher returns different results
+                    ## for same structures.
+                    ##
                     msg  = "\n Error: Supercell genereated by the optimized structure "
-                    msg += "does not match the one read from vasprun.xml."
-                    msg += "\n (%s)" % self.get_relative_path(file_xml)
+                    msg += "does not match the one read from vasprun.xml:"
+                    msg += "\n %s" % self.get_relative_path(file_xml)
                     logger.error(msg)
                     sys.exit()
+                
                 if not match_structures(sc, sc2, ignore_order=False):
                     msg = "\n Note: Supercell is read from %s" % self.get_relative_path(file_xml)
                     logger.error(msg)
@@ -870,19 +879,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
         
-        ###########################################################
-        ##
-        ## This part may need to be fixed.
-        ##
+        ################################################
+        ## Generate displacements using AlamodeDisplace
         try:
+            almdisp = AlamodeDisplace(
+                        displacement_mode, codeobj,
+                        file_evec=file_evec,
+                        primitive=self.primitive,
+                        verbosity=self.verbosity)
+        except Exception as e:
+            msg  = "\n *** Warning ***"
+            msg += "\n The primitive cell is not applicable to AlamodeDisplace."
+            msg += "\n This warning may be caused by the primitive cell generated "
+            msg += "\n in the previous calculation and can usually be ignored."
+            msg += "\n To avoid this warning, please run the job as another calculation."
+            logger.warning(msg)
             almdisp = AlamodeDisplace(
                     displacement_mode, codeobj,
                     file_evec=file_evec,
-                    primitive=self.primitive,
-                    verbosity=self.verbosity
-                    )
-        except:
-            almdisp = None
+                    verbosity=self.verbosity)
         
         if almdisp is None:
             msg = "\n Error: Cannot obtain AlamodeDisplace object properly."
@@ -990,7 +1005,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         ### structures : dict of structure objects
         if order <= 2:
             nsuggest = self._get_number_of_suggested_structures(order)
-            msg = "\n Number of the suggested structures with ALM : %d" % (nsuggest)
+            msg = "\n Number of the suggested structures by ALM : %d" % (nsuggest)
         else:
             ### want to always use LASSO
             nsuggest = self.nmax_suggest + 1
@@ -1029,6 +1044,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         else:
             fc_type = 'lasso'
         
+        calculated_every_structure = False
         if fc_type == 'lasso':
             structures, _ = self._get_suggested_structures_for_lasso(
                 order, nfcs, natoms, frac_nrandom, nmax_suggest,
@@ -1038,8 +1054,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             structures_tmp, _ = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
-            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0, dim=self.dim)
+            nprocs = self.commands["alamode"]["nprocs"]
+            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0, 
+                                                             dim=self.dim, nprocs=nprocs)
             
+            ### Check the number of already calculated structures
+            prev_structures = get_previously_calculated_structure(outdir0, include_pristine=True)
+            if len(prev_structures) >= nsuggest + 1:
+                logger.info('\n Get number of same structures...')
+                num_same = get_number_of_same_structures(structures, prev_structures)                
+                msg  = "\n Number of structures (including the pristine structure):"
+                msg += "\n - already calculated  : %d" % len(prev_structures)
+                msg += "\n - currently suggested : %d" % len(structures)
+                msg += "\n - same                : %d" % num_same
+                if num_same < len(prev_structures):
+                    msg += "\n Suggested structures were changed from the previous calculation "
+                    msg += "\n while this does not cause an error."
+                logger.info(msg)
+                calculated_every_structure = True
+        
         ### If something wrong, return None
         if structures is None:
             return None
@@ -1053,18 +1086,21 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         amin_params_set = pp.copy()
         
         ### start the force calculation
-        self._counter_done = 0
-        self._counter_calc = 0
-        struct_keys = list(structures.keys())
-        logger.info("")
-        for ii, key in enumerate(struct_keys):
-            self._job_for_each_structure(
-                ii, structures, outdir0, order, calculator, 
-                calculate_forces=self.calculate_forces, **amin_params_set)
+        if calculated_every_structure == False:
+            self._counter_done = 0
+            # self._counter_calc = 0
+            struct_keys = list(structures.keys())
+            logger.info("")
+            for ii, key in enumerate(struct_keys):
+                self._job_for_each_structure(
+                    ii, structures, outdir0, order, calculator, 
+                    calculate_forces=self.calculate_forces, **amin_params_set)
+        else:
+            self._counter_done = len(prev_structures)
         
         ### output DFSET
         nsuggest =  len(structures)
-        if self._counter_done == len(structures):
+        if self._counter_done >= len(structures):
             if fc_type == 'fd' and self.dim == 2:
                 fd2d = True
             else:

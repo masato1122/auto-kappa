@@ -16,6 +16,7 @@ import random
 import copy
 import math
 import cmath
+from ase import Atoms
 
 import logging
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class AlamodeDisplace(object):
             self._generate_mapping_s2p()
         
         elif primitive:
-
+            
             pcell = primitive.cell.array.copy()
             self._primitive_lattice_vector = pcell.T
             self._inverse_primitive_lattice_vector = np.linalg.inv(pcell.T)
@@ -102,7 +103,7 @@ class AlamodeDisplace(object):
             for i in range(len(nat_elem)):
                 kd.extend([i] * nat_elem[i])
             self._primitive_kd = kd
-
+            
             self._find_commensurate_q()
             self._generate_mapping_s2p()
 
@@ -111,7 +112,7 @@ class AlamodeDisplace(object):
                     or self._displacement_mode == "pes":
                 raise RuntimeError("The --prim option is necessary when '--random_normalcoord' "
                                    "or '--pes' is invoked.")
-
+        
         if file_evec:
             self._load_phonon_results(file_evec)
 
@@ -757,7 +758,7 @@ class AlamodeDisplace(object):
         tol_zero = 1.0e-3
         convertor = np.dot(self._supercell.lattice_vector.transpose(),
                            self._inverse_primitive_lattice_vector.transpose())
-
+        
         for i in range(3):
             for j in range(3):
                 convertor[i, j] = float(round(convertor[i, j]))
@@ -785,12 +786,10 @@ class AlamodeDisplace(object):
                     break
             
             if iloc == -1:
-                print(diff_min)
-                msg = "\n"
-                msg += " min. diff. : %f\n" % diff_min
-                msg += " Error : Equivalent atom not found. "\
-                        "Check the relaxed structure. The relaxation "\
-                        "calculation may need to be run again."
+                msg  = "\n min. diff. : %f" % diff_min
+                msg += "\n Warning : Equivalent atom not found. "\
+                        "Check the relaxed structure. "
+                        # " The relaxation calculation may need to be run again."
                 logger.error(msg)
                 raise RuntimeError("Equivalent atom not found")
             
