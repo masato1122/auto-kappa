@@ -15,11 +15,12 @@ import numpy as np
 import pandas as pd
 
 import ase.io
-from ase.geometry import get_distances
+# from ase.geometry import get_distances
 
 from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_outcar, print_vasp_params
+from auto_kappa.io.files import extract_data_from_file
 from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
 from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.errors import found_rank_deficient
@@ -174,10 +175,18 @@ class AlamodeForceCalculator():
         
         ### Wheter the calculation has been finished
         filename = outdir + "/vasprun.xml"
+        file_outcar = outdir + "/OUTCAR"
         if wasfinished(outdir):
             if are_forces_available(filename):
+                
+                try:
+                    value = extract_data_from_file(file_outcar, "Total CPU time used")
+                    run_time = float(value[0]) / 60.  # mins
+                except Exception:
+                    run_time = -1.0
+                
                 path = self.get_relative_path(outdir)
-                msg = " ( %d / %d ) %s : skip" % (job_idx + 1, len(struct_keys), path)
+                msg = " ( %d / %d ) %s : skip | %.1f mins" % (job_idx + 1, len(struct_keys), path, run_time)
                 logger.info(msg)
                 self._counter_done += 1
                 return

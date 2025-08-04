@@ -40,3 +40,16 @@ def write_output_yaml(filename, name, info, overwrite=True):
             yaml.dump(data, f, sort_keys=False)
     f.close()
 
+def extract_data_from_file(filename, word, index=-1):
+    """ Return data for ``word`` in ``filename``
+    """
+    lines = open(filename, 'r').readlines()
+    values_get = []
+    for line in lines:
+        if word.lower() in line.lower():
+            data = line.strip().split()[index]
+            values_get.append(float(data))
+    if len(values_get) == 0:
+        return None
+    else:
+        return values_get

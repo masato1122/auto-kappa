@@ -22,7 +22,7 @@ import itertools
 
 import ase
 import ase.io
-from ase.geometry import get_distances
+# from ase.geometry import get_distances
 from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
@@ -32,8 +32,7 @@ from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AnphonInput
 from auto_kappa.io.files import write_output_yaml
-
-from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
+from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile, read_log_fc
 from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.compat import (
     check_directory_name_for_pristine,
@@ -1541,6 +1540,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 break
             ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
+        if propt == 'fc2':
+            self.print_fc_error(propt)
+        
         if has_error:
             if max_num_corrections is not None:
                 logger.debug(" %d" % max_num_corrections)
@@ -1550,7 +1552,30 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             msg += "\n Abort the job."
             logger.error(msg)
             sys.exit()
+    
+    def print_fc_error(self, propt):
+        if propt == 'fc2':
+            filename = self.out_dirs['harm']['force'] + '/fc2.log'
+        elif propt == 'fc3':
+            filename = self.out_dirs['cube']['force'] + '/fc3.log'
+        elif propt == 'lasso':
+            filename = self.out_dirs['cube']['lasso'] + '/lasso.log'
+        else:
+            logger.error(f" Error: {propt} is not supported for printing force constant error.")
+            return
         
+        try:
+            out = read_log_fc(filename)
+            for key in ['fitting_error', 'residual']:
+                if out.get(key, None) is not None:
+                    name = key.capitalize().replace('_', ' ')
+                    msg = f"\n {name}: {out[key]['value']} {out[key]['unit']}"
+                    logger.info(msg)
+        except Exception as e:
+            msg = "\n Warning: Cannot read the error from %s." % filename
+            logger.error(msg)
+            logger.error(e)
+    
     def run_alamode(self, propt=None, order=None, ignore_log=0, outdir=None, logfile=None, verbose=True):
         """ Run anphon
         

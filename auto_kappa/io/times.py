@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-from optparse import OptionParser
-
 import os
 import os.path
 import glob
+
+from auto_kappa.io.files import extract_data_from_file
 
 def get_all_directories(root_directory):
     directory_names = []
@@ -162,8 +160,7 @@ def _get_time_each(dir_name, dtype):
     dtype : string
         "vasp" or "alamode"
     """
-    from auto_kappa.alamode.log_parser import (
-            _get_alamode_runtime, _extract_data)
+    from auto_kappa.alamode.log_parser import _get_alamode_runtime
     
     if dtype == "alamode":
         duration = 0.
@@ -182,7 +179,7 @@ def _get_time_each(dir_name, dtype):
         outcar = dir_name + "/OUTCAR"
         time_single = 0.
         if os.path.exists(outcar):
-            value = _extract_data(outcar, "Total CPU time used")
+            value = extract_data_from_file(outcar, "Total CPU time used")
             if value is not None:
                 time_single = float(value[0])
         

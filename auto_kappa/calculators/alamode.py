@@ -565,12 +565,14 @@ def calculate_cubic_force_constants(
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt, order=2)
             almcalc.run_alamode(propt, order=2, ignore_log=ignore_log)
+        almcalc.print_fc_error('lasso')
     else:
         ## ver.1 : with ALM library
         ##almcalc.calc_anharm_force_constants()
         ## ver.2: with alm command
         almcalc.write_alamode_input(propt='fc3')
         almcalc.run_alamode(propt='fc3', ignore_log=ignore_log)
+        almcalc.print_fc_error('fc3')
 
 def calculate_thermal_conductivities(
         almcalc, 
@@ -642,7 +644,11 @@ def calculate_thermal_conductivities(
                 propt=propt, ignore_log=ignore_log, outdir=outdir,
                 logfile=f"{propt}.log")
         
-        _print_rt_kappa(outdir, almcalc.prefix, calc_type)
+        try:
+            _print_rt_kappa(outdir, almcalc.prefix, calc_type)
+        except Exception as e:
+            msg = f"\n Warning: cannot print thermal conductivity: {e}"
+            logger.warning(msg)
         
         ### check output file for kappa
         kappa_log = f"{outdir}/{propt}.log"

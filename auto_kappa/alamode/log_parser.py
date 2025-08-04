@@ -20,6 +20,7 @@ import yaml
 import glob
 from pymatgen.io.vasp import Poscar
 
+from auto_kappa.io.files import extract_data_from_file
 from auto_kappa import output_directories as out_dirs
 
 import logging
@@ -130,21 +131,6 @@ class AkLog():
         from auto_kappa.plot.pltalm import plot_times_with_pie
         plot_times_with_pie(times, labels, figname=figname)
         
-
-def _extract_data(filename, word, back_id=-1):
-    """ Return data for ``word`` in ``filename``
-    """
-    lines = open(filename, 'r').readlines()
-    values_get = []
-    for line in lines:
-        if word.lower() in line.lower():
-            data = line.split()[back_id]
-            values_get.append(float(data))
-    if len(values_get) == 0:
-        return None
-    else:
-        return values_get
-
 def _extract_lines(filename, word):
     """ Return lines for ``word`` in ``filename``
     """
@@ -270,58 +256,58 @@ def read_log_fc(filename):
         pass
     
     ## fitting error
-    v = _extract_data(filename, 'fitting error (%)')
+    v = extract_data_from_file(filename, 'fitting error (%)')
     if v is not None:
         out['fitting_error'] = {'value': float(v[-1]), 'unit': "%"}
     
     ## residual
-    v = _extract_data(filename, "residual (%)")
+    v = extract_data_from_file(filename, "residual (%)")
     if v is not None:
         out['residual'] = {'value': float(v[0]), 'unit': "%"}
     
     ## number of structures
-    v = _extract_data(
-            filename, "entries will be used for training", back_id=-7)
+    v = extract_data_from_file(
+            filename, "entries will be used for training", index=-7)
     if v is not None:
         out['number_of_structures'] = int(v[0])
      
     ## number of parameters
-    v = _extract_data(filename, "Total Number of Parameters")
+    v = extract_data_from_file(filename, "Total Number of Parameters")
     if v is not None:
         out['number_of_parameters'] = int(v[0])
      
     ## number of free parameters
-    v = _extract_data(filename, "Total Number of Free Parameters")
+    v = extract_data_from_file(filename, "Total Number of Free Parameters")
     if v is not None:
         out['number_of_free_parameters'] = int(v[0])
      
     ### number of FCs
-    vs = _extract_data(filename, "Number of  HARMONIC FCs")
+    vs = extract_data_from_file(filename, "Number of  HARMONIC FCs")
     if vs is not None:
         out['number_of_fc2'] = int(vs[0])
     #
     for order in range(3, 10):
-        vs = _extract_data(filename, "Number of   ANHARM%d FCs" % order)
+        vs = extract_data_from_file(filename, "Number of   ANHARM%d FCs" % order)
         if vs is not None:
             out['number_of_fc%d' % order] = int(vs[0])
     
     ### Number of free FCs
-    vs = _extract_data(filename, "Number of free HARMONIC FCs")
+    vs = extract_data_from_file(filename, "Number of free HARMONIC FCs")
     if vs is not None:
         out['number_of_free_fc2'] = int(vs[0])
     #
     for order in range(3, 10):
-        vs = _extract_data(filename, "Number of free  ANHARM%d FCs" % order)
+        vs = extract_data_from_file(filename, "Number of free  ANHARM%d FCs" % order)
         if vs is not None:
             out['number_of_free_fc%d' % order] = int(vs[0])
     
     ### Number of non-zero FCs
-    vs = _extract_data(filename, "Number of non-zero  HARMONIC FCs")
+    vs = extract_data_from_file(filename, "Number of non-zero  HARMONIC FCs")
     if vs is not None:
         out['number_of_nonzero_fc2'] = int(vs[0])
     #
     for order in range(3, 10):
-        vs = _extract_data(filename, "Number of non-zero   ANHARM%d FCs" % order)
+        vs = extract_data_from_file(filename, "Number of non-zero   ANHARM%d FCs" % order)
         if vs is not None:
             out['number_of_nonzero_fc%d' % order] = int(vs[0])
     
@@ -360,13 +346,13 @@ def read_log_suggest(directory, order=1):
     if v is not None:
         out['time'] = v
     
-    nfcs = int(_extract_data(
-                filename, "number of  harmonic fcs", back_id=-1
+    nfcs = int(extract_data_from_file(
+                filename, "number of  harmonic fcs", index=-1
                 )[0])
     
     if nfcs is None:
-        nfcs = int(_extract_data(
-            filename, "number of harmonic fcs", back_id=-1
+        nfcs = int(extract_data_from_file(
+            filename, "number of harmonic fcs", index=-1
             )[0])
     
     data = _extract_lines(filename, "space group:")[0].translate(
@@ -377,12 +363,12 @@ def read_log_suggest(directory, order=1):
             'number': int(data[-1]),
             }
     
-    out['number_of_symmetry'] = int(_extract_data(
+    out['number_of_symmetry'] = int(extract_data_from_file(
         filename, "number of symmetry operations")[0])
     
     out['number_of_fcs'] = nfcs
     
-    out['number_of_structures'] = int(_extract_data(
+    out['number_of_structures'] = int(extract_data_from_file(
         filename, "number of disp. patterns")[0])
     
     return out
@@ -420,25 +406,25 @@ def read_log_kappa_each(filename):
         out = {}
         
         ### volume
-        v = _extract_data(
+        v = extract_data_from_file(
                 filename, 
-                'volume of the primitive cell', back_id=-2)
+                'volume of the primitive cell', index=-2)
         if v is not None:
             out['volume_of_primitive'] = {'value': float(v[0]), 'unit': "A^3"}
         
         out['number_of_atoms_primitive'] = int(
-                _extract_data(filename, 'number of atoms in the primitive')[0])
+                extract_data_from_file(filename, 'number of atoms in the primitive')[0])
         out['number_of_atoms_supercell'] = int(
-                _extract_data(filename, 'number of atoms in the supercell')[0])
+                extract_data_from_file(filename, 'number of atoms in the supercell')[0])
         out['number_of_symmetry_operation'] = int(
-                _extract_data(filename, 'number of symmetry operations')[0])
-        nk1 = int(_extract_data(filename, 'nk1:')[0])
-        nk2 = int(_extract_data(filename, 'nk2:')[0])
-        nk3 = int(_extract_data(filename, 'nk3:')[0])
+                extract_data_from_file(filename, 'number of symmetry operations')[0])
+        nk1 = int(extract_data_from_file(filename, 'nk1:')[0])
+        nk2 = int(extract_data_from_file(filename, 'nk2:')[0])
+        nk3 = int(extract_data_from_file(filename, 'nk3:')[0])
         out['kgrid'] = [nk1, nk2, nk3]
-        out['number_of_kpoints'] = int(_extract_data(
+        out['number_of_kpoints'] = int(extract_data_from_file(
             filename, "number of k points")[0])
-        out['number_of_irreducible_kpoints'] = int(_extract_data(
+        out['number_of_irreducible_kpoints'] = int(extract_data_from_file(
             filename, "number of irreducible k points")[0])
         v = _get_alamode_runtime(filename)
         if v is not None:
@@ -478,7 +464,7 @@ def _read_each_vaspjob(directory):
             return out
         
         ### time from OUTCAR
-        v = _extract_data(file_out, "Total CPU time used")[0]
+        v = extract_data_from_file(file_out, "Total CPU time used")[0]
         if v is not None:
             out['time'] = {'value': float(v), 'unit': 'sec'}
         return out
