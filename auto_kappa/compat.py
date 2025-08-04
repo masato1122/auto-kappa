@@ -85,19 +85,24 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
         cell_used = struct_used.cell
         msg = ""
         if cells_equal(cell_opt, cell_used) == False:
-            msg = "\n *** Caution ***"
-            msg += "\n The optimized structure and previously used structure have "
-            msg += "\n different cell parameters."
-            msg += "\n\n Lattice constant of the optimized structure:"
+            msg = "\n *** Warning ***"
+            msg += "\n The optimized structure and previously used structure have different "
+            msg += "\n cell parameters."
+            msg += "\n\n Supercell of the optimized structure:"
             msg += "\n (%s)" % files_opt['super']
             msg += "\n\n %15.8f %15.8f %15.8f" % tuple(cell_opt[0])
             msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_opt[1])
             msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_opt[2])
-            msg += "\n\n Lattice constant of the previously used structure:"
+            msg += "\n\n Supercell of the previously used structure:"
             msg += "\n (%s)" % file_used
             msg += "\n\n %15.8f %15.8f %15.8f" % tuple(cell_used[0])
             msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_used[1])
             msg += "\n %15.8f %15.8f %15.8f" % tuple(cell_used[2])
+            msg += "\n\n The discrepancy may occur becuase the previous calculations used "
+            msg += "\n optimized structure in an old calculation."
+            msg += "\n If you want to use the optimized structure,"
+            msg += "\n i.e. %s, " % files_opt['unit']
+            msg += "\n please submit the job again with a different output directory name."
         elif atoms_equal(struct_opt, struct_used, ignore_order=False):
             msg  = "\n Caution: the optimized structure and previously used structure do not match."
         
