@@ -52,7 +52,6 @@ class GruneisenCalculator:
                 GruObj = Gruneisen
             
             elif mode == 'dos':
-                logger.info("")
                 kpts = get_automatic_kmesh(
                     self.primitive,
                     reciprocal_density=reciprocal_density, dim=self.dim)
@@ -65,7 +64,7 @@ class GruneisenCalculator:
             
             ### Make the working directory, write input file, and run the job
             self.write_alamode_input(propt=f'gruneisen_{mode}', **kwargs)
-            self.run_alamode(propt=f'gruneisen_{mode}', neglect_log=False, verbose=False)
+            self.run_alamode(propt=f'gruneisen_{mode}', ignore_log=False, verbose=False)
             
             ### Plot
             fig, axes = make_figure(ncols=1, nrows=1, fig_width=fig_width, aspect=aspect)

@@ -81,7 +81,7 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
     
     logger.info("\n Check previous structures (Previous: %d, New: %d)", 
                 len(prev_structures), len(new_structures))
-
+    
     ## Get index mapping from new to previous
     map_new2prev = {}
     assigned_keys = []
@@ -93,13 +93,11 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3):
             if prev_key in assigned_keys:
                 continue
             
-            # same = same_structures(
-            #     new_structure, prev_structure,
-            #     tolerance=tolerance, dim=dim)
-            #
-            same = match_structures(new_structure, prev_structure)
+            match = match_structures(new_structure, prev_structure,
+                                     ignore_order=False, verbose=False)
             
-            if same:
+            ## Found the same structure in the previous calculation
+            if match:
                 map_new2prev[new_key] = prev_key
                 assigned_keys.append(prev_key)
                 break

@@ -17,7 +17,7 @@ import pandas as pd
 import ase.io
 from ase.geometry import get_distances
 
-from auto_kappa.structure import change_structure_format
+from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_outcar, print_vasp_params
 from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
@@ -123,21 +123,20 @@ class AlamodeForceCalculator():
                     )
         return structures, displacements
     
-    def _check_structures_identity(self, struct_this, struct_prev, tolerance=1e-3, key=None):
-        _, D_len = get_distances(
-            struct_prev.get_positions(),
-            struct_this.get_positions(),
-            cell=struct_prev.cell,
-            pbc=struct_prev.pbc)
-        dists = np.diag(D_len)
+    # def _check_structures_identity(self, struct_this, struct_prev, tolerance=1e-3, key=None):
+    #     _, D_len = get_distances(
+    #         struct_prev.get_positions(),
+    #         struct_this.get_positions(),
+    #         cell=struct_prev.cell,
+    #         pbc=struct_prev.pbc)
         
-        flag = np.any(dists > tolerance)
-        if flag:
-            msg = (
-                f" Error: The structure is not the same as "
-                f"the previous one. ({key}, {np.max(dists)})")
-            logger.error(msg)
-            sys.exit()
+    #     max_disp = np.max(np.diag(D_len))
+    #     if max_disp > tolerance:
+    #         msg = (
+    #             f"\n Error: The structure is not the same as "
+    #             f"the previous one. ({key}, {max_disp})")
+    #         logger.error(msg)
+    #         sys.exit()
         
     def _job_for_each_structure(
         self, job_idx, structures, base_dir, order, calculator, 
@@ -159,10 +158,19 @@ class AlamodeForceCalculator():
         ### Check whether structures are same for the finite-displacement method
         if order == 2 and self.fc3_type == 'fd':
             file_poscar = outdir + "/POSCAR"
-            if os.path.exists(file_poscar):        
+            if os.path.exists(file_poscar):
                 structure_prev = ase.io.read(file_poscar)
-                self._check_structures_identity(
-                    structures[key], structure_prev, tolerance=1e-3, key=key)
+                ### ver.1
+                # self._check_structures_identity(
+                #     structures[key], structure_prev, tolerance=1e-3, key=key)
+                
+                ### ver.2
+                if not match_structures(structures[key], structure_prev, ignore_order=False):
+                    msg = (
+                        f"\n Error: The structure is not the same as "
+                        f"the previous one. ({key})")
+                    logger.error(msg)
+                    sys.exit()
         
         ### Wheter the calculation has been finished
         filename = outdir + "/vasprun.xml"
@@ -619,7 +627,7 @@ def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     -------
     #cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
     #    If cutoffs is given properly, cutoffs is used and cutoff2 and
-    #    cutoff3 are neglected.
+    #    cutoff3 are ignored.
     #    If cutoffs is not given, cutoffs are given automatically with
     #    cutoff2 and cutoff3.
     cutoff2 : float, unit=Ang

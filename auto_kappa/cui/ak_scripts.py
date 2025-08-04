@@ -211,7 +211,8 @@ def main():
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
             params_modified=vasp_params_mod,
-            mater_dim=ak_params['mater_dim']
+            mater_dim=ak_params['mater_dim'],
+            base_directory=base_dir
             )
     
     ### Relaxation calculation
@@ -279,7 +280,7 @@ def main():
     
     ### Set AlmCalc
     almcalc = AlamodeCalc(
-            structures_relax['prim'],
+            structures_relax['prim'],  # primitive structure
             base_directory=base_dir,
             restart=ak_params['restart'],
             primitive_matrix=trans_matrices['primitive'],
@@ -301,13 +302,13 @@ def main():
     calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
     
     ### Analyze phonon properties
-    neglect_log = ak_params['neglect_log']
+    ignore_log = ak_params['ignore_log']
     out = analyze_phonon_properties(
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
             base_dir=base_dir,
-            neglect_log=neglect_log,
+            ignore_log=ignore_log,
             harmonic_only=ak_params['harmonic_only'],
             #
             nmax_suggest=ak_params['nmax_suggest'],
@@ -342,7 +343,7 @@ def main():
                 max_loop_for_largesc=ak_params['max_loop_for_largesc'],
                 k_length=ak_params['k_length'],
                 negative_freq=ak_params['negative_freq'],
-                neglect_log=neglect_log,
+                ignore_log=ignore_log,
                 restart=ak_params['restart'],
                 harmonic_only=ak_params['harmonic_only'],
                 nmax_suggest=ak_params['nmax_suggest'],

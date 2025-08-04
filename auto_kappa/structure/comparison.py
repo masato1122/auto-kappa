@@ -12,20 +12,52 @@
 # 
 import numpy as np
 import ase
+from ase.geometry import get_distances
 from auto_kappa.structure import change_structure_format
 from pymatgen.core import Structure
 from pymatgen.analysis.structure_matcher import StructureMatcher
 
-def match_structures(struct1, struct2, ltol=1e-3, stol=1e-3, angle_tol=0.5):
+import logging
+logger = logging.getLogger(__name__)
+
+def match_structures(struct1, struct2, atol=1e-5, ltol=1e-7, stol=1e-5, angle_tol=0.1, 
+                     ignore_order=False, verbose=True):
     """ Check if two structures are the same using pymatgen's StructureMatcher.
     """
     if isinstance(struct1, Structure) == False:
         struct1 = change_structure_format(struct1, format='pmg-structure')
     if isinstance(struct2, Structure) == False:
         struct2 = change_structure_format(struct2, format='pmg-structure')
-    matcher = StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol, scale=False)
-    match = matcher.fit(struct1, struct2)
-    return match
+    
+    if len(struct1) != len(struct2):
+        if verbose:
+            logger.info("\n Number of atoms mismatch")
+        return False
+    
+    if ignore_order:
+        matcher = StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol, 
+                                   scale=False, primitive_cell=False)
+        match = matcher.fit(struct1, struct2)
+        return match
+    else:
+        if not np.allclose(struct1.lattice.matrix, struct2.lattice.matrix, atol=atol):
+            if verbose:
+                logger.info("\n Lattice mismatch")
+            return False
+        if not np.allclose(struct1.atomic_numbers, struct2.atomic_numbers):
+            if verbose:
+                logger.info("\n Atomic number mismatch")
+            return False
+        
+        _, D_len = get_distances(struct1.cart_coords, struct2.cart_coords, 
+                                 cell=struct1.lattice.matrix, pbc=True)
+        disp_max = np.max(np.diag(D_len))
+        if disp_max > atol:
+            if verbose:
+                logger.info("\n Cartesian coordinates mismatch")
+            return False
+        
+        return True
 
 def cells_equal(cell1, cell2, tol=1e-5):
     """ Check if two cells are equal within a tolerance. """
@@ -64,37 +96,3 @@ def atoms_equal(atoms1, atoms2, tol=1e-5, ignore_order=False):
             return False
     
     return True
-
-
-# def mirror_atoms(atoms, axis='x'):
-#     """ Create a mirror-symmetric structure along a specified axis. """
-#     mirrored = atoms.copy()
-#     pos = mirrored.get_positions()
-#     idx = {'x': 0, 'y': 1, 'z': 2}[axis]
-#     pos[:, idx] *= -1
-#     mirrored.set_positions(pos)
-#     return mirrored
-
-# def is_mirror(atoms1, atoms2, axis='x', tol=1e-3):
-#     mirrored = mirror_atoms(atoms1, axis)
-#     def sorted_data(atoms):
-#         syms = atoms.get_chemical_symbols()
-#         pos = atoms.get_positions()
-#         data = list(zip(syms, pos))
-#         data.sort(key=lambda x: (x[0], *x[1]))
-#         return data
-#     d1 = sorted_data(mirrored)
-#     d2 = sorted_data(atoms2)
-#     if len(d1) != len(d2):
-#         return False
-#     for (s1, p1), (s2, p2) in zip(d1, d2):
-#         if s1 != s2 or not np.allclose(p1, p2, atol=tol):
-#             return False
-#     return True
-
-# def check_mirror_symmetry(atoms1, atoms2, tol=1e-3):
-#     results = {}
-#     for axis in ('x', 'y', 'z'):
-#         results[axis] = is_mirror(atoms1, atoms2, axis=axis, tol=tol)
-#     return results
-    

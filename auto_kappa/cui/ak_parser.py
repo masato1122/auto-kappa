@@ -288,8 +288,8 @@ def get_parser():
     parser.add_option("--verbosity", dest="verbosity", type="int",
             default=1, help="verbosity [0]")
     
-    parser.add_option("--neglect_log", dest="neglect_log", type="int",
-            default=0, help="neglect log (1) or not (0) [0]")
+    parser.add_option("--ignore_log", dest="ignore_log", type="int",
+            default=0, help="ignore log (1) or not (0) [0]")
     
     parser.add_option("--harmonic_only", dest="harmonic_only", type="int",
             default=0, 

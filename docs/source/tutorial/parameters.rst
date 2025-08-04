@@ -122,8 +122,6 @@ Parameters that may be modified for test calculations
     --verbosity=VERBOSITY
         Verbosity (0 or 1) [0].
 
-    --neglect_log=NEGLECT_LOG
-        Neglect log (1) or not (0) [0]. If it is "0", some Alamode calculations will be performed even if 
+    --ignore_log=IGNORE_LOG
+        Ignore log (1) or not (0) [0]. If it is "0", some Alamode calculations will be performed even if 
         they have been already done.
-
-

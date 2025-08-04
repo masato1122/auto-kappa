@@ -159,7 +159,7 @@ def adjust_displacement_magnitude(options, tolerance=1e-5):
         options.outdir + "/" + output_directories['cube']['force_fd'],
         options.outdir + "/" + output_directories['cube']['force_lasso']
     ]
-    orders = ['harm', 'cube', 'cube']
+    orders = ['harm', 'cube_fd', 'cue_lasso']
     
     for i, dir_force in enumerate(dirs_tobe_checked):
         file0 = dir_force + "/prist/POSCAR"
@@ -169,29 +169,41 @@ def adjust_displacement_magnitude(options, tolerance=1e-5):
         try:
             atoms0 = ase.io.read(file0)
             atoms1 = ase.io.read(file1)
-            mag = _get_displacement_magnitude(atoms0, atoms1)
+            mag_comp, mag_disp = _get_displacement_magnitude(atoms0, atoms1)
         except Exception as e:
             msg = f"\n Error reading files in {dir_force}: {e}"
             logger.error(msg)
             sys.exit()
         
+        ## The displacement magnitude is evaluated from
+        ## the displacement along each direction (mag_comp) for FD method,
+        ## the maximum displacement magnitude (mag_disp) for Lasso method,
         if orders[i] == 'harm':
-            if abs(mag - options.mag_harm) > tolerance:
-                msg = f"\n Adjust 'mag_harm' option from {options.mag_harm} to {mag}."
+            if abs(mag_comp - options.mag_harm) > tolerance:
+                msg = f"\n Adjust 'mag_harm' option from {options.mag_harm} to {mag_comp}."
                 logger.info(msg)
-                options.mag_harm = mag
-        elif orders[i] == 'cube':
-            if abs(mag - options.mag_cubic) > tolerance:
-                msg = f"\n Adjust 'mag_cubic' option from {options.mag_cubic} to {mag}."
+                options.mag_harm = mag_comp
+        elif orders[i] == 'cube_fd':
+            if abs(mag_comp - options.mag_cubic) > tolerance:
+                msg = f"\n Adjust 'mag_cubic' option from {options.mag_cubic} to {mag_comp}."
                 logger.info(msg)
-                options.mag_cubic = mag
+                options.mag_cubic = mag_comp
+        elif orders[i] == 'cube_lasso':
+            if abs(mag_disp - options.mag_cubic) > tolerance:
+                msg = f"\n Adjust 'mag_cubic' option from {options.mag_cubic} to {mag_disp}."
+                logger.info(msg)
+                options.mag_cubic = mag_disp
     
 def _get_displacement_magnitude(atoms0, atoms1):
     """ Calculate the displacement magnitude between two ASE atoms objects.
     
     Return
     ------
-    float : The maximum displacement magnitude between the two structures.
+    disp_comp : float
+        The maximum displacement component.
+    
+    mag : float
+        The maximum magnitude of the displacement vector.
     
     """
     if len(atoms0) != len(atoms1):
@@ -199,10 +211,14 @@ def _get_displacement_magnitude(atoms0, atoms1):
         logger.error(msg)
         sys.exit()
     
-    _, D_len = get_distances(
+    D, D_len = get_distances(
         atoms0.positions, atoms1.positions, 
         cell=atoms0.cell, pbc=atoms0.pbc)
     
+    natoms = len(D)
+    disp_comps = np.array([D[i,i,:] for i in range(natoms)])
+    disp_comp = np.max(disp_comps.flatten())
+    
     mag = np.max(np.diag(D_len))
-    return mag
+    return disp_comp, mag
     

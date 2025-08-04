@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 def analyze_phonon_properties(
         almcalc, calc_force=None, negative_freq=-1e-3, 
-        base_dir=None, neglect_log=False, 
+        base_dir=None, ignore_log=False, 
         harmonic_only=False, calc_kappa=True,
         nmax_suggest=None, frac_nrandom=1.0,
         params_nac={'apdb': None, 'kpts': None},
@@ -123,7 +123,7 @@ def analyze_phonon_properties(
             almcalc, calc_force,
             nmax_suggest=nmax_suggest, 
             frac_nrandom=frac_nrandom, 
-            neglect_log=neglect_log
+            ignore_log=ignore_log
             )
     
     ## Calculate Grüneisen parameters
@@ -217,7 +217,7 @@ def analyze_phonon_properties(
         calculate_thermal_conductivities(
             almcalc,
             kdensities=kdensities_for_kappa,
-            neglect_log=neglect_log,
+            ignore_log=ignore_log,
             temperatures_for_spectral=temperatures_for_spectral,
             calc_type=calc_type,
             frac_kdensity_4ph=frac_kdensity_4ph,
@@ -247,7 +247,7 @@ def _back_to_initial_sc_size(sc_matrix):
 def analyze_phonon_properties_with_larger_supercells(
     base_dir, almcalc, calc_force,
     max_natoms=300, delta_max_natoms=50, max_loop_for_largesc=2,
-    k_length=20, negative_freq=-1e-3, neglect_log=False,
+    k_length=20, negative_freq=-1e-3, ignore_log=False,
     restart=1, harmonic_only=False, 
     nmax_suggest=100, frac_nrandom=1.0, frac_nrandom_higher=0.34,
     random_disp_temperature=500.,
@@ -263,7 +263,7 @@ def analyze_phonon_properties_with_larger_supercells(
             max_loop=max_loop_for_largesc,
             k_length=k_length,
             negative_freq=negative_freq,
-            neglect_log=neglect_log,
+            ignore_log=ignore_log,
             restart=restart,
             )
     
@@ -284,7 +284,7 @@ def analyze_phonon_properties_with_larger_supercells(
                 almcalc, calc_force,
                 nmax_suggest=nmax_suggest, 
                 frac_nrandom=frac_nrandom, 
-                neglect_log=neglect_log,
+                ignore_log=ignore_log,
                 )
         
         almcalc_large._fc3_type = almcalc.fc3_type
@@ -311,7 +311,7 @@ def analyze_phonon_properties_with_larger_supercells(
                 almcalc_large, 
                 kdensities=kdensities,
                 calc_type=calc_type,
-                neglect_log=neglect_log,
+                ignore_log=ignore_log,
                 temperatures_for_spectral="300:500",
                 frac_kdensity_4ph=frac_kdensity_4ph,
                 **xml_files
@@ -333,7 +333,7 @@ def analyze_harmonic_with_larger_supercells(
         #
         k_length=20,
         negative_freq=-1e-3,
-        neglect_log=False,
+        ignore_log=False,
         restart=1,
         ):
     """ Analyze harmonic properties with larger supercell(s) """
@@ -421,7 +421,7 @@ def analyze_harmonic_with_larger_supercells(
 
 def analyze_harmonic_properties(
         almcalc, calculator, 
-        neglect_log=False, max_num_corrections=5,
+        ignore_log=False, max_num_corrections=5,
         deltak=0.01, reciprocal_density=1500,
         negative_freq=-1e-3,
         params_nac={'apdb': None, 'kpts': None},
@@ -443,7 +443,7 @@ def analyze_harmonic_properties(
     """
     ### suggest and creat structures for the harmonic FCs
     almcalc.write_alamode_input(propt='suggest', order=1)
-    almcalc.run_alamode(propt='suggest', order=1, neglect_log=True)
+    almcalc.run_alamode(propt='suggest', order=1, ignore_log=True)
     
     ### calculate forces for the harmonic FCs
     almcalc.calc_forces(order=1, calculator=calculator)
@@ -518,9 +518,9 @@ def analyze_harmonic_properties(
                     fns = glob.glob(dir_nac + "/*")
                     for ff in fns:
                         shutil.copy(ff, dir_bandos)
-                neg_log = 0
+                ig_log = 0
             except Exception:
-                neg_log = 1
+                ig_log = 1
             
             ### overwrite harmonic properties
             for propt in ["band", "dos"]:
@@ -529,7 +529,7 @@ def analyze_harmonic_properties(
                         max_num_corrections=max_num_corrections,
                         deltak=deltak, 
                         reciprocal_density=reciprocal_density,
-                        neglect_log=neg_log,
+                        ignore_log=ig_log,
                         )
             
     ###
@@ -542,11 +542,11 @@ def analyze_harmonic_properties(
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
-    almcalc.run_alamode(propt='evec_commensurate', neglect_log=neglect_log)
+    almcalc.run_alamode(propt='evec_commensurate', ignore_log=ignore_log)
     
 def calculate_cubic_force_constants(
         almcalc, calculator,
-        nmax_suggest=None, frac_nrandom=None, neglect_log=False,
+        nmax_suggest=None, frac_nrandom=None, ignore_log=False,
         ):
     """ Calculate cubic force constants
     """
@@ -564,18 +564,18 @@ def calculate_cubic_force_constants(
     if almcalc.fc3_type == 'lasso':
         for propt in ['cv', 'lasso']:
             almcalc.write_alamode_input(propt=propt, order=2)
-            almcalc.run_alamode(propt, order=2, neglect_log=neglect_log)
+            almcalc.run_alamode(propt, order=2, ignore_log=ignore_log)
     else:
         ## ver.1 : with ALM library
         ##almcalc.calc_anharm_force_constants()
         ## ver.2: with alm command
         almcalc.write_alamode_input(propt='fc3')
-        almcalc.run_alamode(propt='fc3', neglect_log=neglect_log)
+        almcalc.run_alamode(propt='fc3', ignore_log=ignore_log)
 
 def calculate_thermal_conductivities(
         almcalc, 
         kdensities=[500, 1000, 1500], 
-        neglect_log=False,
+        ignore_log=False,
         temperatures_for_spectral="300:500",
         calc_type="cubic",
         frac_kdensity_4ph=None, ## fractional k-densities for 4-phonon scattering
@@ -589,7 +589,7 @@ def calculate_thermal_conductivities(
 
     kdensities : array of float
 
-    neglect_log : bool
+    ignore_log : bool
 
     temperatures_for_spectral : string of floats seperated by ":"
     
@@ -639,7 +639,7 @@ def calculate_thermal_conductivities(
             continue
         
         almcalc.run_alamode(
-                propt=propt, neglect_log=neglect_log, outdir=outdir,
+                propt=propt, ignore_log=ignore_log, outdir=outdir,
                 logfile=f"{propt}.log")
         
         _print_rt_kappa(outdir, almcalc.prefix, calc_type)
@@ -656,7 +656,7 @@ def calculate_thermal_conductivities(
             ak_log.rerun_with_omp()
             almcalc.commands['alamode']['anphon_para'] = "omp"
             almcalc.run_alamode(
-                    propt=propt, neglect_log=neglect_log, 
+                    propt=propt, ignore_log=ignore_log, 
                     outdir=outdir, **kwargs)
     
     if almcalc.calculate_forces == False:

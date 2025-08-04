@@ -32,7 +32,7 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     -----
     directory : string
         vasprun.xml can be found under \${directory}/\*/ 
-        while \${directory}/prist/vasprun.xml is neglected.
+        while \${directory}/prist/vasprun.xml is ignored.
     
     offset_xml : string
         vasprun.xml name for offset

@@ -25,7 +25,7 @@ import ase.io
 from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
-from auto_kappa.structure import change_structure_format
+from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.structure.crystal import get_formula
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
@@ -419,23 +419,32 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         
         ### primitive cell
         prim_pp = get_primitive(unit_pp, self.primitive_matrix)
-        
         self._primitive = change_structure_format(prim_pp, format=format)
         
         ### supercell for harmonic FCs
         if self.dim == 3:
-            xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+            
+            sc = get_supercell(unit_pp, self.scell_matrix)
+            
             try:
-                sc = ase.io.read(xml, format='vasp-xml')
-                
-                if xml.startswith('/'):
-                    path = self.get_relative_path(xml)
+                ## Check previously used supercell
+                file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+                sc2 = ase.io.read(file_xml, format='vasp-xml')
+                if not match_structures(sc, sc2, ignore_order=True):
+                    msg  = "\n Error: Supercell genereated by the optimized structure "
+                    msg += "does not match the one read from vasprun.xml."
+                    msg += "\n (%s)" % self.get_relative_path(file_xml)
+                    logger.error(msg)
+                    sys.exit()
+                if not match_structures(sc, sc2, ignore_order=False):
+                    msg = "\n Note: Supercell is read from %s" % self.get_relative_path(file_xml)
+                    logger.error(msg)
+                    sc = sc2.copy()
                 else:
-                    path = xml
-                msg = f"\n Supercell is read from vasprun.xml: {path}"
-                logger.info(msg)
+                    pass
             except Exception:
-                sc = get_supercell(unit_pp, self.scell_matrix)
+                pass
+            
         elif self.dim == 2:
             sc = get_supercell(unit_pp, self.scell_matrix)
         else:
@@ -876,9 +885,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             almdisp = None
         
         if almdisp is None:
-            msg = " Error: Couldn't obtain AlamodeDisplace object properly."
+            msg = "\n Error: Cannot obtain AlamodeDisplace object properly."
             logger.error(msg)
-            return None
+            sys.exit()
         
         msg = "\n"
         msg += " Generate displacement patterns with an Alamode tool\n"
@@ -996,12 +1005,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         ### output directory
         outdir0 = self._get_base_directory_for_forces(order, nsuggest, nmax_suggest)
         
-        if order == 1:
-            mag = self.magnitude
-        elif order == 2:
-            mag = self.magnitude2
-        else:
-            mag = None
+        # if order == 1:
+        #     mag = self.magnitude
+        # elif order == 2:
+        #     mag = self.magnitude2
+        # else:
+        #     mag = None
         
         ### Check the directory name for the pristine structure (ver.1.4.0)
         if self.supercell is not None:
@@ -1030,7 +1039,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             
             ## Adjust keys of structures
             structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0, dim=self.dim)
-        
+            
         ### If something wrong, return None
         if structures is None:
             return None
@@ -1381,7 +1390,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
     
     def analyze_harmonic_property(
             self, propt,
-            outdir=None, max_num_corrections=None, neglect_log=None,
+            outdir=None, max_num_corrections=None, ignore_log=None,
             deltak=None, reciprocal_density=None, 
             **kwargs):
         """ Analyze each harmonic property (why not anharmonic?) 
@@ -1409,7 +1418,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         if propt == 'band':
             file_band_pr = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.band.pr'
             if os.path.exists(file_band_pr) == False:
-                neglect_log = True
+                ignore_log = True
         
         ### get log file name
         if propt == "fc2":
@@ -1423,16 +1432,16 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         while True:
             
             if count == 0:
-                if neglect_log is None:
+                if ignore_log is None:
                     neg_log = 0
                 else:
-                    neg_log = neglect_log
+                    neg_log = ignore_log
             else:
                 neg_log = 1
             
             ### calculate phonon property
             job_output = self.run_alamode(
-                    propt=propt, neglect_log=neg_log, outdir=outdir)
+                    propt=propt, ignore_log=neg_log, outdir=outdir)
             
             try:
                 if job_output.get('rerun', None) is not None:
@@ -1506,7 +1515,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             logger.error(msg)
             sys.exit()
         
-    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None, logfile=None, verbose=True):
+    def run_alamode(self, propt=None, order=None, ignore_log=0, outdir=None, logfile=None, verbose=True):
         """ Run anphon
         
         Args
@@ -1514,7 +1523,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         propt : string
             "band", "dos", "evec_commensurate", "fc*", "kappa", ...
 
-        neglect_log : int
+        ignore_log : int
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
         
@@ -1563,7 +1572,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             _nthreads = self.commands['alamode']['nprocs']
         
         val = run_alamode(filename, logfile, workdir=workdir, 
-                          neglect_log=neglect_log,
+                          ignore_log=ignore_log,
                           mpirun=self.commands['alamode']['mpirun'], 
                           nprocs=_nprocs,
                           nthreads=_nthreads,

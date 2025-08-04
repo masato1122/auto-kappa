@@ -33,6 +33,7 @@ from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.cui import ak_log
 from auto_kappa.vasp.params import reflect_previous_jobs
 from auto_kappa.compat import get_previously_used_structure
+from auto_kappa import output_directories
 
 import logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,8 @@ class ApdbVasp():
             command={'mpirun': 'mpirun', 'nprocs': 2, 'vasp': 'vasp'},
             amin_params = {},
             params_modified = None,
-            mater_dim=3
+            mater_dim=3,
+            base_directory=None
             ):
         """
         Args
@@ -91,6 +93,7 @@ class ApdbVasp():
         self._mat_u2p = primitive_matrix
         self._mat_u2s = scell_matrix
         self._mater_dim = mater_dim
+        self._base_dir = base_directory
         
         if primitive_matrix is None:
             msg = " Error: primitive_matrix must be given."
@@ -133,6 +136,10 @@ class ApdbVasp():
     def mater_dim(self):
         """ Material dimension """
         return self._mater_dim
+    @property
+    def base_directory(self):
+        """ Base directory for the auto-kappa calculation """
+        return self._base_dir
     
     @property
     def primitive_matrix(self):
@@ -155,10 +162,6 @@ class ApdbVasp():
     
     def set_modified_params(self, params_mod):
         self._params_mod = params_mod
-    
-    #@property
-    #def yamlfile_for_outdir(self):
-    #    return self._yamlfile_for_outdir
     
     def update_command(self, val):
         self._command.update(val)
@@ -193,13 +196,29 @@ class ApdbVasp():
             sc   = change_structure_format(phonon.supercell , format=format)
         except Exception:
             
-            unit = change_structure_format(unitcell , format=format) 
+            unit = change_structure_format(unitcell , format=format)
             prim = get_primitive_structure_spglib(unitcell)
             prim = change_structure_format(prim, format=format)
             sc = get_supercell(
                     change_structure_format(unitcell, format='phonopy'),
                     self.scell_matrix)
             sc = change_structure_format(sc, format=format)
+        
+        # ## Check the previously used supercell
+        # if check_previous:
+        #     from auto_kappa.structure import match_structures
+        #     file_prev_sc = self.base_directory + "/harm/force/prist/POSCAR"
+        #     if os.path.exists(file_prev_sc):
+        #         sc_prev = ase.io.read(file_prev_sc, format='vasp')
+        #         if not match_structures(sc_prev, sc, ignore_order=True):
+        #             logger.warning("\n The previously used structure is different from the current one.")
+        #             logger.warning(" Please check the structure in %s" % file_prev_sc)
+        #             sys.exit()
+        #         elif not match_structures(sc_prev, sc, ignore_order=False):
+        #             if file_prev_sc.startswith('/'):
+        #                 file_prev_sc = "./" + os.path.relpath(file_prev_sc, os.getcwd())
+        #             logger.warning("\n The supercell structure is read from %s" % file_prev_sc)
+        #             sc = change_structure_format(sc_prev, format=format)
         
         structures = {"unit": unit, "prim": prim, "super": sc}
         return structures
@@ -358,19 +377,11 @@ class ApdbVasp():
             return 0
         
         ### Read previously used structure
-        base_dir = directory + "/.."
-        unitcell = get_previously_used_structure(base_dir, self.primitive_matrix)
+        unitcell = get_previously_used_structure(
+            self.base_directory, self.primitive_matrix, self.scell_matrix)
+        
         if unitcell is not None:
             self.update_structures(unitcell)
-            # outdir = base_dir + "/check"
-            # os.makedirs(outdir, exist_ok=True)
-            # ase.io.write(outdir + "/POSCAR.prim", self.primitive, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
-            # ase.io.write(outdir + "/POSCAR.unit", self.unitcell, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
-            # ase.io.write(outdir + "/POSCAR.super", self.supercell, 
-            #              format='vasp', direct=True, vasp5=True, sort=True)
-            # exit()
             return 0
         
         ### NSW parameters
