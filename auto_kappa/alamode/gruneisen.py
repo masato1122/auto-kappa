@@ -84,6 +84,8 @@ class GruneisenCalculator:
                 
                 msg = " Output : %s" % figname
                 logger.info(msg)
+                if mode == 'band':
+                    logger.info("")
             
             except Exception as e:
                 msg = f" Failed to calculate or plot Grüneisen parameters for {mode} mode."

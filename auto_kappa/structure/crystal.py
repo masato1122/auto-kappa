@@ -29,7 +29,7 @@ def get_automatic_kmesh(
     struct_init, 
     reciprocal_density=1500, 
     # grid_density=0.01,
-    method='reciprocal_density', dim=3):
+    method='reciprocal_density', dim=3, verbose=True):
     
     structure = change_structure_format(struct_init, format='pmg')
     
