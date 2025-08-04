@@ -1604,7 +1604,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                     name = key.capitalize().replace('_', ' ')
                     msg = f"\n {name}: {out[key]['value']} {out[key]['unit']}"
                     if out[key]['value'] > threshold:
-                        msg += "\n Warning: Force constant error may contain too large!!"
+                        msg += "\n Warning: Force constant error may be too large!!"
                     logger.info(msg)
         except Exception as e:
             msg = "\n Warning: Cannot read the error from %s." % filename
