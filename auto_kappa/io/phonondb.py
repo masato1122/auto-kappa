@@ -19,12 +19,11 @@ import yaml
 
 import ase.io
 from phonopy import Phonopy
-# from ase.calculators.vasp import Vasp
-# from auto_kappa import output_directories
+
 from auto_kappa.structure import change_structure_format
 from auto_kappa.io.vasp import read_poscar, read_kpoints
 
-class Phonondb():
+class Phonondb:
     """ Read files in phonondb
     Args
     =========

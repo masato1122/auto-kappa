@@ -57,7 +57,7 @@ def _make_symbol_pair_index(symbol_lists):
     
     return index_map
 
-class FCSxml():
+class FCSxml:
     def __init__(self, filename: str=None):
         
         self._root = None

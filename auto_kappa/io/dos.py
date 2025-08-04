@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 from auto_kappa.plot import set_legend
 
-class Dos():
+class Dos:
     def __init__(self, filename):
         """
         Variables

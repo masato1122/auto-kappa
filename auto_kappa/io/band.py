@@ -22,7 +22,7 @@ from auto_kappa.plot.initialize import get_customized_cmap, set_legend, set_axis
 import logging
 logger = logging.getLogger(__name__)
 
-class Band():
+class Band:
     def __init__(self, filename=None):
         """Band
         Variables
