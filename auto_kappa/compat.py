@@ -12,6 +12,8 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 # 
 import os
+import sys
+import numpy as np
 import ase.io
 
 # from auto_kappa.structure import change_structure_format
@@ -103,6 +105,14 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
             msg += "\n If you want to use the optimized structure,"
             msg += "\n i.e. %s, " % files_opt['unit']
             msg += "\n please submit the job again with a different output directory name."
+            
+            cell_diff = cell_opt - cell_used
+            max_cell_diff = np.max(abs(cell_diff.flatten()))
+            if max_cell_diff > 0.1:
+                msg += "\n\n Error: The maximum difference in the cell parameters is %.3f." % max_cell_diff
+                logger.error(msg)
+                sys.exit()
+        
         elif atoms_equal(struct_opt, struct_used, ignore_order=False):
             msg  = "\n Caution: the optimized structure and previously used structure do not match."
         
