@@ -613,19 +613,6 @@ def read_log_lasso(directory):
     
     return out
 
-#def _analyze_time(out):
-#    
-#    durations = {}
-#    for mode in ['harm', 'cube', 'higher']:
-#        if mode in out:
-#            if 'force' in out[mode]:
-#                if 'time' in out[mode]['force']:
-#                    durations['%s_forces' % mode] = \
-#                            out[mode]['force']['time']['value']
-#    if 'kappa' in out:
-#        if 'time' in out['kappa']:
-#            durations['kappa'] = out['kappa']['time']['value']
-
 def _get_cellsize_from_log(filename, type=None):
     
     if type.lower() == 'supercell':

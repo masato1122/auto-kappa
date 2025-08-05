@@ -138,7 +138,7 @@ class AlamodeForceCalculator():
     #             f"the previous one. ({key}, {max_disp})")
     #         logger.error(msg)
     #         sys.exit()
-        
+    
     def _job_for_each_structure(
         self, job_idx, structures, base_dir, order, calculator, 
         calculate_forces=True, **amin_params_set):
@@ -161,17 +161,23 @@ class AlamodeForceCalculator():
             file_poscar = outdir + "/POSCAR"
             if os.path.exists(file_poscar):
                 structure_prev = ase.io.read(file_poscar)
-                ### ver.1
-                # self._check_structures_identity(
-                #     structures[key], structure_prev, tolerance=1e-3, key=key)
-                
-                ### ver.2
                 if not match_structures(structures[key], structure_prev, ignore_order=False):
                     msg = (
                         f"\n Error: The structure is not the same as "
                         f"the previous one. ({key})")
                     logger.error(msg)
                     sys.exit()
+        
+        ### Write displacement information
+        from auto_kappa.alamode.io import write_displacement_info
+        try:
+            write_displacement_info(
+                structure=structures[key],
+                pristine_structure=structures['prist'],
+                outdir=outdir
+            )
+        except Exception as e:
+            logger.error(f"\n Failed to write displacement information: {e}")
         
         ### Wheter the calculation has been finished
         filename = outdir + "/vasprun.xml"
@@ -206,11 +212,13 @@ class AlamodeForceCalculator():
         if self.dim == 3:
             struct4vasp = structure.copy()
         elif self.dim == 2:
-            from auto_kappa.structure.two import set_vacuum_to_2d_structure
-            struct_mod = set_vacuum_to_2d_structure(structure, vacuum_thickness=25.0)
-            struct4vasp = change_structure_format(struct_mod, format='ase')
-            if job_idx == 0:
-                logger.info("\n Modify vacuum space for 2D structure.")
+            logger.info("\n 2D structure is not supported.")
+            sys.exit()
+            # from auto_kappa.structure.two import set_vacuum_to_2d_structure
+            # struct_mod = set_vacuum_to_2d_structure(structure, vacuum_thickness=25.0)
+            # struct4vasp = change_structure_format(struct_mod, format='ase')
+            # if job_idx == 0:
+            #     logger.info("\n Modify vacuum space for 2D structure.")
         else:
             msg = " Error: dim must be 2 or 3."
             logger.error(msg)
@@ -229,11 +237,12 @@ class AlamodeForceCalculator():
             ### once AMIN is used, AMIN is set for calculations afterward.
             amin_params_set["num_of_errors"] = 0
 
-        ### Calculate forces with Custodian
+        ### Write VASP input files
         if os.path.exists(calculator.directory) == False:
             os.makedirs(calculator.directory, exist_ok=True)
             calculator.write_input(struct4vasp)
-            
+        
+        ### Calculate forces with Custodian
         if calculate_forces:
             self._calculate_forces_for_each(
                 calculator, struct4vasp, method='custodian', max_num_try=3)

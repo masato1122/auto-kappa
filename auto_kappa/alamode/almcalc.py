@@ -1125,23 +1125,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             self._job_for_each_structure(
                 ii, target_structures, outdir0, order, calculator, 
                 calculate_forces=self.calculate_forces, **amin_params_set)
-        
-        # if calculated_every_structure == False:
-        #     self._counter_done = 0
-        #     struct_keys = list(structures.keys())
-        #     logger.info("")
-        #     for ii, key in enumerate(struct_keys):
-        #         self._job_for_each_structure(
-        #             ii, structures, outdir0, order, calculator, 
-        #             calculate_forces=self.calculate_forces, **amin_params_set)
-        # else:
-        #     self._counter_done = 0
-        #     if prev_structures is not None:
-        #         for i, key in enumerate(prev_structures):
-        #             self._job_for_each_structure(
-        #                 i, prev_structures, outdir0, order, calculator,
-        #                 calculate_forces=self.calculate_forces, **amin_params_set)
-        #     self._counter_done = len(structures)
             
         ### output DFSET
         nsuggest =  len(structures)

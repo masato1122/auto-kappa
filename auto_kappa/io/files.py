@@ -53,3 +53,19 @@ def extract_data_from_file(filename, word, index=-1):
         return None
     else:
         return values_get
+
+def convert_numpy(obj):
+    """ Convert numpy data types to native Python types.
+    
+    How to use
+    ----------
+    >>> with open("output.json", "w", encoding="utf-8") as f:
+    >>>     json.dump(data, f, indent=4, ensure_ascii=False, default=convert_numpy)
+    """
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return obj
