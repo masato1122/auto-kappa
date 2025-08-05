@@ -21,6 +21,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class BandPR:
+    """ Class to handle participation ratio (.band.pr file).
+    If the band file exists in the same directory, it will also read 
+    the band structure from ".bands" file.
+    
+    How to use
+    ----------
+    >>> from auto_kappa.io.participation import BandPR
+    >>> filename = "./mp-149/harm/bandos/Si.band.pr"
+    >>> band_pr = BandPR(filename)
+    >>> band_pr.plot(ax)  # Plot participation ratio with band structure
+    """
     def __init__(self, filename):
         
         if os.path.isabs(filename):

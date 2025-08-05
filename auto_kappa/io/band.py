@@ -24,25 +24,62 @@ logger = logging.getLogger(__name__)
 
 class Band:
     def __init__(self, filename=None):
-        """Band
-        Variables
-        -----------
+        """ Class to read and plot band structure data from .bands file.
+        
+        How to use
+        ------------
+        >>> from auto_kappa.plot import set_matplot, set_legend
+        >>> from auto_kappa.plot.initialize import prepare_two_axes
+        >>> from auto_kappa.io.band import Band
+        >>> from auto_kappa.io.dos import Dos
+        >>> import matplotlib.pyplot as plt
+        
+        >>> fontsize = 7
+        >>> fig_width = 3.0; aspect = 0.6; lw = 0.5
+        >>> color = 'blue'
+        >>> formula = "Si"
+        >>> figname = 'fig_bandos.png'
+        
+        >>> set_matplot(fontsize=fontsize)
+        >>> fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        >>> ax_band, ax_dos = prepare_two_axes(ratio="2:1")
+        >>> cmap = plt.get_cmap('tab10')
+        
+        >>> file_band = "./mp-149/harm/bandos/Si.bands"
+        >>> band = Band("./mp-149/harm/bandos/Si.bands")
+        >>> band.plot(ax_band, color=color, lw=lw, plot_G2G=True, label=formula)
+        
+        >>> file_dos = file_band.replace(".bands", ".dos")
+        >>> dos = Dos(file_dos)
+        >>> dos.plot(ax_dos, plot_pdos=True, show_legend=True,
+        ...          color=color, lw=lw,
+        ...          ylabel="DOS (a.u.)", xlabel=None)
+        
+        >>> fig.savefig(figname, dpi=600, bbox_inches='tight')
+        
+        Args
+        ----
         unit : string
             unit of frequency
+        
         nk : integer
             # of k points
+        
         nbands : integer
             # of bands
+        
         kpoints : array, float, shape=(nk)
             k-points
+        
         frequencies : ndarray, float, shape=(nk, nbands)
             frequencies
-        label : array, string, shape=(nsym)
+        
+        symmetry_labels : array, string, shape=(nsym)
             Labels for symmetry points
-        ksym : array, float, shape=(nsym)
+        
+        symmetry_kpoints : array, float, shape=(nsym)
             k-points for symmetry points
-        nsym : integer
-            # of symmetry points
+        
         """
         self.band_type = 'normal'
         self.unit = "cm^1"

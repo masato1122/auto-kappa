@@ -19,6 +19,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 class GruAll:
+    """ Class to read and handle Gruneisen parameters from a .gru_all file
+    which was calculated with ``kpmode = 1`` in Alamode.
+    
+    How to use
+    ----------
+    >>> from auto_kappa.plot import make_figure
+    >>> from auto_kappa.io.gruneisen import GruAll
+    
+    >>> fig_width = 2.5; aspect = 0.9
+    >>> figname = 'fig_gru_all.png'; dpi = 600
+    
+    >>> fig, axes = make_figure(nrows=1, ncols=1, fig_width=fig_width, aspect=aspect)
+    >>> ax = axes[0][0]
+    
+    >>> filename = './mp-149/cube/gruneisen/Si.gru_all'
+    >>> gru_all = GruAll(filename)
+    >>> gru_all.plot(ax, show_legend=True
+    
+    >>> fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    """
     def __init__(self, filename):
         self._filename = filename
         self._kpoints = None
@@ -85,6 +105,27 @@ class GruAll:
             set_legend(ax, loc='best', fontsize=6, alpha=0.5)
 
 class Gruneisen:
+    """ Class to read and handle Gruneisen parameters from a .gruneisen file
+    which was calculated with ``kpmode = 2`` in Alamode.
+    
+    How to use
+    ----------
+    >>> from auto_kappa.plot import make_figure
+    >>> from auto_kappa.io.gruneisen import Gruneisen
+    
+    >>> fig_width = 2.5; aspect = 0.5
+    >>> figname = 'fig_gruneisen.png'; dpi = 600
+    
+    >>> fig, axes = make_figure(nrows=1, ncols=1, fig_width=fig_width, aspect=aspect)
+    >>> ax = axes[0][0]
+    
+    >>> filename = './mp-149/cube/gruneisen/Si.gruneisen'
+    >>> gru = Gruneisen(filename)
+    >>> gru.plot(ax)
+    
+    >>> fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    
+    """
     def __init__(self, filename):
         if os.path.isabs(filename):
             filename = os.path.relpath(filename, os.getcwd())
@@ -129,7 +170,8 @@ class Gruneisen:
         self.band = Band(self._file_bands)
     
     def plot(self, ax, cmap='rainbow'):
-        
+        """ Plot band structure colored based on Gruneisen parameters 
+        """
         cmin = self.gru_params.min()
         cmax = self.gru_params.max()
         cmax_abs = max(abs(cmin), abs(cmax))
