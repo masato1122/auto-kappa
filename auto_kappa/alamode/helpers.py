@@ -22,7 +22,7 @@ from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.vasp import wasfinished, get_dfset, read_outcar, print_vasp_params
 from auto_kappa.io.files import extract_data_from_file
 from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
-from auto_kappa.alamode.io import wasfinished_alamode
+from auto_kappa.alamode.io import wasfinished_alamode, write_displacement_info
 from auto_kappa.alamode.errors import found_rank_deficient
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
 
@@ -140,8 +140,11 @@ class AlamodeForceCalculator():
     #         sys.exit()
     
     def _job_for_each_structure(
-        self, job_idx, structures, base_dir, order, calculator, 
-        calculate_forces=True, **amin_params_set):
+        self, job_idx, structures, base_dir, order, calculator, **amin_params_set):
+        
+        # print(structures.keys())
+        # for key, struct in structures.items():
+        #     ase.io.write("./check/POSCAR." + key, struct)
         
         struct_keys = list(structures.keys())
         key = struct_keys[job_idx]
@@ -167,17 +170,6 @@ class AlamodeForceCalculator():
                         f"the previous one. ({key})")
                     logger.error(msg)
                     sys.exit()
-        
-        ### Write displacement information
-        from auto_kappa.alamode.io import write_displacement_info
-        try:
-            write_displacement_info(
-                structure=structures[key],
-                pristine_structure=structures['prist'],
-                outdir=outdir
-            )
-        except Exception as e:
-            logger.error(f"\n Failed to write displacement information: {e}")
         
         ### Wheter the calculation has been finished
         filename = outdir + "/vasprun.xml"
@@ -237,13 +229,13 @@ class AlamodeForceCalculator():
             ### once AMIN is used, AMIN is set for calculations afterward.
             amin_params_set["num_of_errors"] = 0
 
-        ### Write VASP input files
-        if os.path.exists(calculator.directory) == False:
-            os.makedirs(calculator.directory, exist_ok=True)
-            calculator.write_input(struct4vasp)
+        ### Write VASP input files only when the directory does not exist
+        ### to make sure that the structure file is not overwritten.
+        self._prepare_vasp_files(calculator, struct4vasp, 
+                                 pristine_structure=structures['prist'])
         
         ### Calculate forces with Custodian
-        if calculate_forces:
+        if self.calculate_forces:
             self._calculate_forces_for_each(
                 calculator, struct4vasp, method='custodian', max_num_try=3)
             self._counter_done += 1
@@ -264,7 +256,25 @@ class AlamodeForceCalculator():
                 pass
         
         self._counter_calc += 1
-        
+    
+    def _prepare_vasp_files(self, calculator, structure, pristine_structure=None):
+        """ Prepare VASP input files and write displacement information.
+        """
+        ## Make VASP input files
+        if os.path.exists(calculator.directory) == False:
+            os.makedirs(calculator.directory, exist_ok=True)
+            calculator.write_input(structure)
+            
+        ### Write displacement information
+        try:
+            write_displacement_info(
+                structure=structure,
+                pristine_structure=pristine_structure,
+                outdir=calculator.directory
+            )
+        except Exception as e:
+            logger.error(f"\n Failed to write displacement information: {e}")
+    
     def _calculate_forces_for_each(
         self, calculator, structure, method='custodian', max_num_try=3):
         count = 0

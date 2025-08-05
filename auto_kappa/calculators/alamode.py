@@ -267,6 +267,9 @@ def analyze_phonon_properties_with_larger_supercells(
             restart=restart,
             )
     
+    if not almcalc.calculate_forces:
+        return
+    
     ### plot band and DOS
     from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
     figname = almcalc.out_dirs["result"] + "/fig_bandos.png"

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # almcalc.py
 #
@@ -1124,7 +1123,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             
             self._job_for_each_structure(
                 ii, target_structures, outdir0, order, calculator, 
-                calculate_forces=self.calculate_forces, **amin_params_set)
+                **amin_params_set)
             
         ### output DFSET
         nsuggest =  len(structures)
@@ -1608,9 +1607,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                         msg += "\n Warning: Force constant error may be too large!!"
                     logger.info(msg)
         except Exception as e:
-            msg = "\n Warning: Cannot read the error from %s." % filename
-            logger.error(msg)
-            logger.error(e)
+            if not self.calculate_forces:
+                return
+            else:
+                msg = "\n Warning: Cannot read the error from %s." % filename
+                logger.error(msg)
+                logger.error(e)
     
     def run_alamode(self, propt=None, order=None, ignore_log=0, outdir=None, logfile=None, verbose=True):
         """ Run anphon
@@ -1626,7 +1628,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         
         """
         if propt not in ['suggest'] and self.calculate_forces == False:
-            logger.info("\n Note: ALAMODE job is not run because forces were not calculated.")
+            # logger.info("\n Note: ALAMODE job is not run because forces were not calculated.")
             return None
         
         ### get alamode_type and mode
