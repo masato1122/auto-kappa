@@ -73,7 +73,7 @@ def plot_bandos_for_different_sizes(
     ax2.set_ylim(ymin, ymax)
     
     ## Save figure
-    if figname.startswith("/"):
+    if os.path.isabs(figname):
         figname = "./" + os.path.relpath(figname, os.getcwd())
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     msg = " Output %s" % figname

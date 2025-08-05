@@ -73,7 +73,7 @@ class GruneisenCalculator:
                 
                 ## file and figure names
                 workdir = self.out_dirs['cube']['gruneisen']
-                if workdir.startswith('/'):
+                if os.path.isabs(workdir):
                     workdir = os.path.relpath(workdir, os.getcwd())
                 filename = f"{workdir}/{self.prefix}.{suffix}"
                 figname = f"{workdir}/fig_{suffix}.png"

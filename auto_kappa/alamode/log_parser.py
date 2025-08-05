@@ -64,7 +64,7 @@ class AkLog():
         with open(outfile, "w") as f:
             yaml.dump(self.out, f)
             
-            if outfile.startswith("/"):
+            if os.path.isabs(outfile):
                 outfile = "./" + os.path.relpath(outfile, os.getcwd())
             msg = "\n Output " + outfile
             logger.info(msg)
@@ -551,7 +551,7 @@ def read_log_forces(directory, mode, fc3_type=None):
         
         ### read vasprun.xml
         dir_vasp = dir1 + '/' + prefix
-        if dir_vasp.startswith("/"):
+        if os.path.isabs(dir_vasp):
             dir_vasp = "." + os.path.relpath(dir_vasp, os.getcwd())
         
         if os.path.exists(dir_vasp) == False:

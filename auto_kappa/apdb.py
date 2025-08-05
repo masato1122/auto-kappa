@@ -350,7 +350,7 @@ class ApdbVasp():
         ### For the old version, the xml file is located under ``directory``.
         if volume_relaxation == 0 and wasfinished(directory, filename='vasprun.xml'):
             filename = directory + "/vasprun.xml"
-            if filename.startswith("/"):
+            if os.path.isabs(filename):
                 filename = "./" + os.path.relpath(filename, os.getcwd())
             prim = ase.io.read(filename, format='vasp-xml')
             unitcell = convert_primitive_to_unitcell(prim, self.primitive_matrix)

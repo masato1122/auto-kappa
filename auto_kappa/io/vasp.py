@@ -114,11 +114,8 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
         all_forces.append(forces)
         
         ##
-        if fn.startswith('/'):
-            rel_path = './' + os.path.relpath(fn, os.getcwd())
-        else:
-            rel_path = fn
-        
+        rel_path = (("./" + os.path.relpath(fn, os.getcwd())
+                      if os.path.isabs(fn) else fn))
         ## get lines
         all_lines.append("# Filename: %s, Snapshot: %d, E_pot (eV): %.7f" % (
             rel_path, ii+1, ene))

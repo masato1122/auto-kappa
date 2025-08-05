@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class BandPR:
     def __init__(self, filename):
         
-        if filename.startswith("/"):
+        if os.path.isabs(filename):
             filename = os.path.relpath(filename, os.getcwd())
         self._file_pr = filename
         self._file_bands = filename.replace('.band.pr', '.bands')

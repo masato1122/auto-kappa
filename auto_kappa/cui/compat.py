@@ -251,6 +251,7 @@ def check_previous_structures(options):
     ## Order is important: harmonic, cubic_fd -> cubic_lasso
     ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
     structure_files = {
+        'relax'     : "./" + options.outdir + "/" + output_directories['relax'] + "/freeze-1/CONTCAR",
         'opt_unit'  : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
         'opt_super' : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.super",
         'nac'       : "./" + options.outdir + "/" + output_directories['nac'] + "/POSCAR",
@@ -273,7 +274,7 @@ def check_previous_structures(options):
             if struct1 is None or struct2 is None:
                 continue
             
-            if key1 in ['nac', 'opt_unit'] or key2 in ['nac', 'opt_unit']:
+            if key1 in ['relax', 'nac', 'opt_unit'] or key2 in ['relax', 'nac', 'opt_unit']:
                 primitive_cell = True
             else:
                 primitive_cell = False

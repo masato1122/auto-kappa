@@ -401,7 +401,7 @@ class AlamodeInputWriter():
         files = {}
         for name in files_abs:
             if files_abs[name] is not None:
-                if files_abs[name].startswith('/'):
+                if os.path.isabs(files_abs[name]):
                     files[name] = os.path.relpath(files_abs[name], workdir)
                 else:
                     files[name] = files_abs[name]
@@ -479,6 +479,7 @@ class AlamodeInputWriter():
             fmin = self.frequency_range[0] - diff * 0.05
             fmax = self.frequency_range[1] + diff * 0.05
             
+            ## These parameters are required for kappa_spec
             npoints = 301
             inp.update({'emin': fmin, 'emax': fmax})
             inp.update({'delta_e': (fmax-fmin)/(npoints-1)})

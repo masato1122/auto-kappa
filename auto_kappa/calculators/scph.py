@@ -153,7 +153,7 @@ def plot_scph_force_constants(
     ## Save the figure
     figname = f"{dir_work}/fig_scph_fc2.png"
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    if figname.startswith("/"):
+    if os.path.isabs(figname):
         figname = "./" + os.path.relpath(figname, os.getcwd())
     logger.info(f"\n Force constants were plotted in {figname}")
 
@@ -299,7 +299,7 @@ def _plot_scph_bands(filename, figname='fig_scph_bands.png',
     ax.axhline(0, color='grey', lw=0.5, ls='-')
     
     fig.savefig(figname, bbox_inches='tight', dpi=dpi)
-    if figname.startswith("/"):
+    if os.path.isabs(figname):
         figname = "./" + os.path.relpath(figname, os.getcwd())
     msg = "\n SCPH bands were plotted: %s" % figname
     logger.info(msg)

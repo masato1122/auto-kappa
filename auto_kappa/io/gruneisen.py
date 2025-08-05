@@ -86,7 +86,7 @@ class GruAll:
 
 class Gruneisen:
     def __init__(self, filename):
-        if filename.startswith('/'):
+        if os.path.isabs(filename):
             filename = os.path.relpath(filename, os.getcwd())
         self._file_gruneisen = filename
         self._file_bands = filename.replace('.gruneisen', '.bands')

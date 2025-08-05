@@ -46,8 +46,8 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
         Returns the primitive cell of the previously used structure.
     
     """
-    if base_dir.startswith('/'):
-        base_dir = "./" + os.path.relpath(base_dir, os.getcwd())
+    base_dir = ("./" + os.path.relpath(base_dir, os.getcwd())
+                if os.path.isabs(base_dir) else base_dir)
     
     ## Optimized structures
     files_opt = {}
@@ -110,6 +110,14 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
             max_cell_diff = np.max(abs(cell_diff.flatten()))
             if max_cell_diff > 0.1:
                 msg += "\n\n Error: The maximum difference in the cell parameters is %.3f." % max_cell_diff
+                
+                base_dir = ("./" + os.path.relpath(base_dir, os.getcwd())
+                          if os.path.isabs(base_dir) else base_dir)
+                msg += "\n\n You may need to run a new job as follows:"
+                msg += f"\n > mv {base_dir} {base_dir}-old"
+                msg += f"\n > mkdir {base_dir}"
+                msg += f"\n > cp -r {base_dir}-old/relax {base_dir}/"
+                
                 logger.error(msg)
                 sys.exit()
         

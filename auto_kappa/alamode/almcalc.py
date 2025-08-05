@@ -431,16 +431,33 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             try:
                 ## Check previously used supercell
                 file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-                sc2 = ase.io.read(file_xml, format='vasp-xml')
+                sc2 = ase.io.read(file_xml, format='vasp-xml', index=-1)
                 
                 if not match_structures(sc, sc2, ignore_order=True):
                     ##
                     ## This error may occur when StructureMatcher returns different results
                     ## for same structures.
                     ##
-                    msg  = "\n Error: Supercell genereated by the optimized structure "
-                    msg += "does not match the one read from vasprun.xml:"
-                    msg += "\n %s" % self.get_relative_path(file_xml)
+                    sc = change_structure_format(sc, format="ase")
+                    
+                    msg = "\n Lattice vectors 1:"
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[0])
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[1])
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[2])
+                    msg += "\n\n Lattice vectors 2 (%s):" % self.get_relative_path(file_xml)
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[0])
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[1])
+                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[2])
+                    logger.info(msg)
+                    
+                    msg  = "\n Error: current supercell is not the same as the previous one,"
+                    msg += "\n %s." % self.get_relative_path(file_xml)
+                    msg += "\n\n You may need to run a new job as follows:"
+                    base_dir = ("./" + os.path.relpath(self.base_directory, os.getcwd())
+                                if os.path.isabs(self.base_directory) else self.base_directory)
+                    msg += f"\n > mv {base_dir} {base_dir}-old"
+                    msg += f"\n > mkdir {base_dir}"
+                    msg += f"\n > cp -r {base_dir}-old/relax {base_dir}/"
                     logger.error(msg)
                     sys.exit()
                 
@@ -691,7 +708,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         for propt in properties:
             
             logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
-            if logfile.startswith("/"):
+            if os.path.isabs(logfile):
                 logfile = "./" + os.path.relpath(logfile, os.getcwd())
             
             if os.path.exists(logfile) == False:
@@ -1261,7 +1278,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         ### Set parameters for the specific calculation
         self._set_parameters_for_property(
             inp, propt=propt, deltak=deltak, kpts=kpts, order=order)
-        
+            
         ### modify path of filenames
         filename_keys = ["fc2xml", "fc3xml", "fcsxml"]
         given_params = kwargs.copy()
@@ -1305,7 +1322,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         else:
             fn = self.out_dirs['higher']['cv']+'/'+self.prefix+'.cvscore'
         
-        if fn.startswith('/'):
+        if os.path.isabs(fn):
             fn = "./" + os.path.relpath(fn, os.getcwd())
         
         try:
@@ -1806,7 +1823,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             
             figname = os.path.dirname(file_fcs) + f"/fig_fc{order+1}.png"
             fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-            if figname.startswith("/"):
+            if os.path.isabs(figname):
                 figname = "./" + os.path.relpath(figname, os.getcwd())
             logger.info(f" Force constants were plotted in {figname}")
             
@@ -2095,7 +2112,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         
         ### File names
         workdir = self.out_dirs['harm']['bandos']
-        if workdir.startswith('/'):
+        if os.path.isabs(workdir):
             workdir = "./" + os.path.relpath(workdir, os.getcwd())
         
         file_band = workdir + "/" + self.prefix + ".bands"
