@@ -1333,6 +1333,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             params[key.replace('xml', 'file')] = params_file[key]
         
         params['nkd'] = None
+        params['kappa_spec'] = None
         params['quartic'] = 1
         params['ismear_4ph'] = 2   # adaptive smearing for 4ph
         params['interpolator'] = 'log-linear' # linear, log-linear, modified-log-linear
