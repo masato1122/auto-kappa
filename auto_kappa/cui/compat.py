@@ -34,6 +34,11 @@ def check_ak_options(options):
     _check_alamode_version(options)
     _adjust_displacement_magnitude(options)
     check_previous_structures(options)
+    
+    if options.mater_dim != 3:
+        msg = "\n Sorry, auto-kappa does not support {options.mater_dim}D systems yet."
+        logger.error(msg)
+        sys.exit()
 
 def _check_deprecated_options(options):
     """ Check deprecated option names and set new option names."""

@@ -41,9 +41,9 @@ def get_parser():
         "--outdir", dest="outdir", type="string", default="./out", 
         help="Output directory name [./out]")
     
-    parser.add_option(
-        "--material_dimension", dest="mater_dim", type="int", default=3, 
-        help="Material dimension [3]")
+    # parser.add_option(
+    #     "--material_dimension", dest="mater_dim", type="int", default=3, 
+    #     help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
     parser.add_option(
@@ -114,15 +114,15 @@ def get_parser():
     
     parser.add_option("--mag_harm", 
             dest="mag_harm", type="float", default=0.01, 
-            help="magnitude of displacements for harmonic FCs "
+            help="displacement magnitude for harmonic FCs "
             "with the unit of angstrom [0.01]")
     
     parser.add_option("--mag_cubic", 
             dest="mag_cubic", type="float", default=0.03, 
-            help="magnitude of displacements for cubic FCs [0.03]")
+            help="displacement magnitude for cubic FCs [0.03]")
     
     parser.add_option("--negative_freq", dest="negative_freq", type="float",
-            default=-0.001, help="threshold of negative frequency [-0.001]")
+            default=-0.001, help="threshold for negative frequency [-0.001]")
             
     parser.add_option("--volume_relaxation", 
             dest="volume_relaxation", type="int", default=1,
@@ -321,6 +321,9 @@ def get_parser():
     params = eval(str(options))
     if params.get('material_name') is not None:
         options.outdir = params['material_name']
+    
+    ### Future options
+    options.mater_dim = 3
     
     return options
     
