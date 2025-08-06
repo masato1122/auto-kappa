@@ -269,17 +269,15 @@ def get_parser():
     ##                "Maximum limit of the number of atoms in the supercell for "\
     ##                " FC3 [None].")
     
-    
     #########################
     ## parameters for VASP ##
     #########################
     parser.add_option("--vasp_parameters", dest="vasp_parameters", type="string",
             default=None, help="VASP parameters. For example, \"ISORBIT=False,DIFFG=1e-7\"")
     
-    
-    #################################################################
-    ### Parameters that need to be changed for test calculations  ###
-    #################################################################
+    #########################################
+    ### Parameters for test calculations  ###
+    #########################################
     parser.add_option("--restart", dest="restart", type="int",
             default=1,
             help="The calculation will restart (1) or will NOT restart (0) "
@@ -323,6 +321,8 @@ def get_parser():
         options.outdir = params['material_name']
     
     ### Future options
+    ## for 2D, ISIF=4 for "full-relax"
+    ## Carefully determine the cell size along c-axis
     options.mater_dim = 3
     
     return options

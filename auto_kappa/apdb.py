@@ -285,8 +285,9 @@ class ApdbVasp():
             **args
             ):
         """ Perform relaxation calculation, including full relaxation 
-        calculations (ISIF=3) with "num_full" times and a relaxation of atomic
-        positions (ISIF=2). See descriptions for self.run_vasp for details.
+        calculations (ISIF=3 for 3D while ISIF=4 for 2D?) with "num_full" times 
+        and a relaxation of atomic positions (ISIF=2). See descriptions for 
+        self.run_vasp for details.
         
         Args
         =======
