@@ -26,7 +26,7 @@ from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
 from auto_kappa.structure import change_structure_format, match_structures
-from auto_kappa.structure.crystal import get_formula
+from auto_kappa.structure.crystal import get_formula, convert_primitive_to_unitcell
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AnphonInput
@@ -233,13 +233,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         self._scell_matrix = scell_matrix
         #self._scell_matrix3 = scell_matrix3
         
-        ### make the unitcell with ``get_supercell`` in Phonopy
-        mat_p2u = np.linalg.inv(primitive_matrix)
-        mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
-        unit_pp = get_supercell(
-                change_structure_format(prim_given, format='phonopy'), 
-                mat_p2u
-                )
+        ### Make the unitcell from the primitive cell
+        unit_pp = convert_primitive_to_unitcell(
+            prim_given, primitive_matrix, format='phonopy')
         
         ### set unitcell, primitive cell, and two kinds of supercells
         self._primitive = None

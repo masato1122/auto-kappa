@@ -251,11 +251,7 @@ def main():
     ### Calculate Born effective charge
     if nac:
         mode = 'nac'
-        if ak_params['mater_dim'] == 2:
-            vaccum_thickness = 20.
-        else:
-            vaccum_thickness = None
-        
+        vaccum_thickness = 20. if ak_params['mater_dim'] == 2 else None
         apdb.run_vasp(mode, out_dirs[mode], kpts_used["nac"], 
                       print_params=True, vaccum_thickness=vaccum_thickness)
         

@@ -118,6 +118,26 @@ def suggest_structures_and_kmeshes(
         for name in kpts:
             kpts[name][2] = 1
     
+    ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # from auto_kappa.structure.crystal import (
+    #     convert_primitive_to_unitcell,
+    #     get_primitive_structure_spglib
+    #     )
+    
+    # for key, struct in structures.items():
+    #     atoms = change_structure_format(struct, format='ase')
+    #     ase.io.write(f"./check/POSCAR.{key}", atoms, 
+    #                  direct=True, vasp5=True, sort=True)
+    
+    # prim = get_primitive_structure_spglib(structures['primitive'])
+    # ase.io.write("./check/POSCAR.prim2", prim, 
+    #              direct=True, vasp5=True, sort=True)
+    # unit = convert_primitive_to_unitcell(prim, matrices['primitive'], format='ase')
+    # ase.io.write("./check/POSCAR.unit2", unit, 
+    #              direct=True, vasp5=True, sort=True)
+    # exit()
+    ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
     return structures, matrices, kpts
 
 def get_unitcell_and_primitive_matrix(structure):

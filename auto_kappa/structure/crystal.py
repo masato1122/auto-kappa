@@ -11,8 +11,8 @@
 #
 import sys
 import numpy as np
-from scipy.optimize import linear_sum_assignment
-import spglib 
+# from scipy.optimize import linear_sum_assignment
+import spglib
 import ase, ase.data
 
 import pymatgen.core.structure as str_pmg
