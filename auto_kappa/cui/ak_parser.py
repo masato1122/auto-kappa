@@ -119,9 +119,9 @@ def get_parser():
             default=-0.001, help="threshold of negative frequency [-0.001]")
             
     parser.add_option("--volume_relaxation", 
-            dest="volume_relaxation", type="int", default=0,
+            dest="volume_relaxation", type="int", default=1,
             help="strict relaxation with the relation between energy and "
-            "volume (0.off or 1.on) [0]")
+            "volume (0.off or 1.on) [1]")
     
     parser.add_option("--relaxed_cell", 
             dest="relaxed_cell", type="string", default=None,
