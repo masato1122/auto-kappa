@@ -280,7 +280,7 @@ class ApdbVasp():
             standardize_each_time=True,
             volume_relaxation=0,
             cell_type='p',
-            force=False, num_full=2, verbosity=1,
+            force=False, num_full=2, verbose=1,
             max_error=None, nsw_params=None, 
             **args
             ):
@@ -309,7 +309,7 @@ class ApdbVasp():
         num_full : int,
             Number of relxation calculation w/o any restriction [default: 2]
 
-        verbosity : int
+        verbose : int
         
         max_error : int
             Max number of retry the calculation. If error.{max_error}.tar(.gz) 
@@ -340,7 +340,7 @@ class ApdbVasp():
             sys.exit()
         
         ### message
-        if verbosity != 0:
+        if verbose != 0:
             line = "Structure optimization"
             msg = "\n\n " + line
             msg += "\n " + "=" * (len(line))
@@ -410,7 +410,7 @@ class ApdbVasp():
                     nsw_diff=nsw_diff, nsw_min=nsw_min)
             
             ### print message
-            if verbosity != 0:
+            if verbose != 0:
                 line = "%s (%d)" % (mode, num)
                 msg = "\n " + line
                 msg += "\n " + "-" * len(line)
@@ -442,7 +442,7 @@ class ApdbVasp():
                     structure=structure, force=force, 
                     print_params=print_params,
                     cell_type=cell_type,
-                    verbosity=0,
+                    verbose=0,
                     standardization=standardize_each_time,
                     **args
                     )
@@ -605,7 +605,7 @@ class ApdbVasp():
     def run_vasp(self, mode: None, directory: str, kpts: None, 
             structure=None, cell_type=None,
             method='custodian', force=False, print_params=False, 
-            standardization=True, verbosity=1, vaccum_thickness=None,
+            standardization=True, verbose=1, vaccum_thickness=None,
             **args
             ):
         """ Run relaxation and born effective charge calculation
@@ -647,7 +647,7 @@ class ApdbVasp():
             1. symmetry was changed during the relaxation calculation
         
         """
-        if verbosity != 0:
+        if verbose != 0:
             line = "VASP calculation (%s)" % (mode)
             msg = "\n\n " + line
             msg += "\n " + "=" * (len(line))

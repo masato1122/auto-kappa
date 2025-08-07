@@ -381,7 +381,7 @@ def analyze_harmonic_with_larger_supercells(
                 magnitude2=almcalc_orig.magnitude2,
                 nac=almcalc_orig.nac,
                 commands=almcalc_orig.commands,
-                verbosity=almcalc_orig.verbosity,
+                verbose=almcalc_orig.verbose,
                 yamlfile_for_outdir=almcalc_orig.yamlfile_for_outdir,
                 dim=almcalc_orig.dim,
                 calculate_forces=almcalc_orig.calculate_forces,

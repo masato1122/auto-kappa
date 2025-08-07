@@ -272,7 +272,7 @@ class AlmInput(AlamodeInput):
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
 
-    def to_file(self, filename: str = None, version=None, verbosity=None):
+    def to_file(self, filename: str = None, version=None, verbose=None):
         """ Make ALM input file
         Args
         -------
@@ -793,7 +793,7 @@ class AnphonInput(AlamodeInput):
             self["isotope"] = 1
             self["isofact"] = out
         
-    def to_file(self, filename: str = None, version=None, verbosity=0):
+    def to_file(self, filename: str = None, version=None, verbose=0):
         """ Make ANPHON input file
         
         Args
@@ -802,7 +802,7 @@ class AnphonInput(AlamodeInput):
         """
         self.check_parameters()
         
-        if verbosity > 0:
+        if verbose > 0:
             msg = "\n Make an input script for ALAMODE : %s" % filename
             logger.info(msg)
         

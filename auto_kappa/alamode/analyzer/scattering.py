@@ -45,7 +45,7 @@ class Scattering():
     
     """
     def __init__(self, file_result: None, temperature=300., file_isotope=None,
-            grain_size=None, verbosity=0):
+            grain_size=None, verbose=0):
         """
         Args
         ----
@@ -63,7 +63,7 @@ class Scattering():
         scattering_rates[keys]
         
         """
-        self.verbosity = verbosity
+        self.verbose = verbose
 
         if file_result is None:
             logger.error(" Error: file_result must be given.")
@@ -186,7 +186,7 @@ class Scattering():
                 msg += "  * %s\n" % key
                 self._total_scattering_rate += self.scattering_rates[key]
         msg += "\n"
-        if self.verbosity > 0:
+        if self.verbose > 0:
             logger.info(msg)
         
         self.set_lifetime()

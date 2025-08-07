@@ -29,7 +29,7 @@ class AlamodeDisplace(object):
                  file_evec=None,
                  file_primitive=None,
                  primitive=None,
-                 verbosity=1):
+                 verbose=1):
         self._pattern = []
         self._primitive_lattice_vector = None
         self._inverse_primitive_lattice_vector = None
@@ -39,7 +39,7 @@ class AlamodeDisplace(object):
         self._counter = 1
         self._displacement_magnitude = 0.02
         self._md_snapshots = None  # displacements in angstrom unit
-        self._verbosity = verbosity
+        self._verbose = verbose
         self._classical = False
         self._commensurate_qpoints = []
         self._mapping_shift = None
@@ -171,7 +171,7 @@ class AlamodeDisplace(object):
                 raise RuntimeError("pattern file must be given with --pattern option")
             self._parse_displacement_patterns(file_pattern)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Finite displacement\n")
                 print(" %d displacement patterns are generated from\n"
                       " the given *.pattern_* files" % len(self._pattern))
@@ -187,7 +187,7 @@ class AlamodeDisplace(object):
 
         if self._displacement_mode == "random":
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Random displacement\n")
                 print(" %d randomly-displaced configurations are generated from\n"
                       " the original supercell structure." % number_of_displacements)
@@ -210,7 +210,7 @@ class AlamodeDisplace(object):
 
             list_every = self._sample_md_snapshots(file_mddata, option_every)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : MD sampling\n")
                 print(" Sampling range and interval: [%d:%d], interval = %d"
                       % (list_every[0] + 1, list_every[1], list_every[2]))
@@ -238,7 +238,7 @@ class AlamodeDisplace(object):
 
             list_every = self._sample_md_snapshots(file_mddata, option_every)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : MD sampling + random displacement\n")
                 print(" Sampling range and interval: [%d:%d], interval = %d"
                       % (list_every[0] + 1, list_every[1], list_every[2]))
@@ -270,7 +270,7 @@ class AlamodeDisplace(object):
 
         if self._displacement_mode == "random_normalcoordinate":
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Random displacement in normal coordinate\n")
                 print(" %d randomly-displaced configurations are generated from\n"
                       " the original supercell structure" % number_of_displacements)
@@ -304,7 +304,7 @@ class AlamodeDisplace(object):
             Qmin, Qmax = option_qrange.split()
             Qlist = np.linspace(float(Qmin), float(Qmax), number_of_displacements)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Along specific normal coordinate\n")
                 print(" %d configurations are generated from\n"
                       " the original supercell structure" % number_of_displacements)
@@ -564,12 +564,12 @@ class AlamodeDisplace(object):
                 if self._omega2[iq, imode] < 0.0:
                     if ignore_imag:
                         omega[iq, imode] = 0.0
-                        if self._verbosity > 0:
+                        if self._verbose > 0:
                             print("Warning: Detected imaginary mode at iq = %d, imode = %d.\n"
                                   "This more will be ignored.\n" % (iq + 1, imode + 1))
                     else:
                         omega[iq, imode] = math.sqrt(-self._omega2[iq, imode])
-                        if self._verbosity > 0:
+                        if self._verbose > 0:
                             print("Warning: Detected imaginary mode at iq = %d, imode = %d.\n"
                                   "Use the absolute frequency for this mode.\n" % (iq + 1, imode + 1))
                 else:

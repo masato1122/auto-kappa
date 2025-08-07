@@ -288,7 +288,7 @@ def main():
             ##mag_high=ak_params['mag_high'],
             nac=nac,
             commands={'alamode': command_alamode, 'vasp': command_vasp},
-            verbosity=ak_params['verbosity'],
+            verbose=ak_params['verbose'],
             yamlfile_for_outdir=yaml_outdir,
             dim=ak_params['mater_dim'],
             calculate_forces=ak_params['calculate_forces'],

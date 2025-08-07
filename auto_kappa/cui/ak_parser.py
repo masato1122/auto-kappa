@@ -283,8 +283,8 @@ def get_parser():
             help="The calculation will restart (1) or will NOT restart (0) "
             "when the directory exsits. [1]")
             
-    parser.add_option("--verbosity", dest="verbosity", type="int",
-            default=1, help="verbosity [0]")
+    parser.add_option("--verbose", dest="verbose", type="int",
+            default=1, help="verbose [0]")
     
     parser.add_option("--ignore_log", dest="ignore_log", type="int",
             default=0, help="ignore log (1) or not (0) [0]")

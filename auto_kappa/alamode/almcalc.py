@@ -86,7 +86,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             #order_lasso=5,
             nac=None,
             commands=None,
-            verbosity=0,
+            verbose=0,
             yamlfile_for_outdir=None,
             dim=3,
             calculate_forces=True,
@@ -141,8 +141,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         nac : int
             If nac=0, nac is not considered while, if nac != 0, nac is considered.
     
-        verbosity : int
-            If verbosity=1, details are output while, if 0, not.
+        verbose : int
+            If verbose=1, details are output while, if 0, not.
 
         commands : dict
             Number of processes and threads are given.
@@ -165,7 +165,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         >>>     nbody=[2,3,3,2], magnitude=0.01,
         >>>     nac=1,
         >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
-        >>>     verbosity=0
+        >>>     verbose=0
         >>>     )
         >>> calc_force = apdb.get_calculator('force', 
         >>>     "./mp-149/harm/force", [4,4,4],
@@ -290,7 +290,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         self._frequency_range = None
         #self._minimum_frequency = None
         
-        self._verbosity = verbosity
+        self._verbose = verbose
         self._yamlfile_for_outdir = yamlfile_for_outdir
     
         self._fc2xml = None
@@ -527,8 +527,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         return self._prefix
     
     @property
-    def verbosity(self):
-        return self._verbosity
+    def verbose(self):
+        return self._verbose
     
     @property
     def yamlfile_for_outdir(self):
@@ -740,7 +740,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 count += 1
         return count
     
-    def _get_number_of_free_fcs(self, order: None, verbosity=False):
+    def _get_number_of_free_fcs(self, order: None, verbose=False):
         """ Return the number of the FCs for FD method """
         
         file_log = self._get_logfile_suggest(order)
@@ -761,7 +761,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                     nfc_free[ith] = int(data[-1])
         
         ### print
-        if verbosity:
+        if verbose:
             msg = "\n Number of free FCs :"
             names = {1: "harmonic", 2: "cubic"}
             for ii in nfc_free:
@@ -897,7 +897,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                         displacement_mode, codeobj,
                         file_evec=file_evec,
                         primitive=self.primitive,
-                        verbosity=self.verbosity)
+                        verbose=self.verbose)
         except Exception as e:
             msg  = "\n *** Warning ***"
             msg += "\n The primitive cell is not applicable to AlamodeDisplace."
@@ -908,7 +908,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             almdisp = AlamodeDisplace(
                     displacement_mode, codeobj,
                     file_evec=file_evec,
-                    verbosity=self.verbosity)
+                    verbose=self.verbose)
         
         if almdisp is None:
             msg = "\n Error: Cannot obtain AlamodeDisplace object properly."
@@ -1030,7 +1030,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         logger.info(msg)
         
         ### number of free FCs
-        nfcs_list = self._get_number_of_free_fcs(order, verbosity=True)
+        nfcs_list = self._get_number_of_free_fcs(order, verbose=True)
         nfcs = nfcs_list[min(3, order)]
         natoms = len(self.supercell)
         
@@ -1825,7 +1825,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         return self._scat
     
     def set_scattering_info(
-            self, grain_size=None, temperature=300, calc_type="cubic", verbosity=True):
+            self, grain_size=None, temperature=300, calc_type="cubic", verbose=True):
         
         ### directory name for kappa
         dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
@@ -1863,7 +1863,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         else:
             msg1 += "\n - %s." % (self.get_relative_path(file_isotope))
         
-        if verbosity:
+        if verbose:
             logger.info(msg1)
         
         ###
@@ -1890,7 +1890,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             Grain size in nm.
             
         """
-        self.set_scattering_info(temperature=temperature, grain_size=grain_size, verbosity=False)
+        self.set_scattering_info(temperature=temperature, grain_size=grain_size, verbose=False)
         
         dump = {"ik": [], "is": [], 
                 "frequency[cm^-1]": [], "lifetime[ps]": [], 
@@ -1966,7 +1966,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         dfs = {}
         for t in ts:
             
-            self.set_scattering_info(temperature=t, grain_size=None, verbosity=False)
+            self.set_scattering_info(temperature=t, grain_size=None, verbose=False)
             omegas = self.scat.result['frequencies']
             taus = self.scat.lifetime
             

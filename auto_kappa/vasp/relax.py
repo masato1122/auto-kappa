@@ -93,7 +93,7 @@ class StrictRelaxation():
         kpts=[2,2,2],
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
         encut_factor=1.3, 
-        verbosity=1,
+        verbose=1,
         params_mod=None
         ):
         """ Run VASP jobs for different volumes and calculate the energy.
@@ -112,8 +112,8 @@ class StrictRelaxation():
             The command to run VASP
         encut_factor : float
             The factor to scale the plane-wave cutoff energy
-        verbosity : int
-            The verbosity level for logging
+        verbose : int
+            The verbose level for logging
         params_mod : dict
             A dictionary of parameters to modify in the VASP input
         """
@@ -124,7 +124,7 @@ class StrictRelaxation():
         line = " Strict structure optimization"
         msg = "\n" + line
         msg += "\n " + "=" * len(line)
-        if verbosity > 0:
+        if verbose > 0:
             logger.info(msg)
         
         ## volume of the initial structure
@@ -143,10 +143,10 @@ class StrictRelaxation():
                 break
             
             if count == 0:
-                verbosity = 2
+                verbose = 2
                 strains = np.linspace(initial_strain_range[0], initial_strain_range[1], nstrains)
             else:
-                verbosity = 1
+                verbose = 1
             
             df_results = relaxation_with_different_volumes(
                 self.initial_structure, strains,
@@ -156,7 +156,7 @@ class StrictRelaxation():
                 kpts=kpts, encut_factor=encut_factor,
                 command=command,
                 params_mod=params_mod,
-                verbosity=verbosity,
+                verbose=verbose,
                 dim=self.dim
             )
             df_results = df_results.sort_values(by='strain')
@@ -382,7 +382,7 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=200, dim=3):
         file_yaml = diri + "/strain.yaml"
         if os.path.exists(file_yaml) == False or dim == 2:
             try:
-                _make_strain_yaml(diri, cell_pristine=cell_pristine, dim=dim, verbosity=0)
+                _make_strain_yaml(diri, cell_pristine=cell_pristine, dim=dim, verbose=0)
             except Exception:
                 continue
         
@@ -396,7 +396,7 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=200, dim=3):
     else:
         return pd.DataFrame(all_results)
 
-def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
+def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbose=1):
     """ Make strain.yaml file """
     
     ### read file 
@@ -426,7 +426,7 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbosity=1):
     outfile = f"{directory}/strain.yaml"
     with open(outfile, "w") as f:
         yaml.dump(out_data, f)
-        if verbosity > 0:
+        if verbose > 0:
             msg = "\n Output ./%s" % os.path.relpath(outfile, os.getcwd())
             logger.info(msg)
     return out_data
@@ -560,7 +560,7 @@ def relaxation_with_different_volumes(
         kpts=[2,2,2], encut_factor=1.3, 
         command={'mpirun': 'mpirun', 'nprocs': 1, 'vasp': 'vasp'},
         params_mod=None,
-        verbosity=1, dim=3,
+        verbose=1, dim=3,
         ):
     """ Structure relaxation with the Birch-Murnaghan equation of state
     Args
@@ -600,7 +600,7 @@ def relaxation_with_different_volumes(
         line = "Strain: %f" % strain
         msg = "\n " + line
         msg += "\n " + "-" * len(line)
-        if verbosity > 0:
+        if verbose > 0:
             logger.info(msg)
         
         ### set the output directory
@@ -613,7 +613,7 @@ def relaxation_with_different_volumes(
                 flag = True
             count += 1
         
-        if verbosity > 0:
+        if verbose > 0:
             logger.info("\n Output directory: %s" % (
                 outdir.replace(os.getcwd(), ".")))
         
@@ -648,7 +648,7 @@ def relaxation_with_different_volumes(
         energy = out_data['energy']
         ene_unit = out_data['energy_unit']
         
-        if verbosity > 0:
+        if verbose > 0:
             msg = (
                 f" strain(%): {strain*100:.3f}   "
                 f"volume({vol_unit}): {volume:.3f}   "

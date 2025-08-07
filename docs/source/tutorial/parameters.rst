@@ -119,7 +119,7 @@ Parameters that may be modified for test calculations
         The calculation will restart (1) or will be overwritten if the output directory exsits (0). [1]
         When the directory does not exist, a new calculation will be conducted.
         
-    --verbosity=VERBOSITY
+    --verbose=VERBOSITY
         Verbosity (0 or 1) [0].
 
     --ignore_log=IGNORE_LOG
