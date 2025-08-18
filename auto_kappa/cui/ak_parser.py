@@ -97,18 +97,21 @@ def get_parser():
     ### Parameters for the calculation condictions
     parser.add_option("--cutoff_cubic", dest="cutoff_cubic", type="float",
             default=4.3, 
-            help="Cutoff length for cubic force constants with the unit of "
-            "angstrom [4.3]")
-    parser.add_option("--min_nearest", dest="min_nearest", type="int",
-            default=3,
+            help="Cutoff length for cubic force constants with the unit of angstrom [4.3]. "
+            "If the provided value is too small, the cutoff length will be adjusted "
+            "using `min_nearest` option."
+            )
+    parser.add_option("--min_nearest", dest="min_nearest", type="int", default=3,
             help="Minimum nearest neighbor atoms to consider cubic FCs [3]")
     
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=100, 
-            help="Maximum number of suggested patterns for cubic FCs [100]")
+            help="Maximum number of suggested patterns for cubic FCs [100]. "
+            "The default value will be changed to '1'."
+            )
     
     parser.add_option("--frac_nrandom", 
-            dest="frac_nrandom", type="float", default=1.,
+            dest="frac_nrandom", type="float", default=1.0,
             help="``Npattern * Natom / Nfc3``, where Npattern is the number "
             "of generated random displacement patterns, Natom is the number "
             "of atoms in a supercell, and Nfc3 is the number of FC3 [1.0]. "
@@ -122,10 +125,10 @@ def get_parser():
     
     parser.add_option("--mag_cubic", 
             dest="mag_cubic", type="float", default=0.03, 
-            help="displacement magnitude for cubic FCs [0.03]")
+            help="displacement magnitude for cubic FCs with the unit of angstrom [0.03]")
     
-    parser.add_option("--negative_freq", dest="negative_freq", type="float",
-            default=-0.001, help="threshold for negative frequency [-0.001]")
+    parser.add_option("--negative_freq", dest="negative_freq", type="float", default=-0.001, 
+            help="threshold for negative frequency with the unit of 1/cm [-0.001]")
             
     parser.add_option("--volume_relaxation", 
             dest="volume_relaxation", type="int", default=1,

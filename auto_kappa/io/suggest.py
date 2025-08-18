@@ -112,7 +112,7 @@ class Pattern:
         Args
         ----
         mag : float
-            Magnitude of the displacement in the unit of Angstrom.
+            Magnitude of the displacement with the unit of Angstrom.
         """
         if self.structure is None:
             msg = "\n Error: Structure is not given."
@@ -139,7 +139,7 @@ class Pattern:
         Args
         ----
         mag : float
-            Magnitude of the displacement in the unit of Angstrom.
+            Magnitude of the displacement with the unit of Angstrom.
         """
         if mag is None:
             msg = "\n Error: Displacement magnitude is not given."
@@ -277,7 +277,7 @@ class SuggestLogParser:
             logger.info(msg)
         
     def get_neighboring_distances(self, unit='Ang'):
-        """ Get distances between neighboring atoms in the unit of Angstrom
+        """ Get distances between neighboring atoms with the unit of Angstrom
         
         Args
         ----
