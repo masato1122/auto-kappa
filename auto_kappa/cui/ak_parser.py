@@ -99,6 +99,9 @@ def get_parser():
             default=4.3, 
             help="Cutoff length for cubic force constants with the unit of "
             "angstrom [4.3]")
+    parser.add_option("--min_nearest", dest="min_nearest", type="int",
+            default=3,
+            help="Minimum nearest neighbor atoms to consider cubic FCs [3]")
     
     parser.add_option("--nmax_suggest", 
             dest="nmax_suggest", type="int", default=100, 

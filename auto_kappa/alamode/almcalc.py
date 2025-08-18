@@ -84,6 +84,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             magnitude=0.01, magnitude2=0.03, 
             ##mag_high=0.03,
             cutoff2=-1, cutoff3=4.3, 
+            min_nearest=3,
             #order_lasso=5,
             nac=None,
             commands=None,
@@ -138,6 +139,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             cutoff radii.
             If cutoffs is None, cutoff2 and cutoff3 are used.
             For lasso calculation, cuttoff3 is used for higher order FCs.
+        
+        min_nearest : int
+            minimum nearest neighbor atoms to consider cubic FCs.
+            At least, ``min_nearest``-th neighbor atoms will be considered,
+            if ``cutoff3`` is shorter than the corresponding distance.
         
         nac : int
             If nac=0, nac is not considered while, if nac != 0, nac is considered.
@@ -262,6 +268,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         
         self._cutoff2 = cutoff2
         self._cutoff3 = cutoff3
+        self.min_nearest = min_nearest
         self._cutoffs = cutoffs
         
         ##

@@ -553,8 +553,9 @@ def calculate_cubic_force_constants(
         ):
     """ Calculate cubic force constants
     """
-    ## Adjust the cutoff length for cubic FCs if it's too short.
-    flag = almcalc.adjust_cutoff3(index=2)  # 2nd shortest atomic distance
+    ## Adjust the cutoff length for cubic FCs if the cutoff is too short.
+    ## `almcalc.min_nearest`-th shortest atomic distance
+    flag = almcalc.adjust_cutoff3(index=almcalc.min_nearest)
     file_log = almcalc.out_dirs['cube']['suggest'] + '/suggest.log'
     if flag and os.path.exists(file_log):
         ignore_log = True

@@ -283,6 +283,7 @@ def main():
             scell_matrix=trans_matrices['supercell'],
             cutoff2=cutoff_harm,
             cutoff3=ak_params['cutoff_cubic'],
+            min_nearest=ak_params['min_nearest'],
             magnitude=ak_params['mag_harm'],
             magnitude2=ak_params['mag_cubic'],
             ##mag_high=ak_params['mag_high'],
