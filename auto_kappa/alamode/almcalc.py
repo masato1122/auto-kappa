@@ -26,10 +26,11 @@ from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
 from auto_kappa.structure import change_structure_format, match_structures
-from auto_kappa.structure.crystal import get_formula, convert_primitive_to_unitcell
+from auto_kappa.structure.crystal import (
+    get_formula, convert_primitive_to_unitcell, get_atomic_distance_list)
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
-from auto_kappa.io.alm import AnphonInput
+from auto_kappa.io.alm import AlmInput, AnphonInput
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile, read_log_fc
 from auto_kappa.alamode.io import wasfinished_alamode
@@ -556,36 +557,59 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
      
     @property
     def cutoff2(self):
-        return self._cutoff2
+        return self._cutoff2 # Bohr
     @cutoff2.setter
-    def cutoffs(self, c2):
+    def cutoff2(self, c2):
         self._cutoff2 = c2
 
     @property
     def cutoff3(self):
-        return self._cutoff3
-    
+        return self._cutoff3 # Bohr
     @cutoff3.setter
-    def cutoffs(self, c3):
+    def cutoff3(self, c3):
         self._cutoff3 = c3
+    
+    def adjust_cutoff3(self, index=3, buffer=0.001):
+        """ Adjust cutoff length for cubic force constants.
+        
+        Return
+        ------
+        bool : If cutoff3 is adjusted, return True, otherwise, return False.
+        """
+        d_list = get_atomic_distance_list(self.supercell, eps=1e-5)  # Angstrom
+        if len(d_list) >= index:
+            suggested_cutoff3 = d_list[index-1] + buffer
+        else:
+            suggested_cutoff3 = d_list[-1] + buffer
+        
+        if suggested_cutoff3 > self.cutoff3:
+            msg = f"\n * Modify cutoff3 from {self.cutoff3:.3f} Å to {suggested_cutoff3:.3f} Å."
+            logger.info(msg)
+            self.cutoff3 = suggested_cutoff3
+            self.set_cutoffs()
+            return True
+        else:
+            return False
     
     @property
     def cutoffs(self):
         if self._cutoffs is not None:
             return self._cutoffs
         else:
-            ### Angstrom => Bohr
-            self._cutoffs = helper.get_cutoffs_automatically(
-                    cutoff2=self.cutoff2,
-                    cutoff3=self.cutoff3,
-                    num_elems=self.num_elems,
-                    order=len(self.nbody)
-                    ) * AToBohr
+            self.set_cutoffs()
         return self._cutoffs
     
-    @cutoffs.setter
-    def cutoffs(self, matrix):
-        self._cutoffs = matrix
+    def set_cutoffs(self):
+        ### Angstrom => Bohr
+        self._cutoffs = helper.get_cutoffs_automatically(
+            cutoff2=self.cutoff2,
+            cutoff3=self.cutoff3,
+            num_elems=self.num_elems,
+            order=len(self.nbody)
+            ) * AToBohr
+    # @cutoffs.setter
+    # def cutoffs(self, matrix):
+    #     self._cutoffs = matrix
 
     @property
     def nmax_suggest(self):
@@ -1288,6 +1312,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             ver_alamode = get_version(self.commands['alamode'][alamode_type])
         else:
             ver_alamode = None
+        
+        # if os.path.exists(filename):
+        #     if alamode_type.startswith('alm'):
+        #         inp_prev = AlmInput.from_file(filename)
+        #     else:
+        #         inp_prev = AnphonInput.from_file(filename)
+            
         inp.to_file(filename=filename, version=ver_alamode)
         
         # msg = "\n Make an input script for ALAMODE : %s." % (
@@ -1493,11 +1524,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
             
             if count == 0:
                 if ignore_log is None:
-                    neg_log = 0
+                    neg_log = False
                 else:
                     neg_log = ignore_log
             else:
-                neg_log = 1
+                neg_log = True
             
             ### calculate phonon property
             job_output = self.run_alamode(
@@ -1610,7 +1641,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 logger.error(msg)
                 logger.error(e)
     
-    def run_alamode(self, propt=None, order=None, ignore_log=0, outdir=None, logfile=None, verbose=True):
+    def run_alamode(self, propt=None, order=None, ignore_log=False, outdir=None, logfile=None, verbose=True):
         """ Run anphon
         
         Args
@@ -1618,7 +1649,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         propt : string
             "band", "dos", "evec_commensurate", "fc*", "kappa", ...
 
-        ignore_log : int
+        ignore_log : bool
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
         

@@ -315,7 +315,7 @@ class FCSxml:
         set_axis(ax, xticks=xticks, mxticks=mxticks)
     
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
-                 xlabel='Distance (${\\rm \\AA}$)', 
+                 xlabel='Maximum distance (${\\rm \\AA}$)', 
                  ylabel='Cubic FC (${\\rm eV/\\AA^3}$)',
                  lw=0.3, ms=2.3, xticks=None, mxticks=None):
         
@@ -360,7 +360,7 @@ class FCSxml:
         set_axis(ax, xticks=xticks, mxticks=mxticks)
     
     def plot_fc4(self, ax, color=None, title=None, show_legend=True,
-                 xlabel='Distance (${\\rm \\AA}$)', 
+                 xlabel='Maximum distance (${\\rm \\AA}$)', 
                  ylabel='Quartic FC (${\\rm eV/\\AA^4}$)',
                  lw=0.3, ms=2.3, xticks=None, mxticks=None):
         

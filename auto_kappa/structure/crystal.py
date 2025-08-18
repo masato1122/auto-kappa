@@ -246,3 +246,26 @@ def get_spg_number(str_orig):
     except:    
         return dataset['number']
 
+def get_atomic_distance_list(structure, eps=1e-5):
+    """ Get unique atomic distances """
+    
+    if not isinstance(structure, ase.Atoms):
+        structure = change_structure_format(structure, format='ase')
+
+    all_ds = structure.get_all_distances(mic=True)
+    ds = np.sort(all_ds.flatten())
+    
+    ### Get unique list
+    d_list = []
+    for d in ds:
+        if len(d_list) == 0:
+            if d > eps:
+                d_list = np.array([d])
+        else:
+            min_diff = np.min(abs(d_list - d))
+            if min_diff > eps and d > eps:
+                if len(d_list) == 0:
+                    d_list = np.array([d])
+                else:
+                    d_list = np.append(d_list, d)
+    return d_list

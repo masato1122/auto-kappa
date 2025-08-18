@@ -546,16 +546,24 @@ def analyze_harmonic_properties(
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
     almcalc.run_alamode(propt='evec_commensurate', ignore_log=ignore_log)
-    
+
 def calculate_cubic_force_constants(
         almcalc, calculator,
         nmax_suggest=None, frac_nrandom=None, ignore_log=False,
         ):
     """ Calculate cubic force constants
     """
+    ## Adjust the cutoff length for cubic FCs if it's too short.
+    flag = almcalc.adjust_cutoff3(index=2)  # 2nd shortest atomic distance
+    file_log = almcalc.out_dirs['cube']['suggest'] + '/suggest.log'
+    if flag and os.path.exists(file_log):
+        ignore_log = True
+    else:
+        ignore_log = False
+    
     ### calculate forces for cubic FCs
     almcalc.write_alamode_input(propt='suggest', order=2)
-    almcalc.run_alamode(propt='suggest', order=2)
+    almcalc.run_alamode(propt='suggest', order=2, ignore_log=ignore_log)
     almcalc.calc_forces(
             order=2, calculator=calculator,
             nmax_suggest=nmax_suggest,

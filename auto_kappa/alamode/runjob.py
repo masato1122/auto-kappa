@@ -27,7 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def run_alamode(
-        filename, logfile, workdir='.', ignore_log=0, file_err="std_err.txt",
+        filename, logfile, workdir='.', ignore_log=False, file_err="std_err.txt",
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon',
         max_num_corrections=None):
     """ Run alamode with a command (alm or anphon)
