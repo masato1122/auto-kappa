@@ -255,8 +255,17 @@ def check_previous_structures(options):
     """
     ## Order is important: harmonic, cubic_fd -> cubic_lasso
     ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
+    pos_volume = "./" + options.outdir + "/" + output_directories['relax'] + "/volume/POSCAR.opt"
+    pos_freeze = "./" + options.outdir + "/" + output_directories['relax'] + "/freeze-1/CONTCAR"
+    if os.path.exists(pos_volume):
+        file_relax = pos_volume
+    elif os.path.exists(pos_freeze):
+        file_relax = pos_freeze
+    else:
+        file_relax = None
+    
     structure_files = {
-        'relax'     : "./" + options.outdir + "/" + output_directories['relax'] + "/freeze-1/CONTCAR",
+        'relax'     : file_relax,
         'opt_unit'  : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
         'opt_super' : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.super",
         'nac'       : "./" + options.outdir + "/" + output_directories['nac'] + "/POSCAR",
