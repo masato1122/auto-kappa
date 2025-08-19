@@ -23,6 +23,7 @@ import ase
 import ase.io
 # from ase.geometry import get_distances
 from phonopy.structure.cells import get_primitive, get_supercell
+import matplotlib.pyplot as plt
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
 from auto_kappa.structure import change_structure_format, match_structures
@@ -49,6 +50,7 @@ from auto_kappa.alamode.gruneisen import GruneisenCalculator
 from auto_kappa.utils import get_version
 from auto_kappa.units import BohrToA, AToBohr
 from auto_kappa.structure.two import get_normal_index, get_thickness
+from auto_kappa.plot import set_matplot
 
 import logging
 logger = logging.getLogger(__name__)
@@ -2175,29 +2177,32 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         fig.savefig(figname, dpi=600, bbox_inches='tight')
         msg = "\n Plot band structure and DOS: %s" % figname
         logger.info(msg)
+    
+    def plot_thermodynamic_properties(self, fontsize=7, fig_width=2.5, aspect=1.3, dpi=600):
+        """ plot thermodynamic properties
+        """
+        from auto_kappa.io.thermo import Thermo
+        filename = self.out_dirs['harm']['bandos'] + "/" + self.prefix + ".thermo"
+        figname = self.out_dirs['harm']['bandos'] + "/fig_thermo.png"
+        if figname.startswith("/"):
+            figname = "./" + os.path.relpath(figname, os.getcwd())
         
+        if not os.path.exists(filename):
+            logger.warning(f"\n Thermodynamic properties file not found: {filename}")
+            return
         
-    # def plot_bandos(self, **kwargs):
-    #     ### set figure name
-    #     if 'figname' not in kwargs.keys():
-    #         figname = self.out_dirs['harm']['bandos'] + '/fig_bandos.png'
-    #     else:
-    #         figname = kwargs['figname']
+        set_matplot(fontsize=fontsize)
+        fig = plt.figure(figsize=(fig_width, fig_width*aspect))
+        plt.subplots_adjust(hspace=0.05)
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
         
-    #     from auto_kappa.plot.bandos import plot_bandos
+        thermo = Thermo(filename)
+        thermo.plot(ax1, ax2)
         
-    #     ### output title
-    #     line = "Plot band and DOS:"
-    #     msg = "\n " + line + "\n"
-    #     msg += " " + "-" * len(line) + "\n"
-    #     logger.info(msg)
-        
-    #     fig = plot_bandos(
-    #             directory=self.get_relative_path(self.out_dirs['harm']['bandos']),
-    #             prefix=self.prefix, 
-    #             figname=self.get_relative_path(figname),
-    #             **kwargs
-    #             )
+        fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+        msg = " Plot thermodynamic properties: %s" % figname
+        logger.info(msg)
     
     def get_kappa_directories(self, calc_type="cubic"):
         

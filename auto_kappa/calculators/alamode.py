@@ -541,7 +541,14 @@ def analyze_harmonic_properties(
     
     ### plot band and DOS
     if almcalc.calculate_forces:
-        almcalc.plot_bandos()
+        try:
+            almcalc.plot_bandos()
+        except Exception as e:
+            logger.warning(f"\n Failed to plot band and DOS: {e}")
+        try:
+            almcalc.plot_thermodynamic_properties()
+        except Exception as e:
+            logger.warning(f"\n Failed to plot thermodynamic properties: {e}")
     
     ### eigenvalues at commensurate points
     almcalc.write_alamode_input(propt='evec_commensurate')
