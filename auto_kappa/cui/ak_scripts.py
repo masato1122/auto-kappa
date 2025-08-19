@@ -94,9 +94,9 @@ def main():
     
     ### Auto-kappa parmaeters
     from auto_kappa.cui.compat import check_ak_options, parse_vasp_params
-    check_ak_options(options)
-    ak_params = eval(str(options))
+    ak_params = vars(options)
     outfile = ak_params['outdir'] + "/parameters.json"
+    check_ak_options(ak_params, outfile)
     _store_parameters(outfile, ak_params)
     vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
     

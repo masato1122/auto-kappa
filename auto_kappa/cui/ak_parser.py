@@ -9,7 +9,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import sys
+# import sys
 # import shutil
 from optparse import OptionParser
 

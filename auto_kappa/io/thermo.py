@@ -129,18 +129,27 @@ class Thermo:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
     
-    def plot(self, ax1, ax2=None, unit1='meV', unit2='eV',
+    def plot(self, ax1, ax2=None, unit1='kB', unit2='eV',
              title="Thermodynamic properties"):
         
         ax1.set_title(title)
         
-        ylabel1 = "${\\rm C_v}$, S (%s)" % unit1
-        self.plot_specific_heat(ax1, xlabel=None, ylabel=None, label='Specific heat')
-        self.plot_entropy(ax1, xlabel=None, ylabel=ylabel1, label='Entropy')
+        if unit1.lower() == 'kb':
+            unit_label = "$k_B$"
+        else:
+            unit_label = unit1
+        ylabel1 = "${\\rm C_v}$, S (%s)" % unit_label
+        ax1.axhline(0, linestyle='-', color='grey', lw=0.3)
+        self.plot_specific_heat(ax1, xlabel=None, ylabel=None, unit=unit1, label='Specific heat')
+        self.plot_entropy(ax1, xlabel=None, ylabel=ylabel1, unit=unit1, label='Entropy')
+        
+        from matplotlib.ticker import MaxNLocator
+        ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
         
         ylabel2 = "Energy (%s)" % unit2
-        self.plot_internal_energy(ax2, xlabel=None, ylabel=None, label='Internal energy')
-        self.plot_free_energy(ax2, xlabel='Temperature (K)', ylabel=ylabel2, label='Free energy')
+        ax2.axhline(0, linestyle='-', color='grey', lw=0.3)
+        self.plot_internal_energy(ax2, xlabel=None, ylabel=None, unit=unit2, label='Internal energy')
+        self.plot_free_energy(ax2, xlabel='Temperature (K)', ylabel=ylabel2, unit=unit2, label='Free energy')
         
         set_axis(ax1)
         set_axis(ax2)

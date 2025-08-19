@@ -14,8 +14,10 @@
 import os
 import sys
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import shutil
+import json
+import pickle
 
 import ase.io
 from ase.geometry import get_distances
@@ -27,37 +29,46 @@ from auto_kappa.structure import match_structures
 import logging
 logger = logging.getLogger(__name__)
 
-def check_ak_options(options):
+def check_ak_options(params, file_params):
     """ Check the auto-kappa options. """
-    _check_deprecated_options(options)
-    _check_command_options(options)
-    _check_alamode_version(options)
-    _adjust_displacement_magnitude(options)
-    check_previous_structures(options)
+    ### Check previous parameters
+    if os.path.exists(file_params):
+        with open(file_params, 'r', encoding='utf-8') as f:
+            if file_params.endswith('.json'):
+                prev_params = json.load(f)
+            elif file_params.endswith('.pkl') or file_params.endswith('.pickle'):
+                prev_params = pickle.load(f)
+            else:
+                logger.error(f"\n Unsupported file format: {file_params}")
+                return None
+        _check_previous_parameters(params, prev_params, file_prev=file_params)
+
+    _check_deprecated_options(params)
+    _check_command_options(params)
+    _check_alamode_version(params)
+    _adjust_displacement_magnitude(params)
+    _check_previous_structures(params)
     
-    if options.mater_dim != 3:
-        msg = "\n Sorry, auto-kappa does not support {options.mater_dim}D systems yet."
+    if params['mater_dim'] != 3:
+        msg = f"\n Error: Auto-kappa does not support {params['mater_dim']}D systems yet."
         logger.error(msg)
         sys.exit()
 
-def _check_deprecated_options(options):
+def _check_deprecated_options(params):
     """ Check deprecated option names and set new option names."""
-    params = eval(str(options))
     ## --ncores
     if params.get('ncores') is not None:
-        options.nprocs = params['ncores']    
+        params['nprocs'] = params['ncores']    
         logger.warning("\n The option --ncores is not used any more. "
                        "Please use --nprocs instead.")
     ## --material_name
     if params.get('material_name') is not None:
-        options.outdir = params['material_name']
+        params['outdir'] = params['material_name']
         logger.warning("\n The option --material_name is not used any more. "
                        "Please use --outdir instead.")
 
-def _check_command_options(options):
+def _check_command_options(params):
     """ Check the command options. """
-    
-    params = eval(str(options))
     count = 0
     for name, cmd in params.items():
         if name.startswith("command_") == False:
@@ -91,7 +102,7 @@ def _check_command_options(options):
             #    ##sys.exit()
             count += 1
 
-def _check_alamode_version(options):
+def _check_alamode_version(params):
     
     from auto_kappa.utils.version import get_version
     from packaging.version import Version
@@ -99,15 +110,15 @@ def _check_alamode_version(options):
     ## 'alm' command is not supported.
     ##if options.command_alm is not None:
     ##    ver = get_version(options.command_alm)
-    if options.command_anphon is not None:
-        ver = get_version(options.command_anphon)
+    if params['command_anphon'] is not None:
+        ver = get_version(params['command_anphon'])
         if ver is not None:
             if Version(ver) >= Version("1.8.0"):
                 msg = f"\n Warning: Anphon ver.{ver} for command_anphon may not be too old."
                 msg += "\n Please check the anphon version for --command_anphon."
                 logger.error(msg)
-    if options.command_anphon_ver2 is not None:
-        ver = get_version(options.command_anphon_ver2)
+    if params['command_anphon_ver2'] is not None:
+        ver = get_version(params['command_anphon_ver2'])
         if ver is not None:
             if Version(ver) < Version("1.9.0"):
                 msg = f"\n Warning: Anphon ver.{ver} for command_anphon_ver2 may be too old."
@@ -160,15 +171,15 @@ def parse_vasp_params(params_string):
     
     return params_dict
 
-def _adjust_displacement_magnitude(options, tolerance=1e-5):
+def _adjust_displacement_magnitude(params, tolerance=1e-5):
     """ Adjust the displacement magnitude for harmonic and cubic force calculations.
     """
     ## Order is important: harmonic, cubic_fd -> cubic_lasso
     ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
     dirs_tobe_checked = [
-        options.outdir + "/" + output_directories['harm']['force'],
-        options.outdir + "/" + output_directories['cube']['force_fd'],
-        options.outdir + "/" + output_directories['cube']['force_lasso']
+        params['outdir'] + "/" + output_directories['harm']['force'],
+        params['outdir'] + "/" + output_directories['cube']['force_fd'],
+        params['outdir'] + "/" + output_directories['cube']['force_lasso']
     ]
     orders = ['harm', 'cube_fd', 'cube_lasso']
     
@@ -193,22 +204,22 @@ def _adjust_displacement_magnitude(options, tolerance=1e-5):
         ## the maximum displacement magnitude (mag_disp) for Lasso method,
         adjusted = False
         if orders[i] == 'harm':
-            if abs(mag_comp - options.mag_harm) > tolerance:
-                mag_orig = options.mag_harm
+            if abs(mag_comp - params['mag_harm']) > tolerance:
+                mag_orig = params['mag_harm']
                 mag_mod = mag_comp
-                options.mag_harm = mag_mod
-                adjusted = True    
+                params['mag_harm'] = mag_mod
+                adjusted = True
         elif orders[i] == 'cube_fd':
-            if abs(mag_comp - options.mag_cubic) > tolerance:
-                mag_orig = options.mag_cubic
+            if abs(mag_comp - params['mag_cubic']) > tolerance:
+                mag_orig = params['mag_cubic']
                 mag_mod = mag_comp
-                options.mag_cubic = mag_comp
+                params['mag_cubic'] = mag_comp
                 adjusted = True
         elif orders[i] == 'cube_lasso':
-            if abs(mag_disp - options.mag_cubic) > tolerance:
-                mag_orig = options.mag_cubic
+            if abs(mag_disp - params['mag_cubic']) > tolerance:
+                mag_orig = params['mag_cubic']
                 mag_mod = mag_disp
-                options.mag_cubic = mag_disp
+                params['mag_cubic'] = mag_disp
                 adjusted = True
         else:
             msg = f"\n Error: Unknown order '{orders[i]}' in adjust_displacement_magnitude."
@@ -250,13 +261,13 @@ def _get_displacement_magnitude(atoms0, atoms1):
     mag = np.max(np.diag(D_len))
     return disp_comp, mag
 
-def check_previous_structures(options):
+def _check_previous_structures(params):
     """ Adjust the displacement magnitude for harmonic and cubic force calculations.
     """
     ## Order is important: harmonic, cubic_fd -> cubic_lasso
     ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
-    pos_volume = "./" + options.outdir + "/" + output_directories['relax'] + "/volume/POSCAR.opt"
-    pos_freeze = "./" + options.outdir + "/" + output_directories['relax'] + "/freeze-1/CONTCAR"
+    pos_volume = "./" + params['outdir'] + "/" + output_directories['relax'] + "/volume/POSCAR.opt"
+    pos_freeze = "./" + params['outdir'] + "/" + output_directories['relax'] + "/freeze-1/CONTCAR"
     if os.path.exists(pos_volume):
         file_relax = pos_volume
     elif os.path.exists(pos_freeze):
@@ -266,12 +277,12 @@ def check_previous_structures(options):
     
     structure_files = {
         'relax'     : file_relax,
-        'opt_unit'  : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
-        'opt_super' : "./" + options.outdir + "/" + output_directories['relax'] + "/structures/POSCAR.super",
-        'nac'       : "./" + options.outdir + "/" + output_directories['nac'] + "/POSCAR",
-        'harm'      : "./" + options.outdir + "/" + output_directories['harm']['force'] + "/prist/POSCAR",
-        'cube_fd'   : "./" + options.outdir + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
-        'cube_lasso': "./" + options.outdir + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
+        'opt_unit'  : "./" + params['outdir'] + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
+        'opt_super' : "./" + params['outdir'] + "/" + output_directories['relax'] + "/structures/POSCAR.super",
+        'nac'       : "./" + params['outdir'] + "/" + output_directories['nac'] + "/POSCAR",
+        'harm'      : "./" + params['outdir'] + "/" + output_directories['harm']['force'] + "/prist/POSCAR",
+        'cube_fd'   : "./" + params['outdir'] + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
+        'cube_lasso': "./" + params['outdir'] + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
     }
     structures = {}
     for key, file in structure_files.items():
@@ -304,3 +315,34 @@ def check_previous_structures(options):
                     first_output = False
                 msg = f" - %s and %s" % (structure_files[key1], structure_files[key2])
                 logger.info(msg)
+
+def _check_previous_parameters(given_params, prev_params, file_prev=None):
+    """ Check if the current parameters match the previous ones.
+    """
+    columns_must_be_same = [
+        'cutoff_cubic', 'min_nearest', 'nmax_suggest', 'frac_nrandom',
+        'mag_harm', 'mag_cubic', 'negative_freq', 'relaxed_cell', 
+        'k_length', 'max_natoms', 'random_disp_temperature']
+    
+    count = 0
+    for key in given_params:
+        if key not in columns_must_be_same:
+            continue
+        if prev_params.get(key) is None:
+            continue
+        if given_params[key] != prev_params[key]:
+            if count == 0:
+                if file_prev.startswith("/"):
+                    file_prev = "./" + os.path.relpath(file_prev)
+                logger.info("\n The following parameters are modified to match the previous ones:")
+                logger.info(" If you want to keep the current parameters, please modify")
+                logger.info(" the parameters in the file \"%s\"." % file_prev)
+                count += 1
+            msg = " - %s: %s -> %s" % (key, given_params[key], prev_params[key])
+            logger.info(msg)
+            
+            ### Modify the parameter
+            given_params[key] = prev_params[key]
+    
+    if count != 0:
+        logger.info("")
