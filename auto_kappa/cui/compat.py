@@ -18,6 +18,7 @@ import numpy as np
 import shutil
 import json
 import pickle
+import glob
 
 import ase.io
 from ase.geometry import get_distances
@@ -324,12 +325,24 @@ def _check_previous_parameters(given_params, prev_params, file_prev=None):
         'mag_harm', 'mag_cubic', 'negative_freq', 'relaxed_cell', 
         'k_length', 'max_natoms', 'random_disp_temperature']
     
+    base_dir = os.path.dirname(file_prev) if file_prev is not None else None
+    
     count = 0
     for key in given_params:
         if key not in columns_must_be_same:
             continue
         if prev_params.get(key) is None:
             continue
+        
+        if key.startswith("mag_") and base_dir is not None:
+            if key == "mag_harm":
+                line = f"{base_dir}/harm/force/1/vasprun.xml"
+            elif key == 'mag_cubic':
+                line = f"{base_dir}/cube/force_*/1/vasprun.xml"
+            dirs = glob.glob(line)
+            if len(dirs) == 0:
+                continue
+        
         if given_params[key] != prev_params[key]:
             if count == 0:
                 if file_prev.startswith("/"):
