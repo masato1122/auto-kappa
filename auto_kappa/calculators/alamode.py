@@ -292,6 +292,9 @@ def analyze_phonon_properties_with_larger_supercells(
         
         almcalc_large._fc3_type = almcalc.fc3_type
         
+        ## Calculate Grüneisen parameters
+        almcalc.calculate_gruneisen_parameters()
+        
         ### Calculate higher-order force constants
         if four == 1:
             calculate_high_order_force_constants(

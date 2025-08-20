@@ -46,10 +46,11 @@ class GruneisenCalculator:
             if mode == 'band':
                 kwargs = {}
                 
-                fig_width = 2.6
-                aspect = 0.7
+                fig_width = 2.3
+                aspect = 0.9
                 suffix = 'gruneisen'
                 GruObj = Gruneisen
+                args = {'plot_G2G': True}
             
             elif mode == 'dos':
                 kpts = get_automatic_kmesh(
@@ -61,6 +62,7 @@ class GruneisenCalculator:
                 aspect = 0.9
                 suffix = 'gru_all'
                 GruObj = GruAll
+                args = {}
             
             try:
                 ### Make the working directory, write input file, and run the job
@@ -81,7 +83,7 @@ class GruneisenCalculator:
                 figname = f"{workdir}/fig_{suffix}.png"
                 
                 obj = GruObj(filename)
-                obj.plot(ax)
+                obj.plot(ax, **args)
                 fig.savefig(figname, dpi=600, bbox_inches='tight')
                 
                 msg = " Output : %s" % figname
