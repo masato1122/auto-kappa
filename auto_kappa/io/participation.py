@@ -68,14 +68,17 @@ class BandPR:
         if self._prs is None:
             self._read_file_pr()
         return self._prs
-    
+    @property
+    def nbands(self):
+        return self.prs.shape[1]
+
     def _read_file_pr(self):
         self._kpoints, self._prs = parse_file_pr(self.file_pr)
         
     def _read_file_bands(self):
         self.band = Band(self.file_bands)
     
-    def plot(self, ax, lw=0.5, cmap='rainbow', cbar_location='right', plot_G2G=False):
+    def plot(self, ax, lw=None, cmap='rainbow', cbar_location='right', plot_G2G=False):
         
         assert len(self.kpoints) == len(self.band.kpoints), \
             "Number of kpoints in participation ratio and band structure must match."

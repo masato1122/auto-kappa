@@ -169,7 +169,7 @@ class Gruneisen:
     def _read_band_file(self):
         self.band = Band(self._file_bands)
     
-    def plot(self, ax, cmap='rainbow', plot_G2G=True):
+    def plot(self, ax, cmap='rainbow', plot_G2G=True, lw=0.5):
         """ Plot band structure colored based on Gruneisen parameters 
         """
         cmin = self.gru_params.min()
@@ -178,7 +178,7 @@ class Gruneisen:
         norm = plt.Normalize(-cmax_abs, cmax_abs)
         
         self.band.plot_with_weighted_colors(
-            ax, self.gru_params, cmap=cmap, norm=norm, plot_G2G=plot_G2G,
+            ax, self.gru_params, cmap=cmap, norm=norm, plot_G2G=plot_G2G, lw=lw,
             clabel='Gr${\\rm \\ddot{u}}$neisen parameter')
 
 def parse_gru_all(filepath):

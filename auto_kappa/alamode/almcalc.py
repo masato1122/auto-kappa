@@ -2161,8 +2161,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
         
         ### Plot DOS
         try:
+            if lw is not None:
+                lw_dos = lw * 1.3
+            else:
+                lw_dos = 0.8
             dos = Dos(file_dos)
-            dos.plot(ax2, xlabel=None, lw=lw*1.3, frac_lw=0.7)
+            dos.plot(ax2, xlabel=None, lw=lw_dos, frac_lw=0.7)
         except Exception as e:
             msg = "\n Warning: cannot plot DOS. %s" % str(e)
             logger.warning(msg)

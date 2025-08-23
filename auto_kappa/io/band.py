@@ -23,7 +23,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Band:
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, adjust_kpoints=True):
         """ Class to read and plot band structure data from .bands file.
         
         How to use
@@ -93,7 +93,7 @@ class Band:
         self.symmetry_labels = None
         self.symmetry_kpoints = None
         if filename is not None:
-            self.read_bfile(filename)
+            self.read_bfile(filename, adjust_kpoints=adjust_kpoints)
     
     @property
     def nk(self):
@@ -124,47 +124,59 @@ class Band:
         self.kpoints = out[0]
         self.frequencies = out[1]
         
-    def read_bfile(self, bfile):
+    def read_bfile(self, bfile, adjust_kpoints=True):
         """Read band file
         """
         # self.set_nk_nbands(bfile)
         self.set_symmetry_points(bfile)
         self.set_eigen_values(bfile)
+        if adjust_kpoints:
+            self._adjust_kpoints()
+    
+    def _adjust_kpoints(self, frac_kmin=0.08):
+        """ Adjust kpoints to expand the small sections
+        """
+        ## Total k-length and minimum k-length for a section
+        lk_tot = self.kpoints[-1] - self.kpoints[0]
+        lk_min = lk_tot * frac_kmin
+        
+        ## Get indices for each section
+        section_ids, _, _ = get_band_section_indices_labels(
+            self.kpoints, self.symmetry_kpoints, self.symmetry_labels,
+        )
+        
+        koffset = 0.
+        _kpoints = np.zeros_like(self.kpoints)
+        _symmetry_kpoints = []
+        for isec, idx in enumerate(section_ids):
+            (i0, i1) = idx
+            ksec = self.kpoints[i0:i1+1] + koffset
+            lk_sec = ksec[-1] - ksec[0]
+            
+            if lk_sec < lk_min:
+                ## Expand section if too small
+                npoints = i1 - i0 + 1
+                k0 = ksec[0]
+                k1 = k0 + lk_min
+                _kpoints[i0:i1+1] = np.linspace(k0, k1, npoints)
+                koffset += lk_min - lk_sec
+            else:
+                _kpoints[i0:i1+1] = ksec
+
+            _symmetry_kpoints.append(float(_kpoints[i0]))
+        
+        _symmetry_kpoints.append(float(_kpoints[i1]))
+        
+        ## Update k-point info
+        self.symmetry_kpoints = _symmetry_kpoints
+        self.kpoints = _kpoints
     
     def plot_bands(self, **args):
         msg = "\n Warning: plot_bands() will be deprecated. Use plot() method instead."
         logger.warning(msg)
         self.plot(**args)
     
-    def _get_indices_of_1st_and_2nd_gamma(self):
-        """Get indices of the first and second gamma points in kpoints and symmetry_kpoints.
-        If there are no gamma points, return 0 and nk-1.
-        
-        Returns
-        -------
-        idx_init : int
-            Index of the first gamma point.
-        idx_end : int
-            Index of the second gamma point.
-        itick_init : int
-            Index of the first gamma point in symmetry_kpoints.
-        itick_end : int
-            Index of the second gamma point in symmetry_kpoints.
-        """
-        gamma_kpoints = []
-        itick_gammas = []
-        for i, lab in enumerate(self.symmetry_labels):
-            if lab.startswith('G'):
-                gamma_kpoints.append(self.symmetry_kpoints[i])
-                itick_gammas.append(i)
-        if len(gamma_kpoints) >= 2:
-            idx_init = np.argmin(abs(self.kpoints - gamma_kpoints[0]))
-            idx_end = np.argmin(abs(self.kpoints - gamma_kpoints[1]))
-            return ((idx_init, idx_end), (itick_gammas[0], itick_gammas[1]))
-        else:
-            return ((0, self.nk - 1), (0, len(self.symmetry_labels) - 1))
-    
-    def plot(self, ax, color=None, lw=0.3, linestyle='-', plot_G2G=False,
+    def plot(self, ax, color='blue', lw=0.5, linestyle='-', plot_G2G=False,
              ylabel="Frequency (${\\rm cm^{-1}}$)", 
              label=None, show_legend=True, set_xticks=True):
         """ Plot band structure
@@ -180,7 +192,7 @@ class Band:
             the given color is used.
         
         lw : float, optional
-            Line width. Default is 0.3.
+            Line width. Default is 0.5.
         
         linestyle : string, optional
             Line style. Default is '-'. 
@@ -195,56 +207,28 @@ class Band:
             Whether to show the legend if it exists. Default is True.
         
         """
-        from auto_kappa.plot.bandos import set_xticks_labels
-        
-        col = color if color is not None else 'blue'
-        
-        ## For partial plot (between the first and second gamma points)
-        idx_init = 0
-        idx_end = self.nk - 1
-        itick_init = 0
-        itick_end = len(self.symmetry_labels) - 1
-        if plot_G2G:
-            (idx_init, idx_end), (itick_init, itick_end) = self._get_indices_of_1st_and_2nd_gamma()
-        
-        ## Plot each band
-        for ib in range(self.nbands):
-            lab = label if ib == 0 else None
-            x = self.kpoints[idx_init:idx_end+1]
-            y = self.frequencies[idx_init:idx_end+1, ib]
-            ax.plot(x, y, color=col, lw=lw, linestyle=linestyle, label=lab)
-        
-        ## set x-axis labels
-        if set_xticks:
-            
-            _symmetry_labels = self.symmetry_labels[itick_init:itick_end+1]
-            if plot_G2G:
-                _symmetry_labels[-1] = 'GAMMA'
-            
-            set_xticks_labels(ax, self.symmetry_kpoints[itick_end], 
-                              self.symmetry_kpoints[itick_init:itick_end+1], 
-                              _symmetry_labels)
-        
-        ax.set_ylabel(ylabel)
-        set_axis(ax)
+        _plot_bands(ax, 
+                    self.symmetry_kpoints, self.symmetry_labels,
+                    self.kpoints, self.frequencies,
+                    plot_G2G=plot_G2G, set_xticks=set_xticks, ylabel=ylabel, label=label,
+                    color=color, lw=lw, linestyle=linestyle)
         
         if show_legend:
             if ax.get_legend() is not None:
                 set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0))
-
+    
     def plot_with_weighted_colors(
         self, ax, weights, plot_G2G=False,
-        lw=0.8, cmap='viridis', norm=None,
+        lw=0.5, cmap='viridis', norm=None,
         set_xticks=True, colorbar=True, cbar_location='right',
         ylabel="Frequency (${\\rm cm^{-1}}$)",
         clabel=None):
         """ Plot band structure with color based on weights 
         """
-        from auto_kappa.plot.bandos import set_xticks_labels
-        
+        ## Set min and max weights
         cmin_weight = weights.min()
         cmax_weight = weights.max()
-
+        
         if norm is None:
             cmin = cmin_weight
             cmax = cmax_weight
@@ -253,30 +237,13 @@ class Band:
             cmin = norm.vmin
             cmax = norm.vmax
         
-        ## Partial plot
-        ## if plot_G2G is True, plot only between the first and second gamma points
-        ## For partial plot (between the first and second gamma points)
-        idx_init = 0
-        idx_end = self.nk - 1
-        itick_init = 0
-        itick_end = len(self.symmetry_labels) - 1
-        if plot_G2G:
-            (idx_init, idx_end), (itick_init, itick_end) = self._get_indices_of_1st_and_2nd_gamma()
-        
         ## Plot each band with color based on weights
-        x = self.kpoints[idx_init:idx_end+1]
-        for ib in range(self.nbands):
-            
-            y = self.frequencies[idx_init:idx_end+1, ib]
-            c = weights[idx_init:idx_end+1, ib]
-            
-            points = np.array([x, y]).T.reshape(-1, 1, 2)
-            segments = np.concatenate([points[:-1], points[1:]], axis=1)
-            
-            lc = LineCollection(segments, cmap=cmap, norm=norm)
-            lc.set_array(c[:-1])
-            lc.set_linewidth(lw)
-            ax.add_collection(lc)
+        lw = 0.5 if lw is None else lw
+        _plot_bands(ax, 
+                    self.symmetry_kpoints, self.symmetry_labels,
+                    self.kpoints, self.frequencies,
+                    plot_G2G=plot_G2G, set_xticks=set_xticks, ylabel=ylabel,
+                    weights=weights, norm=norm, cmap=cmap, lw=lw)
         
         ### ver.1
         ax.autoscale()
@@ -288,15 +255,6 @@ class Band:
         # ymax = y1 + 0.05 * (y1 - y0)
         # ax.set_ylim(ymin, ymax)
         
-        ax.axhline(0, color='grey', lw=lw*0.3, ls='-')
-        
-        if set_xticks:
-            set_xticks_labels(ax, self.symmetry_kpoints[itick_end], 
-                              self.symmetry_kpoints[itick_init:itick_end+1], 
-                              self.symmetry_labels[itick_init:itick_end+1])
-        
-        ax.set_ylabel(ylabel)
-        set_axis(ax)
         if ax.get_legend() is not None:
             set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0))
         
@@ -353,6 +311,9 @@ class SCPHBand(Band):
         """
         from auto_kappa.plot.bandos import set_xticks_labels
         
+        msg = "\n SCPHBand.plot will be modified in the future."
+        logger.warning(msg)
+        
         cmap = get_customized_cmap(len(self.temperatures))
             
         for it, temp in enumerate(self.temperatures):
@@ -385,6 +346,107 @@ class SCPHBand(Band):
         if show_legend:
             set_legend(ax, fs=6, loc='lower left', loc2=(0.0, 1.0), ncol=2)
 
+def _plot_bands(ax, 
+                symmetry_kpoints, symmetry_labels, kpoints, frequencies,
+                plot_G2G=False, set_xticks=True, ylabel=None, label=None,
+                linestyle='-', lw=0.5, color='blue',
+                weights=None, norm=None, cmap='viridis',
+                ):
+    """ Plot phonon band structure
+    """
+    from auto_kappa.plot.bandos import set_xticks_labels
+    
+    section_indices, _symmetry_kpoints, _symmetry_labels = (
+        get_band_section_indices_labels(
+            kpoints, symmetry_kpoints, symmetry_labels,
+            plot_G2G=plot_G2G
+        )
+    )
+    
+    for isec, ind_each in enumerate(section_indices):
+        
+        (i0, i1) = ind_each
+        x = kpoints[i0:i1+1]
+        
+        for ib in range(frequencies.shape[1]):
+            y = frequencies[i0:i1+1, ib]
+            
+            if weights is None:
+                if isec == 0 and ib == 0:
+                    lab = label
+                else:
+                    lab = None
+                ax.plot(x, y, color=color, lw=lw, linestyle=linestyle, label=lab)
+            else:
+                c = weights[i0:i1+1, ib]
+                points = np.array([x, y]).T.reshape(-1, 1, 2)
+                segments = np.concatenate([points[:-1], points[1:]], axis=1)
+                lc = LineCollection(segments, cmap=cmap, norm=norm)
+                lc.set_array(c[:-1])
+                lc.set_linewidths(lw)
+                ax.add_collection(lc)
+    
+    ax.set_ylabel(ylabel)
+    set_axis(ax)
+    ax.axhline(0, color='grey', lw=0.3, ls='-')
+    
+    if set_xticks:
+        set_xticks_labels(ax, _symmetry_kpoints[-1], _symmetry_kpoints, _symmetry_labels)
+    
+def get_band_section_indices_labels(kpoints, symmetry_kpoints, symmetry_labels, plot_G2G=False):
+    """ Get section indices of band structure 
+    
+    Args
+    ----
+    kpoints : ndarray, shape=(nk)
+        Array of k-points.
+    symmetry_kpoints : ndarray, shape=(nsecs+1)
+        Array of k-points for symmetry points
+    symmetry_labels : list of str, shape=(nsecs+1)
+        List of labels for symmetry points
+    plot_G2G : bool, optional
+        Whether only to plot Gamma to Gamma. Default is False.
+    
+    Returns
+    -------
+    indices_plt : list of tuple
+        List of indices for each section to be plotted.
+    _symmetry_kpoints : list of float
+        New list of k-points for symmetry points.
+    _symmetry_labels : list of str
+        New list of labels for symmetry points.
+    """
+    nsecs = len(symmetry_labels) - 1
+    
+    def _get_min_index(kpoints, ktarget, tol=1e-7):
+        min_diff = np.min(abs(kpoints - ktarget))
+        return np.where(abs(abs(kpoints - ktarget) - min_diff) < tol)[0]
+
+    count = 0
+    indices_plt = []
+    _symmetry_kpoints = []
+    _symmetry_labels = []
+    for isec in range(nsecs):
+        l0 = symmetry_labels[isec]
+        l1 = symmetry_labels[isec + 1]
+        k0 = symmetry_kpoints[isec]
+        k1 = symmetry_kpoints[isec + 1]
+        i0 = _get_min_index(kpoints, k0)[-1]
+        i1 = _get_min_index(kpoints, k1)[0]
+        indices_plt.append([i0, i1])
+        _symmetry_kpoints.append(k0)
+        _symmetry_labels.append(l0)
+        if l0.startswith('G') or l1.startswith('G'):
+            count += 1
+        if plot_G2G and count == 2:
+            break
+    
+    _symmetry_kpoints.append(k1)
+    _symmetry_labels.append(l1)
+    if plot_G2G and _symmetry_labels[-1].startswith("G"):
+        _symmetry_labels[-1] = "GAMMA"
+    
+    return indices_plt, _symmetry_kpoints, _symmetry_labels
 
 def _add_colorbar(ax, lc, cbar_location='right', height=None, width=None):
     """ Add colorbar to the given axes with LineCollection.

@@ -177,11 +177,12 @@ def read_phonopy_conf(filename):
     """
     from phonopy.cui.settings import PhonopyConfParser
     confparser = PhonopyConfParser(filename=filename)
-    params = confparser.get_configures()
+    try:
+        params = confparser.get_configures()
+    except:
+        params = confparser.confs
+    
     from fractions import Fraction
-    # matrix = np.zeros((2,3,3,))
-    # matrix[0] = np.identity(3)
-    # matrix[1] = np.identity(3)
     matrix = []
     for ii, target in enumerate(['dim', 'primitive_axis']):
         matrix.append(np.identity(3))

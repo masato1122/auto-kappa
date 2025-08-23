@@ -1030,7 +1030,7 @@ def _check_dict_contents(dictionary, key, message=True):
                 )
     return flag
 
-def get_kpoint_path(primitive, deltak=0.01, dim=3):
+def get_kpoint_path(primitive, deltak=0.01, dim=3, nk_min=10):
     """
     Args
     --------
@@ -1075,7 +1075,7 @@ def get_kpoint_path(primitive, deltak=0.01, dim=3):
         
         kvec = k1 - k0
         kleng = np.linalg.norm(kvec)
-        nk = max(int(np.ceil(kleng / deltak)), 3)
+        nk = max(int(np.ceil(kleng / deltak)), nk_min)
         kpoints.append([{each[0]: k0}, {each[1]: k1}, nk])
     return kpoints
 
