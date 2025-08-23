@@ -216,9 +216,14 @@ class Band:
         
         ## set x-axis labels
         if set_xticks:
+            
+            _symmetry_labels = self.symmetry_labels[itick_init:itick_end+1]
+            if plot_G2G:
+                _symmetry_labels[-1] = 'GAMMA'
+            
             set_xticks_labels(ax, self.symmetry_kpoints[itick_end], 
                               self.symmetry_kpoints[itick_init:itick_end+1], 
-                              self.symmetry_labels[itick_init:itick_end+1])
+                              _symmetry_labels)
         
         ax.set_ylabel(ylabel)
         set_axis(ax)
