@@ -688,11 +688,12 @@ def get_minimum_frequency_from_logfile(filename, tar=None):
         logger.warning(msg)
         return out
     else:
-        kpoitns = eigen[0]
+        kpoints = eigen[0]
         frequencies = eigen[1]
-    
-    out['minimum_frequency'] = float(np.amin(frequencies))
-    return out
+        ik_min, ib_min = np.unravel_index(np.argmin(frequencies, axis=None), frequencies.shape)
+        out['minimum_frequency'] = float(frequencies[ik_min, ib_min])
+        out['fmin_kpoint'] = kpoints[ik_min].tolist()
+        return out
 
 def get_eigenvalues_from_logfile(filename, tar=None):
     """
