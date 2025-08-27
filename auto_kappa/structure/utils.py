@@ -7,7 +7,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-from ase.data import atomic_numbers
+from ase.data import atomic_numbers, atomic_masses
 import ase
 import pymatgen.core.structure as str_pmg
 from phonopy.structure.atoms import PhonopyAtoms
@@ -27,7 +27,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
     pymatgen's IStructure object
     """
     if (isinstance(structure, str_pmg.Structure) or
-            isinstance(structure, str_pmg.IStructure)):
+        isinstance(structure, str_pmg.IStructure)):
         
         ## from pymatgen's (I)Structure object
         lattice = structure.lattice.matrix
@@ -37,7 +37,7 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
         coords = structure.frac_coords
     
     elif (isinstance(structure, ase.Atoms) or
-            isinstance(structure, PhonopyAtoms)):
+          isinstance(structure, PhonopyAtoms)):
         
         ## from ase's Atoms and phonopy's PhonopyAtoms
         lattice = structure.cell
@@ -74,9 +74,14 @@ def change_structure_format(structure, format='pymatgen-IStructure'):
     
     elif form == 'phonopyatoms' or form == 'phonopy':
         
+        masses = []
+        for name in all_symbols:
+            masses.append(atomic_masses[atomic_numbers[name]])
+        
         return PhonopyAtoms(
             cell=lattice,
             symbols=all_symbols,
+            masses=masses,
             scaled_positions=coords,
             pbc=True
             )
