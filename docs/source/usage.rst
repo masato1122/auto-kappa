@@ -7,10 +7,9 @@ Examples
 
 1. ``database`` example
 
-The calculation in ``database`` calculates thermal conductivity of Silicon automatically.
-Because every process is included in this job, it takes one or two hours.
-It is recommended to use a job scheduler to submit this job.
-An example of job script is shown below. Please modify depending on your environment.
+The calculation in the ``database`` directory automatically computes the thermal conductivity of silicon.
+Since all processes required for phonon analysis are included, it is recommended to use a job scheduler to run this calculation.
+An example job script is shown below. Please modify it according to your environment.
 
 .. code-block:: shell
     

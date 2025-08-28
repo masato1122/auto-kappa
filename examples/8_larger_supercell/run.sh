@@ -14,18 +14,15 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
 
 nprocs=2
 
-poscar=POSCAR.init   ## file name of the structure
-material_name=Si     ## this option is used only for the name of output directory
+poscar=POSCAR.Si   ## file name of the structure
+mpid=mp-149
 
 akrun \
     --file_structure $poscar \
-    --outdir $material_name \
+    --outdir $mpid \
     --nprocs $nprocs \
-    --mpirun mpirun \
-    --command_vasp vasp \
-    --command_alm alm \
-    --command_anphon anphon \
-    --volume_relaxation 1 \
     --analyze_with_larger_supercell 1 \
-    --max_loop_for_largersc 2
+    --max_natoms 150 \
+    --delta_max_natoms 50 \
+    --max_loop_for_largersc 1
 

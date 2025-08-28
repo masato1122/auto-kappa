@@ -1,5 +1,5 @@
 #
-# A very simple example to check if anphon of Alamode command works properly.
+# A simple example to check anphon command
 #
 anphon band.in > band.log
 
