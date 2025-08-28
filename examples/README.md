@@ -1,46 +1,18 @@
-WORKDIR=`pwd`
 
-# 1_alm : test job for "alm"
+Examples
+=========
 
-cd $WORKDIR/1_alm
-sh run.sh
+To check functions of libraries used in Auto-kappa,
+please perform an example in each directory.
+Some of the examples can be performed using ``run.sh`` script in the directory.
 
-# 2_anphon : test job for "anphon"
+* 1_alm : test job for "alm"
 
-cd $WORKDIR/2_anphon
-sh run.sh
+* 2_anphon : test job for "anphon"
 
-# 3_ase : test job for ASE with "auto-kappa"
+* 3_ase : test job for ASE with "auto-kappa"
 
-cd $WORKDIR/3_ase
-sh run.sh
+* 4_vasp_custodian : test job for VASP with "custodian"
 
-# 4_vasp_custodian : test job for VASP with "custodian"
-
-cd $WORKDIR/4_vasp_custodian
-sh run.sh
-
-# 5_single : 
-# job script to analyze phonon properties of a material included in Phonondb
-
-cd $WORKDIR/5_single
-sh run.sh
-
-# 6_database : test job to analyze many materials
-
-cd $WORKDIR/6_database
-sh run_many.sh
-
-# 6_database_strict : 
-# test job to analyze materials that may need the strict structure relaxation
-
-cd $WORKDIR/6_database_strict
-sh run_massive_neg.sh
-
-# 7_structure_file : 
-# test job to analyze phonon properties using a structure file such as cif, POSCAR, etc.
-
-cd $WORKDIR/7_structure_file
-sh run.sh
-
+* 5_single : job script to analyze phonon properties of a material included in Phonondb
 
