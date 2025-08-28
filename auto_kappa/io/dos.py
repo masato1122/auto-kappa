@@ -133,11 +133,11 @@ class Dos:
         
         ax.plot(xdat, ydat, color=color, lw=lw, label='Total')
         
-        if plot_pdos and self.integrated_pdos is not None:
-            self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
-        
-        if show_legend:
-            set_legend(ax, fontsize=6, loc='best', length=0.5)
+        if plot_pdos:
+            if self.integrated_pdos is not None:
+                self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
+            if show_legend:
+                set_legend(ax, fontsize=6, loc='best', length=0.5)
         
     def plot_pdos(self, ax, lw=0.5, rotate=True):
         

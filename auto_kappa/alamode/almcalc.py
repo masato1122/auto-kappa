@@ -2165,8 +2165,17 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, NameHandler, Grune
                 lw_dos = lw * 1.3
             else:
                 lw_dos = 0.8
+            
+            prim = change_structure_format(self.primitive, format="ase")
+            nelements = len(list(set(prim.get_chemical_symbols())))
+            if nelements == 1:
+                plot_pdos = False
+            else:
+                plot_pdos = True
+            
             dos = Dos(file_dos)
-            dos.plot(ax2, xlabel=None, lw=lw_dos, frac_lw=0.7)
+            dos.plot(ax2, xlabel=None, lw=lw_dos, frac_lw=0.7, plot_pdos=plot_pdos)
+            
         except Exception as e:
             msg = "\n Warning: cannot plot DOS. %s" % str(e)
             logger.warning(msg)
