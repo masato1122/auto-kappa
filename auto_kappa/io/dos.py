@@ -133,10 +133,16 @@ class Dos:
         
         ax.plot(xdat, ydat, color=color, lw=lw, label='Total')
         
+        try:
+            nelems = len(self.integrated_pdos.keys())
+        except:
+            nelems = 0
+        
         if plot_pdos:
             if self.integrated_pdos is not None:
-                self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
-            if show_legend:
+                if nelems > 1:
+                    self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
+            if show_legend and nelems > 1:
                 set_legend(ax, fontsize=6, loc='best', length=0.5)
         
     def plot_pdos(self, ax, lw=0.5, rotate=True):
