@@ -666,12 +666,6 @@ def calculate_thermal_conductivities(
                 propt=propt, ignore_log=ignore_log, outdir=outdir,
                 logfile=f"{propt}.log")
         
-        try:
-            _print_rt_kappa(outdir, almcalc.prefix, calc_type)
-        except Exception as e:
-            msg = f"\n Warning: cannot print thermal conductivity: {e}"
-            logger.warning(msg)
-        
         ### check output file for kappa
         kappa_log = f"{outdir}/{propt}.log"
         flag = should_rerun_alamode(kappa_log)
@@ -686,106 +680,167 @@ def calculate_thermal_conductivities(
             almcalc.run_alamode(
                     propt=propt, ignore_log=ignore_log, 
                     outdir=outdir, **kwargs)
-    
-    if almcalc.calculate_forces == False:
-        return None
-    
-    ### analyze phonons
-    msg = "\n"
-    msg += " Plot anharmonic properties:\n"
-    msg += " ---------------------------"
-    logger.info(msg)
-    
-    if calc_type == "cubic":
-        figname = None
-        out = almcalc.plot_kappa(figname=figname, calc_type=calc_type)
-    
-    ###
-    if calc_type == "cubic":
+        
+        # ================================== #
+        # === Plot anharmonic properties === #
+        # ================================== #
+        ## Kind of scattering process
+        if '4ph' in calc_type:
+            process = '4ph'
+        else:
+            process = '3ph'
+        
+        ## Print thermal conductivity at room temperature
+        try:
+            _print_rt_kappa(outdir, almcalc.prefix)
+            logger.info("")
+        except Exception as e:
+            msg = f"\n Warning: cannot print thermal conductivity: {e}"
+            logger.warning(msg)
+        
+        ## Plot T-dependent thermal conductivity
+        try:
+            if 'scp' not in calc_type:
+                almcalc.plot_kappa(outdir)
+        except Exception as e:
+            msg = f"\n Warning: cannot plot thermal conductivity: {e}"
+            logger.warning(msg)
 
+        ## Make csv files containing lifetime etc.
         try:
             for T in temperatures_for_spectral.split(':'):
-                almcalc.write_lifetime_at_given_temperature(temperature=float(T))
+                almcalc.write_lifetime_at_given_temperature(outdir, temperature=float(T))
         except Exception as e:
             msg = f"\n Warning: lifetime was not written properly. {e}"
             logger.warning(msg)
         
+        ## Plot lifetime
         try:
-            almcalc.plot_lifetime(
-                    temperatures=temperatures_for_spectral, calc_type=calc_type)
+            almcalc.plot_lifetime(outdir,
+                                  temperatures=temperatures_for_spectral, 
+                                  process=process)
         except Exception as e:
             msg = f"\n Warning: the figure of lifetime was not created properly. {e}"
             logger.warning(msg)
         
+        ## Plot scattering rates
         try:
-            almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+            almcalc.plot_scattering_rates(outdir, temperature=300., grain_size=1000., process='3ph')
+            if process == '4ph':
+                almcalc.plot_scattering_rates(outdir, temperature=300., grain_size=1000., process='4ph')
         except Exception as e:
             msg = f"\n Warning: the figure of scattering rate was not created properly. {e}"
             logger.warning(msg)
-
-        try:
-            almcalc.plot_cumulative_kappa(
-                    temperatures=temperatures_for_spectral, 
-                    wrt='frequency', xscale='linear')
-        except Exception as e:
-            msg = f"\n Warning: the figure of cumulative thermal conductivity was not created properly. {e}"
-            logger.warning(msg)
-
-        try:
-            almcalc.plot_cumulative_kappa(
-                    temperatures=temperatures_for_spectral, 
-                    wrt='mfp', xscale='log')
-        except Exception as e:
-            msg = f"\n Warning: the figure of cumulative TCs was not created properly. {e}"
-            logger.warning(msg)
-
-def _print_rt_kappa(outdir, prefix, calc_type, rt=300):
+        
+        ## Plot spectral and cumulative kappa wrt frequency and MFP
+        for wrt in ['frequency', 'mfp']:
+            if wrt == 'frequency':
+                xscale = 'linear'
+            else:
+                xscale = 'log'
+            try:
+                almcalc.plot_cumulative_kappa(outdir, process='3ph',
+                                              temperatures=temperatures_for_spectral, 
+                                              wrt=wrt, xscale=xscale)
+                if process == '4ph':
+                    almcalc.plot_cumulative_kappa(outdir, process='4ph',
+                                                  temperatures=temperatures_for_spectral, 
+                                                  wrt=wrt, xscale=xscale)
+            except Exception as e:
+                msg = f"\n Warning: the figure of cumulative thermal conductivity wrt {wrt} "
+                msg += f"was not created properly. {e}"
+                logger.warning(msg)
     
-    ks = {'kp': {}, 'kc': {}}
-    ktypes = ['kp', 'kc']
-    for ik, ktype in enumerate(ktypes):
+    if almcalc.calculate_forces == False:
+        return None
+    
+    msg  = "\n - .... . .-. -- .- .-..   -.-. --- -. -.. ..- -.-. - - .. ...- .. - .. . ...   "
+    msg += "\n .-- . .-. .   -.-. .- .-.. -.-. ..- .-.. .- - . -."
+    logger.info(msg)
+    
+    ### analyze phonons
+    if calc_type == "cubic":
+        logger.info("\n Plot thermal conductivity for different k-mesh densities:")
+        almcalc.plot_all_kappa(figname=None, calc_type=calc_type)
         
-        if ik == 0:
-            extension = 'kl' if '4ph' not in calc_type else 'kl4'
+        # try:
+        #     for T in temperatures_for_spectral.split(':'):
+        #         almcalc.write_lifetime_at_given_temperature(temperature=float(T))
+        # except Exception as e:
+        #     msg = f"\n Warning: lifetime was not written properly. {e}"
+        #     logger.warning(msg)
+        
+        # try:
+        #     almcalc.plot_lifetime(
+        #             temperatures=temperatures_for_spectral, calc_type=calc_type)
+        # except Exception as e:
+        #     msg = f"\n Warning: the figure of lifetime was not created properly. {e}"
+        #     logger.warning(msg)
+        
+        # try:
+        #     almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
+        # except Exception as e:
+        #     msg = f"\n Warning: the figure of scattering rate was not created properly. {e}"
+        #     logger.warning(msg)
+
+        # try:
+        #     almcalc.plot_cumulative_kappa(
+        #             temperatures=temperatures_for_spectral, 
+        #             wrt='frequency', xscale='linear')
+        # except Exception as e:
+        #     msg = f"\n Warning: the figure of cumulative thermal conductivity was not created properly. {e}"
+        #     logger.warning(msg)
+
+        # try:
+        #     almcalc.plot_cumulative_kappa(
+        #             temperatures=temperatures_for_spectral, 
+        #             wrt='mfp', xscale='log')
+        # except Exception as e:
+        #     msg = f"\n Warning: the figure of cumulative TCs was not created properly. {e}"
+        #     logger.warning(msg)
+
+def _print_rt_kappa(outdir, prefix, rt=300):
+    
+    from auto_kappa.io.kl import Kboth, KL
+    
+    files = {}
+    suffixes = ['kl', 'kl3', 'kl4', 'kl_coherent']
+    for ik in range(4):
+        suffix = suffixes[ik]
+        file = f"{outdir}/{prefix}.{suffix}"
+        if not os.path.exists(file):
+            continue
+        if file.startswith("/"):
+            file = "./" + os.path.relpath(file)
+        files[suffix] = file
+
+    def _print_each(kappa_temp):
+        msg = " "
+        for ii, dtype in enumerate(['kp', 'kc', 'klat']):
+            if ii  != 0:
+                msg += "\n "
+            for direct in ['xx', 'yy', 'zz', 'ave']:
+                key = f"{dtype}_{direct}"
+                if key in kappa_temp:
+                    msg += f"{key:8s}: {kappa_temp[key]:8.3f}   "
+                    # if key != 'ave':
+                    #     msg += "  |  "
+        logger.info(msg)
+    
+    for key in ['kl', 'kl3', 'kl4']:
+        if key not in files:
+            continue
+        if 'kl_coherent' not in files:
+            kobj = KL(files[key])
         else:
-            extension = 'kl_coherent'
+            kobj = Kboth(files[key], files['kl_coherent'])
         
-        file_kappa = f"{outdir}/{prefix}.{extension}"
-        if os.path.exists(file_kappa) == False:
-            return 0
-            
-        dump = np.genfromtxt(file_kappa)
-        if dump.ndim == 1:
-            dump = dump.reshape((1, -1))
-        
-        idx_rt = np.where(abs(dump[:,0] - rt) < 1)[0][0]
-        if abs(dump[idx_rt, 0] - rt) > 1.0:
+        ks = kobj.get_kappa(temperature=rt)
+        if ks is None:
+            logger.error(f"\n Error: could not read data at {rt}K from {files[key]}")
             continue
         
-        if ik == 0:
-            istep = 4
-        elif ik == 1:
-            istep = 1
-        kxx = dump[idx_rt, 1]
-        kyy = dump[idx_rt, 1 + istep]
-        kzz = dump[idx_rt, 1 + 2 * istep]
-        kave = (kxx + kyy + kzz) / 3.0
-        
-        ks[ktype]['xx'] = kxx
-        ks[ktype]['yy'] = kyy
-        ks[ktype]['zz'] = kzz
-        ks[ktype]['ave'] = kave
-        
-        if 'kl' not in ks:
-            ks['kl'] = {'xx': 0.0, 'yy': 0.0, 'zz': 0.0, 'ave': 0.0}
-        ks['kl']['xx'] += kxx
-        ks['kl']['yy'] += kyy
-        ks['kl']['zz'] += kzz
-        ks['kl']['ave'] += kave
+        process = '4ph' if key == 'kl4' else '3ph'
+        logger.info(f"\n Thermal conductivity at {rt}K ({process}):")
+        _print_each(ks)
     
-    msg = f"\n Thermal conductivity at {rt}K:"
-    for ktype in ks:
-        msg += "\n "
-        for key in ks[ktype]:
-            msg += f"{ktype}_{key}: {ks[ktype][key]:8.3f}  "
-    logger.info(msg)

@@ -1,10 +1,17 @@
-# -*- coding: utf-8 -*-
-import sys
+#
+# pes.py
+#
+# This module contains functions for calculating and plotting 
+# potential energy surfaces (PES) from ALAMODE calculations.
+#
+# Copyright (c) 2025 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import os, os.path
-import math
 import numpy as np
-import pandas as pd
-import glob
 
 from auto_kappa.alamode.log_parser import (
         get_eigenvalues_from_logfile,

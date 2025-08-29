@@ -58,16 +58,15 @@ class Isotope():
         self.nbands = len(self.frequencies[0])
 
 def read_isotope(filename):
-    """Read k points written in .self_isotope
-    Parameters
-    ------------
-    .kpoints : ndarray, float, shape=(nk,3)
+    """ Read k points written in .self_isotope
+    
+    kpoints : ndarray, float, shape=(nk,3)
         each k point
-    .multiplicity : array, int, shape=(nk)
+    multiplicity : array, int, shape=(nk)
         multiplicity
-    .frequencies : ndarray, float, shape=(nk,3)
+    frequencies : ndarray, float, shape=(nk,3)
         eivenvalues
-    .gammas : ndarray, float, shape=(nk,3)
+    gammas : ndarray, float, shape=(nk,3)
         gamma due to isotope
     """
     out = _get_numbers(filename)

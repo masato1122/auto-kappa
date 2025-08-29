@@ -14,12 +14,12 @@
 import os, sys
 import os.path
 import numpy as np
-#import warnings
 import pandas as pd
 
 import auto_kappa.units as units
-from auto_kappa.alamode.analyzer.result import Result
-from auto_kappa.alamode.analyzer.analyzer import get_average_at_degenerate_point, get_kmode
+from auto_kappa.io.result import Result
+from auto_kappa.io.analyzer import get_average_at_degenerate_point, get_kmode
+import matplotlib.pyplot as plt
 
 import logging
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class Scattering():
     
     """
     def __init__(self, file_result: None, temperature=300., file_isotope=None,
-            grain_size=None, verbose=0):
+                 grain_size=None, verbose=0):
         """
         Args
         ----
@@ -161,24 +161,22 @@ class Scattering():
     
     @property
     def total_scattering_rate(self):
-        
         if self._total_scattering_rate is None:
             self.set_total_scattering_rate()
         return self._total_scattering_rate
     
     def set_total_scattering_rate(self):
-        
         if (self.file_isotope is not None and
-                self.scattering_rates['isotope'] is None):
+            self.scattering_rates['isotope'] is None):
             self.set_scattering_rate_isotope()
 
         if (self.size is not None and
-                self.scattering_rates['boundary'] is None):
+            self.scattering_rates['boundary'] is None):
             self.set_scattering_rate_boundary()
         
         ##
         self._total_scattering_rate = np.zeros_like(
-                self.scattering_rates['phph'])
+            self.scattering_rates['phph'])
         
         msg = " ### Calculate total scattering rate"
         for key in self.scattering_rates:
@@ -222,13 +220,13 @@ class Scattering():
     def set_kmode(self):
         """calculate model thermal conductivity
         """
-        self._kappa, self._kmode = get_kmode(
-                self.result['volume'],
-                self.temperature,
-                self.result['frequencies'],
-                self.result['multiplicity'],
-                self.result['velocities'],
-                self.lifetime)
+        self._kappa, self._kmode = \
+            get_kmode(self.result['volume'],
+                      self.temperature,
+                      self.result['frequencies'],
+                      self.result['multiplicity'],
+                      self.result['velocities'],
+                      self.lifetime)
     
     def get_cumulative_kappa(self, temperature=300., grain_size=None,
             wrt='frequency', nbins=200, xscale='linear'):
@@ -256,7 +254,7 @@ class Scattering():
         
         ## set temperature
         if abs(self.temperature - temperature) > 0.1:
-                    self.change_temperature(temperature)
+            self.change_temperature(temperature)
         
         ### get non-directional cumulative kappa
         nk = self.result['nk']
@@ -527,7 +525,7 @@ class Scattering():
     #                 self.scattering_rates['phph'][ik,ib] = np.nan
     
     def set_scattering_rate_isotope(self):
-        from .isotope import Isotope
+        from auto_kappa.io.isotope import Isotope
         if os.path.exists(self.file_isotope) == False:
             logger.warning(" %s does not exist." % self.file_isotope)
         else:
@@ -548,14 +546,103 @@ class Scattering():
             self.scattering_rates['boundary'] = None
             return None
          
-        nk = self.result['nk']
-        nbands = self.result['nbands']
-        
         ## rate [1/ps]
-        self.scattering_rates['boundary'] = (
-                1e-3 * 2. * self.averaged_velocities / size
-                )
+        self.scattering_rates['boundary'] = 1e-3 * 2. * self.averaged_velocities / size
     
+    def plot_lifetime(self, ax, temperature=300, label=None,
+                      marker='o', ms=1.3, lw=0.3, color='blue'):
+        """ Plot phonon lifetime as a function of frequency.
+        """
+        self.change_temperature(temperature)
+        
+        nk = self.result['nk']
+        nb = self.result['nbands']
+        
+        xorig = self.result['frequencies'].reshape(nk*nb)  # 1/cm
+        yorig = self.lifetime.reshape(nk*nb)     # ps
+        
+        _plot_share_for_mode_property(
+            ax, xorig, yorig, color=color, marker=marker,
+            lw=lw, ms=ms, label=label)
+
+    def plot_scattering_rates(self, ax, ms=1.3, lw=0.3, process=None):
+        """ Plot scattering rates for different processes.
+        """
+        cmap = plt.get_cmap("tab10")
+        n1, n2 = self.frequencies.shape
+        xorig = self.result['frequencies'].reshape(n1*n2)
+        
+        markers = ['o', '^', 's', 'd', 'v']
+        xlim = [100, -100]
+        ylim = [100, -100]
+        icol = 0
+        for ik, key in enumerate(self.scattering_rates):
+            
+            if self.scattering_rates[key] is None:
+                continue
+            
+            if key == 'phph':
+                try:
+                    label = f'{process}({self.temperature:.0f}K)'
+                except:
+                    label = None
+            elif key == "boundary":
+                label = f"L={self.size:.0f}nm"
+            else:
+                label = key
+            
+            yorig = self.scattering_rates[key].reshape(n1*n2)
+            
+            xlim_ik, ylim_ik = _plot_share_for_mode_property(
+                ax, xorig, yorig, color=cmap(icol), marker=markers[ik%len(markers)],
+                lw=lw, ms=ms, label=label)
+            icol += 1
+
+            xlim[0] = min(xlim[0], xlim_ik[0])
+            xlim[1] = max(xlim[1], xlim_ik[1])
+            ylim[0] = min(ylim[0], ylim_ik[0])
+            ylim[1] = max(ylim[1], ylim_ik[1])
+        
+        ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
+        ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
+        
+
+def _plot_share_for_mode_property(ax, xorig, yorig, color='black', marker='o', lw=0.5, ms=2.3,
+                                  alpha=1.0, label=None):
+    
+    idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+    if len(idx_pos) == 0:
+        return
+    
+    xdat, ydat = xorig[idx_pos], yorig[idx_pos]
+    ax.plot(xdat, ydat, linestyle='None', mfc='none',
+            marker=marker, ms=ms, mew=lw, mec=color, alpha=alpha,
+            label=label)
+    
+    ###
+    vlim = []
+    for values in [xdat, ydat]:
+        isort = np.argsort(values)
+        v0 = np.min(values[isort][5:])
+        v1 = np.max(values)
+        vlim.append((v0, v1))
+    
+    xlim = _get_log_range(vlim[0][0], vlim[0][1], space=0.05)
+    ylim = _get_log_range(vlim[1][0], vlim[1][1], space=0.05)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    return xlim, ylim
+
+def _get_log_range(vmin, vmax, space=0.05):
+    vmin_log = np.log10(vmin)
+    vmax_log = np.log10(vmax)
+    dv_log = vmax_log - vmin_log
+    v0_log = vmin_log - dv_log * space
+    v1_log = vmax_log + dv_log * space
+    v0 = np.power(10, v0_log)
+    v1 = np.power(10, v1_log)
+    return [v0, v1]
+
 ###
 def convert_gamma2scatrate(gammas):
     """

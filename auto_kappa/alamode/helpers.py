@@ -13,9 +13,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-
 import ase.io
-# from ase.geometry import get_distances
 
 from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.io.alm import AlmInput, AnphonInput

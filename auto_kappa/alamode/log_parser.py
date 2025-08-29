@@ -518,23 +518,17 @@ def read_log_nac(directory):
 def read_log_forces(directory, mode, fc3_type=None):
     
     ### get the directory name for force calculation
-    if mode == 'harm':
-        
-        dir1 = directory+'/'+out_dirs[mode]['force']
-    
+    if mode == 'harm':        
+        dir1 = directory+'/' + out_dirs[mode]['force']
     elif mode == 'cube':
-        
-        dir1 = directory+'/'+out_dirs[mode]['force_%s' % fc3_type]
-    
+        dir1 = directory+'/' + out_dirs[mode]['force_%s' % fc3_type]
     elif mode == 'higher':
-        
         dir1 = directory + '/' + out_dirs[mode]['force']
-    
     else:
         msg = " Warning: %s is not supported." % mode
         logger.warning(msg)
         return None
-
+    
     if os.path.exists(dir1) == False:
         return None
       
@@ -589,16 +583,16 @@ def read_log_forces(directory, mode, fc3_type=None):
 
 def read_log_lasso(directory):
     
-    dir_lasso = directory+'/'+out_dirs['higher']['lasso']
+    dir_lasso = directory + '/' + out_dirs['higher']['lasso']
     if os.path.exists(dir_lasso) == False:
         return None
     
     ### force (vasprun.xml and OUTCAR)
     out = {}
-    out['force'] = read_log_forces(directory, 'lasso')
+    # out['force'] = read_log_forces(directory, 'lasso')  # no force calculation for lasso
     
     ### cv.log
-    filename = directory+'/'+out_dirs['higher']['cv']+'/cv.log'
+    filename = directory + '/' + out_dirs['higher']['cv'] + '/cv.log'
     if os.path.exists(filename):
         out['cv'] = {}
         v = _get_alamode_runtime(filename)
@@ -606,7 +600,7 @@ def read_log_lasso(directory):
             out['cv']['time'] = v
      
     ### lasso.log
-    filename = directory+'/'+out_dirs['higher']['lasso']+'/lasso.log' 
+    filename = directory + '/' + out_dirs['higher']['lasso'] + '/lasso.log'
     v = read_log_fc(filename)
     if v is not None:
         out['lasso'] = v

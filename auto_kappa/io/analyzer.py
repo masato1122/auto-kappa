@@ -10,7 +10,7 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-import sys
+# import sys
 import numpy as np
 import auto_kappa.units as units
 

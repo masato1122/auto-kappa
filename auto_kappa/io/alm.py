@@ -980,7 +980,7 @@ def get_isofact_info(elements):
         array for g2 factors
 
     """
-    from auto_kappa.io.isotopes import isotopes
+    from auto_kappa.utils.isotopes import isotopes
     msg = "\n Get IFOFACT info."
     g2_factors = []
     for el in elements:
