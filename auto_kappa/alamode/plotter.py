@@ -15,7 +15,9 @@ import numpy as np
 import pandas as pd
 import glob
 import itertools
+import copy
 import matplotlib.pyplot as plt
+from concurrent.futures import ProcessPoolExecutor
 
 import auto_kappa.alamode.helpers as helper
 from auto_kappa.alamode.io import wasfinished_alamode
@@ -529,7 +531,8 @@ class AlamodePlotter:
     def write_kappa_vs_grain_size(self, dir_kappa, process='3ph', 
                                   outfile=None, force_compute=False,
                                   temperatures=None,
-                                  grain_sizes=np.logspace(0.5, 5, 50)):
+                                  grain_sizes=np.logspace(0.5, 5, 50),
+                                  nprocs=1):
         """ Write thermal conductivity as a function of grain size and
         return the obtained result in the format of DataFrame
         """
@@ -540,7 +543,7 @@ class AlamodePlotter:
         if not force_compute and os.path.exists(outfile):
             logger.info(f" Read {outfile}")
             df = pd.read_csv(outfile, comment="#")
-            return None
+            return df
         
         ## Read files such as .result, .4ph.result, .self_isotope files
         scat = self.get_scattering_info(dir_kappa, temperature=300, grain_size=None,
@@ -560,17 +563,21 @@ class AlamodePlotter:
             temperatures = scat.temperatures
         
         ## Calculate T- and grain-size-dependent kappa
-        for temp in temperatures:
-            scat.change_temperature(temp)
-            for size in grain_sizes:
-                scat.change_grain_size(size)
-                dump['temperature[K]'].append(temp)
-                dump['grain_size[nm]'].append(size)
-                for i, j in itertools.product(range(3), repeat=2):
-                    dump[f'k{directs[i]}{directs[j]}[W/mK]'].append(scat.kappa[i,j])
-                dump['kave[W/mK]'].append(np.mean(np.diag(scat.kappa)))
+        ### ver.1: serial
+        # for temp in temperatures:
+        #     scat.change_temperature(temp)
+        #     for size in grain_sizes:
+        #         scat.change_grain_size(size)
+        #         dump['temperature[K]'].append(temp)
+        #         dump['grain_size[nm]'].append(size)
+        #         for i, j in itertools.product(range(3), repeat=2):
+        #             dump[f'k{directs[i]}{directs[j]}[W/mK]'].append(scat.kappa[i,j])
+        #         dump['kave[W/mK]'].append(np.mean(np.diag(scat.kappa)))
+        # df = pd.DataFrame(dump)
         
-        df = pd.DataFrame(dump)
+        ### ver.2: parallel
+        df = _parallel_kappa_vs_grain(scat, temperatures, grain_sizes, nprocs=nprocs)
+        
         with open(outfile, 'w') as f:
             f.write("# Created by auto-kappa\n")
             f.write("# %s scattering  : %s\n" % (process, self.get_relative_path(scat.result.filename)))
@@ -690,6 +697,48 @@ class AlamodePlotter:
         logger.info("")
         plot_all_kappa(dfs, figname=self.get_relative_path(figname), dim=self.dim)
     
+
+def _simulate_each_temp(temp, grain_sizes, scat_orig):
+    """ Simulate thermal conductivity vs grainsize at a given temperature. 
+    """
+    scat = copy.deepcopy(scat_orig)
+    scat.change_temperature(temp)
+    
+    directs = ['x', 'y', 'z']
+    local_result = []
+    for size in grain_sizes:
+        scat.change_grain_size(size)
+        result = {
+            'temperature[K]': temp,
+            'grain_size[nm]': size,
+            'kave[W/mK]': float(np.mean(np.diag(scat.kappa)))
+        }
+        for i, j in itertools.product(range(3), repeat=2):
+            result[f'k{directs[i]}{directs[j]}[W/mK]'] = float(scat.kappa[i, j])
+        local_result.append(result)
+        
+    return local_result
+
+def _parallel_kappa_vs_grain(scat, temperatures, grain_sizes, nprocs=1):
+    """ Compute kappa vs grain size at different temperatures 
+    """
+    with ProcessPoolExecutor(max_workers=nprocs) as executor:
+        futures = [
+            executor.submit(_simulate_each_temp, temp, grain_sizes, scat)
+            for temp in temperatures
+        ]
+        results = []
+        for f in futures:
+            results.extend(f.result())
+    
+    ## Convert to a dict
+    dump = {key: [] for key in results[0].keys()}
+    for row in results:
+        for key, val in row.items():
+            dump[key].append(val)
+    df = pd.DataFrame(dump)
+    return df
+
 
 def plot_kappa_vs_grain_size(filename: str, figname: str, fontsize=7, marker=None,
                              fig_width=2.3, aspect=0.9, dpi=600, lw=0.4, ms=2.3):

@@ -753,14 +753,15 @@ def calculate_thermal_conductivities(
 
         ## Write and plot thermal conductivity as a function of grain size
         try:
+            nprocs = almcalc.commands['alamode']['nprocs']
             filename = outdir + f"/kappa_vs_grain_size.csv"
             figname = outdir + f"/fig_kappa_vs_grain_size.png"
-            almcalc.write_kappa_vs_grain_size(outdir, process='3ph', outfile=filename)
+            almcalc.write_kappa_vs_grain_size(outdir, process='3ph', outfile=filename, nprocs=nprocs)
             plot_kappa_vs_grain_size(filename, figname)
             if process == '4ph':
                 filename = outdir + f"/kappa_vs_grain_size_4ph.csv"
                 figname = outdir + f"/fig_kappa_vs_grain_size_4ph.png"
-                almcalc.write_kappa_vs_grain_size(outdir, process=process, outfile=filename)
+                almcalc.write_kappa_vs_grain_size(outdir, process=process, outfile=filename, nprocs=nprocs)
                 plot_kappa_vs_grain_size(filename, figname)
         
         except Exception as e:
