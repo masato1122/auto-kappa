@@ -13,7 +13,7 @@
 import os
 import numpy as np
 import pandas as pd
-from scipy.interpolate import make_interp_spline
+# from scipy.interpolate import make_interp_spline
 import matplotlib.pyplot as plt
 
 from auto_kappa.plot import set_axis, set_legend
@@ -115,11 +115,14 @@ class Kboth(KappaShare):
         
         ## klat_ave
         ydat = self.data['klat_ave'].values
-        label = "$\\kappa_{p+c}^{ave}$"
-        xsmooth = np.logspace(np.log10(xdat[0]), np.log10(xdat[-1]), 200)
-        spline = make_interp_spline(xdat, ydat)
-        y_smooth = spline(xsmooth)
-        ax.plot(xsmooth, y_smooth, linestyle='-', lw=lw_ave, color=color, label=label)
+        ax.plot(xdat, ydat, linestyle='-', lw=lw_ave, color=color, label=label)
+        
+        ## smooth line
+        # label = "$\\kappa_{p+c}^{ave}$"
+        # xsmooth = np.logspace(np.log10(xdat[0]), np.log10(xdat[-1]), 200)
+        # spline = make_interp_spline(xdat, ydat)
+        # y_smooth = spline(xsmooth)
+        # ax.plot(xsmooth, y_smooth, linestyle='-', lw=lw_ave, color=color, label=label)
         
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
