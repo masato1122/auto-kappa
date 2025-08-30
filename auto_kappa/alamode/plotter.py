@@ -503,7 +503,7 @@ class AlamodePlotter:
                 pass
         
         ##
-        lab_kappa = "${\\rm \\kappa_{lat}}$"
+        lab_kappa = "${\\rm \\kappa_p}$"
         if 'freq' in wrt:
             xlabel = "Frequency (${\\rm cm^{-1}}$)"
             unit1 = "${\\rm Wm^{-1}K^{-1}/cm^{-1}}$"
