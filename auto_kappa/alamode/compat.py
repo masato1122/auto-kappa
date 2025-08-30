@@ -18,9 +18,7 @@ import glob
 import subprocess
 import shutil
 import multiprocessing as mp
-
 import ase.io
-# from ase.geometry import get_distances
 
 from auto_kappa.io import AlmInput
 from auto_kappa.structure import change_structure_format

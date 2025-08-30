@@ -351,12 +351,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         abs_path : string
             absolute path
         """
-        try:
-            dir1 = "./" + self.base_directory.split("/")[-1]
-            relative_path = abs_path.replace(self.base_directory, dir1)
-            return relative_path
-        except Exception:
-            return abs_path
+        if abs_path.startswith("/"):
+            relpath = "./" + os.path.relpath(abs_path, os.getcwd())
+        else:
+            relpath = abs_path
+        return relpath
+        
+        ### old version
+        # try:
+        #     dir1 = "./" + self.base_directory.split("/")[-1]
+        #     relative_path = abs_path.replace(self.base_directory, dir1)
+        #     return relative_path
+        # except Exception:
+        #     return abs_path
 
     @property
     def fc2xml(self):

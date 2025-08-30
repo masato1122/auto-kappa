@@ -13,7 +13,6 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import json
 from ase.geometry import get_distances
 
 import logging

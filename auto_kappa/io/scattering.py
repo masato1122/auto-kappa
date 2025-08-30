@@ -29,20 +29,19 @@ class Scattering():
     Hot To Use
     ------------
     >>> scat = Scattering(options.fresult, 
-    >>>                 isotope=file_isotope, 
-    >>>                 temperature=options.T,
-    >>>                 grain_size=size)
+    >>>                   isotope=file_isotope, 
+    >>>                   temperature=options.T,
+    >>>                   grain_size=size)
     >>> 
     >>> scat.set_total_scattering_rate()
     >>> print(scat.kappa)
     >>> 
     >>> 
     >>> size = 1000   # nm
-    >>> scat.cahnge_grain_size(size)
+    >>> scat.change_grain_size(size)
     >>> 
     >>> T = 100.
-    >>> scat.change_tempearture(T)
-    
+    >>> scat.change_temperature(T)
     """
     def __init__(self, file_result: None, temperature=300., file_isotope=None,
                  grain_size=None, verbose=0):
@@ -113,7 +112,14 @@ class Scattering():
         ### T-independent
         if self.size is not None:
             self.set_scattering_rate_boundary(size=self.size)
-        
+    
+    @property
+    def temperatures(self):
+        try:
+            return self.result['temperatures']
+        except:
+            return None
+    
     @property
     def kpoints(self):
         return self.result['kpoints']
@@ -124,7 +130,6 @@ class Scattering():
     
     @property
     def averaged_velocities(self):
-        
         if self._averaged_velocities is None:
             self.set_averaged_velocities()
         return self._averaged_velocities

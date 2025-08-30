@@ -16,6 +16,7 @@ import numpy as np
 import glob
 import shutil
 
+from auto_kappa.alamode.plotter import plot_kappa_vs_grain_size
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa.alamode.helpers import should_rerun_alamode
@@ -25,8 +26,7 @@ from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
 from auto_kappa.calculators.compat import remove_old_kappa_data
 from auto_kappa.calculators.scph import calculate_high_order_force_constants
-# from auto_kappa.io.fcs import FCSxml
-# from auto_kappa.plot import make_figure
+from auto_kappa.alamode.plotter import plot_kappa_vs_grain_size
 
 import logging
 logger = logging.getLogger(__name__)
@@ -750,54 +750,34 @@ def calculate_thermal_conductivities(
                 msg = f"\n Warning: the figure of cumulative thermal conductivity wrt {wrt} "
                 msg += f"was not created properly. {e}"
                 logger.warning(msg)
-    
+
+        ## Write and plot thermal conductivity as a function of grain size
+        try:
+            filename = outdir + f"/kappa_vs_grain_size.csv"
+            figname = outdir + f"/fig_kappa_vs_grain_size.png"
+            almcalc.write_kappa_vs_grain_size(outdir, process='3ph', outfile=filename)
+            plot_kappa_vs_grain_size(filename, figname)
+            if process == '4ph':
+                filename = outdir + f"/kappa_vs_grain_size_4ph.csv"
+                figname = outdir + f"/fig_kappa_vs_grain_size_4ph.png"
+                almcalc.write_kappa_vs_grain_size(outdir, process=process, outfile=filename)
+                plot_kappa_vs_grain_size(filename, figname)
+        
+        except Exception as e:
+            msg = f"\n Warning: the figure of thermal conductivity vs grain size was not created properly. {e}"
+            logger.warning(msg)
+        
     if almcalc.calculate_forces == False:
         return None
+    else:
+        msg  = "\n - .... . .-. -- .- .-..   -.-. --- -. -.. ..- -.-. - - .. ...- .. - .. . ...   "
+        msg += "\n .-- . .-. .   -.-. .- .-.. -.-. ..- .-.. .- - . -."
+        logger.info(msg)
     
-    msg  = "\n - .... . .-. -- .- .-..   -.-. --- -. -.. ..- -.-. - - .. ...- .. - .. . ...   "
-    msg += "\n .-- . .-. .   -.-. .- .-.. -.-. ..- .-.. .- - . -."
-    logger.info(msg)
-    
-    ### analyze phonons
-    if calc_type == "cubic":
+    if almcalc.calculate_forces and calc_type == "cubic":
         logger.info("\n Plot thermal conductivity for different k-mesh densities:")
         almcalc.plot_all_kappa(figname=None, calc_type=calc_type)
-        
-        # try:
-        #     for T in temperatures_for_spectral.split(':'):
-        #         almcalc.write_lifetime_at_given_temperature(temperature=float(T))
-        # except Exception as e:
-        #     msg = f"\n Warning: lifetime was not written properly. {e}"
-        #     logger.warning(msg)
-        
-        # try:
-        #     almcalc.plot_lifetime(
-        #             temperatures=temperatures_for_spectral, calc_type=calc_type)
-        # except Exception as e:
-        #     msg = f"\n Warning: the figure of lifetime was not created properly. {e}"
-        #     logger.warning(msg)
-        
-        # try:
-        #     almcalc.plot_scattering_rates(temperature=300., grain_size=1000.)
-        # except Exception as e:
-        #     msg = f"\n Warning: the figure of scattering rate was not created properly. {e}"
-        #     logger.warning(msg)
 
-        # try:
-        #     almcalc.plot_cumulative_kappa(
-        #             temperatures=temperatures_for_spectral, 
-        #             wrt='frequency', xscale='linear')
-        # except Exception as e:
-        #     msg = f"\n Warning: the figure of cumulative thermal conductivity was not created properly. {e}"
-        #     logger.warning(msg)
-
-        # try:
-        #     almcalc.plot_cumulative_kappa(
-        #             temperatures=temperatures_for_spectral, 
-        #             wrt='mfp', xscale='log')
-        # except Exception as e:
-        #     msg = f"\n Warning: the figure of cumulative TCs was not created properly. {e}"
-        #     logger.warning(msg)
 
 def _print_rt_kappa(outdir, prefix, rt=300):
     

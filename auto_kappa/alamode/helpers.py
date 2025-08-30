@@ -122,21 +122,6 @@ class AlamodeForceCalculator():
                     )
         return structures, displacements
     
-    # def _check_structures_identity(self, struct_this, struct_prev, tolerance=1e-3, key=None):
-    #     _, D_len = get_distances(
-    #         struct_prev.get_positions(),
-    #         struct_this.get_positions(),
-    #         cell=struct_prev.cell,
-    #         pbc=struct_prev.pbc)
-        
-    #     max_disp = np.max(np.diag(D_len))
-    #     if max_disp > tolerance:
-    #         msg = (
-    #             f"\n Error: The structure is not the same as "
-    #             f"the previous one. ({key}, {max_disp})")
-    #         logger.error(msg)
-    #         sys.exit()
-    
     def _job_for_each_structure(
         self, job_idx, structures, base_dir, order, calculator, **amin_params_set):
         
