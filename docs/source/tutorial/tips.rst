@@ -28,6 +28,9 @@ Many directories which contain a vasprun.xml file are supposed to be located und
 ..
 
 
+Plot phonon dispersion and DOS
+===============================
+
 Preparing...
 
 (Please see ``.../examples/8_plot`` to plot phonon dispersion and DOS)
