@@ -6,7 +6,7 @@ Useful Tips
 Make DFSET file for Alamode
 ===============================
 
-``get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
+``auto_kappa.io.vasp.get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
 Many directories which contain a vasprun.xml file are supposed to be located under the given directory.
 
 .. code-block:: shell
@@ -28,70 +28,75 @@ Many directories which contain a vasprun.xml file are supposed to be located und
 ..
 
 
-Plot phonon dispersion and DOS
-=================================
+Preparing...
 
-``plot_bandos`` helps to plot the phonon dispersion and DOS.
-Different files such as .bands, .dos, .band.pr are supposed to be in the same directory.
+(Please see ``.../examples/8_plot`` to plot phonon dispersion and DOS)
 
-.. code-block:: shell
+
+.. Plot phonon dispersion and DOS
+.. =================================
+
+.. ``plot_bandos`` helps to plot the phonon dispersion and DOS.
+.. Different files such as .bands, .dos, .band.pr are supposed to be in the same directory.
+
+.. .. code-block:: shell
     
-    $ ls
-    ... Si.bands Si.dos Si.band.pr ...
-..
+..     $ ls
+..     ... Si.bands Si.dos Si.band.pr ...
+.. ..
 
-.. code-block:: python
+.. .. code-block:: python
 
-    from auto_kappa.plot.bandos import plot_bandos
+..     from auto_kappa.plot.bandos import plot_bandos
 
-    plot_bandos(directory='.', prefix='Si',
-                figname='fig_bandos.png',
-                plot_pr=True)
-..
+..     plot_bandos(directory='.', prefix='Si',
+..                 figname='fig_bandos.png',
+..                 plot_pr=True)
+.. ..
 
-.. figure:: ../files/fig_bandos.png
-    :height: 250px
-    :align: center
+.. .. figure:: ../files/fig_bandos.png
+..     :height: 250px
+..     :align: center
     
-    Phonon dispersion with participation ratio and DOS of Silicon
+..     Phonon dispersion with participation ratio and DOS of Silicon
 
-..
+.. ..
 
-A more flexible way is as follows:
+.. A more flexible way is as follows:
 
-.. code-block:: python
+.. .. code-block:: python
 
-    import matplotlib.pyplot as plt
-    from auto_kappa.plot.alamode.band import Band
-    from auto_kappa.plot.bandos import plot_bands_with_symmetry_points
+..     import matplotlib.pyplot as plt
+..     from auto_kappa.plot.alamode.band import Band
+..     from auto_kappa.plot.bandos import plot_bands_with_symmetry_points
 
-    fig, ax = plt.subplots(figsize=(5, 3))
+..     fig, ax = plt.subplots(figsize=(5, 3))
     
-    file_band = 'Si.bands'
-    band = Band(file_band)
-    plot_bands_with_symmetry_points(ax, band)
+..     file_band = 'Si.bands'
+..     band = Band(file_band)
+..     plot_bands_with_symmetry_points(ax, band)
 
-    fig.savefig('fig_band.png', dpi=600, bbox_inches='tight')
+..     fig.savefig('fig_band.png', dpi=600, bbox_inches='tight')
     
-..
+.. ..
 
 
-Plot results of cross validation
-=====================================
+.. Plot results of cross validation
+.. =====================================
 
-.. code-block:: shell
+.. .. code-block:: shell
     
-    $ ls
-    ... **.cvset1 **.cvset2 ... **.cvscore ...
+..     $ ls
+..     ... **.cvset1 **.cvset2 ... **.cvscore ...
 
-.. code-block:: python
+.. .. code-block:: python
 
-    from auto_kappa.plot.lasso import plot_cvsets
-    plot_cvsets(directory='.', figname='fig_cvsets.png')
+..     from auto_kappa.plot.lasso import plot_cvsets
+..     plot_cvsets(directory='.', figname='fig_cvsets.png')
     
-.. figure:: ../files/fig_cvsets.png
-    :height: 250px
-    :align: center
+.. .. figure:: ../files/fig_cvsets.png
+..     :height: 250px
+..     :align: center
 
-    Results for cross-valication
+..     Results for cross-valication
 
