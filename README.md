@@ -51,7 +51,7 @@ Some Important Options
 You can view a description of the options using ``akrun -h``. 
 Frequently used commands are listed below.
 
-- **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
+- **file_structure**: Structure file name. Different formats, including POSCAR and CIF, are accepted.
 
 - **outdir**: Name of the output directory
 
@@ -59,19 +59,19 @@ Frequently used commands are listed below.
 
 - **mpirun**: MPI command [Default: mpirun]
 
-- **command\_{vasp/vasp\_gam/alm/anphon/anphon_ver2}**: Command to run VASP, alm, and anphon [Default: vasp, vasp_gam, alm, anphon, anphon.2.0]
+- **command\_{vasp/vasp\_gam/alm/anphon/anphon_ver2}**: Command to run ``VASP``, ``alm``, and ``anphon`` [Default: vasp, vasp_gam, alm, anphon, anphon.2.0]
 
-- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state [Default: 0]
+- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state [Default: 1]
 
 - **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear [Default: 0]
 
-- **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
+- **max\_natoms**: Maximum number of atoms in the supercell used for the force constant calculation [Default: 150]
 
-- **scph**: Flag for the phonon renormalization using the self-consistent phonon approach [Default: 0]
+- **scph**: Flag for considering phonon renormalization using the self-consistent phonon (SCPH) approach [Default: 0]
 
-- **four**: Flag for the four phonon scattering calculation [Default: 0]
+- **four**: Flag for considering four phonon scattering [Default: 0]
 
-- **material_dimension**: Dimension of the material (2 or 3) [Default: 3]
+<!-- - **material_dimension**: Dimension of the material (2 or 3) [Default: 3] -->
 
 Citation
 ---------
