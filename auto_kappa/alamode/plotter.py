@@ -365,11 +365,12 @@ class AlamodePlotter:
             
             scat.plot_lifetime(ax, temperature=t, label=label,
                                marker=markers[i % len(markers)],
-                               color=cmap(i % 10))
+                               color=cmap(i % 10))    
             _update_ax_range(ax, xlim, ylim)
         
         ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
         ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
+        
         set_axis(ax, xscale='log', yscale='log')
         set_legend(ax, fs=6, alpha=0.5, loc='best')
         
