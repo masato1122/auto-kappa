@@ -580,10 +580,10 @@ class AlamodePlotter:
         
         with open(outfile, 'w') as f:
             f.write("# Created by auto-kappa\n")
-            f.write("# %s scattering  : %s\n" % (process, self.get_relative_path(scat.result.filename)))
+            f.write("# %s scattering : %s\n" % (process, self.get_relative_path(scat.result.filename)))
             if scat.file_isotope is not None:
                if os.path.exists(scat.file_isotope):
-                    f.write("# Isotope      : %s\n" % self.get_relative_path(scat.file_isotope))
+                   f.write("# Isotope        : %s\n" % self.get_relative_path(scat.file_isotope))
             f.write("# Temperature [K] : %.2f to %.2f\n" % (df['temperature[K]'].min(), df['temperature[K]'].max()))
             f.write("# Grain size [nm] : %.2f to %.2f\n" % (df['grain_size[nm]'].min(), df['grain_size[nm]'].max()))
             df.to_csv(f, index=False, float_format="%.7e")
