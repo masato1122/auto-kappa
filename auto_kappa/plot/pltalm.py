@@ -76,7 +76,7 @@ def _plot_each_kappa(
         ydat = df['ksum_ave'].values
         
         lw = 0.5
-        label = "${\\rm \\kappa_{p+c}}$, %s" % kappa_label
+        label = "${\\rm \\kappa_{p+c}^{ave}}$, %s" % kappa_label
         if np.max(ydat) > kappa_min:
             ax.plot(xdat, ydat, linestyle='-', lw=lw, 
                     marker=None, c=col, label=label)

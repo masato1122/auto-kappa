@@ -677,13 +677,12 @@ class AlamodePlotter:
     
     
     def plot_all_kappa(self, figname=None, calc_type="cubic"):
-        """
-        Args
-        ======
-
+        """ Plot all kappa results
+        
+        Parameters
+        ----------
         calc_type : string
             "cubic", "scph"
-
         """
         dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
         keys = dirs_kappa.keys()
