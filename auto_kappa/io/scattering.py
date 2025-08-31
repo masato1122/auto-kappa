@@ -590,7 +590,7 @@ class Scattering():
                 try:
                     label = f'{process}({self.temperature:.0f}K)'
                 except:
-                    label = None
+                    label = key
             elif key == "boundary":
                 label = f"L={self.size:.0f}nm"
             else:
@@ -601,8 +601,12 @@ class Scattering():
             xlim_ik, ylim_ik = _plot_share_for_mode_property(
                 ax, xorig, yorig, color=cmap(icol), marker=markers[ik%len(markers)],
                 lw=lw, ms=ms, label=label)
+            
+            if xlim_ik is None:
+                logger.info(" No valid data for %s", label)
+                continue
             icol += 1
-
+            
             xlim[0] = min(xlim[0], xlim_ik[0])
             xlim[1] = max(xlim[1], xlim_ik[1])
             ylim[0] = min(ylim[0], ylim_ik[0])
@@ -613,11 +617,11 @@ class Scattering():
         
 
 def _plot_share_for_mode_property(ax, xorig, yorig, color='black', marker='o', lw=0.5, ms=2.3,
-                                  alpha=1.0, label=None):
-    
-    idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+                                  alpha=1.0, label=None, xtol=0.0, ytol=1e-5):
+
+    idx_pos = np.where((xorig > xtol) & (yorig > ytol))[0]
     if len(idx_pos) == 0:
-        return
+        return None, None
     
     xdat, ydat = xorig[idx_pos], yorig[idx_pos]
     ax.plot(xdat, ydat, linestyle='None', mfc='none',
