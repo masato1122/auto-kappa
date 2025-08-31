@@ -140,12 +140,11 @@ def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
 
 def print_times(times, labels):
 
-    msg = "\n"
+    msg = "\n\n"
     msg += " Calculation times:\n"
     msg += " ==================\n"
-    msg += "\n"
     logger.info(msg)
-
+    
     nchar = 0
     ttot = np.sum(np.asarray(times))
     for i, lab in enumerate(labels):
@@ -153,10 +152,9 @@ def print_times(times, labels):
         percentage = 100.*tt/ttot
         line = "%25s (sec): %13.2f (%.1f%%)" % (lab, tt, percentage)
         nchar = max(nchar, len(line))
-
         msg = " " + line
         logger.info(msg)
-
+        
     msg = " " + "-" * (nchar + 5) + "\n"
     msg += " %25s (sec): %13.2f \n" % ("total", ttot)
     logger.info(msg)

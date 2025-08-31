@@ -643,6 +643,8 @@ def _plot_share_for_mode_property(ax, xorig, yorig, color='black', marker='o', l
     return xlim, ylim
 
 def _get_log_range(vmin, vmax, space=0.05):
+    if vmin <= 0 or vmax <= 0:
+        return [vmin, vmax]
     vmin_log = np.log10(vmin)
     vmax_log = np.log10(vmax)
     dv_log = vmax_log - vmin_log

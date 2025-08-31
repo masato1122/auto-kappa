@@ -368,8 +368,8 @@ class AlamodePlotter:
                                color=cmap(i % 10))
             _update_ax_range(ax, xlim, ylim)
         
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
+        ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
+        ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
         set_axis(ax, xscale='log', yscale='log')
         set_legend(ax, fs=6, alpha=0.5, loc='best')
         
@@ -804,3 +804,15 @@ def plot_kappa_vs_grain_size(filename: str, figname: str, fontsize=7, marker=Non
         figname = "./" + os.path.relpath(figname, os.getcwd())
     print(" Output", figname)
     return fig
+
+def _get_log_range(vmin, vmax, space=0.05):
+    if vmin <= 0 or vmax <= 0:
+        return [vmin, vmax]
+    vmin_log = np.log10(vmin)
+    vmax_log = np.log10(vmax)
+    dv_log = vmax_log - vmin_log
+    v0_log = vmin_log - dv_log * space
+    v1_log = vmax_log + dv_log * space
+    v0 = np.power(10, v0_log)
+    v1 = np.power(10, v1_log)
+    return [v0, v1]
