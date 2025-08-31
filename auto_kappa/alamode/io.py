@@ -137,5 +137,5 @@ def write_displacement_info(structure, pristine_structure=None, outdir=None, thr
     
     outfile = outdir + "/disp_info.csv"
     df = pd.DataFrame(disp_info)
-    df.to_csv(outfile, float_format='%.5e', index=False)
+    df.to_csv(outfile, float_format='%.8e', index=False)
 
