@@ -156,7 +156,7 @@ class KL(KappaShare):
                     return True
         return False
     
-    def plot(self, ax, linestyle='none', color='blue',
+    def plot(self, ax, process=None, linestyle='none', color='blue',
              lw=0.4, ms=2.3, marker=None,
              xlabel=None, ylabel=None, 
              xscale='log', yscale='log'):
@@ -185,10 +185,13 @@ class KL(KappaShare):
                 lwi = lw
                 markeri = marker if marker is not None else markers[j]
             
-            ###
-            col = f"k{dirs[j]}"
-            ydat = self.data[col].values            
+            ## label
             label = "${\\rm %s^{%s}}$" % (base_label, dirs[j])
+            if process is not None:
+                label += f"({process})"
+            
+            col = f"k{dirs[j]}"
+            ydat = self.data[col].values
             ax.plot(xdat, ydat, 
                     linestyle=linestyle, lw=lwi, color=color,
                     marker=markeri, mew=lwi, mec=color, 

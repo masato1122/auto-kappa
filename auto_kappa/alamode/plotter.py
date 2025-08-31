@@ -611,24 +611,34 @@ class AlamodePlotter:
         cmap = plt.get_cmap("tab10")
         if 'kl_coherent' in files:
             if 'kl' in files:
-                both_obj = Kboth(files['kl'], files['kl_coherent'])
-                both_obj.plot(ax, color=cmap(0), lw=lw, ms=ms)
+                try:
+                    both_obj = Kboth(files['kl'], files['kl_coherent'])
+                    both_obj.plot(ax, color=cmap(0), lw=lw, ms=ms)
+                except Exception as e:
+                    logger.error(f" Error plotting kl and kl_coherent: {e}")
             elif 'kl4' in files:
                 ## data with 4ph scattering
-                both_obj = Kboth(files['kl4'], files['kl_coherent'])
-                both_obj.plot(ax, color=cmap(0), lw=lw, ms=ms)
+                try:
+                    both_obj = Kboth(files['kl4'], files['kl_coherent'])
+                    both_obj.plot(ax, color=cmap(0), lw=lw, ms=ms, process='4ph')
+                except Exception as e:
+                    logger.error(f" Error plotting kl4 and kl_coherent: {e}")
+                
                 if 'kl3' in files:
                     ## data with 3ph scattering
-                    both_obj = Kboth(files['kl3'], files['kl_coherent'])
-                    xdat = both_obj.data['temperature']
-                    ydat = both_obj.data['klat_ave']
-                    label = '${\\rm \\kappa_{p+c}^{ave}(3ph)}$'
-                    if len(xdat) > 0:
-                        ls = None if len(xdat) == 1 else '--'
-                        marker = 'o' if len(xdat) == 1 else None
-                        ax.plot(xdat, ydat, linestyle=ls, marker=marker, 
-                                ms=ms, mec=cmap(1), mfc='none', mew=lw,
-                                color=cmap(1), lw=lw, label=label)
+                    try:
+                        both_obj = Kboth(files['kl3'], files['kl_coherent'])
+                        xdat = both_obj.data['temperature']
+                        ydat = both_obj.data['klat_ave']
+                        label = '${\\rm \\kappa_{p+c}^{ave}(3ph)}$'
+                        if len(xdat) > 0:
+                            ls = None if len(xdat) == 1 else '--'
+                            marker = 'o' if len(xdat) == 1 else None
+                            ax.plot(xdat, ydat, linestyle=ls, marker=marker, 
+                                    ms=ms, mec=cmap(1), mfc='none', mew=lw,
+                                    color=cmap(1), lw=lw, label=label)
+                    except Exception as e:
+                        logger.error(f" Error plotting kl3 and kl_coherent: {e}")
         
         set_axis(ax, xscale='log', yscale='log')
         set_legend(ax, fs=6, alpha=0.5, loc='best')
