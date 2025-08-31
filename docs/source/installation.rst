@@ -73,37 +73,37 @@ Alternatively, you may use ``conda`` or other tools to create a virtual environm
 
 .. code-block:: bash
 
-    $ (mkdir ~/.venv)
-    $ cd ~/.venv
-    $ python -m venv kappa
-    $ source ./kappa/bin/activate
+    (mkdir ~/.venv)
+    cd ~/.venv
+    python -m venv kappa
+    source ./kappa/bin/activate
     
 To set ``kappa`` as the default, add the following line in ``.bash_profile``.
 
 .. code-block:: bash
 
-    $ source ~/.venv/kappa/bin/activate
+    source ~/.venv/kappa/bin/activate
 
 
 2. Download the code with ``git`` command.
 
 .. code-block:: bash
     
-    $ git clone git@github.com:masato1122/auto-kappa.git
+    git clone git@github.com:masato1122/auto-kappa.git
 
 Update and install the code:
 
 .. code-block:: bash
 
-    $ cd ./auto-kappa
-    $ git pull
-    $ sh ./install.sh
+    cd ./auto-kappa
+    git pull
+    sh ./install.sh
 
 After completing the process, verify the installation:
 
 .. code-block:: bash
 
-    $ akrun -h
+    akrun -h
 
 
 Examples

@@ -2,19 +2,18 @@
 Examples
 =========
 
-To check functions of libraries used in auto-kappa,
-please perform an example in each directory.
-Some of the examples can be performed using ``run.sh`` script in the directory.
+These examples are prepared to check functions of libraries used in auto-kappa.
+These jobs can be performed using the ``run.sh`` script in each directory.
 
-- 1_alm : Test job for "alm"
+- **1_alm** : Test job for "alm"
 
-- 2_anphon : Test job for "anphon"
+- **2_anphon** : Test job for "anphon"
 
-- 3_ase : Test job for ASE with "auto-kappa"
+- **3_ase** : Test job for ASE with "auto-kappa"
 
-- 4_vasp_custodian : Test job for VASP with "custodian"
+- **4_vasp_custodian** : Test job for VASP with "custodian"
 
-- 5_single : Job script to analyze phonon properties of Silicon using auto-kappa
+- **5_single** : Job script to analyze phonon properties of Silicon using auto-kappa
 
     - from_file : Calculation from structure file
     
