@@ -69,7 +69,7 @@ Frequently used commands are listed below.
 
 - **scph**: Flag for considering phonon renormalization using the self-consistent phonon (SCPH) approach [Default: 0]
 
-- **four**: Flag for considering four phonon scattering [Default: 0]
+- **four**: Flag for considering four phonon scattering. The "command_anphon_ver2" option must be set properly. [Default: 0]
 
 <!-- - **material_dimension**: Dimension of the material (2 or 3) [Default: 3] -->
 
@@ -96,10 +96,10 @@ References
 
 - **ASE:** A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
-To Do
+<!-- To Do
 ------
 
 - Iterative calculation
 
-- Cell size for 2D systems: fix cell size for VASP calculations
+- Cell size for 2D systems: fix cell size for VASP calculations -->
 
