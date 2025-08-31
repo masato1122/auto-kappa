@@ -635,13 +635,8 @@ class NameHandler():
 
 def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
     """ 
-    Args
-    -------
-    #cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
-    #    If cutoffs is given properly, cutoffs is used and cutoff2 and
-    #    cutoff3 are ignored.
-    #    If cutoffs is not given, cutoffs are given automatically with
-    #    cutoff2 and cutoff3.
+    Parameters
+    -----------
     cutoff2 : float, unit=Ang
     cutoff3 : float, unit=Ang
     """
@@ -696,12 +691,12 @@ def should_rerun_alamode(logfile):
 
 def should_rerun_band(filename):
     """ Check phonon dispersion calculated with ALAMODE
-    Args
-    ======
-
+    
+    Parameters
+    -----------
     filename : string
-        alamode band file (***.bands)
-
+        alamode band file (.bands file)
+        
     """
     data = np.genfromtxt(filename)
     data = data[:,1:]
@@ -717,8 +712,8 @@ def should_rerun_band(filename):
 def read_kappa(dir_kappa, prefix, dim=3, norm_idx=None, kappa_scale=1.0):
     """ Read .kl and .kl_coherent files and return pandas.DataFrame object
     
-    Args
-    ------
+    Parameters
+    -----------
     dir_kappa : string
         directory in which .kl and .kl_coherent should exist.
     

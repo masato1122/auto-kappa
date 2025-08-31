@@ -1,47 +1,48 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../..'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode/analyzer'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/io'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot/alamode'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/structure'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode_tools'))
+
+import os, sys
+sys.path.insert(0, os.path.abspath('..'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 # -- Project information 
 
 project = 'auto-kappa'
-copyright = '2022, M. Ohnishi'
+copyright = '2025, M. Ohnishi'
 author = 'M. Ohnishi'
 
 # The full version, including alpha/beta/rc tags
-release = 'Oct. 3th, 2022'
+release = 'Sept. 1st, 2025'
 
-# -- General configuration 
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
-    ]
+]
+autosummary_generate = True
+
+autosummary_filename_map = {
+    "auto_kappa.io": "auto_kappa.io",
+    "auto_kappa.plot": "auto_kappa.plot",
+}
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+    "inherited-members": True,
+    # "imported-members": True,
+}
+autoclass_content = "both"
+autodoc_typehints = "description"
 
 templates_path = ['_templates']
-
 exclude_patterns = []
 
-
 # -- Options for HTML output 
-
 html_theme = 'sphinx_rtd_theme'
-
 html_static_path = ['_static']
-
 html_style = 'css/custom.css'
-
 pygments_style = "sphinx"
 
 ## numbering
@@ -70,4 +71,3 @@ latex_show_urls = 'footnote'
 #        external_links[i].setAttribute("rel", "noopener noreferrer");
 #    }
 #});
-

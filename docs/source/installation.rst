@@ -22,7 +22,6 @@ Preparation
 
 For phonon calculations using Auto-kappa, the ``alm``, ``anphon``, and ``vasp`` commands, 
 as well as the ``VASP_PP_PATH`` environment variable, are required. 
-See below for details.
 
 VASP and Alamode
 -------------------

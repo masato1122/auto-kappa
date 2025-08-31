@@ -12,6 +12,7 @@
 import sys
 import os
 import os.path
+from typing import Sequence
 import numpy as np
 import glob
 import shutil
@@ -46,9 +47,8 @@ def analyze_phonon_properties(
         ):
     """ Analyze phonon properties
     
-    Args
-    =====
-    
+    Parameters
+    -----------
     almcalc : auto_kappa.alamode.almcalc.AlamodeCalc
     
     calc_force : ase.calculators.vasp.vasp.Vasp
@@ -85,8 +85,8 @@ def analyze_phonon_properties(
     scph_temperatures : float, [100, 200, ..., 1000]
         temperatures for SCPH
     
-    Return
-    =======
+    Returns
+    --------
     integer :
         ``0`` when the calculation was finished properly,
         ``-1`` when negative frequencies were found,
@@ -95,8 +95,7 @@ def analyze_phonon_properties(
     ###
     ### Calculate harmonic FCs and harmonic phonon properties
     ###
-    analyze_harmonic_properties(
-        almcalc, calc_force, negative_freq=negative_freq, params_nac=params_nac)
+    analyze_harmonic_properties(almcalc, calc_force, negative_freq=negative_freq, params_nac=params_nac)
     
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq and almcalc.calculate_forces:
@@ -230,19 +229,38 @@ def analyze_phonon_properties(
     
     return 0
 
-def _back_to_initial_sc_size(sc_matrix):
-    """ Print message: Back to the initial supercell size """
+def _back_to_initial_sc_size(sc_matrix: Sequence[Sequence[int]]) -> None:
+    """Log a framed message about using the initial supercell size.
+    
+    Parameters
+    ----------
+    sc_matrix : array_like of int, shape (3, 3)
+        Supercell transformation matrix.
+        
+    """
+    dims = tuple(int(sc_matrix[i][i]) for i in range(3))
     main_msg = "Analysis using the supercell of initial size"
-    n_tot = len(main_msg) + 6
-    msg  = "\n " + "#" * n_tot
-    msg += "\n ##" + " " * (n_tot - 4) + "##"
-    msg += "\n ## %s ##" % main_msg
-    line_size = "Supercell size : %d x %d x %d" % (
-        sc_matrix[0][0], sc_matrix[1][1], sc_matrix[2][2])
-    msg += "\n ## %s " % line_size + " " * (len(main_msg) - len(line_size)) + "##"
-    msg += "\n ##" + " " * (n_tot - 4) + "##"
-    msg += "\n " + "#" * n_tot
-    logger.info(msg)
+    line_size = f"Supercell size : {dims[0]} x {dims[1]} x {dims[2]}"
+    
+    inner = max(len(main_msg), len(line_size)) + 2  # includes a space at both sides
+    n_tot = inner + 4  # '##' + '##' の分
+
+    top_bottom = " " + "#" * n_tot
+    blank_line  = " ##" + " " * (n_tot - 4) + "##"
+
+    def pad_line(text: str) -> str:
+        extra = inner - (len(text) + 2)   # include both sides
+        return f" ## {text}" + " " * extra + " ##"
+    
+    msg = "\n".join([
+        top_bottom,
+        blank_line,
+        pad_line(main_msg),
+        pad_line(line_size),
+        blank_line,
+        top_bottom,
+    ])
+    logger.info("\n" + msg)
 
 def analyze_phonon_properties_with_larger_supercells(
     base_dir, almcalc, calc_force,

@@ -4,18 +4,16 @@ auto\_kappa.vasp package
 Submodules
 ----------
 
-auto\_kappa.vasp.relax module
------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: auto_kappa.vasp.relax
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   auto_kappa.vasp.params
+   auto_kappa.vasp.relax
 
 Module contents
 ---------------
 
 .. automodule:: auto_kappa.vasp
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

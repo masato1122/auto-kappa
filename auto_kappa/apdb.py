@@ -232,6 +232,7 @@ class ApdbVasp():
     
     def get_calculator(self, mode, directory=None, kpts=None, **args):
         """ Return VASP calculator created by ASE
+        
         Args
         ------
         mode : string
@@ -240,11 +241,16 @@ class ApdbVasp():
         directory : string
             output directory
         
-        kpts : list of float, shpae=(3,)
+        kpts : list of float, shape=(3,)
+            k-mesh for VASP calculation
         
         **args : dict
             VASP parameters that will be modified which are prior to 
             ``self.params_mod``
+        
+        Return
+        ------
+        ase.calculators.vasp.Vasp
         
         """
         from auto_kappa.calculators.vasp import get_vasp_calculator

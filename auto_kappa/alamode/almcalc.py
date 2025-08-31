@@ -27,7 +27,7 @@ from auto_kappa.structure.crystal import (
     get_formula, convert_primitive_to_unitcell, get_atomic_distance_list)
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.vasp import write_born_info
-from auto_kappa.io.alm import AlmInput, AnphonInput
+from auto_kappa.io.alm import AnphonInput
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile, read_log_fc
 from auto_kappa.alamode.io import wasfinished_alamode
@@ -47,7 +47,6 @@ from auto_kappa.alamode.gruneisen import GruneisenCalculator
 from auto_kappa.utils import get_version
 from auto_kappa.units import BohrToA, AToBohr
 from auto_kappa.structure.two import get_normal_index, get_thickness
-from auto_kappa.plot import make_figure, set_matplot, set_axis, set_legend
 
 import logging
 logger = logging.getLogger(__name__)
@@ -95,88 +94,59 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             ):
         """ This class helps to manage ALAMODE calculations including force
         calculations with VASP.
-        
-        Args
-        ------
 
-        prim_given : primitive structure
-            Different formats such as pymatgen and ASE are accepted while the
-            format is changed to ase-Atoms in this module.
-
-        base_directory : string
-            The top directory of the output directories. For example, material
-            ID of Materials Project or composition [apdb_output]
-        
-        additional_directory : string
-            ``base_directory`` + ``additional_directory`` will be used as the
-            base directory.
-        
+        Parameters
+        -----------
+        prim_given : pymatgen.core.Structure or ase.Atoms
+            Primitive cell. Various formats (pymatgen `Structure`, ASE `Atoms`) are
+            accepted; internally converted to `ase.Atoms`.
+        base_directory : str
+            Top-level output directory (e.g., Materials Project ID or composition).
+        additional_directory : str
+            Path segment appended to ``base_directory`` to form the working directory.
         restart : int, default 1
-            The calculation will restart (1) or NOT restart (0) when the
-            directory exists.
-
-        scell_matrix : array of float, shape=(3,3)
-            transformation matrix from the unitcell to a supercell
+            Whether to restart if the directory already exists (1 = restart, 0 = fresh).
+        scell_matrix : array_like of float, shape (3, 3), optional
+            Transformation matrix from the unit cell to a supercell.
+        primitive_matrix : array_like of float, shape (3, 3), optional
+            Transformation matrix from the unit cell to the primitive cell.
+        cutoffs : array_like, shape (order, num_elems, num_elems), optional
+            Cutoff radii for force constants in Å. If omitted, ``cutoff2`` and
+            ``cutoff3`` are used. Defaults: harmonic = -1 Å, cubic = 4.3 Å.
+        nbody : list of int, optional
+            ``nbody[i]``-body interaction is considered for ``(i+2)``-order FCs.
+            If omitted, defaults to ``[2, 3, 3, 2, 2, ...]``. See the ALAMODE tutorial.
+        cutoff2 : float, optional
+            Cutoff radius for harmonic FCs in Å (used when ``cutoffs`` is ``None``).
+        cutoff3 : float, optional
+            Cutoff radius for cubic/higher-order FCs in Å (LASSO uses ``cutoff3``).
+        min_nearest : int, optional
+            Minimum neighbor shell to include for cubic FCs. Ensures at least the
+            ``min_nearest``-th neighbors are included even if ``cutoff3`` is shorter.
+        nac : int, default 0
+            Non-analytical correction (NAC). If 0, disabled; otherwise enabled.
+        verbose : int, default 0
+            Verbosity level. 1 prints details; 0 stays quiet.
+        commands : dict, optional
+            External command settings (MPI/ANPHON/ALM). Example:
+            ``{'mpirun': 'mpirun', 'anphon_para': 'omp', 'nprocs': 1, 'anphon': 'anphon', 'alm': 'alm'}``
+        yamlfile_for_outdir : str, optional
+            YAML file name to write output directory names.
         
-        primitive_matrix : array of float, shape=(3,3)
-            transformation matrix from the unitcell to the primitive cell
-        
-        #scell_matrix3 : array of float, shape=(3,3)
-        #    transformation matrix from the unitcell to a supercell used to
-        #    calculate cubic FCs
-
-        cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
-            cutoff radii for force constants. If it's not given, it will be set
-            automatically with cutoff2 and cutoff3. Default cutoff radii are 
-            "-1" and "4.3" Angstrom for harmonic and cubid FCs, respectively.
-        
-        ndoby : list of int
-            nbody[i]-body interaction is considered for {i+2}-order FCs.
-            If it is not given, default value is [2,3,3,2,2,...].
-            See the tutorial of Alamode for details.
-         
-        cutoff2, cutoff3 : float, unit=[Ang]
-            cutoff radii.
-            If cutoffs is None, cutoff2 and cutoff3 are used.
-            For lasso calculation, cuttoff3 is used for higher order FCs.
-        
-        min_nearest : int
-            minimum nearest neighbor atoms to consider cubic FCs.
-            At least, ``min_nearest``-th neighbor atoms will be considered,
-            if ``cutoff3`` is shorter than the corresponding distance.
-        
-        nac : int
-            If nac=0, nac is not considered while, if nac != 0, nac is considered.
-    
-        verbose : int
-            If verbose=1, details are output while, if 0, not.
-
-        commands : dict
-            Number of processes and threads are given.
-            default={
-                'mpirun': 'mpirun', "anphon_para": "omp", 
-                "nprocs": 1, "anphon": "anphon", "alm": "alm",
-                }
-        
-        yamlfile_for_outdir : string
-            yaml file name to write output directory names
-        
-        Example
-        ----------
+        Examples
+        --------
         >>> almcalc = AlamodeCalc(
-        >>>     primitive,
-        >>>     base_directory='mpid-149',
-        >>>     primitive_matrix=pmat,
-        >>>     scell_matrix=smat,
-        >>>     cutoff2=-1, cutoff3=4.3,
-        >>>     nbody=[2,3,3,2], magnitude=0.01,
-        >>>     nac=1,
-        >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
-        >>>     verbose=0
-        >>>     )
-        >>> calc_force = apdb.get_calculator('force', 
-        >>>     "./mp-149/harm/force", [4,4,4],
-        >>>     )
+        ...     primitive,
+        ...     base_directory='mpid-149',
+        ...     primitive_matrix=pmat,
+        ...     scell_matrix=smat,
+        ...     cutoff2=-1, cutoff3=4.3,
+        ...     nbody=[2,3,3,2], magnitude=0.01,
+        ...     nac=1,
+        ...     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
+        ...     verbose=0
+        ...     )
+        >>> calc_force = apdb.get_calculator('force', "./mp-149/harm/force", [4,4,4])
         >>> almcalc.calc_forces(1, calc_force)
         >>> almcalc.calc_harmonic_force_constants()
         >>> almcalc.write_alamode_input(propt='dos')
