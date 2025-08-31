@@ -593,6 +593,11 @@ class AlamodePlotter:
     
     def plot_kappa(self, kappa_dir, dpi=600, fig_width=2.3, fontsize=7, aspect=0.9, lw=0.4, ms=2.3):
         """ Plot lattice thermal conductivity from Peierls and coherence contribution
+        
+        Parameters
+        ----------
+        kappa_dir : str
+            Directory for kappa results
         """
         from auto_kappa.io.kl import Kboth
         files = {}
@@ -601,8 +606,9 @@ class AlamodePlotter:
             if os.path.exists(fn):
                 files[suffix] = fn
         
-        ## Prepare figure
         figname = kappa_dir + '/fig_kappa.png'
+        
+        ## Prepare figure
         set_matplot(fontsize=fontsize)
         fig = plt.figure(figsize=(fig_width, aspect*fig_width))
         ax = plt.subplot()
@@ -642,6 +648,7 @@ class AlamodePlotter:
         
         set_axis(ax, xscale='log', yscale='log')
         set_legend(ax, fs=6, alpha=0.5, loc='best')
+        
         fig.savefig(figname, dpi=dpi, bbox_inches='tight')
         if figname.startswith('/'):
             figname = "./" + os.path.relpath(figname, os.getcwd())

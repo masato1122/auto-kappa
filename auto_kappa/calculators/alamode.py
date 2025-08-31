@@ -723,7 +723,7 @@ def calculate_thermal_conductivities(
         except Exception as e:
             msg = f"\n Warning: cannot plot thermal conductivity: {e}"
             logger.warning(msg)
-
+        
         ## Make csv files containing lifetime etc.
         try:
             for T in temperatures_for_spectral.split(':'):

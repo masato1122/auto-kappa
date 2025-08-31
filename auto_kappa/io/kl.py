@@ -86,7 +86,7 @@ class Kboth(KappaShare):
         
         self.data = df_new
     
-    def plot(self, ax, lw=0.4, ms=2.3, color='blue',
+    def plot(self, ax, process=None, lw=0.4, ms=2.3, color='blue',
              xlabel="Temperature (K)",
              ylabel="Thermal conductivity (${\\rm W m^{-1} K^{-1}}$)"):
         
@@ -98,6 +98,8 @@ class Kboth(KappaShare):
             xdat = self.data['temperature'].values
             ydat = self.data['kp_' + dirs[j]].values
             label = "$\\kappa_{p}^{%s}$" % (dirs[j])
+            if process is not None:
+                label += f"({process})"
             ax.plot(xdat, ydat, linestyle='None', lw=lw, color=cmap(j), 
                     marker=markers[j], mew=lw, mec=color,
                     ms=ms, mfc='none', 
@@ -109,20 +111,18 @@ class Kboth(KappaShare):
         ## kp_ave
         ydat = self.data['kp_ave'].values
         label = "$\\kappa_{p}^{ave}$"
+        if process is not None:
+            label += f"({process})"
         ax.plot(xdat, ydat, linestyle='none', 
                 marker='o', ms=ms_ave, mew=lw_ave, mec=color, mfc='none',
                 label=label)
         
         ## klat_ave
         ydat = self.data['klat_ave'].values
+        label = "$\\kappa_{p+c}^{ave}$"
+        if process is not None:
+            label += f"({process})"
         ax.plot(xdat, ydat, linestyle='-', lw=lw_ave, color=color, label=label)
-        
-        ## smooth line
-        # label = "$\\kappa_{p+c}^{ave}$"
-        # xsmooth = np.logspace(np.log10(xdat[0]), np.log10(xdat[-1]), 200)
-        # spline = make_interp_spline(xdat, ydat)
-        # y_smooth = spline(xsmooth)
-        # ax.plot(xsmooth, y_smooth, linestyle='-', lw=lw_ave, color=color, label=label)
         
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -157,11 +157,13 @@ class KL(KappaShare):
         return False
     
     def plot(self, ax, process=None, linestyle='none', color='blue',
-             lw=0.4, ms=2.3, marker=None,
-             xlabel=None, ylabel=None, 
-             xscale='log', yscale='log'):
+             lw=0.4, ms=2.3, marker=None, xlabel=None, ylabel=None, xscale='log', yscale='log'):
         """ Plot kappa vs temperature.
         """
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        
         if self.kappa_type == 'kp':
             base_label = "\\kappa_{p}"
         elif self.kappa_type == 'kc':
