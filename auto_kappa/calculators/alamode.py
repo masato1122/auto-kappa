@@ -727,7 +727,9 @@ def calculate_thermal_conductivities(
         ## Make csv files containing lifetime etc.
         try:
             for T in temperatures_for_spectral.split(':'):
-                almcalc.write_lifetime_at_given_temperature(outdir, temperature=float(T))
+                almcalc.write_lifetime_at_given_temperature(outdir, temperature=float(T), process='3ph')
+                if process == '4ph':
+                    almcalc.write_lifetime_at_given_temperature(outdir, temperature=float(T), process=process)
         except Exception as e:
             msg = f"\n Warning: lifetime was not written properly. {e}"
             logger.warning(msg)

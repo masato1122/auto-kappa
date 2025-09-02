@@ -235,7 +235,8 @@ class AlamodePlotter:
                           grain_size=grain_size, 
                           temperature=temperature)
         
-    def write_lifetime_at_given_temperature(self, dir_kappa, temperature=300, outfile=None, grain_size=None):
+    def write_lifetime_at_given_temperature(self, dir_kappa, temperature=300, grain_size=None,
+                                            outfile=None, process='3ph'):
         """ Write lifetime at a given temperature in a csv file in a format similar to ALAMODE.
         
         Args
@@ -250,7 +251,8 @@ class AlamodePlotter:
             Grain size in nm.
         
         """
-        scat = self.get_scattering_info(dir_kappa, temperature=temperature, grain_size=grain_size, verbose=False)
+        scat = self.get_scattering_info(dir_kappa, temperature=temperature, grain_size=grain_size, 
+                                        process=process, verbose=False)
         if scat is None:
             return
         
@@ -301,7 +303,10 @@ class AlamodePlotter:
             
         ### write a csv file
         if outfile is None:
-            outfile = dir_kappa + "/tau_%dK.csv" % (int(temperature))
+            if process == '3ph':
+                outfile = dir_kappa + "/tau_%dK.csv" % (int(temperature))
+            else:
+                outfile = dir_kappa + "/tau_%dK_%s.csv" % (int(temperature), process)
         
         df = pd.DataFrame(dump)
         with open(outfile, 'w') as f:

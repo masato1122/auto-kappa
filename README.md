@@ -45,8 +45,8 @@ ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
 3. Run the command: ``akrun --file_structure POSCAR.Si --outdir Si``.
 
-Some Important Options
------------------------
+Some Options
+-------------
 
 You can view a description of the options using ``akrun -h``. 
 Frequently used commands are listed below.
