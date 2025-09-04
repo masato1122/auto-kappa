@@ -202,7 +202,8 @@ def get_parser():
     ###### 4-phonon scattering
     parser.add_argument("--four", dest="four", type=int, default=0, help=
                         "Flag for considering four-phonon scattering (0.off, 1.on) [0]. \n"
-                        "If 'scph' option is also set to 1, SCPH+4ph is performed. ")
+                        "If 'scph' option is also set to 1, SCPH+4ph is performed. \n"
+                        "--command_anphon_ver2 must be set properly.")
     parser.add_argument("--frac_kdensity_4ph", dest="frac_kdensity_4ph", type=float, default=0.13, 
                         help=
                         "Fractional k-point density for four-phonon scattering relative to the \n"
@@ -253,7 +254,7 @@ def get_parser():
                         "Maximum number of errors for relaxation calculations with VASP.\n"
                         "Set this option if the number of error is too many. [500]")
     
-    ## ### author
+    ## ### author (deleted)
     ## parser.add_argument(
     ##         "--authors", dest="authors", type=str,
     ##         default=None, help="authors' name (A^1, B^1, C^2)")
