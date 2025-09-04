@@ -67,6 +67,8 @@ Frequently used commands are listed below.
 
 - **max\_natoms**: Maximum number of atoms in the supercell used for the force constant calculation [Default: 150]
 
+- **nmax\_suggest**: Maximum number of displacement patterns for the finite-displacement method. If the number of generated patterns exceeds this value, the LASSO regression approach will be applied [Default: 100].
+
 - **scph**: Flag for considering phonon renormalization using the self-consistent phonon (SCPH) approach [Default: 0]
 
 - **four**: Flag for considering four phonon scattering. The "command_anphon_ver2" option must be set properly. [Default: 0]
