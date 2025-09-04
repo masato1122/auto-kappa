@@ -160,10 +160,6 @@ class KL(KappaShare):
              lw=0.4, ms=2.3, marker=None, xlabel=None, ylabel=None, xscale='log', yscale='log'):
         """ Plot kappa vs temperature.
         """
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        
         if self.kappa_type == 'kp':
             base_label = "\\kappa_{p}"
         elif self.kappa_type == 'kc':
@@ -242,9 +238,10 @@ def read_kl_file(filename):
         df = pd.DataFrame(dump)
         df['kave'] = df[['kxx', 'kyy', 'kzz']].mean(axis=1)
     
-    if df['kave'].max() > 1e4:
+    if df['kave'].max() > 1e6:
         if filename.startswith('/'):
             filename = os.path.relpath(filename)
-        logger.warning(f"\n Warning: Unusually high thermal conductivity values found in {filename}.")
+        kmax = df['kave'].max()
+        logger.warning(f"\n Warning: Unusually high thermal conductivity values found in {filename} ({kmax:.3e}).")
     
     return df

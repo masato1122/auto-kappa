@@ -68,7 +68,8 @@ class GruneisenCalculator:
                 ### Make the working directory, write input file, and run the job
                 self.write_alamode_input(propt=f'gruneisen_{mode}', **kwargs)
                 if not self.calculate_forces:
-                    return
+                    continue
+                
                 self.run_alamode(propt=f'gruneisen_{mode}', ignore_log=False, verbose=False)
                 
                 ### Plot

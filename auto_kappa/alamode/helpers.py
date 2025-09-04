@@ -447,6 +447,15 @@ class AlamodeInputWriter():
         inp.dim = self.dim
         return inp
     
+    def _set_emin_emax_delta_e(self, inp, npoints=301, frac_buffer=0.05):
+        """ Set emin, emax, and delta_e for DOS calculation if possible. """
+        if self.frequency_range is not None:
+            diff = self.frequency_range[1] - self.frequency_range[0]
+            fmin = self.frequency_range[0] - diff * frac_buffer
+            fmax = self.frequency_range[1] + diff * frac_buffer
+            inp.update({'emin': fmin, 'emax': fmax})
+            inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
+    
     def _set_parameters_for_property(
         self, inp, propt=None, deltak=None, kpts=None, order=None):
         
@@ -456,15 +465,7 @@ class AlamodeInputWriter():
                 inp.update({'printpr': 1})
         
         elif propt == 'dos' or propt.startswith('gruneisen_dos'):
-            if self.frequency_range is not None:
-                diff = self.frequency_range[1] - self.frequency_range[0]
-                fmin = self.frequency_range[0] - diff * 0.05
-                fmax = self.frequency_range[1] + diff * 0.05
-                
-                npoints = 301
-                inp.update({'emin': fmin, 'emax': fmax})
-                inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
-            
+            self._set_emin_emax_delta_e(inp)
             inp.update({'kpts': kpts})
             inp.update({'pdos': 1})
         
@@ -476,15 +477,7 @@ class AlamodeInputWriter():
         elif propt.startswith('kappa'):
             from auto_kappa.alamode.parameters import set_parameters_kappa
             set_parameters_kappa(inp, kpts=kpts, nac=self.nac)
-            
-            diff = self.frequency_range[1] - self.frequency_range[0]
-            fmin = self.frequency_range[0] - diff * 0.05
-            fmax = self.frequency_range[1] + diff * 0.05
-            
-            ## These parameters are required for kappa_spec
-            npoints = 301
-            inp.update({'emin': fmin, 'emax': fmax})
-            inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
+            self._set_emin_emax_delta_e(inp)
             
         elif propt == "scph":
             from auto_kappa.calculators.scph import set_parameters_scph

@@ -276,8 +276,8 @@ class FCSxml:
     
     def plot_fc2(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Distance (${\\rm \\AA}$)', 
-                 ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)',
-                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
+                 ylabel='Harmonic FC (${\\rm eV/\\AA^2}$)', yscale='linear',
+                 lw=0.3, ms=2.3, marker=None, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -288,6 +288,12 @@ class FCSxml:
         index_map = _make_symbol_pair_index([symbol_list, symbol_list])
         distances = self.supercell.get_all_distances(mic=True)
         
+        if yscale == 'log':
+            absolute_value = True
+            ylabel = "|Harmonic FC| (${\\rm eV/\\AA^2}$)"
+        else:
+            absolute_value = False
+            
         ###
         fcs = self.fc2
         for iel1, el1 in enumerate(symbol_list):
@@ -309,15 +315,16 @@ class FCSxml:
                                 xdat[i1, i2, j1, j2] = dmax
                                 ydat[i1, i2, j1, j2] = fcs[iat1_prim, iat2_sc, j1, j2]
                 
-                _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
+                _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms, marker=marker,
+                          absolute_value=absolute_value)
         
-        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend, yscale=yscale)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
     
     def plot_fc3(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Maximum distance (${\\rm \\AA}$)', 
-                 ylabel='Cubic FC (${\\rm eV/\\AA^3}$)',
-                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
+                 ylabel='Cubic FC (${\\rm eV/\\AA^3}$)', yscale='linear',
+                 lw=0.3, ms=2.3, marker=None, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -328,6 +335,12 @@ class FCSxml:
         index_map = _make_symbol_pair_index([symbol_list, symbol_list, symbol_list])
         distances = self.supercell.get_all_distances(mic=True)
         
+        if yscale == 'log':
+            absolute_value = True
+            ylabel = "|Cubic FC| (${\\rm eV/\\AA^3}$)"
+        else:
+            absolute_value = False
+            
         ##
         fcs = self.fc3
         for iel1, el1 in enumerate(symbol_list):
@@ -354,15 +367,16 @@ class FCSxml:
                                     xdat[i1, i2, i3, j1, j2, j3] = dmax
                                     ydat[i1, i2, i3, j1, j2, j3] = fcs[iat1_prim, iat2_sc, iat3_sc, j1, j2, j3]
                     
-                    _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
+                    _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms, marker=marker,
+                              absolute_value=absolute_value)
         
-        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend, yscale=yscale)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
     
     def plot_fc4(self, ax, color=None, title=None, show_legend=True,
                  xlabel='Maximum distance (${\\rm \\AA}$)', 
-                 ylabel='Quartic FC (${\\rm eV/\\AA^4}$)',
-                 lw=0.3, ms=2.3, xticks=None, mxticks=None):
+                 ylabel='Quartic FC (${\\rm eV/\\AA^4}$)', yscale='linear',
+                 lw=0.3, ms=2.3, marker=None, xticks=None, mxticks=None):
         
         prim_indices = self.map_p2s[0, :]
         symbols_super = self.supercell.get_chemical_symbols()
@@ -374,6 +388,12 @@ class FCSxml:
         
         distances = self.supercell.get_all_distances(mic=True)
         
+        if yscale == 'log':
+            absolute_value = True
+            ylabel = "|Quartic FC| (${\\rm eV/\\AA^4}$)"
+        else:
+            absolute_value = False
+            
         ##
         fcs = self.fc4
         for iel1, el1 in enumerate(symbol_list):
@@ -412,17 +432,19 @@ class FCSxml:
                                             ydat[i1, i2, i3, i4, j1, j2, j3, j4] = \
                                                 fcs[iat1_prim, iat2_sc, iat3_sc, iat4_sc, j1, j2, j3, j4]
                         
-                        _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms)
+                        _plot_fcs(ax, xdat, ydat, pair_idx, color=color, label=label, lw=lw, ms=ms, marker=marker,
+                                  absolute_value=absolute_value)
         
-        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend)
+        _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend, yscale=yscale)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
 
 def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5, yscale='linear'):
+    
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    if show_legend:
-        
+    
+    if show_legend:    
         try:
             valid_labels = set(
                     line.get_label()
@@ -433,7 +455,7 @@ def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5, yscale='
             ncol = int(n_legend / 13) + 1
         except Exception:
             ncol = 1
-
+        
         set_legend(ax, ncol=ncol, loc='upper left', loc2=[1.0, 1.0], fs=fontsize, alpha=0.5)
     
     ###
@@ -445,9 +467,11 @@ def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5, yscale='
     else:
         set_axis(ax)
 
-def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tol_y=1e-7, lw=0.3, ms=2.3):
+def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, 
+              tol_y=1e-7, lw=0.3, ms=2.3, marker=None, absolute_value=False):
     cmap = plt.get_cmap('tab10')
     markers = ['o', '^', 's', 'D', 'v', 'x']
+    marker_used = marker if marker is not None else markers[pair_idx % len(markers)]
     xdat = xdat.flatten()
     ydat = ydat.flatten()
     # idx_nonzero = [i for i in range(len(xdat)) if abs(xdat[i]) > tolerance and abs(ydat[i]) > tolerance]
@@ -456,7 +480,9 @@ def _plot_fcs(ax, xdat, ydat, pair_idx, color=None, label=None, tol_y=1e-7, lw=0
     ydat = ydat[idx_nonzero]
     ax.axhline(0, linestyle='-', color='grey', lw=lw)
     if len(xdat) > 0 and len(ydat) > 0:
-        ax.plot(xdat, ydat, marker=markers[pair_idx % len(markers)],
+        if absolute_value:
+            ydat = np.abs(ydat)
+        ax.plot(xdat, ydat, marker=marker_used,
                 ms=ms, linestyle='None', mew=lw,
                 mec=color if color is not None else cmap(pair_idx % 10),
                 mfc='none', label=label)

@@ -111,6 +111,7 @@ class Dos:
         self.integrated_pdos = int_pdos
     
     def plot(self, ax, plot_pdos=True, rotate=True, show_legend=True,
+             linestyle='-',
              color='black', lw=0.8, frac_lw=0.7,
              xlabel='Frequency (${\\rm cm^{-1}}$)',
              ylabel='DOS (a.u.)',
@@ -131,7 +132,7 @@ class Dos:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         
-        ax.plot(xdat, ydat, color=color, lw=lw, label='Total')
+        ax.plot(xdat, ydat, linestyle=linestyle, color=color, lw=lw, label='Total')
         
         try:
             nelems = len(self.integrated_pdos.keys())
@@ -141,11 +142,11 @@ class Dos:
         if plot_pdos:
             if self.integrated_pdos is not None:
                 if nelems > 1:
-                    self.plot_pdos(ax, lw=lw*frac_lw, rotate=rotate)
+                    self.plot_pdos(ax, linestyle=linestyle, lw=lw*frac_lw, rotate=rotate)
             if show_legend and nelems > 1:
                 set_legend(ax, fontsize=6, loc='best', length=0.5)
         
-    def plot_pdos(self, ax, lw=0.5, rotate=True):
+    def plot_pdos(self, ax, linestyle='-', lw=0.5, rotate=True):
         
         cmap = plt.get_cmap("tab10")
         
@@ -158,7 +159,7 @@ class Dos:
                 ydat = self.integrated_pdos[elem]
             
             ax.plot(xdat, ydat,
-                    linestyle='-', c=cmap(ie),
+                    linestyle=linestyle, c=cmap(ie),
                     lw=lw, label=elem)
         
 def get_elements(filename):
