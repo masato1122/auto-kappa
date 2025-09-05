@@ -94,6 +94,8 @@ class ApdbVasp():
         self._mat_u2s = scell_matrix
         self._mater_dim = mater_dim
         self._base_dir = base_directory
+        self._model_dir = '/home/wangzeyu/home/research/ML-IPS/matbench-discovery/models/eSEN/checkpoints'
+        self._model_name = 'esen_30m_oam.pt'
         
         if primitive_matrix is None:
             msg = " Error: primitive_matrix must be given."
@@ -230,7 +232,7 @@ class ApdbVasp():
     def supercell(self):
         return self._structures['super']
     
-    def get_calculator(self, mode, directory=None, kpts=None, **args):
+    def get_calculator(self, mode, directory=None, kpts=None, use_mlips=False, **args):
         """ Return VASP calculator created by ASE
         Args
         ------
@@ -260,21 +262,36 @@ class ApdbVasp():
         merged_params_mod = self.params_mod.copy()
         merged_params_mod.update(args)
         
-        calc = get_vasp_calculator(mode, 
-                                   directory=directory, 
-                                   atoms=structure,
-                                   kpts=kpts,
-                                   encut_scale_factor=self.encut_factor,
-                                   **merged_params_mod)
-        
-        calc.command = f"{self.command['mpirun']} -n {self.command['nprocs']} "
-        if list(kpts) == [1, 1, 1]:
-            calc.command += f"{self.command['vasp_gam']}"
+        if use_mlips:
+            calc = self.get_calculator_mlips(mode, directory=directory, kpts=kpts, **args)
         else:
-            calc.command += f"{self.command['vasp']}"
+            calc = get_vasp_calculator(mode, 
+                                    directory=directory, 
+                                    atoms=structure,
+                                    kpts=kpts,
+                                    encut_scale_factor=self.encut_factor,
+                                    **merged_params_mod)
+            
+            calc.command = f"{self.command['mpirun']} -n {self.command['nprocs']} "
+            if list(kpts) == [1, 1, 1]:
+                calc.command += f"{self.command['vasp_gam']}"
+            else:
+                calc.command += f"{self.command['vasp']}"
         
         return calc
     
+    def get_calculator_mlips(self, mode, directory=None, kpts=None, **args):
+        """ Return MLIPS calculator created by ASE
+        """
+        from fairchem.core import OCPCalculator
+        from pathlib import Path
+        model_ckpt = str(Path(self._model_dir) / self._model_name)
+        calculator = OCPCalculator(checkpoint_path=model_ckpt, cpu=False, seed=0)
+        calculator.trainer.scaler = None
+        calc = calculator
+
+        return calc
+
     def run_relaxation(
             self, directory: str, kpts: None,
             standardize_each_time=True,

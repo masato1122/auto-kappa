@@ -43,6 +43,7 @@ def analyze_phonon_properties(
         scph_temperatures={'scph': 100*np.arange(1, 11), 'kappa': 300},
         ## 4-phonon
         four=0, frac_kdensity_4ph=0.2,
+        use_mlips=False,
         ):
     """ Analyze phonon properties
     
@@ -96,7 +97,7 @@ def analyze_phonon_properties(
     ### Calculate harmonic FCs and harmonic phonon properties
     ###
     analyze_harmonic_properties(
-        almcalc, calc_force, negative_freq=negative_freq, params_nac=params_nac)
+        almcalc, calc_force, negative_freq=negative_freq, params_nac=params_nac, use_mlips=use_mlips)
     
     ### Check negative frequency
     if almcalc.minimum_frequency < negative_freq and almcalc.calculate_forces:
@@ -123,7 +124,8 @@ def analyze_phonon_properties(
             almcalc, calc_force,
             nmax_suggest=nmax_suggest, 
             frac_nrandom=frac_nrandom, 
-            ignore_log=ignore_log
+            ignore_log=ignore_log,
+            use_mlips=use_mlips,
             )
     
     ## Calculate Grüneisen parameters
@@ -252,7 +254,8 @@ def analyze_phonon_properties_with_larger_supercells(
     nmax_suggest=100, frac_nrandom=1.0, frac_nrandom_higher=0.34,
     random_disp_temperature=500.,
     four=0, frac_kdensity_4ph=0.13,
-    pes=0
+    pes=0,
+    use_mlips=False,
     ):
     
     almcalc_large = analyze_harmonic_with_larger_supercells(
@@ -265,6 +268,7 @@ def analyze_phonon_properties_with_larger_supercells(
             negative_freq=negative_freq,
             ignore_log=ignore_log,
             restart=restart,
+            use_mlips=use_mlips,
             )
     
     if not almcalc.calculate_forces:
@@ -338,6 +342,7 @@ def analyze_harmonic_with_larger_supercells(
         negative_freq=-1e-3,
         ignore_log=False,
         restart=1,
+        use_mlips=False,
         ):
     """ Analyze harmonic properties with larger supercell(s) """
     from auto_kappa.structure.supercell import estimate_supercell_matrix
@@ -405,7 +410,9 @@ def analyze_harmonic_with_larger_supercells(
         ### analyze phonon properties with a supercell
         analyze_harmonic_properties(
                 almcalc_new, calc_force,
-                negative_freq=negative_freq)
+                negative_freq=negative_freq,
+                use_mlips=use_mlips,
+                )
         
         ### If negative frequencies were eliminated, escape the loop
         if almcalc_new.minimum_frequency > negative_freq:
@@ -428,6 +435,7 @@ def analyze_harmonic_properties(
         deltak=0.01, reciprocal_density=1500,
         negative_freq=-1e-3,
         params_nac={'apdb': None, 'kpts': None},
+        use_mlips=False,
         ):
     """ Analyze harmonic FCs and phonon properties.
     
@@ -449,7 +457,7 @@ def analyze_harmonic_properties(
     almcalc.run_alamode(propt='suggest', order=1, ignore_log=True)
     
     ### calculate forces for the harmonic FCs
-    almcalc.calc_forces(order=1, calculator=calculator)
+    almcalc.calc_forces(order=1, calculator=calculator, use_mlips=use_mlips)
     
     _nprocs_orig = almcalc.commands['alamode']['nprocs']
     _para_orig = almcalc.commands['alamode']['anphon_para']
@@ -550,6 +558,7 @@ def analyze_harmonic_properties(
 def calculate_cubic_force_constants(
         almcalc, calculator,
         nmax_suggest=None, frac_nrandom=None, ignore_log=False,
+        use_mlips=False,
         ):
     """ Calculate cubic force constants
     """
@@ -560,7 +569,8 @@ def calculate_cubic_force_constants(
             order=2, calculator=calculator,
             nmax_suggest=nmax_suggest,
             frac_nrandom=frac_nrandom,
-            output_dfset=2,
+            output_dfset=2, 
+            use_mlips=use_mlips,
             )
     
     ### calculate anharmonic force constants

@@ -25,7 +25,7 @@ from auto_kappa.structure.two import get_normal_index
 import logging
 logger = logging.getLogger(__name__)
 
-def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
+def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False, use_mlips=False):
     """ Get dataset of displacements and forces from many vasprun.xml files.
     
     Args
@@ -49,7 +49,10 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     """
     from ase.geometry import get_distances
     
-    line = directory + '/*/vasprun.xml'
+    if use_mlips:
+        line = directory + '/*/forces.xyz'
+    else:
+        line = directory + '/*/vasprun.xml'
     all_files = glob.glob(line)
     
     ## get keys
@@ -59,16 +62,25 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
         key = fn.split('/')[-2]
         if key == 'prist':
             continue
-        if not wasfinished(dirname):
+        # For MLIPS, check forces.xyz instead of vasprun.xml
+        if use_mlips:
+            finished = wasfinished_mlips(dirname)
+        else:
+            finished = wasfinished(dirname)
+        
+        if not finished:
             continue
         all_keys.append(key)
     all_keys = sorted(all_keys, key=int)
     
     ## get offset data
     try:
-        atoms0 = ase.io.read(offset_xml, format='vasp-xml')
-    except Exception:
-        warnings.warn(" Cannot read %s" % (offset_xml))
+        if use_mlips:
+            atoms0 = ase.io.read(offset_xml)
+        else:
+            atoms0 = ase.io.read(offset_xml, format='vasp-xml')
+    except Exception as e:
+        warnings.warn(f" Cannot read {offset_xml}: {e}")
         return None
 
     forces0 = atoms0.get_forces()
@@ -94,8 +106,14 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     all_lines = []
     # count = 0
     for ii, key in enumerate(all_keys):
-        fn = "%s/%s/vasprun.xml" % (directory, key)
-        atoms1 = ase.io.read(fn, format='vasp-xml')
+        if use_mlips:
+            fn = "%s/%s/forces.xyz" % (directory, key)
+            atoms1 = ase.io.read(fn)
+            print("Reading forces.xyz file: ", fn)
+        else:
+            fn = "%s/%s/vasprun.xml" % (directory, key)
+            atoms1 = ase.io.read(fn, format='vasp-xml')
+            print("Reading vasprun.xml file: ", fn)        
         
         disp_large, _ = get_distances(
                 positions0, p2=atoms1.get_positions(),
@@ -219,6 +237,27 @@ def read_dfset(filename, natoms=None, nstructures=None):
         forces[ii,:,:] = data[ii,:,3:]
     
     return disps, forces
+
+def wasfinished_mlips(directory):
+    """Check if MLIPS calculation is finished by checking if forces.xyz exists and has content.
+    
+    Args:
+        directory: Path to the directory to check
+        
+    Returns:
+        bool: True if forces.xyz exists and has content, False otherwise
+    """
+    fn_target = directory + '/forces.xyz'
+    try:
+        with open(fn_target, 'r') as f:
+            lines = f.readlines()
+        # Check if file has at least 3 lines (natoms, comment, first atom)
+        if len(lines) >= 3:
+            return True
+        else:
+            return False
+    except Exception:
+        return False
 
 def wasfinished(directory, filename='vasprun.xml', tar=None):
     """ 

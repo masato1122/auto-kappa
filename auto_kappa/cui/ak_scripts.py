@@ -299,7 +299,11 @@ def main():
             )
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation
-    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
+    if ak_params['use_mlips']:
+        print("\nUsing MLIPS for force calculation")
+    else:
+        print("\nUsing VASP for force calculation")
+    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'], use_mlips=ak_params['use_mlips'])
     
     ### Analyze phonon properties
     ignore_log = ak_params['ignore_log']
@@ -322,6 +326,7 @@ def main():
             #
             four=ak_params['four'],
             frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
+            use_mlips=ak_params['use_mlips'],
             )
     
     ### Calculate PES

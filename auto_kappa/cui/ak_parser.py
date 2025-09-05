@@ -275,7 +275,12 @@ def get_parser():
     #########################
     parser.add_option("--vasp_parameters", dest="vasp_parameters", type="string",
             default=None, help="VASP parameters. For example, \"ISORBIT=False,DIFFG=1e-7\"")
-    
+
+    ##########################
+    ## parameters for MLIPS ##
+    ##########################
+    parser.add_option("--use_mlips", dest="use_mlips", action="store_true", 
+            default=False, help="Use MLIPS to calculate forces [False]")
     
     #################################################################
     ### Parameters that need to be changed for test calculations  ###
