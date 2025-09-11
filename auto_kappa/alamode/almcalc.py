@@ -1386,10 +1386,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         if flag == False:
             return None
     
-    def get_optimal_nac(
-            self, tol_neg_frac=0.03,
-            deltak=None, max_num_corrections=None, 
-            reciprocal_density=None, negative_freq=None):
+    def get_optimal_nac(self, tol_neg_frac=0.03,
+                        deltak=None, max_num_corrections=None, 
+                        reciprocal_density=None, negative_freq=None):
         """ Analyze harmonic properties with different methods for NAC when
         negative frequencies were obtained. Parameters are required for
         ``analyze_harmonic_property``.
@@ -1409,9 +1408,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         
         ###
         try:
-            file_band_orig = (
-                    self.out_dirs["harm"]["bandos"] + "/" +
-                    self.prefix + ".bands")
+            file_band_orig = (self.out_dirs["harm"]["bandos"] + "/" + 
+                              self.prefix + ".bands")
             dump = np.genfromtxt(file_band_orig)
             frequencies = dump[:,1]
             num_neg = len(np.where(frequencies < negative_freq)[0])
@@ -1451,9 +1449,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             outdir = self.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
             for propt in ["band", "dos"]:
                 
-                fcsxml_abs = (
-                        self.out_dirs["harm"]["force"] + "/" + 
-                        self.prefix + ".xml")
+                fcsxml_abs = (self.out_dirs["harm"]["force"] + "/" + 
+                              self.prefix + ".xml")
                 fcsxml = os.path.relpath(fcsxml_abs, outdir)
                 
                 self.analyze_harmonic_property(
@@ -1472,10 +1469,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             try:
                 out_band = get_minimum_frequency_from_logfile(log_band)
                 out_dos = get_minimum_frequency_from_logfile(log_dos)
-                fmin = min(
-                        out_band["minimum_frequency"],
-                        out_dos["minimum_frequency"]
-                        )
+                fmin = min(out_band["minimum_frequency"], out_dos["minimum_frequency"])
             except Exception:
                 fmin = -1e5
             

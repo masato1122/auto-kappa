@@ -429,6 +429,7 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
             for name in names:
                 if name.startswith(f"{dir1}/box"):
                     continue
-                cmd = f"mv {name} {dir_box}/"    
-                subprocess.run(cmd, shell=True)
-            logger.info(cmd)
+                shutil.move(name, os.path.join(dir_box, os.path.basename(name)))
+                cmd = f" >>> move {name} to {dir_box}/{name}"
+                logger.info(cmd)
+
