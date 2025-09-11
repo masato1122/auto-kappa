@@ -672,15 +672,18 @@ def should_rerun_alamode(logfile):
     """
     Args
     ======
-
     logfile : string
         alamode log file
-
     """
-    if os.path.exists(logfile) == False:
-        return True
+    if not os.path.exists(logfile):
+        if logfile.startswith('/'):
+            logfile = os.path.join(".", os.path.relpath(logfile, os.getcwd()))
+        msg = "\n Warning: %s does not exist." % logfile
+        logger.warning(msg)
+        sys.exit()
+        # return True
     else:
-        if wasfinished_alamode(logfile) == False:
+        if not wasfinished_alamode(logfile):
             return True
     return False
 

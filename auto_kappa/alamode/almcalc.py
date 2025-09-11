@@ -1430,7 +1430,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         outdir = dir1 + "/nac_%d" % nac_orig
         if os.path.exists(outdir) == False:
             os.makedirs(outdir, exist_ok=True)
-            for ff in glob.glob(dir1+"/*"):
+            for ff in glob.glob(dir1 + "/*"):
                 if os.path.isfile(ff):
                     shutil.move(ff, outdir)
             ###
@@ -1513,10 +1513,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                 ignore_log = True
         
         ### get log file name
-        if propt == "fc2":
-            logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
-        else:
-            logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+        # if propt == "fc2":
+        #     logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
+        # else:
+        #     logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+        
         
         count = 0
         nprocs = self.commands["alamode"]["nprocs"]
@@ -1532,8 +1533,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                 neg_log = True
             
             ### calculate phonon property
-            job_output = self.run_alamode(
-                    propt=propt, ignore_log=neg_log, outdir=outdir)
+            job_output = self.run_alamode(propt=propt, ignore_log=neg_log, outdir=outdir)
             
             try:
                 if job_output.get('rerun', None) is not None:
@@ -1546,7 +1546,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             
             ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             ### check log file
-            flag = helper.should_rerun_alamode(logfile)
+            flag = helper.should_rerun_alamode(job_output['logfile'])
             
             ### Check phonon band
             ## This part solves a bug in the old calculation.
@@ -1716,31 +1716,38 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                 outdir=workdir, force_plot=False,
                 order=orders.get(propt) if order is None else min(order, 3))
         
+        output = {'rerun': None, 'last_line': last_line, 
+                  'logfile': os.path.join(workdir, logfile), 
+                  'workdir': workdir}
         if val == -1:
             logger.info(f" {propt} has already been calculated.")
-            return {'return': False, 'last_line': last_line}
+            output['rerun'] = False
+            return output
         elif "ERROR in openfiles  MESSAGE: cannot open DFSET file" in last_line:
             logger.info(f"{last_line}")
-            return {'rerun': False, 'last_line': last_line}
+            output['rerun'] = False
+            return output
         elif "ERROR in parse_general_vars  MESSAGE: The following variable is not found in &general input region: FCSXML" in last_line:
             logger.info(f"{last_line}")
-            return {'rerun': False, 'last_line': last_line}
+            output['rerun'] = False
+            return output
         elif "ERROR in load_system_info_from_XML  MESSAGE: Cannot open file FCSXML" in last_line:
             logger.info(f"{last_line}")
-            return {'rerun': False, 'last_line': last_line}
+            output['rerun'] = False
+            return output
         elif val == 1:
             msg = "\n Error : ALAMODE job did not finish properly, possibly due to insufficient memory."
             msg += "\n Stop the calculation."
             logger.error(msg)
             sys.exit()
         
-        if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
-            
+        if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:    
             ### copy the generated FCs file to "result" directory
             self._copy_generated_fcsfiles(propt=propt, order=order)
-            
             if propt in ['lasso']:
                 self._plot_cvsets(order=order)
+        
+        return output
             
     def _copy_generated_fcsfiles(self, propt=None, order=None):
         """ Copyr a FCs file into the "result" directory.

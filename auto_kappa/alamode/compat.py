@@ -398,13 +398,13 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
         
         if np.max(diff_eps) > 1e-4 or np.max(diff_charges) > 1e-4:
             
-            n1, n2 = diff_eps.shape
-            for i in range(n1):
-                print(" ".join(["%10.6f" % diff_eps[i,j] for j in range(n2)]))
-            n1, n2, n3 = diff_charges.shape
-            for i in range(n1):
-                for j in range(n2):
-                    print(" ".join(["%10.6f" % diff_charges[i,j,k] for k in range(n3)]))
+            # n1, n2 = diff_eps.shape
+            # for i in range(n1):
+            #     print(" ".join(["%10.6f" % diff_eps[i,j] for j in range(n2)]))
+            # n1, n2, n3 = diff_charges.shape
+            # for i in range(n1):
+            #     for j in range(n2):
+            #         print(" ".join(["%10.6f" % diff_charges[i,j,k] for k in range(n3)]))
             
             logger.info(f"\n Error in {dir_work}/BORNINFO")
             
