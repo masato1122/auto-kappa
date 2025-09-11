@@ -70,7 +70,6 @@ def get_commensurate_points(supercell_matrix):
         Commensurate q-points
 
     """
-    import ase
     from ase.build import make_supercell
     rec_prim = ase.Atoms(cell=np.identity(3), pbc=True)
     rec_prim.append(ase.Atom(position=np.zeros(3), symbol="H"))
@@ -78,6 +77,7 @@ def get_commensurate_points(supercell_matrix):
     q_pos = rec_scell.get_scaled_positions()
     q_pos = np.where(q_pos > 1.-1e-15, q_pos-1., q_pos)
     return q_pos
+
 
 #def get_primitive_structure(structure, primitive_matrix=None, format='ase'):
 #    """ Return the primitive cell created by Phonopy. If primitive_matrix is not
@@ -183,11 +183,9 @@ def get_standardized_structure(struct_orig,
         numbers = struct_stand.atomic_numbers
         
         ## 
-        atoms = ase.Atoms(
-                cell=cell_stand, pbc=True,
-                scaled_positions=scaled_positions,
-                numbers=numbers,
-                )
+        atoms = ase.Atoms(cell=cell_stand, pbc=True,
+                          scaled_positions=scaled_positions,
+                          numbers=numbers)
     
     return change_structure_format(atoms, format=format)
 
@@ -195,9 +193,7 @@ def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
     from phonopy.structure.cells import get_supercell
     mat_p2u = np.linalg.inv(primitive_matrix)
     mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
-    unitcell = get_supercell(
-        change_structure_format(primitive, format='phonopy'),
-        mat_p2u)
+    unitcell = get_supercell(change_structure_format(primitive, format='phonopy'), mat_p2u)
     unitcell = change_structure_format(unitcell, format=format)
     return unitcell
 

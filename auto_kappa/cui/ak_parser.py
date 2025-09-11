@@ -138,6 +138,13 @@ def get_parser():
                         "is increased in steps of ``delta_max_natoms``. \n"
                         "The supercell size for cubic FCs is not changed during the simulation.")
     
+    # parser.add_argument("--supercell_matrix", dest="supercell_matrix", 
+    #                     nargs=3, type=int, default=None, help=
+    #                     "[This option is currently in testing.] \n"
+    #                     "Supercell matrix size with respect to the unit cell [None]:\n"
+    #                     "Three integers should be given, e.g., \"2 2 2\".\n"
+    #                     "If this option is provided, 'max_natoms' option is ignored.\n\n\n")
+    
     ### three options for larger supercell
     parser.add_argument("--analyze_with_larger_supercell", dest="analyze_with_largersc", type=int, default=0, help=
                         "Flag for analyzing harmonic properties with larger supercells \n"

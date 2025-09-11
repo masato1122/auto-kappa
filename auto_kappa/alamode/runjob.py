@@ -14,6 +14,7 @@ import os
 import os.path
 import subprocess
 import time
+import signal
 
 try:
     import psutil
@@ -126,59 +127,67 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
     """ Run a job with subprocss
     
     Args
-    -------
-
+    -----
     cmd : string
         command to run a job
-    
     """    
     ## run the job!!
     status = None
-    with open(logfile, 'w') as f, open(file_err, "w", buffering=1) as f_err:
-        
-        ### Error file, termination check
+    with open(logfile, 'w') as f_out, open(file_err, 'w', buffering=1) as f_err:
         proc = subprocess.Popen(
-                cmd, shell=True, env=os.environ,
-                stdout=f, stderr=f_err)
+            cmd, shell=True, env=os.environ,
+            stdout=f_out, stderr=f_err,
+            preexec_fn=os.setsid # available on Linux only
+            )
         
+        # mem_info = None
         count = 0
-        mem_max = -1
-        mem_info = None
-        while True:
-            
-            if proc.poll() is not None:
-                break
-            
-            ### get memory info if available
-            mem_percentage = 0.
-            try:
-                
-                ##### ver.2
-                ##process = psutil.Process(proc.pid)
-                ##mem_info = process.memory_info()
-                
-                #### ver.1
-                mem_info = psutil.virtual_memory()
-                mem_max = max(mem_max, mem_info.used)
-                # mem_tot = mem_info.total
-                mem_percentage = mem_info.percentage
-                
-                if mem_percentage > 95.:
-                    logger.info("\n Warning: memory usage is %.2f%%" % (
-                        mem_info.percentage))
+        mem_max = 0
+        process = psutil.Process(proc.pid)
+        try:
+            while True:
+                if proc.poll() is not None:
                     break
-
-            except Exception:
-                pass
+                
+                # ### get memory info if available
+                # mem_percentage = 0.
+                try:
+                    ### Modified on 2025/09/06
+                    mem_info = process.memory_info()
+                    mem_used_mb = mem_info.rss / (1024.**2)
+                    mem_max = max(mem_max, mem_used_mb)
+                    
+                    total_mem = psutil.virtual_memory().total / (1024.**2)
+                    percentage = mem_used_mb / total_mem * 100.
+                    
+                    ##### ver.2
+                    ##process = psutil.Process(proc.pid)
+                    ##mem_info = process.memory_info()
+                    
+                    #### ver.1
+                    # mem_info = psutil.virtual_memory()
+                    # mem_max = max(mem_max, mem_info.used)
+                    # mem_tot = mem_info.total
+                    # mem_percentage = mem_info.percentage
+                    
+                    if percentage > 95.:
+                        logger.info(f"\n Warning: high memory usage: {percentage:.2f}%")
+                        os.killpg(proc.pid, signal.SIGTERM)
+                        break
+                
+                except psutil.NoSuchProcess:
+                    break
+                
+                time.sleep(min(10, count))
+                count += 1
             
-            # lines = open(logfile, 'r').readlines()
-            # last_line = lines[-1] if len(lines) > 0 else "No output yet."
+            ## status = proc.poll()
+            status = proc.wait()
             
-            waiting_time = min(10, count)
-            time.sleep(waiting_time)
-            count += 1
-            
-        status = proc.poll()
+        finally:
+            # Ensure that the process is terminated
+            if proc.poll() is None:
+                os.killpg(proc.pid, signal.SIGTERM)
     
-    return 0
+    return status
 

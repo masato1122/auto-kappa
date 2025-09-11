@@ -58,9 +58,6 @@ def suggest_structures_and_kmeshes(
         
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
-    # print(get_spg_number(struct_ase))
-    # print(get_spg_number(unitcell))
-    # exit()
     
     ### get the supercell matrix and supercell for FC2
     if dim == 3:
@@ -95,48 +92,20 @@ def suggest_structures_and_kmeshes(
         sys.exit()
 
     ### collect obtained parameters
-    structures = {
-            "primitive": primitive, 
-            "unitcell": unitcell, 
-            "supercell": supercell,
-            }
+    structures = {"primitive": primitive,  "unitcell": unitcell,  "supercell": supercell}
     
-    matrices = {
-            "primitive": prim_mat, 
-            "unitcell": np.identity(3).astype(int),
-            "supercell": sc_mat,
-            }
+    matrices = {"primitive": prim_mat, 
+                "unitcell": np.identity(3).astype(int),
+                "supercell": sc_mat}
     
     ### k-mesh
-    kpts = {
-            "primitive": klength2mesh(k_length, primitive.cell.array),
+    kpts = {"primitive": klength2mesh(k_length, primitive.cell.array),
             "unitcell": klength2mesh(k_length, unitcell.cell.array),
-            "supercell": klength2mesh(k_length, supercell.cell.array),
-            }
+            "supercell": klength2mesh(k_length, supercell.cell.array)}
     
     if dim == 2:
         for name in kpts:
             kpts[name][2] = 1
-    
-    ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # from auto_kappa.structure.crystal import (
-    #     convert_primitive_to_unitcell,
-    #     get_primitive_structure_spglib
-    #     )
-    
-    # for key, struct in structures.items():
-    #     atoms = change_structure_format(struct, format='ase')
-    #     ase.io.write(f"./check/POSCAR.{key}", atoms, 
-    #                  direct=True, vasp5=True, sort=True)
-    
-    # prim = get_primitive_structure_spglib(structures['primitive'])
-    # ase.io.write("./check/POSCAR.prim2", prim, 
-    #              direct=True, vasp5=True, sort=True)
-    # unit = convert_primitive_to_unitcell(prim, matrices['primitive'], format='ase')
-    # ase.io.write("./check/POSCAR.unit2", unit, 
-    #              direct=True, vasp5=True, sort=True)
-    # exit()
-    ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     return structures, matrices, kpts
 

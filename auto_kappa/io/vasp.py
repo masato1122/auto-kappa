@@ -12,9 +12,7 @@
 import os
 import glob
 import numpy as np
-import xmltodict
-import warnings
-from pymatgen.io.vasp.outputs import Vasprun
+# from pymatgen.io.vasp.outputs import Vasprun
 from phonopy.interface.vasp import read_vasp
 from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
@@ -68,7 +66,7 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     try:
         atoms0 = ase.io.read(offset_xml, format='vasp-xml')
     except Exception:
-        warnings.warn(" Cannot read %s" % (offset_xml))
+        logger.warning(f" Warning: cannot read {offset_xml}")
         return None
 
     forces0 = atoms0.get_forces()
@@ -202,8 +200,8 @@ def read_dfset(filename, natoms=None, nstructures=None):
             if "#" == line[0]:
                 nstructures += 1
         if ntot%nstructures != 0:
-            warnings.warn(" Numbers of atoms and structures are "\
-                    "inconsistent in %s" % filename)
+            logger.warning(f" Warning: Numbers of atoms and structures are "
+                           f"inconsistent in {filename}.")
         natoms = int(ntot / nstructures)
     
     nstructures = int(ntot / natoms)
@@ -257,7 +255,7 @@ def read_poscar(filename):
     try:
         structure = read_vasp(filename)
     except Exception:
-        warnings.warn(" Warning: cannot find %s" % filename)
+        logger.warning(f" Warning: cannot find {filename}")
     return structure
 
 def read_incar(filename):
@@ -265,7 +263,7 @@ def read_incar(filename):
     try:
         incar = Incar.from_file(filename)
     except Exception:
-        warnings.warn(" Warning: cannot find %s" % filename)
+        logger.warning(f" Warning: cannot find {filename}")
     return incar
 
 def read_kpoints(filename):
@@ -273,70 +271,76 @@ def read_kpoints(filename):
     try:
         kpoints = Kpoints.from_file(filename)
     except Exception:
-        warnings.warn(" Warning: cannot find %s" % filename)
+        logger.warning(f" Warning: cannot find {filename}")
     return kpoints
 
-def write_born_info(filename, outfile='BORNINFO'):
-    """
-    Args
-    -------
-    filename (str) : vasprun.xml
-    """
-    lines = []
+# def get_born_charges(filename):
+#     """
+#     Args
+#     ---------
+#     filename (str) : vasprun.xml
+#     """
+#     out = None
+#     with open(filename, 'r') as f:
+#         out = xmltodict.parse(f.read())
+#     array = out['modeling']['calculation']['array']
     
-    vasprun = Vasprun(filename, parse_potcar_file=False)
-    dielectric_tensor = vasprun.epsilon_static
-    born_charges = get_born_charges(filename)
+#     ## Check
+#     if array['@name'] != 'born_charges':
+#         warnings.warn(' Cannot find born_charges in %s' % filename)
+#         return None
     
-    ## dielectric tensor
-    for j in range(3):
-        lines.append("%18.13f " * 3 % tuple(dielectric_tensor[j]))
+#     ## number of atoms
+#     natoms = len(array['set'])
     
-    ## Born effective charge
-    for ia in range(len(born_charges)):
-        for j in range(3):
-            lines.append("%18.13f " * 3 % tuple(born_charges[ia][j]))
-    
-    lines.append("")
-    f = open(outfile, 'w')
-    f.write('\n'.join(lines))
+#     ## Read contents in "born_charges"
+#     borns = []
+#     for i in range(natoms):
+        
+#         ### modified on April 17, 2023
+#         if natoms == 1:
+#             lines = array['set']['v']
+#         else:
+#             lines = array['set'][i]['v']
+        
+#         born = np.zeros((3,3))
+#         for i1, line in enumerate(lines):
+#             data = line.split()
+#             for i2 in range(3):
+#                 born[i1,i2] = float(data[i2])
+#         borns.append(born)
+#     return borns
 
-def get_born_charges(filename):
-    """
-    Args
-    ---------
-    filename (str) : vasprun.xml
-    """
-    out = None
-    with open(filename, 'r') as f:
-        out = xmltodict.parse(f.read())
-    array = out['modeling']['calculation']['array']
+# def get_borninfo(filename):
+#     """ Get Born effective charge and dielectric tensor from vasprun.xml
+#     """
+#     vasprun = Vasprun(filename, parse_potcar_file=False)
+#     dielectric_tensor = vasprun.epsilon_static
+#     born_charges = get_born_charges(filename)
+#     return dielectric_tensor, born_charges
+
+# def write_born_info_old(filename, outfile='BORNINFO'):
+#     """
+#     Args
+#     -------
+#     filename (str) : vasprun.xml
+#     """
+#     dielectric_tensor, born_charges = get_borninfo(filename)
     
-    ## Check
-    if array['@name'] != 'born_charges':
-        warnings.warn(' Cannot find born_charges in %s' % filename)
-        return None
+#     lines = []
     
-    ## number of atoms
-    natoms = len(array['set'])
+#     ## dielectric tensor
+#     for j in range(3):
+#         lines.append("%18.13f " * 3 % tuple(dielectric_tensor[j]))
     
-    ## Read contents in "born_charges"
-    borns = []
-    for i in range(natoms):
-        
-        ### modified on April 17, 2023
-        if natoms == 1:
-            lines = array['set']['v']
-        else:
-            lines = array['set'][i]['v']
-        
-        born = np.zeros((3,3))
-        for i1, line in enumerate(lines):
-            data = line.split()
-            for i2 in range(3):
-                born[i1,i2] = float(data[i2])
-        borns.append(born)
-    return borns
+#     ## Born effective charge
+#     for ia in range(len(born_charges)):
+#         for j in range(3):
+#             lines.append("%18.13f " * 3 % tuple(born_charges[ia][j]))
+    
+#     lines.append("")
+#     f = open(outfile, 'w')
+#     f.write('\n'.join(lines))
 
 def print_vasp_params(params):
     """ print the contents of a dictionary """

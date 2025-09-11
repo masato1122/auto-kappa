@@ -549,13 +549,12 @@ def analyze_harmonic_properties(
             ### overwrite harmonic properties
             for propt in ["band", "dos"]:
                 almcalc.analyze_harmonic_property(
-                        propt,
-                        max_num_corrections=max_num_corrections,
-                        deltak=deltak, 
-                        reciprocal_density=reciprocal_density,
-                        ignore_log=ig_log,
-                        )
-            
+                    propt,
+                    max_num_corrections=max_num_corrections,
+                    deltak=deltak, 
+                    reciprocal_density=reciprocal_density,
+                    ignore_log=ig_log)
+    
     ###
     almcalc.commands['alamode']['nprocs'] = _nprocs_orig
     almcalc.commands['alamode']['anphon_para'] = _para_orig

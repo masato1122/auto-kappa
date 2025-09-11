@@ -15,7 +15,7 @@
 import sys
 import numpy as np
 from lxml import etree
-from itertools import product
+from itertools import product, combinations
 from ase.units import Rydberg, Bohr
 import ase
 import matplotlib.pyplot as plt
@@ -226,6 +226,27 @@ class FCSxml:
             map_p2s[itran, iatom] = int(elems.text) - 1
         return map_p2s
     
+    def get_center_of_primitive_cells(self):
+        ## Get atomic potisions in each primitive cell
+        positions_cell = {}
+        for elems in self._root.findall('Symmetry/Translations/map'):
+            itran = int(elems.get('tran')) - 1
+            iatom_prim = int(elems.get('atom')) - 1
+            iatom_sc = int(elems.text) - 1
+            if itran not in positions_cell:
+                positions_cell[itran] = []
+            positions_cell[itran].append(self.supercell.get_positions()[iatom_sc])
+            
+        ## Calculate the center of each primitive cell
+        centers = []
+        for itran in range(self.ntrans):
+            pos_array = np.array(positions_cell[itran], dtype=float)
+            center = np.mean(pos_array, axis=0)
+            centers.append(center)
+            
+        return np.array(centers, dtype=float)
+        
+        
     @property
     def primitive_positions(self):
         if self._prim_positions is None:
@@ -233,6 +254,21 @@ class FCSxml:
             self._prim_positions = self.supercell.get_positions()[indices, :]
             # symbols = [self.supercell.get_symbols()[i] for i in indices]
         return self._prim_positions
+    
+    @property
+    def primitive_symbols(self):
+        indices = self.map_p2s[0, :]
+        symbols = [self.supercell.get_chemical_symbols()[i] for i in indices]
+        return symbols
+    
+    # @property
+    # def primitive(self):
+    #     prim = ase.Atoms(
+    #         scaled_positions=self.primitive_positions,
+    #         symbols=self.primitive_symbols,
+    #         cell=self.supercell.cell,
+    #         pbc=True)
+    #     return prim
     
     @property
     def distances(self):
@@ -252,7 +288,29 @@ class FCSxml:
             cell=self.supercell.cell, pbc=True)
         self._distances = D_len
         return D_len
+    
+    def get_fc3_distances(self):
+        """ Calculate the maximum distances among three atoms 
+        in the primitive cell and atoms in supercell. """
+        ## Get distances between atoms in primitive cell and atoms in supercell
+        natom_prim = self.natom_prim
+        natom_super = self.natom_super
+        _, len_ps = ase.geometry.get_distances(
+            self.primitive_positions, self.supercell.get_positions(), 
+            cell=self.supercell.cell, pbc=True)
+        len_ss = self.supercell.get_all_distances(mic=True)
         
+        ## Calculate the maximum distances among three atoms
+        self._distances_fc3 = np.zeros((natom_prim, natom_super, natom_super), dtype=float)
+        for iat1 in range(natom_prim):
+            for iat2 in range(natom_super):
+                for iat3 in range(natom_super):
+                    d12 = len_ps[iat1, iat2]
+                    d13 = len_ps[iat1, iat3]
+                    d23 = len_ss[iat2, iat3]
+                    self._distances_fc3[iat1, iat2, iat3] = max(d12, d13, d23)
+        return self._distances_fc3
+    
     def print_fc2_phonopy(self):
         natom_prim, natom_super = self.fc2.shape[:2]
         print("{:5d} {:5d}".format(natom_prim, natom_super))
@@ -437,6 +495,7 @@ class FCSxml:
         
         _set_frame(ax, title, xlabel, ylabel, show_legend=show_legend, yscale=yscale)
         set_axis(ax, xticks=xticks, mxticks=mxticks)
+
 
 def _set_frame(ax, title, xlabel, ylabel, show_legend=True, fontsize=5, yscale='linear'):
     

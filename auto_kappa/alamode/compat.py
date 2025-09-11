@@ -14,6 +14,7 @@
 #
 import os
 import sys
+import numpy as np
 import glob
 import subprocess
 import shutil
@@ -21,6 +22,7 @@ import multiprocessing as mp
 import ase.io
 
 from auto_kappa.io import AlmInput
+from auto_kappa.io.born import BORNINFO, read_born_info
 from auto_kappa.structure import change_structure_format
 # from auto_kappa.structure.two import get_normal_index
 from auto_kappa.structure.comparison import match_structures
@@ -354,7 +356,6 @@ def backup_previous_results(directory, propt, prefix=None):
         cmd = f"\n Backup process for {propt} was not implemented yet."
         logger.info(cmd)
         sys.exit()
-    
 
     # backup_dir = directory + "_backup"
     # if os.path.exists(backup_dir):
@@ -362,3 +363,70 @@ def backup_previous_results(directory, propt, prefix=None):
     
     # os.system(f"mv {directory} {backup_dir}")
 
+def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml=None):
+    """ Check the previous BORNINFO file and update it if necessary.
+    """
+    ## Get existing force constants files
+    files = [fn for fn in [fc2xml, fc3xml, fcsxml] if fn is not None]
+    if len(files) == 0:
+        msg = "\n Error: fc2xml, fc3xml, or fcsxml must be given."
+        logger.error(msg)
+        return None
+    
+    ## Read dielectric tensor and Born effective charge from vasprun.xml
+    ## and transform for ALAMODE calculation
+    if os.path.isabs(files[0]):
+        fn_fcs = files[0]
+    else:
+        fn_fcs = os.path.join(dir_work, files[0])
+    
+    if os.path.exists(fn_fcs) == False:
+        msg = f"\n Error: Cannot find {fn_fcs}."
+        logger.error(msg)
+        return None
+    
+    born = BORNINFO(born_xml, file_fcs=fn_fcs)
+    eps = born.alm.dielectric_tensor
+    charges = born.alm.born_charges
+    
+    ## Check the previous BORNINFO file
+    outfile = dir_work + "/BORNINFO"
+    if os.path.exists(outfile):
+        eps_prev, charges_prev = read_born_info(outfile)
+        diff_eps = np.abs(eps - eps_prev)
+        diff_charges = np.abs(charges - charges_prev)
+        
+        if np.max(diff_eps) > 1e-4 or np.max(diff_charges) > 1e-4:
+            
+            n1, n2 = diff_eps.shape
+            for i in range(n1):
+                print(" ".join(["%10.6f" % diff_eps[i,j] for j in range(n2)]))
+            n1, n2, n3 = diff_charges.shape
+            for i in range(n1):
+                for j in range(n2):
+                    print(" ".join(["%10.6f" % diff_charges[i,j,k] for k in range(n3)]))
+            
+            logger.info(f"\n Error in {dir_work}/BORNINFO")
+            
+            ## Backup the previous BORNINFO file
+            count = 1
+            while os.path.exists(out_backup := f"{outfile}.{count}"):
+                count += 1    
+            shutil.move(outfile, out_backup)
+            
+            ## Make "./box" directory if it does not exist
+            count = 1
+            while os.path.exists(dir_box := f"{dir_work}/box{count}"):
+                count += 1    
+            
+            ## Move log files to the box directory
+            dir1 = os.path.relpath(dir_work, os.getcwd())
+            names = glob.glob(f"{dir1}/*")
+            if len(names) > 0:
+                os.makedirs(dir_box, exist_ok=True)
+            for name in names:
+                if name.startswith(f"{dir1}/box"):
+                    continue
+                cmd = f"mv {name} {dir_box}/"    
+                subprocess.run(cmd, shell=True)
+            logger.info(cmd)

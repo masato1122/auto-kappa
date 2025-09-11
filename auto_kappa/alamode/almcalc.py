@@ -14,11 +14,11 @@ import os
 import os.path
 import numpy as np
 import shutil
-import pandas as pd
 import glob
 
 import ase
 import ase.io
+# from pymatgen.core import Structure
 from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
@@ -26,9 +26,9 @@ from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.structure.crystal import (
     get_formula, convert_primitive_to_unitcell, get_atomic_distance_list)
 from auto_kappa.alamode.runjob import run_alamode
-from auto_kappa.io.vasp import write_born_info
 from auto_kappa.io.alm import AnphonInput
 from auto_kappa.io.files import write_output_yaml
+from auto_kappa.io.born import BORNINFO
 from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile, read_log_fc
 from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.compat import (
@@ -424,10 +424,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                     msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[0])
                     msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[1])
                     msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[2])
+                    msg += "\n (%d atoms)" % len(sc)
                     msg += "\n\n Lattice vectors 2 (%s):" % self.get_relative_path(file_xml)
                     msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[0])
                     msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[1])
                     msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[2])
+                    msg += "\n (%d atoms)" % len(sc2)
                     logger.info(msg)
                     
                     msg  = "\n Error: current supercell is not the same as the previous one,"
@@ -1201,6 +1203,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         
         ### prepare filenames
         files = self._get_filenames(propt, order, **kwargs)
+        for key in ['fc2xml', 'fc3xml', 'fcsxml', 'dfset', 'dir_work', 'born_xml']:
+            if kwargs.get(key, None) is not None:
+                files[key] = kwargs[key]
         fc2xml = files['fc2xml']
         fc3xml = files['fc3xml']
         fcsxml = files['fcsxml']
@@ -1233,11 +1238,30 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         ## non-analytical term
         if self.nac != 0 and alamode_type.startswith('anphon'):
             
+            ### ver.1: make BORNINFO file
             borninfo = 'BORNINFO'
+            outfile = dir_work + f'/{borninfo}'
+            # write_born_info_old(born_xml, outfile=outfile)
             
-            ## make BORNINFO file
-            outfile = dir_work + '/BORNINFO'
-            write_born_info(born_xml, outfile=outfile) 
+            ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            ### ver.2: write BORNINFO and check previous BORNINFO
+            # Check previous file!!
+            # Previous result files will be removed when the BORNINFO is changed.
+            from auto_kappa.alamode.compat import check_previous_borninfo
+            check_previous_borninfo(dir_work, born_xml, fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml)
+            
+            ## Write the new BORNINFO file
+            files = []
+            for fn in [fc2xml, fc3xml, fcsxml]:
+                if fn is not None:
+                    if os.path.isabs(fn):
+                        files.append(fn)
+                    else:
+                        files.append(os.path.join(dir_work, fn))
+            born = BORNINFO(born_xml, file_fcs=files[0])
+            born.write(outfile=outfile)
+            ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            
         else:
             borninfo = None
         
@@ -1262,9 +1286,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         
         ################################################
         ### Set parameters for the specific calculation
-        self._set_parameters_for_property(
-            inp, propt=propt, deltak=deltak, kpts=kpts, order=order)
-            
+        self._set_parameters_for_property(inp, propt=propt, deltak=deltak, kpts=kpts, order=order)
+        
         ### modify path of filenames
         filename_keys = ["fc2xml", "fc3xml", "fcsxml"]
         given_params = kwargs.copy()

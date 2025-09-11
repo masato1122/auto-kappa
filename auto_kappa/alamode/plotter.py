@@ -494,7 +494,10 @@ class AlamodePlotter:
             ## output file for the cumulative and spectral kappa
             try:
                 df_each = dfs[int(t)].rename(columns={'xdat': wrt})
-                outfile = dir_kappa + '/kspec_%s_%dK.csv' % (wrt, int(t))
+                if process != '3ph':
+                    outfile = dir_kappa + '/kspec_%s_%dK_%s.csv' % (wrt, int(t), process)
+                else:
+                    outfile = dir_kappa + '/kspec_%s_%dK.csv' % (wrt, int(t))
                 
                 ### save spectral kappa
                 with open(outfile, 'w') as f:
@@ -808,7 +811,7 @@ def plot_kappa_vs_grain_size(filename: str, figname: str, fontsize=7, marker=Non
     fig.savefig(figname, dpi=dpi, bbox_inches='tight')
     if figname.startswith('/'):
         figname = "./" + os.path.relpath(figname, os.getcwd())
-    print(" Output", figname)
+    logger.info(f" Output: {figname}")
     return fig
 
 def _get_log_range(vmin, vmax, space=0.05):

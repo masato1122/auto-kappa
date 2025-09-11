@@ -143,6 +143,14 @@ def main():
             dim=ak_params['mater_dim'],
         ))
     
+    ### If the previous structure was not the same as the given structure,
+    if structures.get('supercell', None) is not None:
+        num_new = len(structures['supercell'])
+        if ak_params['max_natoms'] < num_new:
+            ak_params['max_natoms'] = num_new + 1
+            msg = "\n Modify \"max_natoms\" parameter to %d." % (ak_params['max_natoms'])
+            logger.error(msg)
+    
     ### NONANALYTIC (primitive)
     if nac != 0:
         if ak_params['nonanalytic'] is not None:
@@ -221,9 +229,19 @@ def main():
             kpts_used["relax"],
             volume_relaxation=ak_params['volume_relaxation'],
             cell_type=cell_types["relax"],
-            max_error=ak_params["max_relax_error"],
+            # max_error=ak_params["max_relax_error"],
             nsw_params=ak_params["nsw_params"],
             )
+    
+    # ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # ## For debug: check the order of elements in the system
+    # symbols = structures["unitcell"].get_chemical_symbols()
+    # print("Elements in the system:", list(dict.fromkeys(symbols).keys()))
+    # for key in apdb.structures.keys():
+    #     symbols = apdb.structures[key].get_chemical_symbols()
+    #     print(key, list(dict.fromkeys(symbols).keys()), len(symbols))
+    # exit()
+    # ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     ### Stop the calculation because of the symmetry error
     if out < 0:

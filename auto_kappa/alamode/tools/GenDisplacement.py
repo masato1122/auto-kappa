@@ -29,7 +29,7 @@ class AlamodeDisplace(object):
                  file_evec=None,
                  file_primitive=None,
                  primitive=None,
-                 verbose=1):
+                 verbose=0):
         self._pattern = []
         self._primitive_lattice_vector = None
         self._inverse_primitive_lattice_vector = None

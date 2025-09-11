@@ -368,8 +368,7 @@ class ApdbVasp():
             return 0
         
         ### Read previously used structure
-        unitcell = get_previously_used_structure(
-            self.base_directory, self.primitive_matrix, self.scell_matrix)
+        unitcell = get_previously_used_structure(self.base_directory, self.primitive_matrix)
         
         if unitcell is not None:
             self.update_structures(unitcell)
@@ -609,11 +608,10 @@ class ApdbVasp():
             yaml.dump(dict_data, f)
             
     def run_vasp(self, mode: None, directory: str, kpts: None, 
-            structure=None, cell_type=None,
-            method='custodian', force=False, print_params=False, 
-            standardization=True, verbose=1, vaccum_thickness=None,
-            **args
-            ):
+                 structure=None, cell_type=None,
+                 method='custodian', force=False, print_params=False, 
+                 standardization=True, verbose=1, vaccum_thickness=None,
+                 **args):
         """ Run relaxation and born effective charge calculation
         
         Args

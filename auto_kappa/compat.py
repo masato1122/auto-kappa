@@ -26,25 +26,20 @@ from auto_kappa.structure.comparison import match_structures, cells_equal, atoms
 import logging
 logger = logging.getLogger(__name__)
 
-def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
+def get_previously_used_structure(base_dir, prim_matrix):
     """ Compare the optimized structure and the previously used structure
     
     Args
     ----
     base_dir (str): 
         Base directory containing the structure files.
-    
     prim_matrix (np.ndarray):
         Primitive matrix
-    
-    scell_matrix (np.ndarray):
-        Supercell matrix
     
     Returns
     -------
     ase.Atoms or None:
         Returns the primitive cell of the previously used structure.
-    
     """
     base_dir = ("./" + os.path.relpath(base_dir, os.getcwd())
                 if os.path.isabs(base_dir) else base_dir)
@@ -74,14 +69,19 @@ def get_previously_used_structure(base_dir, prim_matrix, scell_matrix):
     type = 'unit'
     struct_opt = structures_opt[type]
     struct_used = structures_used[type]
-    match = match_structures(struct_opt, struct_used, ignore_order=True, verbose=True,
-                             ltol=1e-7, stol=1e-7)
+    match_wo_order = match_structures(struct_opt, struct_used, 
+                                      ignore_order=True, verbose=True,
+                                      ltol=1e-7, stol=1e-7)
+    # match_with_order = match_structures(struct_opt, struct_used, 
+    #                                     ignore_order=False, verbose=True,
+    #                                     ltol=1e-7, stol=1e-7)
     
-    if match:
+    if match_wo_order:
         ## Good! The optimized structure matches the previously used structure.
-        msg = "\n The optimized structure is read from %s." % files_opt[type]
-        logger.info(msg)
-        return struct_opt
+        # msg = "\n The optimized structure is read from %s." % files_opt[type]
+        # logger.info(msg)
+        # return struct_opt
+        return struct_used
     else:
         cell_opt = struct_opt.cell
         cell_used = struct_used.cell

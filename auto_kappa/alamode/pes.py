@@ -14,8 +14,9 @@ import os, os.path
 import numpy as np
 
 from auto_kappa.alamode.log_parser import (
-        get_eigenvalues_from_logfile,
-        get_minimum_frequency_from_logfile)
+        get_eigenvalues_from_logfile)
+from auto_kappa.io.born import write_born_info
+from auto_kappa.io.alm import AnphonInput
 
 import logging
 logger = logging.getLogger(__name__)
@@ -44,9 +45,6 @@ def calculate_evec(
         vasp_xml=None, file_anphon="evec.in", nac=0, dim=3):
     """ Calculate eiven vector at the given kpoint """
     
-    from auto_kappa.io.vasp import write_born_info
-    from auto_kappa.io.alm import AnphonInput
-    
     ### move to the target directory
     cwd = os.getcwd()
     os.makedirs(outdir, exist_ok=True)
@@ -63,7 +61,7 @@ def calculate_evec(
     ### make BORNINFO
     borninfo = "BORNINFO"
     if vasp_xml is not None:
-        write_born_info(vasp_xml, outfile=borninfo)
+        write_born_info(vasp_xml, file_fcs=fcsxml, outfile=borninfo)
     
     ### make AnphonInput obj
     inp = AnphonInput.from_structure(

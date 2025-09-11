@@ -46,12 +46,14 @@ class AlamodeForceCalculator():
             outdir = self.out_dirs['harm']['force']
         elif order == 2:
             if nsuggest <= nmax_suggest:
+                
                 ## Avoid the unexpected error due to the rank deficiency
                 use_lasso = False
                 logfile = self.out_dirs['cube']['force_fd'] + '/fc3.log'
                 if os.path.exists(logfile):
                     if found_rank_deficient(logfile):
-                        msg = "\n Previous calculation for the cubic FCs contained rank deficient error."
+                        msg = "\n *** Warning: rank deficient error is found. ***"
+                        msg += "\n Previous calculation for the cubic FCs contained rank deficient error."
                         msg += "\n Use lasso regression to avoid the error."
                         logger.warning(msg)
                         use_lasso = True

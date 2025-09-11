@@ -26,7 +26,7 @@ def estimate_supercell_matrix(structure, max_num_atoms=120, max_iter=100):
     spg_num = spglib_dataset["number"]
     num_atoms = len(spglib_dataset["std_types"])
     
-    ### in Phonopy, which might be wrong
+    ### Line copied from the Phonopy code, which might be wrong
     #lengths = _get_lattice_parameters(spglib_dataset["std_lattice"])
     ### corrected
     lengths = _get_lattice_parameters(spglib_dataset["std_lattice"].T)

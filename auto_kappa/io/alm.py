@@ -417,7 +417,10 @@ def get_alamode_variables_from_structure(structure, norder=None):
     sym_all = []
     for each in structure.species:
         sym_all.append(each.name)
-    sym_list = sorted(set(sym_all), key=sym_all.index)
+    try:
+        sym_list = list(dict.fromkeys(sym_all))
+    except:
+        sym_list = sorted(set(sym_all), key=sym_all.index)
     
     ## get number of atoms for each species
     params['nkd'] = []

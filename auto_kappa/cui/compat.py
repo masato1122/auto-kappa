@@ -21,6 +21,7 @@ import pickle
 import glob
 
 import ase.io
+from ase.build import make_supercell
 from ase.geometry import get_distances
 from pymatgen.io.vasp.inputs import Incar
 
@@ -48,7 +49,7 @@ def check_ak_options(params, file_params):
     _check_command_options(params)
     _check_alamode_version(params)
     _adjust_displacement_magnitude(params)
-    _check_previous_structures(params)
+    _check_previous_structures(params['outdir'])
     
     if params['mater_dim'] != 3:
         msg = f"\n Error: Auto-kappa does not support {params['mater_dim']}D systems yet."
@@ -131,7 +132,8 @@ def parse_vasp_params(params_string):
     Parameters
     ------------
     params_string : string
-        VASP parameters which differ from the default values are given by ``--vasp_parameters`` option.
+        VASP parameters which differ from the default values are given by 
+        ``--vasp_parameters`` option.
         The parmeters can be given like following.
 
     How to set the option
@@ -262,13 +264,13 @@ def _get_displacement_magnitude(atoms0, atoms1):
     mag = np.max(np.diag(D_len))
     return disp_comp, mag
 
-def _check_previous_structures(params):
+def _check_previous_structures(base_dir):
     """ Adjust the displacement magnitude for harmonic and cubic force calculations.
     """
     ## Order is important: harmonic, cubic_fd -> cubic_lasso
     ## The disp. magnitude for 'cubic_lasso' is prior to 'cubic_fd' in the order.
-    pos_volume = "./" + params['outdir'] + "/" + output_directories['relax'] + "/volume/POSCAR.opt"
-    pos_freeze = "./" + params['outdir'] + "/" + output_directories['relax'] + "/freeze-1/CONTCAR"
+    pos_volume = "./" + base_dir + "/" + output_directories['relax'] + "/volume/POSCAR.opt"
+    pos_freeze = "./" + base_dir + "/" + output_directories['relax'] + "/freeze-1/CONTCAR"
     if os.path.exists(pos_volume):
         file_relax = pos_volume
     elif os.path.exists(pos_freeze):
@@ -278,12 +280,12 @@ def _check_previous_structures(params):
     
     structure_files = {
         'relax'     : file_relax,
-        'opt_unit'  : "./" + params['outdir'] + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
-        'opt_super' : "./" + params['outdir'] + "/" + output_directories['relax'] + "/structures/POSCAR.super",
-        'nac'       : "./" + params['outdir'] + "/" + output_directories['nac'] + "/POSCAR",
-        'harm'      : "./" + params['outdir'] + "/" + output_directories['harm']['force'] + "/prist/POSCAR",
-        'cube_fd'   : "./" + params['outdir'] + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
-        'cube_lasso': "./" + params['outdir'] + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
+        'opt_unit'  : "./" + base_dir + "/" + output_directories['relax'] + "/structures/POSCAR.unit",
+        'opt_super' : "./" + base_dir + "/" + output_directories['relax'] + "/structures/POSCAR.super",
+        'nac'       : "./" + base_dir + "/" + output_directories['nac'] + "/POSCAR",
+        'harm'      : "./" + base_dir + "/" + output_directories['harm']['force'] + "/prist/POSCAR",
+        'cube_fd'   : "./" + base_dir + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
+        'cube_lasso': "./" + base_dir + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
     }
     structures = {}
     for key, file in structure_files.items():
@@ -317,6 +319,7 @@ def _check_previous_structures(params):
                 msg = f" - %s and %s" % (structure_files[key1], structure_files[key2])
                 logger.info(msg)
 
+    
 def _check_previous_parameters(given_params, prev_params, file_prev=None):
     """ Check if the current parameters match the previous ones.
     """
@@ -360,3 +363,4 @@ def _check_previous_parameters(given_params, prev_params, file_prev=None):
     
     if count != 0:
         logger.info("")
+
