@@ -53,7 +53,7 @@ def get_previously_used_structure(base_dir, prim_matrix):
             return None
         else:
             structures_opt[type] = ase.io.read(files_opt[type])
-    
+            
     ## Previously used structures
     file_used = base_dir + '/harm/force/prist/POSCAR'
     structures_used = {}

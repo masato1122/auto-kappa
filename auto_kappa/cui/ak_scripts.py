@@ -14,12 +14,11 @@ import os
 import os.path
 import datetime
 import json
-import numpy as np
+# import numpy as np
 
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
 from auto_kappa.alamode.almcalc import AlamodeCalc
-# from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.io.files import write_output_yaml
 from auto_kappa.calculators.alamode import analyze_phonon_properties
 from auto_kappa.cui import ak_log
@@ -115,13 +114,6 @@ def main():
             logger.info(msg)
             ak_params["anphon_para"] = "omp"
     
-    ######################
-    ### Adjust options ###
-    ######################
-    ### max_natoms3: maximun limit of the number of atoms for FC3
-    #if options.max_natoms3 is None:
-    #    options.max_natoms3 = options.max_natoms
-    
     ### relaxed_cell
     if ak_params['relaxed_cell'] is not None:
         if (ak_params['relaxed_cell'].lower()[0] == "u" or 
@@ -170,12 +162,9 @@ def main():
     
     ### print parameters
     ak_log.print_options(ak_params)
-    
-    ak_log.print_conditions(
-            cell_types=cell_types, 
-            trans_matrices=trans_matrices,
-            kpts_all=kpts_used,
-            )
+    ak_log.print_conditions(cell_types=cell_types, 
+                            trans_matrices=trans_matrices,
+                            kpts_all=kpts_used)
     
     ### write file
     os.makedirs(out_dirs["result"], exist_ok=True)
@@ -195,13 +184,6 @@ def main():
             "kind": "others",
             "note": "results"}
     write_output_yaml(yaml_outdir, "result", info, overwrite=False)
-    
-    ### For materials with negative frequencies, options.max_natoms3 may be
-    ### different from options.max_natoms.
-    #if options.max_natoms != options.max_natoms3:
-    #    msg = " Error: max_natoms != max_natoms3 is not supported yet."
-    #    logger.error(msg)
-    #    exti()
     
     ### command to run VASP jobs
     command_vasp = {

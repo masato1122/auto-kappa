@@ -136,7 +136,7 @@ def get_base_directory_name(label, restart=True):
                     break
     return outdir
 
-def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
+def _get_previously_used_parameters(outdir, cell_types=None):
     """ Read previously used parameters: transformation matrices and k-meshes.
     
     Parameters
@@ -162,84 +162,72 @@ def _get_previously_used_parameters(outdir, lattice_unit, cell_types=None):
     params_prev = {calc_type: {} for calc_type in cell_types.keys()}
     
     ### check k-meshes and transformation matrices
-    for i in range(4):
+    structures_cell = {}
+    kpts_cell = {}
+    calc_types = ["relax", "nac", "harm", "cube"]
+    for i, calc_type in enumerate(calc_types):
         if i == 0: 
             # relaxation
-            calc_type = "relax"
-            dirs = [outdir + "/relax/full-1", outdir + "/relax"]
+            dirs = [outdir + "/relax", 
+                    outdir + "/relax/full-1", 
+                    outdir + "/relax/full-2",
+                    outdir + "/relax/freeze-1",
+                    outdir + "/relax"]
         elif i == 1: 
             # NAC
-            calc_type = "nac"
             dirs = [outdir + f"/{output_directories['nac']}"]
         elif i == 2: 
             # harmonic FCs
-            calc_type = "harm"
             dirs = [outdir + f"/{output_directories['harm']['force']}/prist"]
         elif i == 3: 
             # cubic FCs
-            calc_type = "cube"
             dirs = [outdir + "/cube/force_fd/prist",
                     outdir + "/cube/force_lasso/prist"]
-                    # outdir + "/cube/force/prist",
-        ###
-        ignore_kpts = True
+        
         cell_type = cell_types[calc_type]
         for dd in dirs:
-            fn_kpts = dd + "/KPOINTS"
-            fn_structure = dd + "/POSCAR"
-            if os.path.exists(fn_kpts) and os.path.exists(fn_structure):
+            fn_poscar = dd + "/POSCAR"
+            fn_kpoints = dd + "/KPOINTS"
+            if os.path.exists(fn_poscar) and os.path.exists(fn_kpoints):
+                ### structure
+                atoms = ase.io.read(fn_poscar, format='vasp')
+                params_prev[calc_type]['structure'] = atoms.copy()
                 
                 ### k-mesh
-                kpts = Kpoints.from_file(fn_kpts).kpts[0]
+                kpts = Kpoints.from_file(fn_kpoints).kpts[0]
                 if params_prev[calc_type].get('kpts', None) is not None:
                     if not np.allclose(params_prev[calc_type]['kpts'], kpts):
-                        if fn_kpts.startswith("/"):
-                            fn_kpts = "./" + os.path.relpath(fn_kpts, os.getcwd())
+                        if fn_kpoints.startswith("/"):
+                            fn_kpoints = "./" + os.path.relpath(fn_kpoints, os.getcwd())
                         msg = f"\n Error: different k-meshes were used for the \"{cell_type}\" structure"
                         msg += f" and {calc_type} calculation."
-                        msg += f"\n Check {fn_kpts}."
+                        msg += f"\n Check {fn_kpoints}."
                         logger.warning(msg)
-                        if not ignore_kpts:
-                            sys.exit()
+                        sys.exit()
                 
                 params_prev[calc_type]['kpts'] = kpts
                 
-                ### structure
-                sc = ase.io.read(fn_structure, format='vasp')
-                params_prev[calc_type]['structure'] = sc.copy()
-                
-                ### transformation matrix
-                ##
-                ## cell_trans.T = cell_orig.T @ Mtrans
-                ## => Mtrans = (cell_orig.T)^-1 @ cell_trans.T
-                ##
-                #### modified at April 13, 2023
-                lat_sc = sc.cell.array
-                mat = np.dot(np.linalg.inv(lattice_unit.T), lat_sc.T)
-                
-                ###
-                if cell_types[calc_type] in ["primitive"]:
-                    inv_mat = np.linalg.inv(mat)
-                    inv_mat_int = np.rint(inv_mat).astype(int)
-                    try:
-                         mat_corr = np.linalg.inv(inv_mat_int)
-                    except Exception as e:
-                        logger.warning(f"Failed to set transformation matrix for {calc_type}: {e}")
-                    
-                    max_diff = np.abs(mat - mat_corr).max()
-                    if max_diff > 0.05:
-                        msg = f"\n Caution: transformation matrix for the \"{cell_type}\" structure was adjusted."
-                        msg += f"\n This message may be solely due to a significant strucuture change during the relaxation."
-                        logger.warning(msg)
-                        logger.warning(' - Calculated: ' + ' '.join(f"{x:.5f}" for x in mat.flatten()))
-                        logger.warning(' - Adjusted  : ' + ' '.join(f"{x:.5f}" for x in mat_corr.flatten()))
-                        logger.warning(f" max diff = {max_diff:.5f}")
-                        # exit()
-                    params_prev[calc_type]["trans_matrix"] = mat_corr
-                else:
-                    params_prev[calc_type]["trans_matrix"] = np.rint(mat).astype(int)
+                structures_cell[cell_type] = atoms.copy()
+                kpts_cell[cell_type] = kpts
     
-    return params_prev
+    ### Get transformation matrices
+    # print(structures_cell.keys())
+    trans_matrices = {}
+    if 'primitive' in structures_cell and 'unitcell' in structures_cell:
+        primitive = structures_cell['primitive']
+        unitcell = structures_cell['unitcell']
+        prim_mat = np.dot(np.linalg.inv(unitcell.cell.array), primitive.cell.array)
+        inv_prim_mat = np.linalg.inv(prim_mat)
+        inv_prim_mat = np.rint(inv_prim_mat).astype(int)
+        prim_mat = np.linalg.inv(inv_prim_mat)
+        trans_matrices['primitive'] = np.rint(prim_mat)
+    if 'supercell' in structures_cell and 'unitcell' in structures_cell:
+        supercell = structures_cell['supercell']
+        unitcell = structures_cell['unitcell']
+        super_mat = np.dot(np.linalg.inv(unitcell.cell.array), supercell.cell.array)
+        trans_matrices['supercell'] = np.rint(super_mat).astype(int)
+                
+    return params_prev, trans_matrices
 
 def _make_structures(unitcell, 
         primitive_matrix=None, 
@@ -420,17 +408,7 @@ def get_required_parameters(
         
         ### Read Phonondb directory
         unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)
-        
         trans_matrices["unitcell"] = np.identity(3).astype(int)
-        
-        ### Suggest the structure for FC3
-        #if max_natoms3 == max_natoms:
-        #    trans_matrices["supercell3"] = trans_matrices["supercell"].copy()
-        #
-        #else:
-        #    from auto_kappa.structure.supercell import estimate_supercell_matrix
-        #    trans_matrices["supercell3"] = estimate_supercell_matrix(
-        #            unitcell, max_num_atoms=max_natoms3)
         
         ### Set structures
         structures = _make_structures(
@@ -438,7 +416,7 @@ def get_required_parameters(
                 primitive_matrix=trans_matrices['primitive'],
                 supercell_matrix=trans_matrices['supercell'],
                 )
-            
+        
         ### get suggested k-mesh
         kpts_suggested = {
                 "primitive": klength2mesh(
@@ -493,66 +471,60 @@ def get_required_parameters(
     
     ### Get previously used transformation matrices, structures, and kpoints
     ### Keys are ['relax', 'nac', 'harm', 'cube']
-    params_prev = _get_previously_used_parameters(base_directory, 
-                                                  structures["unitcell"].cell.array,
-                                                  cell_types=cell_types)
+    params_prev, tmat_prev = _get_previously_used_parameters(base_directory, cell_types=cell_types)
     
-    ### new version (2025.09.05)
-    prioritize_previous_info = True
-    if prioritize_previous_info:
-        for calc_type, each in params_prev.items():
-            
-            cell_type = cell_types[calc_type]
-            
-            ### Structure
-            if each.get('structure', None) is not None:
-                if len(structures[cell_type]) != len(each['structure']):
-                    msg = f" Previously used structure for the \"{cell_type}\" structure will be used."
-                    logger.info(msg)
-                structures[cell_type] = each['structure']
-                
-            ### Transformation matrix
-            if each.get('trans_matrix', None) is not None:
-                if not np.allclose(trans_matrices[cell_type], each['trans_matrix']):
-                    msg = f" Previously used transformation matrix for the \"{cell_type}\" structure will be used."
-                    logger.info(msg)
-                    
-                trans_matrices[cell_type] = each['trans_matrix']
-                
-            ### k-mesh
-            if each.get('kpts', None) is not None:
-                if not np.allclose(kpts_calc_type[calc_type], each['kpts']):
-                    msg = f" Previously used k-mesh for the \"{cell_type}\" structure will be used."
-                    logger.info(msg)
-                
-                kpts_calc_type[calc_type] = each['kpts']
+    ## Check k-points
+    for calc_type, each_param in params_prev.items():
+        kpts_prev = each_param.get('kpts', None)
+        if kpts_prev is not None:
+            if not np.allclose(kpts_calc_type[calc_type], kpts_prev):
+                msg  = f"\n Warning: previously used k-mesh for \"{calc_type}\" calculation "
+                msg += "is different from the suggested one."
+                msg += f"\n Suggested : {kpts_calc_type[calc_type]}"
+                msg += f"\n Previous  : {kpts_prev}"
+                logger.info(msg)
+    
+    ## Check transformation matrices
+    for cell_type, mat1 in tmat_prev.items():
+        if cell_type in trans_matrices:
+            if not np.allclose(trans_matrices[cell_type], mat1):
+                msg  = f"\n Error: transformation matrix for \"{cell_type}\" "
+                msg += "is different from the previously used one."
+                msg += f"\n Suggested : {trans_matrices[cell_type].flatten()}"
+                msg += f"\n Previous  : {mat1.flatten()}"
+                logger.info(msg)
     
     ### Sort atoms in each structure according to the order of the supercell
     sym_list = list(dict.fromkeys(structures['supercell'].get_chemical_symbols()))
     for key in structures:
-        atoms = structures[key]
         if key != 'supercell':
-            indices = [next(i for i, atom in enumerate(atoms) if atom.symbol == sym) for sym in sym_list]
-            atoms_sorted = atoms[indices]
-            structures[key] = atoms_sorted.copy()
-    
-    ### old version (<= 2025.09.05)
-    # ### prepare dictionary to compare with ``params_prev``
-    # params_suggest = {}
-    # for cal_type in params_prev:
-    #     cell_type = cell_types[cal_type]
-    #     params_suggest[cal_type] = {}
-    #     params_suggest[cal_type]['trans_matrix'] = trans_matrices[cell_type]
-    #     params_suggest[cal_type]['kpts'] = kpts_suggested[cell_type]
-    
-    # ### determine k-mesh info for all calculations
-    # prioritize_previous_info = True
-    # kpts_all = _determine_kpoints_for_all(
-    #         params_suggest, params_prev,
-    #         prioritize_previous_info=prioritize_previous_info
-    #         )
+            structures[key] = _sort_atoms_according_to_elements(structures[key].copy(), sym_list)
     
     return cell_types, structures, trans_matrices, kpts_calc_type, nac
+
+def _sort_atoms_according_to_elements(atoms, sym_list):
+    """ Sort atoms according to the order of elements in sym_list.
+    
+    Parameters
+    -----------
+    atoms : Atoms obj
+        structure to be sorted
+
+    sym_list : list of string
+        order of elements
+
+    Return
+    -------
+    atoms_sorted : Atoms obj
+        sorted structure
+
+    """
+    indices_sorted = []
+    for sym in sym_list:
+        indices = [i for i, s in enumerate(atoms.get_chemical_symbols()) if s == sym]
+        indices_sorted.extend(indices)
+    atoms_sorted = atoms[indices_sorted]
+    return atoms_sorted
 
 def get_previous_nac(base_dir):
     """ Get previously-used NAC parameter. If it cannot be found, return None.
