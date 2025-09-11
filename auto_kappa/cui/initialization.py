@@ -213,8 +213,6 @@ def _get_previously_used_parameters(outdir, cell_types=None):
                         sys.exit()
                 params_prev[calc_type]['kpts'] = kpts
                 kpts_cell[cell_type] = kpts
-
-        print(">>>>>>>>>", cell_type, dd)
         
     ## Get transformation matrices
     trans_matrices = {}
