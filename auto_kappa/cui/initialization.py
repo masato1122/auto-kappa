@@ -213,15 +213,17 @@ def _get_previously_used_parameters(outdir, cell_types=None):
                         sys.exit()
                 params_prev[calc_type]['kpts'] = kpts
                 kpts_cell[cell_type] = kpts
-    
+
+        print(">>>>>>>>>", cell_type, dd)
+        
     ## Get transformation matrices
     trans_matrices = {}
     if 'primitive' in structures_cell and 'unitcell' in structures_cell:
         pmat = get_transformation_matrix(structures_cell['unitcell'], 
                                          structures_cell['primitive'])
         pmat_inv = np.linalg.inv(pmat)
-        pmat_inv_roud = np.rint(pmat_inv).astype(int)
-        pmat_mod = np.linalg.inv(pmat_inv_roud)
+        pmat_inv_round = np.rint(pmat_inv).astype(int)
+        pmat_mod = np.linalg.inv(pmat_inv_round)
         
         diff = np.abs(pmat - pmat_mod)
         if np.max(diff) > 0.1:
