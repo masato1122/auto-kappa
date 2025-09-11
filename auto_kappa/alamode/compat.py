@@ -418,6 +418,8 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
             count = 1
             while os.path.exists(dir_box := f"{dir_work}/box{count}"):
                 count += 1    
+            if dir_box.startswith("/"):
+                dir_box = os.path.relpath(dir_box, os.getcwd())
             
             ## Move log files to the box directory
             dir1 = os.path.relpath(dir_work, os.getcwd())
