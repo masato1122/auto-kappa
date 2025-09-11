@@ -143,16 +143,12 @@ def get_unitcell_and_primitive_matrix(structure):
             scaled_positions=cell_std[1],
             numbers=cell_std[2])
     
-    # ver.2
-    # from pymatgen.symmetry.analyzer import SpacegroupAnalyzer as spg_analyzer
-    # spg = spg_analyzer(change_structure_format(structure, 'pmg'))
-    # conv = spg.get_conventional_standard_structure()
-    # print(conv)
-    # conv.to("POSCAR")
-    # exit()
-    
-    ### primitive matrix
+    ### primitive matrix in ASE definition
     cell_prim = spglib.standardize_cell(cell, to_primitive=True)
+    
+    ## cell_prim[0], cell_std[0] are P^T, U^T, where P and U are the vectors
+    ## of the primitive and unit cells in POSCAR file
+    ## e.g. P = prim.cell.array, U = unit.cell.array
     primitive_matrix = np.dot(cell_prim[0], np.linalg.inv(cell_std[0])).T
     
     return unitcell, primitive_matrix

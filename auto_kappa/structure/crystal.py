@@ -78,29 +78,6 @@ def get_commensurate_points(supercell_matrix):
     q_pos = np.where(q_pos > 1.-1e-15, q_pos-1., q_pos)
     return q_pos
 
-
-#def get_primitive_structure(structure, primitive_matrix=None, format='ase'):
-#    """ Return the primitive cell created by Phonopy. If primitive_matrix is not
-#    given, it will be suggested by SpacegroupAnalyzer in Pymatgen.
-#    """
-#    if primitive_matrix is None:
-#        primitive_matrix = get_primitive_matrix(structure)
-#    
-#    atoms_ph = get_primitive_phonopy(
-#            change_structure_format(structure, format='phonopy'),
-#            primitive_matrix)
-#    
-#    return change_structure_format(atoms_ph, format=format)
-
-#def get_primitive_matrix(structure):
-#    """ Return the primitive matrix of the given structure suggested by
-#    SpacegroupAnalyzer in Pymatgen. Different formats of structure are
-#    available. """
-#    str_pmg = change_structure_format(structure, format="pymatgen")
-#    spg_analyzer = SpacegroupAnalyzer(str_pmg)
-#    pmat = spg_analyzer.get_conventional_to_primitive_transformation_matrix()
-#    return pmat
-
 def get_primitive_structure_spglib(structure, format='ase'):
     
     prim = get_standardized_structure(

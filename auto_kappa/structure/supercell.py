@@ -129,7 +129,6 @@ def _get_multiplicity_abc(num_atoms, lengths, max_num_atoms, max_iter=20):
 
     return multi
 
-
 def _get_multiplicity_ac(num_atoms, lengths, max_num_atoms, max_iter=20):
     multi = [1, 1]
     a = lengths[0]
@@ -151,7 +150,6 @@ def _get_multiplicity_ac(num_atoms, lengths, max_num_atoms, max_iter=20):
         #    multi[mod_index] -= 1
 
     return [multi[0], multi[0], multi[1]]
-
 
 def _get_multiplicity_a(num_atoms, lengths, max_num_atoms, max_iter=20):
     multi = 1

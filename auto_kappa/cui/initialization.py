@@ -22,7 +22,7 @@ from pymatgen.io.vasp import Kpoints
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa import output_directories
 from auto_kappa.cui.suggest import klength2mesh
-from auto_kappa.structure import change_structure_format
+from auto_kappa.structure import change_structure_format, get_transformation_matrix
 # from auto_kappa.structure.crystal import get_primitive_structure_spglib
 
 import logging
@@ -172,7 +172,7 @@ def _get_previously_used_parameters(outdir, cell_types=None):
                     outdir + "/relax/full-1", 
                     outdir + "/relax/full-2",
                     outdir + "/relax/freeze-1",
-                    outdir + "/relax"]
+                    outdir + "/relax/volume"]
         elif i == 1: 
             # NAC
             dirs = [outdir + f"/{output_directories['nac']}"]
@@ -186,13 +186,20 @@ def _get_previously_used_parameters(outdir, cell_types=None):
         
         cell_type = cell_types[calc_type]
         for dd in dirs:
-            fn_poscar = dd + "/POSCAR"
+            
+            if dd.endswith("volume"):
+                fn_poscar = dd + "/POSCAR.opt"
+            else:
+                fn_poscar = dd + "/POSCAR"
+            
             fn_kpoints = dd + "/KPOINTS"
-            if os.path.exists(fn_poscar) and os.path.exists(fn_kpoints):
-                ### structure
+            
+            if os.path.exists(fn_poscar):
                 atoms = ase.io.read(fn_poscar, format='vasp')
                 params_prev[calc_type]['structure'] = atoms.copy()
+                structures_cell[cell_type] = atoms.copy()
                 
+            if os.path.exists(fn_kpoints):
                 ### k-mesh
                 kpts = Kpoints.from_file(fn_kpoints).kpts[0]
                 if params_prev[calc_type].get('kpts', None) is not None:
@@ -204,36 +211,43 @@ def _get_previously_used_parameters(outdir, cell_types=None):
                         msg += f"\n Check {fn_kpoints}."
                         logger.warning(msg)
                         sys.exit()
-                
                 params_prev[calc_type]['kpts'] = kpts
-                
-                structures_cell[cell_type] = atoms.copy()
                 kpts_cell[cell_type] = kpts
     
-    ### Get transformation matrices
-    # print(structures_cell.keys())
+    ## Get transformation matrices
     trans_matrices = {}
     if 'primitive' in structures_cell and 'unitcell' in structures_cell:
-        primitive = structures_cell['primitive']
-        unitcell = structures_cell['unitcell']
-        prim_mat = np.dot(np.linalg.inv(unitcell.cell.array), primitive.cell.array)
-        inv_prim_mat = np.linalg.inv(prim_mat)
-        inv_prim_mat = np.rint(inv_prim_mat).astype(int)
-        prim_mat = np.linalg.inv(inv_prim_mat)
-        trans_matrices['primitive'] = np.rint(prim_mat)
+        pmat = get_transformation_matrix(structures_cell['unitcell'], 
+                                         structures_cell['primitive'])
+        pmat_inv = np.linalg.inv(pmat)
+        pmat_inv_roud = np.rint(pmat_inv).astype(int)
+        pmat_mod = np.linalg.inv(pmat_inv_roud)
+        
+        diff = np.abs(pmat - pmat_mod)
+        if np.max(diff) > 0.1:
+            msg = "\n Error: the primitive matrix may not be correct."
+            msg += "\n From " + ' '.join(f"{x:.3f}" for x in pmat.flatten())
+            msg += "\n To   " + ' '.join(f"{x:.3f}" for x in pmat_mod.flatten())
+            logger.error(msg)
+            sys.exit()
+        trans_matrices['primitive'] = pmat
+    
     if 'supercell' in structures_cell and 'unitcell' in structures_cell:
-        supercell = structures_cell['supercell']
-        unitcell = structures_cell['unitcell']
-        super_mat = np.dot(np.linalg.inv(unitcell.cell.array), supercell.cell.array)
-        trans_matrices['supercell'] = np.rint(super_mat).astype(int)
+        super_mat = get_transformation_matrix(structures_cell['unitcell'], 
+                                              structures_cell['supercell'])
+        super_mat_round = np.rint(super_mat).astype(int)
+        diff = np.abs(super_mat - super_mat_round)
+        if np.max(diff) > 0.1:
+            msg = "\n Error: the supercell matrix may not be correct."
+            msg += "\n From " + ' '.join(f"{x:.2f}" for x in super_mat.flatten())
+            msg += "\n To   " + ' '.join(f"{x:.2f}" for x in super_mat_round.flatten())
+            logger.error(msg)
+            sys.exit()
+        trans_matrices['supercell'] = super_mat
                 
     return params_prev, trans_matrices
 
-def _make_structures(unitcell, 
-        primitive_matrix=None, 
-        supercell_matrix=None, 
-        #supercell_matrix3=None,
-        ):
+def _make_structures(unitcell, primitive_matrix=None, supercell_matrix=None):
     """
     Parameters
     ------------
@@ -451,6 +465,15 @@ def get_required_parameters(
         logger.error(msg)
         sys.exit()
     
+    ## Check the primitive matrix
+    pmat = get_transformation_matrix(structures['unitcell'], structures['primitive'])
+    diff = np.abs(pmat - trans_matrices['primitive'])
+    if np.max(diff) > 1e-5:
+        msg = "\n Error: the primitive matrix is not correct."
+        msg += "\n Check the primitive matrix in Phonondb."
+        logger.error(msg)
+        sys.exit()
+    
     ### Cell type used for the relaxation
     ### primitive or unitcell (conventional)
     ### All the elements of ``cell_types`` must be given.
@@ -490,7 +513,7 @@ def get_required_parameters(
             if not np.allclose(trans_matrices[cell_type], mat1):
                 msg  = f"\n Error: transformation matrix for \"{cell_type}\" "
                 msg += "is different from the previously used one."
-                msg += f"\n Suggested : {trans_matrices[cell_type].flatten()}"
+                msg += f"\n Suggested : {np.array(trans_matrices[cell_type]).flatten()}"
                 msg += f"\n Previous  : {mat1.flatten()}"
                 logger.info(msg)
     
