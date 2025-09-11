@@ -430,6 +430,6 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
                 if name.startswith(f"{dir1}/box"):
                     continue
                 shutil.move(name, os.path.join(dir_box, os.path.basename(name)))
-                cmd = f" >>> move {name} to {dir_box}/{name}"
+                cmd = f" >>> move {name} to {dir_box}/"
                 logger.info(cmd)
 
