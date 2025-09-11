@@ -490,7 +490,6 @@ def analyze_harmonic_properties(
     
     ### calculate Born effective charge
     if fmin < negative_freq and almcalc.nac == 0:
-        
         try:
             ## set NONANALYTICAL option for Alamode
             almcalc.nac = 2
@@ -509,7 +508,7 @@ def analyze_harmonic_properties(
     if fmin < negative_freq and almcalc.nac != 0:
         
         nac_new = almcalc.get_optimal_nac(
-                tol_neg_frac=0.03,
+                tol_neg_frac=0.1,
                 max_num_corrections=max_num_corrections,
                 deltak=deltak,
                 reciprocal_density=reciprocal_density,

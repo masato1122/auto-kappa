@@ -130,9 +130,9 @@ class BORNINFO:
         if self.alm.dielectric_tensor is None or self.alm.born_charges is None:
             self.set_born_info()
         write_born_info(self.alm.dielectric_tensor, self.alm.born_charges, outfile=outfile)
-        if outfile.startswith('/'):
-            outfile = "./" + os.path.relpath(outfile, os.getcwd())
-        logger.info(f" Output {outfile}")
+        # if outfile.startswith('/'):
+        #     outfile = "./" + os.path.relpath(outfile, os.getcwd())
+        # logger.info(f" Output {outfile}")
 
 
 def plot_tensor_ellipsoid(ax, Z, center=(0,0,0), color='orange', alpha=0.6):
