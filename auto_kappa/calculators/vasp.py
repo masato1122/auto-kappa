@@ -16,10 +16,16 @@ import numpy as np
 import re
 import tarfile
 import glob
+import signal
 
 import ase.io
 from ase.calculators.vasp import Vasp
 from ase.calculators.vasp.create_input import GenerateVaspInput
+
+from custodian.custodian import Custodian
+from custodian.vasp.handlers import (VaspErrorHandler, 
+                                     UnconvergedErrorHandler)
+from custodian.vasp.jobs import VaspJob
 
 import logging
 logger = logging.getLogger(__name__)
@@ -34,11 +40,6 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     atoms : ASE Atoms obj
     
     """
-    from custodian.custodian import Custodian
-    from custodian.vasp.handlers import (
-            VaspErrorHandler, UnconvergedErrorHandler)
-    from custodian.vasp.jobs import VaspJob
-    
     ### prepare a directory and write files
     os.makedirs(calc.directory, exist_ok=True)
     calc.write_input(atoms)
@@ -49,24 +50,36 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     os.chdir(outdir)
     
     ### set handlers and run VASP
-    handlers = [VaspErrorHandler()]
-    ##, UnconvergedErrorHandler()]
-    
+    handlers = [VaspErrorHandler()]  ##, UnconvergedErrorHandler()]
     vjob = VaspJob(calc.command.split(), auto_npar=True)
     c = Custodian(handlers, [vjob], max_errors=max_errors)
-    c.run()
     
-    ### return to the initial directory
-    os.chdir(cwd)
+    def _on_term(signum, frame):
+        logger.info(f"\n 📛 Caught signal {signum} — terminating VASP job cleanly...")
+        try:
+            vjob.terminate(directory=".")
+        except Exception as e:
+            print(f"\n ⚠️ Failed to terminate VASP properly: {e}")
+        sys.exit(1)
+    
+    signal.signal(signal.SIGTERM, _on_term)
+    signal.signal(signal.SIGINT, _on_term)
+    
+    try:
+        c.run()
+    except Exception as e:
+        logger.error(f"\n ⚠️ Error occurred while running VASP: {e}")
+    finally:
+        ### return to the initial directory
+        os.chdir(cwd)
     
     ### check the final structure
     file_vasprun = f"{outdir}/vasprun.xml"
     if os.path.exists(file_vasprun):
         final_atoms = ase.io.read(file_vasprun, index=-1)
-        if _same_structures(atoms, final_atoms) == False:
-            msg = "\n Error: the final structure is different from the initial one."
-            logger.info(msg)
-            sys.exit()
+        if not _same_structures(atoms, final_atoms):
+            logger.info("\n ❌ Final structure differs from initial structure.")
+            sys.exit(1)
     
     return 1
 

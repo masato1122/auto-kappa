@@ -11,7 +11,7 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import os
-import os.path
+import sys
 import subprocess
 import time
 import signal
@@ -21,7 +21,7 @@ try:
 except ImportError:
     pass
 
-from auto_kappa.alamode.io import wasfinished_alamode, get_status
+from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.errors import check_unexpected_errors
 
 import logging
@@ -133,14 +133,28 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
     """    
     ## run the job!!
     status = None
+    proc = None
+    
+    def terminate(signum, frame):
+        logger.info(f"\n Recevied signum {signum}, terminating the subprocess group...")
+        if proc and proc.poll() is None:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            except Exception as e:
+                logger.error(f" Error while terminating the subprocess group: {e}")
+        sys.exit(0)
+    
+    ## Register signal handlers
+    signal.signal(signal.SIGTERM, terminate)
+    signal.signal(signal.SIGINT, terminate)
+    
     with open(logfile, 'w') as f_out, open(file_err, 'w', buffering=1) as f_err:
         proc = subprocess.Popen(
             cmd, shell=True, env=os.environ,
             stdout=f_out, stderr=f_err,
-            preexec_fn=os.setsid # available on Linux only
+            preexec_fn=os.setsid  # Start new process group (available on Linux only)
             )
         
-        # mem_info = None
         count = 0
         mem_max = 0
         process = psutil.Process(proc.pid)
@@ -149,10 +163,8 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
                 if proc.poll() is not None:
                     break
                 
-                # ### get memory info if available
-                # mem_percentage = 0.
                 try:
-                    ### Modified on 2025/09/06
+                    ### Modified on 2025/09/06 (This may not be working properly.)
                     mem_info = process.memory_info()
                     mem_used_mb = mem_info.rss / (1024.**2)
                     mem_max = max(mem_max, mem_used_mb)
@@ -160,34 +172,27 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
                     total_mem = psutil.virtual_memory().total / (1024.**2)
                     percentage = mem_used_mb / total_mem * 100.
                     
-                    ##### ver.2
-                    ##process = psutil.Process(proc.pid)
-                    ##mem_info = process.memory_info()
-                    
-                    #### ver.1
-                    # mem_info = psutil.virtual_memory()
-                    # mem_max = max(mem_max, mem_info.used)
-                    # mem_tot = mem_info.total
-                    # mem_percentage = mem_info.percentage
-                    
                     if percentage > 95.:
-                        logger.info(f"\n Warning: high memory usage: {percentage:.2f}%")
-                        os.killpg(proc.pid, signal.SIGTERM)
+                        logger.info(f"\n ⚠️ Error: high memory usage: {percentage:.2f}%")
+                        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                         break
                 
                 except psutil.NoSuchProcess:
                     break
                 
-                time.sleep(min(10, count))
+                time.sleep(min(10, count + 1))
                 count += 1
             
-            ## status = proc.poll()
             status = proc.wait()
             
         finally:
             # Ensure that the process is terminated
             if proc.poll() is None:
-                os.killpg(proc.pid, signal.SIGTERM)
+                logger.info(" Clearning up: killing leftover subprocess group...")
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                except Exception as e:
+                    logger.error(f" Error while killing the subprocess group: {e}")
     
     return status
 
