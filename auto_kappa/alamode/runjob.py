@@ -136,7 +136,7 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
     proc = None
     
     def terminate(signum, frame):
-        logger.info(f"\n Recevied signum {signum}, terminating the subprocess group...")
+        logger.info(f" Received signum {signum}, terminating the subprocess group...")
         if proc and proc.poll() is None:
             try:
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
@@ -145,8 +145,8 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
         sys.exit(0)
     
     ## Register signal handlers
-    signal.signal(signal.SIGTERM, terminate)
     signal.signal(signal.SIGINT, terminate)
+    signal.signal(signal.SIGTERM, terminate)
     
     with open(logfile, 'w') as f_out, open(file_err, 'w', buffering=1) as f_err:
         proc = subprocess.Popen(

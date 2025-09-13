@@ -1425,20 +1425,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         except Exception:
             pass
         
-        ### Store old results
+        ### Store results in ".../bandos/nac_{nac_orig}/"
         dir1 = self.out_dirs["harm"]["bandos"]
-        outdir = dir1 + "/nac_%d" % nac_orig
-        if os.path.exists(outdir) == False:
+        outdir = dir1 + f"/nac_{nac_orig}"
+        if not os.path.exists(outdir):
             os.makedirs(outdir, exist_ok=True)
             for ff in glob.glob(dir1 + "/*"):
                 if os.path.isfile(ff):
                     shutil.move(ff, outdir)
-            ###
             msg = "\n >>> Move files in %s to %s." % (
                     self.get_relative_path(dir1),
                     self.get_relative_path(outdir))
             logger.info(msg)
-         
+        
         ### Analyze with different NAC options
         for nac in [2, 1, 3, 0]:
             
@@ -1476,6 +1475,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             if fmin > negative_freq:
                 self.nac = nac_orig
                 return nac
+        
+        ### not found: restore original results
+        msg = f"\n >>> Copy files in {self.get_relative_path(dir1)}/nac_{nac_orig} to {self.get_relative_path(dir1)}."
+        logger.info(msg)
+        for ff in glob.glob(dir1 + f"/nac_{nac_orig}/*"):
+            if os.path.isfile(ff):
+                shutil.copy(ff, dir1)
         
         self.nac = nac_orig
         return None

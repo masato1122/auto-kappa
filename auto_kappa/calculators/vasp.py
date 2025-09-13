@@ -55,11 +55,11 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     c = Custodian(handlers, [vjob], max_errors=max_errors)
     
     def _on_term(signum, frame):
-        logger.info(f"\n 📛 Caught signal {signum} — terminating VASP job cleanly...")
+        logger.info(f"\n Caught signal {signum} — terminating VASP job cleanly...")
         try:
             vjob.terminate(directory=".")
         except Exception as e:
-            print(f"\n ⚠️ Failed to terminate VASP properly: {e}")
+            print(f"\n 📛 Failed to terminate VASP properly: {e}")
         sys.exit(1)
     
     signal.signal(signal.SIGTERM, _on_term)
@@ -68,7 +68,7 @@ def run_vasp_with_custodian(calc, atoms, max_errors=10):
     try:
         c.run()
     except Exception as e:
-        logger.error(f"\n ⚠️ Error occurred while running VASP: {e}")
+        logger.error(f"\n 📛 Error occurred while running VASP: {e}")
     finally:
         ### return to the initial directory
         os.chdir(cwd)
