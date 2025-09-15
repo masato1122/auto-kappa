@@ -1,5 +1,7 @@
+# Ver. MLIPs
+# Ver. 1.1.1 (September 15, 2025)
 
-# Ver. 1.1.1 ()
+- Add 'use_mlips' option. When this option is set to be "True", MLIPS is used to calculate forces.
 
 ## New
 
