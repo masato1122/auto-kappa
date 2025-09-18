@@ -20,6 +20,7 @@ import subprocess
 import shutil
 import multiprocessing as mp
 import ase.io
+from ase.geometry import get_duplicate_atoms
 
 from auto_kappa.io import AlmInput
 from auto_kappa.io.born import BORNINFO, read_born_info
@@ -474,6 +475,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     for line in lines:
         
         fns = glob.glob(line)
+        print(line)
         if len(fns) == 0:
             continue
         fn = fns[0]
@@ -498,6 +500,9 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
                 msg = "\n Error: max. diff. = %.6f between" % (np.max(np.abs(diff)))
                 msg += f"\n {ref_fn} and {fn}"
                 logger.error(msg)
+    
+    if ref_sc is None:
+        return
     
     try:
         generate_mapping_s2p(primitive, ref_sc)
@@ -537,8 +542,6 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         'unitcell': unitcell,
         'supercell': ref_sc
     }
-
-from ase.geometry import get_duplicate_atoms
 
 def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atoms:
     """ Get the small cell (e.g. unitcell) from the supercell and the transformation matrix

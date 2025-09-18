@@ -415,9 +415,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell,
                                                    prim_mat=self.primitive_matrix,
                                                    sc_mat=self.scell_matrix,)
-            self._primitive = structures['primitive']
-            self._unitcell = structures['unitcell']
-            self._supercell = structures['supercell']
+            if structures is not None:
+                self._primitive = structures['primitive']
+                self._unitcell = structures['unitcell']
+                self._supercell = structures['supercell']
                         
             # try:
             #     file_prim = self.out_dirs['relax'] + '/structures/POSCAR.prim'
