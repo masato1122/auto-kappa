@@ -11,9 +11,8 @@
 #
 import sys
 import numpy as np
-# from scipy.optimize import linear_sum_assignment
 import spglib
-import ase, ase.data
+import ase
 
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -79,13 +78,9 @@ def get_commensurate_points(supercell_matrix):
     return q_pos
 
 def get_primitive_structure_spglib(structure, format='ase'):
-    
-    prim = get_standardized_structure(
-            structure, to_primitive=True, format=format, version='spglib')
-    
+    prim = get_standardized_structure(structure, to_primitive=True, format=format, version='spglib')
     if prim is None:
         logger.warning(" WARNING: the primitive could not be found.")
-
     return prim
 
 def get_standardized_structure_spglib(struct_orig, to_primitive=False, format='ase'):
@@ -119,8 +114,7 @@ def get_standardized_structure_spglib(struct_orig, to_primitive=False, format='a
     atoms = ase.Atoms(cell=out[0], pbc=True, scaled_positions=out[1], numbers=out[2])
     return change_structure_format(atoms, format=format)
 
-def get_standardized_structure(struct_orig, 
-        to_primitive=False, format='ase', version='spglib'):
+def get_standardized_structure(struct_orig, to_primitive=False, format='ase', version='spglib'):
     """ Get a standardized cell shape and return its structure
     
     Args
@@ -174,38 +168,38 @@ def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
     unitcell = change_structure_format(unitcell, format=format)
     return unitcell
 
-def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
-    """ Return an ase-Atoms object:
+# def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
+#     """ Return an ase-Atoms object:
 
-    Args
-    -----
-    cell : shape=(3,3)
+#     Args
+#     -----
+#     cell : shape=(3,3)
 
-    scaled_positions : shape=(natoms,3)
-        scaled positions
+#     scaled_positions : shape=(natoms,3)
+#         scaled positions
 
-    numbers : shape=(natoms)
-        IDs of chemical symbol
+#     numbers : shape=(natoms)
+#         IDs of chemical symbol
 
-    """
-    # --- chemical symbols in the primitive cell
-    symbols = []
-    for ia, num in enumerate(numbers):
-        symbols.append(ase.data.chemical_symbols[num])
+#     """
+#     # --- chemical symbols in the primitive cell
+#     symbols = []
+#     for ia, num in enumerate(numbers):
+#         symbols.append(ase.data.chemical_symbols[num])
 
-    # --- make the primitive cell
-    atoms_new = ase.Atoms(symbols, np.dot(scaled_positions, cell), cell=cell)
-    if pbc:
-        atoms_new.pbc = pbc
-    if center:
-        atoms_new.center()
-    return atoms_new
+#     # --- make the primitive cell
+#     atoms_new = ase.Atoms(symbols, np.dot(scaled_positions, cell), cell=cell)
+#     if pbc:
+#         atoms_new.pbc = pbc
+#     if center:
+#         atoms_new.center()
+#     return atoms_new
 
 def get_formula(str_orig):    
     structure = change_structure_format(str_orig, format='pmg-istructure')
     return structure.composition.reduced_formula
-    
-def get_spg_number(str_orig):
+
+def get_symmetry_dataset(str_orig):
     """ Return the international space group number
     """
     atoms = change_structure_format(str_orig, format='ase')
@@ -214,6 +208,12 @@ def get_spg_number(str_orig):
             atoms.get_scaled_positions(),
             atoms.numbers)
     dataset = spglib.get_symmetry_dataset(cell)
+    return dataset
+    
+def get_spg_number(str_orig):
+    """ Return the international space group number
+    """
+    dataset = get_symmetry_dataset(str_orig)
     try:
         return dataset.number
     except:    

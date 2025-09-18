@@ -33,7 +33,6 @@ from auto_kappa.io.vasp import print_vasp_params, wasfinished
 from auto_kappa.cui import ak_log
 from auto_kappa.vasp.params import reflect_previous_jobs
 from auto_kappa.compat import get_previously_used_structure
-from auto_kappa import output_directories
 
 import logging
 logger = logging.getLogger(__name__)
@@ -194,6 +193,7 @@ class ApdbVasp():
             unit = change_structure_format(phonon.unitcell , format=format) 
             prim = change_structure_format(phonon.primitive , format=format) 
             sc   = change_structure_format(phonon.supercell , format=format)
+        
         except Exception:
             
             unit = change_structure_format(unitcell , format=format)
@@ -203,7 +203,7 @@ class ApdbVasp():
                     change_structure_format(unitcell, format='phonopy'),
                     self.scell_matrix)
             sc = change_structure_format(sc, format=format)
-        
+            
         structures = {"unit": unit, "prim": prim, "super": sc}
         return structures
     
@@ -368,11 +368,15 @@ class ApdbVasp():
             return 0
         
         ### Read previously used structure
-        unitcell = get_previously_used_structure(self.base_directory, self.primitive_matrix)
+        test_job = False
         
-        if unitcell is not None:
+        ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        unitcell = get_previously_used_structure(self.base_directory, self.primitive_matrix,
+                                                 orig_structures=self.structures.copy())
+        if unitcell is not None and not test_job:
             self.update_structures(unitcell)
             return 0
+        ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
         ### NSW parameters
         out = _parse_nsw_params(nsw_params)
@@ -495,42 +499,46 @@ class ApdbVasp():
             init_struct = change_structure_format(structure, format='pmg')
             
             ### check the previous optimal structure
+            ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            struct_opt = None
             struct_opt = _get_previous_optimal_structure(
                 directory, prim_matrix=self.primitive_matrix, to_primitive=to_primitive)
             ###
-            # struct_opt = None; logger.info(" TEST JOB!!!!!!!!")
+            ## struct_opt = None; logger.info(" TEST JOB!!!!!!!!")
+            ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             
-            if struct_opt is None:
+            if struct_opt is None or test_job:
                 relax = StrictRelaxation(init_struct, outdir=outdir, dim=self.mater_dim)
                 Vs, Es = relax.with_different_volumes(
                         kpts=kpts, command=self.command, params_mod=self.params_mod,
                         initial_strain_range=[-0.03, 0.05], nstrains=15
                         )
                 
-                ### output figure
+                ### output optimized structure file
+                struct_opt = relax.get_optimal_structure()
+            
+            try:
+                # ### output figure
+                # figname = outdir + '/fig_bm.png'
+                # relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+                
                 figname = outdir + '/fig_bm.png'
-                relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+                relax.plot_physical_properties(figname=figname)
                 
                 ### print results
                 relax.print_results()
-                
-                ### output optimized structure file
-                struct_opt = relax.get_optimal_structure()
-                
+            
+            except Exception:
+                pass
+            
+            
             outfile = outdir + "/POSCAR.opt"
-            struct_opt.to(filename=outfile.replace(os.getcwd(), "."))
             struct_ase = change_structure_format(struct_opt, format='ase')
+            ase.io.write(outfile, struct_ase, format='vasp', direct=True, vasp5=True, sort=False)
             
             ### update structures
             if to_primitive:
-                # _mat_p2u = np.linalg.inv(self.primitive_matrix)
-                # _mat_p2u = np.array(np.sign(_mat_p2u) * 0.5 + _mat_p2u, dtype="intc")
-                # unitcell = get_supercell(
-                #         change_structure_format(struct_ase, format='phonopy'),
-                #         _mat_p2u)
-                
                 unitcell = convert_primitive_to_unitcell(struct_ase, self.primitive_matrix, format='ase')
-                
             else:
                 unitcell = struct_ase.copy()
             
@@ -539,7 +547,7 @@ class ApdbVasp():
                 unitcell = adjust_vacuum_size(unitcell)
             
             self.update_structures(unitcell)
-            
+        
         ## Adjust the vacuum space size based the supercell
         if self.mater_dim < 3:    
             unit_mod = adjust_vacuum_size(self.unitcell, self.scell_matrix)
@@ -556,14 +564,7 @@ class ApdbVasp():
             'volume_relaxation': volume_relaxation,
             })
         
-        ### output structures (>= ver.0.4.0)
-        outdir = directory + "/structures"
-        os.makedirs(outdir, exist_ok=True)
-        logger.info("")
-        for key in self.structures.keys():
-            fn = outdir.replace(os.getcwd(), ".") + "/POSCAR.%s" % key
-            ase.io.write(fn, self.structures[key], format='vasp', direct=True, vasp5=True, sort=True)
-            logger.info(" Output %s" % fn)
+        self.output_structures(verbose=False)
         
         if spg_before != spg_after:
             ak_log.symmetry_error(spg_before, spg_after)
@@ -571,6 +572,20 @@ class ApdbVasp():
         
         return 0
     
+    def output_structures(self, verbose=True):
+        """ Output structures (>= ver.0.4.0)
+        """
+        outdir = self.base_directory + "/relax/structures"
+        os.makedirs(outdir, exist_ok=True)
+        if verbose:
+            logger.info("")
+        for key in self.structures.keys():
+            fn = outdir.replace(os.getcwd(), ".") + "/POSCAR.%s" % key
+            ase.io.write(fn, self.structures[key], format='vasp', direct=True, vasp5=True, sort=False)
+            if verbose:
+                logger.info(" Output %s" % fn)
+        
+        
     def _write_relax_yaml(self, params):
         import yaml
         outfile = params['directory'] + '/relax.yaml'
@@ -772,12 +787,10 @@ def _parse_nsw_params(line, params_default=[200, 10, 20]):
     """ Return NSW params with an array 
     Args
     ======
-    
     line : string, "**:**:**"
 
     Return
     =======
-    
     array, shape=(3)
         initial, interval, and minimum NSW
     """
@@ -805,9 +818,6 @@ def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True)
         f"{outdir}/volume/POSCAR.opt",
         # f"{outdir}/../harm/force/prist/POSCAR",
     ]
-    
-    # mat_p2u = np.linalg.inv(prim_matrix)
-    # mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
     
     for i, fn in enumerate(filenames):
         if os.path.exists(fn):

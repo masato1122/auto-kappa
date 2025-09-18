@@ -21,6 +21,8 @@ from ase import Atoms
 import logging
 logger = logging.getLogger(__name__)
 
+from auto_kappa.units import BohrToA, kb, RyToJ, AMU
+
 class AlamodeDisplace(object):
 
     def __init__(self,
@@ -54,11 +56,17 @@ class AlamodeDisplace(object):
 
         self._displacement_mode = displacement_mode.lower()
         self._supercell = codeobj_base
-
-        self._BOHR_TO_ANGSTROM = 0.5291772108
-        self._K_BOLTZMANN = 1.3806488e-23
-        self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
-        amu = 1.660538782e-27
+        
+        ###
+        self._BOHR_TO_ANGSTROM = BohrToA
+        self._K_BOLTZMANN = kb
+        self._RYDBERG_TO_JOULE = RyToJ
+        amu = AMU
+        ###
+        # self._BOHR_TO_ANGSTROM = 0.5291772108
+        # self._K_BOLTZMANN = 1.3806488e-23
+        # self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
+        # amu = 1.660538782e-27
         electron_mass = 9.10938215e-31
         self._AMU_RYD = amu / electron_mass / 2.0
         
@@ -96,9 +104,9 @@ class AlamodeDisplace(object):
                         nat_elem.append(1)
                     else:
                         nat_elem[-1] += 1
-
+            
             nat = np.sum(nat_elem)
-
+            
             kd = []
             for i in range(len(nat_elem)):
                 kd.extend([i] * nat_elem[i])
@@ -106,7 +114,7 @@ class AlamodeDisplace(object):
             
             self._find_commensurate_q()
             self._generate_mapping_s2p()
-
+            
         else:
             if self._displacement_mode == "random_normalcoordinate" \
                     or self._displacement_mode == "pes":
@@ -157,7 +165,7 @@ class AlamodeDisplace(object):
                  option_qrange=None,
                  ignore_imag=False,
                  imag_evec=False):
-
+        
         self._counter = 1
         self._displacement_magnitude = magnitude
         self._classical = classical
@@ -753,15 +761,11 @@ class AlamodeDisplace(object):
 
         self._commensurate_qpoints = qlist
 
-    def _generate_mapping_s2p(self):
-
-        tol_zero = 1.0e-3
+    def _generate_mapping_s2p(self, tol_zero=1.0e-3):
+        
         convertor = np.dot(self._supercell.lattice_vector.transpose(),
                            self._inverse_primitive_lattice_vector.transpose())
-        
-        for i in range(3):
-            for j in range(3):
-                convertor[i, j] = float(round(convertor[i, j]))
+        convertor = np.round(convertor).astype(float)
         
         shift = np.zeros((self._supercell.nat, 3))
         map_s2p = np.zeros(self._supercell.nat, dtype=int)

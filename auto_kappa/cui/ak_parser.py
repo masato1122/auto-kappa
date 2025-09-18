@@ -160,8 +160,8 @@ def get_parser():
                         "This option is used only when ``--analyze_with_largersc = 1``.\n\n\n")
     
     ### parameters for NSW
-    parser.add_argument("--nsw_params", dest="nsw_params", type=str, default="100:10:20", help=
-                        "Parameters which determine NSW for relaxation calculations [100:10:20]. \n"
+    parser.add_argument("--nsw_params", dest="nsw_params", type=str, default="200:20:20", help=
+                        "Parameters which determine NSW for relaxation calculations [200:20:20]. \n"
                         "\"{nsw_init}:{nsw_diff}:{nsw_min}\": NSW = min(``nsw_min``, \n"
                         "``nsw_init`` - ``nsw_diff`` * ``num_errors``), where \n"
                         "``num_errors`` is the number of errors.\n\n\n")

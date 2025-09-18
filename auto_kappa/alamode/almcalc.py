@@ -25,6 +25,7 @@ from auto_kappa import output_directories, output_files, default_amin_parameters
 from auto_kappa.structure import change_structure_format, match_structures
 from auto_kappa.structure.crystal import (
     get_formula, convert_primitive_to_unitcell, get_atomic_distance_list)
+from auto_kappa.structure.comparison import generate_mapping_s2p
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.alm import AnphonInput
 from auto_kappa.io.files import write_output_yaml
@@ -406,51 +407,88 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         ### supercell for harmonic FCs
         if self.dim == 3:
             
-            sc = get_supercell(unit_pp, self.scell_matrix)
+            sc = get_supercell(unit_pp, np.asarray(self.scell_matrix))
+            self._supercell = change_structure_format(sc, format=format)
             
-            try:
-                ## Check previously used supercell
-                file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-                sc2 = ase.io.read(file_xml, format='vasp-xml', index=-1)
+            ### check previously used supercell
+            from auto_kappa.alamode.compat import check_previous_structures
+            structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell)
+            self._primitive = structures['primitive']
+            self._unitcell = structures['unitcell']
+            self._supercell = structures['supercell']
+                        
+            # try:
+            #     file_prim = self.out_dirs['relax'] + '/structures/POSCAR.prim'
+            #     file_unit = self.out_dirs['relax'] + '/structures/POSCAR.unit'
+            #     file_super = self.out_dirs['relax'] + '/structures/POSCAR.super'
+            #     prim = ase.io.read(file_prim, format='vasp', index=0)
+            #     unit = ase.io.read(file_unit, format='vasp', index=0)
+            #     sc_tmp = ase.io.read(file_super, format='vasp', index=0)
                 
-                if not match_structures(sc, sc2, ignore_order=True):
-                    ##
-                    ## This error may occur when StructureMatcher returns different results
-                    ## for same structures.
-                    ##
-                    sc = change_structure_format(sc, format="ase")
-                    
-                    msg = "\n Lattice vectors 1:"
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[0])
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[1])
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[2])
-                    msg += "\n (%d atoms)" % len(sc)
-                    msg += "\n\n Lattice vectors 2 (%s):" % self.get_relative_path(file_xml)
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[0])
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[1])
-                    msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[2])
-                    msg += "\n (%d atoms)" % len(sc2)
-                    logger.info(msg)
-                    
-                    msg  = "\n Error: current supercell is not the same as the previous one,"
-                    msg += "\n %s." % self.get_relative_path(file_xml)
-                    msg += "\n\n You may need to run a new job as follows:"
-                    base_dir = ("./" + os.path.relpath(self.base_directory, os.getcwd())
-                                if os.path.isabs(self.base_directory) else self.base_directory)
-                    msg += f"\n > mv {base_dir} {base_dir}-old"
-                    msg += f"\n > mkdir {base_dir}"
-                    msg += f"\n > cp -r {base_dir}-old/relax {base_dir}/"
-                    logger.error(msg)
-                    sys.exit()
+            #     generate_mapping_s2p(sc_tmp, prim)
+            #     generate_mapping_s2p(sc_tmp, unit)
                 
-                if not match_structures(sc, sc2, ignore_order=False):
-                    msg = "\n Note: Supercell is read from %s" % self.get_relative_path(file_xml)
-                    logger.error(msg)
-                    sc = sc2.copy()
-                else:
-                    pass
-            except Exception:
-                pass
+            #     sc = sc_tmp.copy()
+            #     dir_structures = self.out_dirs['relax'] + '/structures'
+            #     if dir_structures.startswith("/"):
+            #         dir_structures = "./" + os.path.relpath(dir_structures, os.getcwd())
+            #     msg = "\n Structures are read from %s." % dir_structures
+            #     logger.info(msg)
+            #     self._primitive = change_structure_format(prim.copy(), format=format)
+            #     self._unitcell = change_structure_format(unit.copy(), format=format)
+            #     self._supercell = change_structure_format(sc.copy(), format=format)
+                
+            # except Exception:
+                
+            #     try:
+            #         ## Check previously used supercell
+            #         file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
+            #         sc2 = ase.io.read(file_xml, format='vasp-xml', index=-1)
+                    
+            #         match_wo_order = match_structures(sc, sc2, ignore_order=True)
+            #         match_with_order = match_structures(sc, sc2, ignore_order=False)
+                    
+            #         if not match_wo_order:
+                        
+            #             sc = change_structure_format(sc, format="ase")
+                        
+            #             msg = "\n Lattice vectors 1:"
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[0])
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[1])
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[2])
+            #             msg += "\n (%d atoms)" % len(sc)
+            #             msg += "\n\n Lattice vectors 2 (%s):" % self.get_relative_path(file_xml)
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[0])
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[1])
+            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[2])
+            #             msg += "\n (%d atoms)" % len(sc2)
+            #             logger.info(msg)
+                        
+            #             msg  = "\n Error: current supercell is not the same as the previous one,"
+            #             msg += "\n %s." % self.get_relative_path(file_xml)
+            #             msg += "\n\n You may need to run a new job as follows:"
+            #             base_dir = ("./" + os.path.relpath(self.base_directory, os.getcwd())
+            #                         if os.path.isabs(self.base_directory) else self.base_directory)
+            #             msg += f"\n > mv {base_dir} {base_dir}-old"
+            #             msg += f"\n > mkdir {base_dir}"
+            #             msg += f"\n > cp -r {base_dir}-old/relax {base_dir}/"
+            #             logger.error(msg)
+            #             sys.exit()
+                    
+            #         if not match_with_order:
+                        
+            #             msg = "\n Supercell is read from %s" % self.get_relative_path(file_xml)
+            #             logger.error(msg)
+            #             sc = sc2.copy()
+            #             self._supercell = change_structure_format(sc, format=format)
+                    
+            #         else:
+            #             pass
+            #     except Exception:
+            #         pass
+            
+            # except Exception:
+            #     pass
             
         elif self.dim == 2:
             sc = get_supercell(unit_pp, self.scell_matrix)
@@ -459,7 +497,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             logger.error(msg)
             sys.exit()
         
-        self._supercell = change_structure_format(sc, format=format)
+        generate_mapping_s2p(self.supercell, self.primitive)
+        generate_mapping_s2p(self.supercell, self.unitcell)
     
     @property
     def magnitude(self):
@@ -919,10 +958,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                     displacement_mode, codeobj,
                     file_evec=file_evec,
                     verbose=self.verbose)
-        
+            sys.exit()
+            
         if almdisp is None:
-            msg = "\n Error: Cannot obtain AlamodeDisplace object properly."
-            logger.error(msg)
+            logger.error("\n Error: Cannot obtain AlamodeDisplace object properly.")
             sys.exit()
         
         msg = "\n"
@@ -1146,7 +1185,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         """ Make an input script for the ALAMODE job for an harmonic property
         """
         from auto_kappa.structure.crystal import get_automatic_kmesh
-        
         if propt == "band":
             self.write_alamode_input(
                     propt=propt, deltak=deltak, outdir=outdir, **kwargs)
@@ -1248,7 +1286,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             # Check previous file!!
             # Previous result files will be removed when the BORNINFO is changed.
             from auto_kappa.alamode.compat import check_previous_borninfo
-            check_previous_borninfo(dir_work, born_xml, fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml)
+            try:
+                check_previous_borninfo(dir_work, born_xml, fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml)
+            except Exception as e:
+                pass
             
             ## Write the new BORNINFO file
             files = []
@@ -1258,8 +1299,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                         files.append(fn)
                     else:
                         files.append(os.path.join(dir_work, fn))
-            born = BORNINFO(born_xml, file_fcs=files[0])
-            born.write(outfile=outfile)
+            
+            if self.calculate_forces:
+                born = BORNINFO(born_xml, file_fcs=files[0])
+                born.write(outfile=outfile)
             ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             
         else:
@@ -1523,7 +1566,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         #     logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
         # else:
         #     logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
-        
         
         count = 0
         nprocs = self.commands["alamode"]["nprocs"]

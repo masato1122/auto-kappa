@@ -14,6 +14,7 @@
 import os
 import sys
 import numpy as np
+import glob
 import ase.io
 
 # from auto_kappa.structure import change_structure_format
@@ -26,7 +27,7 @@ from auto_kappa.structure.comparison import match_structures, cells_equal, atoms
 import logging
 logger = logging.getLogger(__name__)
 
-def get_previously_used_structure(base_dir, prim_matrix):
+def get_previously_used_structure(base_dir, prim_matrix, orig_structures=None):
     """ Compare the optimized structure and the previously used structure
     
     Args
@@ -44,15 +45,23 @@ def get_previously_used_structure(base_dir, prim_matrix):
     base_dir = ("./" + os.path.relpath(base_dir, os.getcwd())
                 if os.path.isabs(base_dir) else base_dir)
     
-    ## Optimized structures
     files_opt = {}
     structures_opt = {}
+    
+    ## Optimized structures
     for type in ['prim', 'unit', 'super']:
         files_opt[type] = base_dir + '/relax/structures/POSCAR.' + type
         if os.path.exists(files_opt[type]) == False:
             return None
         else:
             structures_opt[type] = ase.io.read(files_opt[type])
+    
+    ## XML file for harmonic force constants
+    # from auto_kappa.io.fcs import FCSxml
+    # line = base_dir + '/harm/force/*.xml'
+    # file_xml = glob.glob(line)[0]
+    # fc2 = FCSxml(file_xml)
+    # structures_opt['super'] = fc2.supercell
             
     ## Previously used structures
     file_used = base_dir + '/harm/force/prist/POSCAR'
@@ -72,9 +81,6 @@ def get_previously_used_structure(base_dir, prim_matrix):
     match_wo_order = match_structures(struct_opt, struct_used, 
                                       ignore_order=True, verbose=True,
                                       ltol=1e-7, stol=1e-7)
-    # match_with_order = match_structures(struct_opt, struct_used, 
-    #                                     ignore_order=False, verbose=True,
-    #                                     ltol=1e-7, stol=1e-7)
     
     if match_wo_order:
         ## Good! The optimized structure matches the previously used structure.

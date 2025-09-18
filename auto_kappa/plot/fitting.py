@@ -21,11 +21,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 def plot_bm_result(
-        bm, dim=3, modulus_info=None, figname='fig.png', color='black',
-        dpi=600, fontsize=7, fig_width=2.5, aspect=0.7, lw=0.5, ms=2.3):
-    
-    set_matplot(fontsize=fontsize)
-    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        bm, ax=None, dim=3, modulus_info=None, figname=None, color='black',
+        dpi=600, fontsize=7, fig_width=2.5, aspect=0.7, lw=0.5, ms=2.3,
+        xlabel='Volume (${\\rm \\AA^3}$)', ylabel='Energy (eV)'
+        ):
     
     ### check fitting mode
     from pymatgen.analysis.eos import BirchMurnaghan
@@ -34,10 +33,14 @@ def plot_bm_result(
         logger.warning(msg)
         return None
     
-    ax = plt.subplot()
-    ax.set_xlabel('Volume (${\\rm \\AA^3}$)')
-    ax.set_ylabel('Energy (eV)')
+    if ax is None:
+        set_matplot(fontsize=fontsize)
+        fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        ax = plt.subplot()
     
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
     ### plot original data
     xdat = bm.volumes
     ydat = bm.energies
@@ -61,17 +64,20 @@ def plot_bm_result(
     
     ### show text
     text = "Min. energy = %.2f eV" % (bm.e0)
-    text += "\nOpt. volume = %.2f eV" % (bm.v0)
-    text += "\nBulk modulus = %.2f %s" % (modulus_info['value'], modulus_info['unit'])
-    if dim == 2:
-        text += "\nThickness = %.2f ${\\rm \\AA}$" % (modulus_info['thickness'])
-    text += "\nDerivative of bulk modulus wrt pressure = %.2f" % (bm.b1)
+    text += "\nOpt. volume = %.2f ${\\rm \\AA^3}$" % (bm.v0)
+    if modulus_info is not None:
+        text += "\nBulk modulus = %.2f %s" % (modulus_info['value'], modulus_info['unit'])
+        if dim == 2:
+            text += "\nThickness = %.2f ${\\rm \\AA}$" % (modulus_info['thickness'])
+        text += "\nDerivative of bulk modulus wrt pressure = %.2f" % (bm.b1)
+    
     ax.text(0.03, 0.95, text, fontsize=4, transform=ax.transAxes,
             horizontalalignment="left", verticalalignment="top",
-            bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=0.0))
+            bbox=dict(facecolor='white', edgecolor='none', alpha=0.8, pad=0.0))
     
-    set_axis(ax)
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    msg = " Output %s" % figname
-    logger.info(msg)
-    return fig
+    if ax is None and figname is not None:
+        set_axis(ax)
+        fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+        msg = " Output %s" % figname
+        logger.info(msg)
+        return fig

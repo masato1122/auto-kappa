@@ -15,6 +15,7 @@ import os
 import os.path
 import numpy as np
 import glob
+import pickle
 
 import ase.io
 from pymatgen.io.vasp import Kpoints
@@ -209,6 +210,8 @@ def _get_previously_used_parameters(outdir, cell_types=None):
                         msg = f"\n Error: different k-meshes were used for the \"{cell_type}\" structure"
                         msg += f" and {calc_type} calculation."
                         msg += f"\n Check {fn_kpoints}."
+                        msg += f"\n {params_prev[calc_type]['kpts']} : previously used"
+                        msg += f"\n {kpts} : currently suggested"
                         logger.warning(msg)
                         sys.exit()
                 params_prev[calc_type]['kpts'] = kpts
@@ -280,70 +283,6 @@ def _make_structures(unitcell, primitive_matrix=None, supercell_matrix=None):
     
     return structures
 
-# def _determine_kpoints_for_all(
-#         params_suggest, params_prev,
-#         prioritize_previous_info=True
-#         ):
-#     """ Return k-mesh for all the calculation
-    
-#     Algorithm
-#     ----------
-#     If ``prioritize_previous_kpts`` is True:
-
-#     mat1 = params_suggest[cal_type]["trans_matrix"]
-#     mat2 = params_prev[cal_type]["trans_matrix"]
-#     kpts1 = params_suggest[cal_type]["kpts"]
-#     kpts2 = params_prev[cal_type]["kpts"]
-    
-#     - If ``mat1`` is equal to ``mat2``, use ``kpts2``. Note that ``kpts2`` may
-#       be None.
-    
-#     - If ``mat1`` is not equal to ``mat2``, use kpts1.
-
-#     Parameters
-#     ----------
-#     params_*** : dict
-#         keys = "relax", "nac", "harm", and "cube"
-    
-#     params_***[key] : dict of array
-#         keys = "trans_matrix" and "kpts"
-#         transformation matrix and kmesh
-
-#     params_suggest :
-#         parameters suggested or used in Phonondb
-
-#     params_prev :
-#         parameters used in the previous calculation
-    
-#     prioritize_previous_kpts : bool
-    
-#     """
-#     kpts_all = {"relax": None, "nac": None, "harm": None, "cube": None}
-#     for cal_type in kpts_all:
-        
-#         mat1 = params_suggest[cal_type]["trans_matrix"]
-#         mat2 = params_prev[cal_type]["trans_matrix"]
-        
-#         kpts1 = params_suggest[cal_type]["kpts"]
-#         kpts2 = params_prev[cal_type]["kpts"]
-        
-#         if mat2 is not None:
-#             if np.allclose(mat1, mat2):
-#                 if prioritize_previous_info and kpts2 is not None:
-#                     kpts_all[cal_type] = kpts2
-        
-#         if kpts_all[cal_type] is None:
-#             kpts_all[cal_type] = kpts1
-        
-#         ### check
-#         if kpts_all[cal_type] is None:
-#             msg = "\n Error: cannot obtain k-mesh info properly."
-#             msg += "\n k-mesh for %s is None." % cal_type
-#             logger.error(msg)
-#             sys.exit()
-    
-#     return kpts_all
-
 def get_required_parameters(
         base_directory=None,
         dir_phdb=None, file_structure=None,
@@ -395,56 +334,13 @@ def get_required_parameters(
     trans_matrices = None
     cell_types = None
     if dir_phdb is not None:
-        """ Case 1: Phonondb directory is given.
-        Read data in the given Phonondb directory and suggest parameters for
-        FC3.
-        
-        Note
-        -----
-        For Phonondb, the conventional cell is used for both of the
-        relaxation and NAC calculations. Auto-kappa, however, can accept
-        different cell types while the default types are the conventional and 
-        primitive cells for the relaxation and NAC, respectively. Therefore,
-        the k-meshes used for Phonondb basically will not be used for the
-        automation calculation.
-        
-        Example of the contents in Phonondb directory
-        ----------------------------------------------
-        >>> BORN       FORCE_SETS   INCAR-nac    KPOINTS-force  KPOINTS-relax
-        >>> phonon.yaml   POSCAR-unitcell        disp.yaml  INCAR-force
-        >>> INCAR-relax  KPOINTS-nac    PAW_dataset.txt  phonopy.conf
-        >>> POSCAR-unitcell.yaml
-
-        """
-        msg = f"\n Read Phonondb data from "
-        msg += f"\n {dir_phdb}"
-        logger.info(msg)
-        
-        ### Read Phonondb directory
-        unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)
-        trans_matrices["unitcell"] = np.identity(3).astype(int)
-        
-        ### Set structures
-        structures = _make_structures(
-                unitcell,
-                primitive_matrix=trans_matrices['primitive'],
-                supercell_matrix=trans_matrices['supercell'],
-                )
-        
-        ### get suggested k-mesh
-        kpts_suggested = {
-                "primitive": klength2mesh(
-                    k_length, structures["primitive"].cell.array),
-                "unitcell": klength2mesh(
-                    k_length, structures["unitcell"].cell.array),
-                "supercell": klength2mesh(
-                    k_length, structures["supercell"].cell.array),
-                }
-        
+        ### Case 1: Phonondb directory is given.
+        structures, trans_matrices, kpts_suggested, nac = (
+            read_parameters_from_phonondb(dir_phdb, k_length)
+        )
     elif file_structure is not None:
-        """ Case 2: only a structure is given.
-        Every required parameters are suggested.
-        """
+        ### Case 2: A structure is given.
+        ### Every required parameters are suggested.
         from auto_kappa.cui.suggest import suggest_structures_and_kmeshes
         
         structures, trans_matrices, kpts_suggested = (
@@ -457,7 +353,7 @@ def get_required_parameters(
         ### This part can be modified. So far, NAC is considered for materials
         ### which is not included in Phonondb.
         nac = 2
-    
+        
     else:
         """ Case 3: error
         """
@@ -523,7 +419,79 @@ def get_required_parameters(
         if key != 'supercell':
             structures[key] = _sort_atoms_according_to_elements(structures[key].copy(), sym_list)
     
+    _save_initial_setting(base_directory, cell_types, structures, trans_matrices, kpts_calc_type)
+    
     return cell_types, structures, trans_matrices, kpts_calc_type, nac
+
+def read_parameters_from_phonondb(dir_phdb, k_length):
+    """ Read data in the given Phonondb directory and suggest parameters for FC3
+    
+    Note
+    -----
+    For Phonondb, the conventional cell is used for both of the
+    relaxation and NAC calculations. Auto-kappa, however, can accept
+    different cell types while the default types are the conventional and 
+    primitive cells for the relaxation and NAC, respectively. Therefore,
+    the k-meshes used for Phonondb basically will not be used for the
+    automation calculation.
+    
+    Example of the contents in Phonondb directory
+    ----------------------------------------------
+    >>> BORN       FORCE_SETS   INCAR-nac    KPOINTS-force  KPOINTS-relax
+    >>> phonon.yaml   POSCAR-unitcell        disp.yaml  INCAR-force
+    >>> INCAR-relax  KPOINTS-nac    PAW_dataset.txt  phonopy.conf
+    >>> POSCAR-unitcell.yaml
+
+    """
+    msg = f"\n Read Phonondb data from "
+    msg += f"\n {dir_phdb}"
+    logger.info(msg)
+    
+    ### Read Phonondb directory
+    unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)
+    trans_matrices["unitcell"] = np.identity(3).astype(int)
+    
+    ### Set structures
+    structures = _make_structures(
+            unitcell,
+            primitive_matrix=trans_matrices['primitive'],
+            supercell_matrix=trans_matrices['supercell'],
+            )
+    
+    ### get suggested k-mesh
+    kpts_suggested = {
+        "primitive": klength2mesh(k_length, structures["primitive"].cell.array),
+        "unitcell": klength2mesh(k_length, structures["unitcell"].cell.array),
+        "supercell": klength2mesh(k_length, structures["supercell"].cell.array)
+        }
+    
+    return structures, trans_matrices, kpts_suggested, nac
+
+def _save_initial_setting(base_directory, cell_types, structures, trans_matrices, kpts_calc_type):
+    """ Save the initial setting to a file.
+    """
+    dir_out = base_directory + "/init"
+    os.makedirs(dir_out, exist_ok=True)
+    if dir_out.startswith("/"):
+        dir_out = "./" + os.path.relpath(dir_out, os.getcwd())
+    
+    ## Cell types for each calculation
+    file_init = dir_out + "/initial_setting.pkl"
+    init_setting = {'cell_types': cell_types,
+                    'transformation_matrices': trans_matrices,
+                    'kpoints': kpts_calc_type}
+    
+    with open(file_init, 'wb') as f:
+        pickle.dump(init_setting, f)
+    # msg = f" Output {file_init}"
+    # logger.info(msg)
+    
+    ## Structures
+    for key in structures:
+        outfile = dir_out + f"/POSCAR.{key}"
+        ase.io.write(outfile, structures[key], format='vasp', vasp5=True, direct=True, sort=False)
+        # msg = f" Output {outfile}"
+        # logger.info(msg)
 
 def _sort_atoms_according_to_elements(atoms, sym_list):
     """ Sort atoms according to the order of elements in sym_list.

@@ -168,7 +168,7 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3, nprocs=No
     return adjusted_key_structures
 
 def get_previously_calculated_structure(dir_forces, include_pristine=True):
-    """ Get already calculated structures
+    """ Get already calculated structures with displacement.
     """
     from auto_kappa.io.vasp import wasfinished as wasfinished_vasp
     line = f"{dir_forces}/*/vasprun.xml"
@@ -381,8 +381,8 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
         fn_fcs = os.path.join(dir_work, files[0])
     
     if os.path.exists(fn_fcs) == False:
-        msg = f"\n Error: Cannot find {fn_fcs}."
-        logger.error(msg)
+        # msg = f"\n Error: Cannot find {fn_fcs}."
+        # logger.error(msg)
         return None
     
     born = BORNINFO(born_xml, file_fcs=fn_fcs)
@@ -433,3 +433,85 @@ def check_previous_borninfo(dir_work, born_xml, fc2xml=None, fc3xml=None, fcsxml
                 cmd = f" >>> move {name} to {dir_box}/"
                 logger.info(cmd)
 
+def _relative_path(filename):
+    if filename.startswith("/"):
+        return os.path.relpath(filename, os.getcwd())
+    else:
+        return filename
+
+def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_mat=None):
+    
+    from auto_kappa.structure.comparison import generate_mapping_s2p
+    from auto_kappa.io.fcs import FCSxml
+    
+    ref_sc = None
+    
+    ## Supercell used for force and FCs calculations
+    lines = [
+        outdirs.get('harm', {}).get('force', None) + "/prist/POSCAR",
+        outdirs.get('harm', {}).get('force', None) + "/*.xml",
+        outdirs.get('cube', {}).get('force_fd', None) + "/prist/POSCAR",
+        outdirs.get('cube', {}).get('force_lasso', None) + "/prist/POSCAR",
+        outdirs.get('cube', {}).get('force_fd', None) + "/*.xml",
+        outdirs.get('cube', {}).get('lasso', None) + "/*.xml"
+    ]
+    ref_sc = None
+    for line in lines:
+        
+        fns = glob.glob(line)
+        if len(fns) == 0:
+            continue
+        fn = fns[0]
+        
+        if fn.endswith('.xml'):
+            fcs = FCSxml(fn)
+            sc = fcs.supercell
+        else:
+            sc = ase.io.read(fn)
+        
+        if sc is None:
+            continue
+        
+        if ref_sc is None:
+            ref_file = fn
+            ref_sc = sc.copy()
+        else:
+            diff = ref_sc.get_positions() - sc.get_positions()
+            if np.max(np.abs(diff)) > 1e-4:
+                ref_fn = _relative_path(ref_file)
+                fn = _relative_path(fn)
+                msg = "\n Error: max. diff. = %.6f between" % (np.max(np.abs(diff)))
+                msg += f"\n {ref_fn} and {fn}"
+                logger.error(msg)
+    
+    try:
+        generate_mapping_s2p(primitive, ref_sc)
+    except:
+        from auto_kappa.structure.comparison import match_structures
+        match = match_structures(primitive, ref_sc, ignore_order=False, verbose=False)
+        #print(match)
+        
+        #
+        # TODO: find the compatible primitive cell
+        #
+        msg = "\n Error: The primitive cell does not match the supercell."
+        msg += "\n Please report the bug to the developer."
+        logger.error(msg)
+        sys.exit()
+    
+    try:
+        generate_mapping_s2p(unitcell, ref_sc)
+    except:
+        #
+        # TODO: find the compatible unitcell
+        #
+        msg = "\n Error: The unitcell cell does not match the supercell."
+        msg += "\n Please report the bug to the developer."
+        logger.error(msg)
+        sys.exit()
+    
+    return {
+        'primitive': primitive,
+        'unitcell': unitcell,
+        'supercell': ref_sc
+    }

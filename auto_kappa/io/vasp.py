@@ -165,7 +165,7 @@ def _adjust_displacements_with_trans_disp(displacements, normal_index=None, tole
     if vmax - vmin < 1e-7:
         return displacements
     
-    ## Gest the best shift with the tolerance
+    ## Get the best shift with the tolerance
     from collections import Counter
     shift_candidates = - disps_norm
     rounded = np.round(shift_candidates / tolerance) * tolerance

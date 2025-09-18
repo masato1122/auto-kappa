@@ -1262,6 +1262,8 @@ def proc_val(key, val):
             'anime_format',  # xyz,  string
             ## relax
             'strain_ifc_dir', # None, string
+            ## added
+            'dbasis',
             )
     
     int_keys = (
@@ -1335,6 +1337,16 @@ def proc_val(key, val):
             'renorm_2to1st',    # 2, integer
             'renorm_34to1st',   # 0, integer
             'renorm_3to2nd',    # 2, integer
+            ## added
+            'printvel',         # 0, integer
+            'printvec',        # 0, integer
+            'printxsf',       # 0, integer
+            'kpmode',
+            'newfcs',        # 0, integer
+            'nsym',         # 0, integer
+            'fcs_alamode', 
+            'fc4_shengbte',
+            'fc2_qefc',
             )
     
     double_keys = (

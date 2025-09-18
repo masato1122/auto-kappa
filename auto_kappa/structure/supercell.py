@@ -23,13 +23,19 @@ def estimate_supercell_matrix(structure, max_num_atoms=120, max_iter=100):
     
     spglib_dataset = spglib.get_symmetry_dataset(cell)
     
-    spg_num = spglib_dataset["number"]
-    num_atoms = len(spglib_dataset["std_types"])
+    try:
+        spg_num = spglib_dataset.number
+        num_atoms = len(spglib_dataset.std_types)
+        std_lattice = spglib_dataset.std_lattice
+    except Exception:
+        spg_num = spglib_dataset["number"]
+        num_atoms = len(spglib_dataset["std_types"])
+        std_lattice = spglib_dataset['std_lattice']
     
     ### Line copied from the Phonopy code, which might be wrong
     #lengths = _get_lattice_parameters(spglib_dataset["std_lattice"])
     ### corrected
-    lengths = _get_lattice_parameters(spglib_dataset["std_lattice"].T)
+    lengths = _get_lattice_parameters(std_lattice.T)
     
     if spg_num <= 74:     # Triclinic, monoclinic, and orthorhombic
         multi = _get_multiplicity_abc(
@@ -61,53 +67,6 @@ def _get_lattice_parameters(lattice):
 
     """
     return np.array(np.sqrt(np.dot(lattice.T, lattice).diagonal()), dtype="double")
-
-#def get_sphericity(lattice):
-#    """
-#    Args
-#    -----
-#    lattice : float, shape=(3,3)
-#        row vectors
-#    """
-#    ### total surface area
-#    Atot = 0.
-#    for i in range(3):
-#        i1 = i
-#        i2 = (i1+1) % 3
-#        v1 = lattice[i1]
-#        v2 = lattice[i2]
-#        area = np.linalg.norm(np.cross(v1, v2))
-#        Atot += area * 2.0
-#
-#    ### calculate the volume
-#    volume = abs(np.dot(
-#        np.cross(lattice[0], lattice[1]), 
-#        lattice[2]
-#        ))
-#
-#    ### calculate the sphericity
-#    chi = math.pow(np.pi, 1./3.) * mat.pow(6.*volume, 2./3.) / Atot
-#    return chi
-
-#def _get_next_modification_index(lengths, multi):
-#    """ Return the modified index
-#
-#    Args
-#    -------
-#    lengths : float, shape=(n)
-#    multi : int, shape=(n)
-#
-#    Return
-#    -------
-#    mod_index : int, (< n)
-#    """
-#    stds = []
-#    for imod in range(len(lengths)):
-#        multi_next = multi.copy()
-#        multi_next[imod] += 1
-#        lengths_sc = np.asarray(lengths) * np.asarray(multi_next)
-#        stds.append(np.std(lengths_sc))
-#    return np.argmin(stds)    
 
 def _get_multiplicity_abc(num_atoms, lengths, max_num_atoms, max_iter=20):
     multi = [1, 1, 1]
@@ -160,3 +119,50 @@ def _get_multiplicity_a(num_atoms, lengths, max_num_atoms, max_iter=20):
 
     return [multi, multi, multi]
 
+
+#def get_sphericity(lattice):
+#    """
+#    Args
+#    -----
+#    lattice : float, shape=(3,3)
+#        row vectors
+#    """
+#    ### total surface area
+#    Atot = 0.
+#    for i in range(3):
+#        i1 = i
+#        i2 = (i1+1) % 3
+#        v1 = lattice[i1]
+#        v2 = lattice[i2]
+#        area = np.linalg.norm(np.cross(v1, v2))
+#        Atot += area * 2.0
+#
+#    ### calculate the volume
+#    volume = abs(np.dot(
+#        np.cross(lattice[0], lattice[1]), 
+#        lattice[2]
+#        ))
+#
+#    ### calculate the sphericity
+#    chi = math.pow(np.pi, 1./3.) * mat.pow(6.*volume, 2./3.) / Atot
+#    return chi
+
+#def _get_next_modification_index(lengths, multi):
+#    """ Return the modified index
+#
+#    Args
+#    -------
+#    lengths : float, shape=(n)
+#    multi : int, shape=(n)
+#
+#    Return
+#    -------
+#    mod_index : int, (< n)
+#    """
+#    stds = []
+#    for imod in range(len(lengths)):
+#        multi_next = multi.copy()
+#        multi_next[imod] += 1
+#        lengths_sc = np.asarray(lengths) * np.asarray(multi_next)
+#        stds.append(np.std(lengths_sc))
+#    return np.argmin(stds)    

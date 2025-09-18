@@ -23,16 +23,17 @@ import yaml
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Vasprun
 
-# from auto_kappa.io.vasp import wasfinished
-from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
-from auto_kappa.structure import change_structure_format
-from auto_kappa.structure.two import get_thickness, get_normal_index
-
 ## Birch-Murnaghan equation of state
 from pymatgen.analysis.eos import BirchMurnaghan
 
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from auto_kappa.plot import set_matplot, set_axis
+
+from auto_kappa.calculators.vasp import get_vasp_calculator, run_vasp
+from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.two import get_thickness, get_normal_index
+from auto_kappa.units import EvToJ
+from auto_kappa.plot.fitting import plot_bm_result
 
 import logging
 logger = logging.getLogger(__name__)
@@ -169,8 +170,8 @@ class StrictRelaxation():
             
             ## Get the volume minimizing the energy
             if len(df_results) != 0:
-                imin = np.argmin(df_results['energy'].values)
-                opt_vol = df_results['volume'].values[imin]
+                imin = np.argmin(df_results['energy[eV]'].values)
+                opt_vol = df_results['volume[A^3]'].values[imin]
             else:
                 opt_vol = init_vol
             
@@ -226,9 +227,9 @@ class StrictRelaxation():
     def get_calculated_volumes_and_energies(self):
         init_cell = self.initial_structure.lattice.matrix
         df = _get_calculated_results(self.outdir, cell_pristine=init_cell, dim=self.dim)
-        df_sort = df.sort_values(by='volume')
-        self._volumes = df_sort['volume'].values
-        self._energies = df_sort['energy'].values
+        df_sort = df.sort_values(by='volume[A^3]')
+        self._volumes = df_sort['volume[A^3]'].values
+        self._energies = df_sort['energy[eV]'].values
         return self._volumes, self._energies
      
     def _fit(self):
@@ -266,9 +267,94 @@ class StrictRelaxation():
             modulus_unit = "N/m"
         modulus_info = {'value': float(modulus), 'unit': modulus_unit, 'thickness': thickness}
         
-        from auto_kappa.plot.fitting import plot_bm_result
         plot_bm_result(bm, figname=figname, dim=self.dim, modulus_info=modulus_info)
+    
+    def plot_physical_properties(self, figname='fig_fitting.png',
+                                 fontsize=7, fig_width=2.3, aspect=1.5,
+                                 mew=0.5, ms=2.3, color='black'):
+        """ Plot physical properties vs volume
+        """
+        cell0 = self.initial_structure.lattice.matrix
+        df = _get_calculated_results(self.outdir, cell_pristine=cell0, dim=self.dim)
+        Vs = df['volume[A^3]'].values
+        Ps = df['pressure[GPa]'].values
+        Fs = df['force_max[eV/A]'].values
+        Es = df['energy[eV]'].values
+        ys = [Es, Ps, Fs]
         
+        ylabels = ['E (eV)', 'P (GPa)', '${\\rm F_{max}}$ (eV/${\\rm \\AA}$)']
+        
+        vol0 = self.initial_structure.volume
+        
+        set_matplot(fontsize=fontsize)
+        fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        plt.subplots_adjust(hspace=0.03)
+        nfig = len(ys)
+        xdat = Vs
+        for ifig, ydat in enumerate(ys):
+            
+            ax = plt.subplot(len(ys), 1, ifig+1)
+            
+            if ifig == nfig - 1:
+                xlabel = 'Volume (${\\rm \\AA^3}$)'
+            else:
+                xlabel = None
+                ax.set_xticklabels([])
+            
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabels[ifig])
+            
+            ax.plot(xdat, ydat, linestyle='None', lw=0.5,
+                    marker='o', markersize=ms, mec=color, mfc='none', mew=mew)
+            
+            if ifig == 1 or ifig == 2:
+                ysort = np.sort(ydat)
+                ax.axhline(y=0.0, linestyle='-', c='gray', lw=0.3)
+                xs_zero = _find_zero_crossings(xdat, ydat)
+                # text = "${\\rm V_{opt}}$ [${\\rm \\AA^3}$] = "
+                for i, x0 in enumerate(xs_zero):
+                    ax.axvline(x=x0, linestyle='-', c='gray', lw=0.3)
+                    text = "%.2f" % (x0)
+                    ax.text(x0, ysort[1], text, fontsize=5,
+                            horizontalalignment="center", verticalalignment="bottom",
+                            bbox=dict(facecolor='white', edgecolor='none', alpha=1.0, pad=0.1))
+                
+                if len(xs_zero) != 1:
+                    msg = "\n Warning: The number of zero crossings is not one."
+                    msg += "\n Please check the relaxation process."
+                    logger.warning(msg)
+                
+            elif ifig == 0:
+                bm = BirchMurnaghan(Vs, Es)
+                bm.fit()
+                
+                ax.axvline(x=bm.v0, linestyle='-', c='gray', lw=0.3)
+                
+                if self.dim == 3:
+                    thickness = None
+                    modulus = bm.b0_GPa # GPa
+                    modulus_unit = "GPa"
+                elif self.dim == 2:
+                    # opt_struct = self.get_optimal_structure(format='pmg')
+                    # thickness = get_thickness(opt_struct) # Angstrom
+                    # modulus = bm.b0_GPa * thickness * 0.1 # N/m
+                    # modulus_unit = "N/m"
+                    print(" Not yet supported for 2D.")
+                    sys.exit()
+                
+                modulus_info = {'value': float(modulus), 'unit': modulus_unit, 'thickness': thickness}
+                plot_bm_result(bm, ax=ax, dim=self.dim, modulus_info=modulus_info, ylabel=ylabels[ifig])
+                
+                
+            set_axis(ax)
+        
+        fig.savefig(figname, dpi=600, bbox_inches='tight')
+        if figname.startswith("/"):
+            figname = "./" + os.path.relpath(figname, os.getcwd())
+        msg = " Output %s" % figname
+        logger.info(msg)
+        
+    
     def _strain_volume2length(self, s_vol):
         """ Convert volume strain to length strain
         """
@@ -366,35 +452,44 @@ def _get_calculated_results(base_dir, cell_pristine=None, num_max=200, dim=3):
     all_results = []
     for diri in dirs:
         
-        ### check result (vasprun.xml)
-        ### ver.1
-        #if wasfinished(diri, filename='vasprun.xml') == False:
-        #    continue
-        
-        ### ver.2
-        file_xml = diri + "/vasprun.xml"
+        ### Make strain.yaml if it doesn't exist and possible.
+        file_yaml = diri + "/strain.yaml"
+        data = None
         try:
-            vasprun = Vasprun(file_xml, parse_potcar_file=False)
+            data = _make_strain_yaml(diri, cell_pristine=cell_pristine, dim=dim, verbose=0)
         except Exception:
             continue
         
-        ### Make strain.yaml if it doesn't exist and possible.
-        file_yaml = diri + "/strain.yaml"
-        if os.path.exists(file_yaml) == False or dim == 2:
-            try:
-                _make_strain_yaml(diri, cell_pristine=cell_pristine, dim=dim, verbose=0)
-            except Exception:
-                continue
+        if data is None and os.path.exists(file_yaml):
+            with open(file_yaml, 'r') as yml:
+                data = yaml.safe_load(yml)
         
-        with open(file_yaml, 'r') as yml:
-            data = yaml.safe_load(yml)
-            data['filename'] = "./" + os.path.relpath(file_xml, base_dir)
-            all_results.append(data)
+        file_xml = diri + "/vasprun.xml"
+        data['filename'] = "./" + os.path.relpath(file_xml, base_dir)
+        all_results.append(data)
     
     if len(all_results) == 0:
         return None
     else:
         return pd.DataFrame(all_results)
+
+# def _get_external_pressure_from_outcar(file_outcar):
+#     """ Get external pressure from OUTCAR file
+#     """
+#     pressure = None
+#     unit = None
+#     if os.path.exists(file_outcar):
+#         with open(file_outcar, 'r') as f:
+#             lines = f.readlines()
+#         for line in reversed(lines):
+#             if "external pressure" in line:
+#                 try:
+#                     pressure = float(line.split()[3])
+#                     unit = line.split()[4]
+#                 except ValueError:
+#                     continue
+#                 break
+#     return pressure, unit
 
 def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbose=1):
     """ Make strain.yaml file """
@@ -403,6 +498,7 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbose=1):
     file_xml = directory + "/vasprun.xml"
     vasprun = Vasprun(file_xml, parse_potcar_file=False)
     structure = vasprun.final_structure
+    atoms = ase.io.read(file_xml, index=-1, format='vasp-xml')
     
     ### get strain
     l1 = np.linalg.norm(structure.lattice.matrix[0])
@@ -412,15 +508,24 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbose=1):
     ### get parameters
     out_data = {}
     out_data['strain'] = float(strain)
-    out_data['energy'] = float(vasprun.final_energy.real)
-    out_data['energy_unit'] = str(vasprun.final_energy.unit)
-    out_data['volume'] = float(get_volume(structure, dim=dim))
-    out_data['volume_unit'] = 'A^3'
+    ene_unit = str(vasprun.final_energy.unit)
+    out_data[f'energy[{ene_unit}]'] = float(vasprun.final_energy.real)  # should be in eV
+    ## out_data['energy_unit'] = str(vasprun.final_energy.unit)
+    ##
+    out_data['stress[eV/A^3]'] = (atoms.get_stress()).tolist()  # in eV/A^3
+    out_data['pressure[eV/A^3]'] = float(np.mean(atoms.get_stress()[:3]))
+    out_data['pressure[GPa]'] = out_data['pressure[eV/A^3]'] * EvToJ * 1e21  # in GPa
+    ##
+    forces = atoms.get_forces().flatten()
+    imax = np.argmax(np.abs(forces))
+    out_data['force_max[eV/A]'] = float(forces[imax])
+    ##
+    out_data['volume[A^3]'] = float(get_volume(structure, dim=dim))
+    # out_data['volume_unit'] = 'A^3'
     out_data['dim'] = int(dim)
     if dim == 2:
         thickness = get_thickness(structure)
-        out_data['thickness'] = float(thickness)
-        out_data['thick_unit'] = 'A'
+        out_data['thickness[A]'] = float(thickness)
     
     ### output file
     outfile = f"{directory}/strain.yaml"
@@ -430,61 +535,6 @@ def _make_strain_yaml(directory, cell_pristine=None, dim=3, verbose=1):
             msg = "\n Output ./%s" % os.path.relpath(outfile, os.getcwd())
             logger.info(msg)
     return out_data
-
-# def _get_results_all(base_dir, keys=['strain'], cell_pristine=None, dim=3):
-#     all_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
-#     extracted_data = []
-#     for each in all_results:
-#         try:
-#             values = []
-#             for key in keys:
-#                 values.append(each.get(key, None))
-#             extracted_data.append(values)
-#         except Exception:
-#             pass
-#     return extracted_data
-
-# def _get_calculated_strains(base_dir, cell_pristine=None, dim=3):
-#     """ Get list of strains for which the energy has been already calculated. 
-#     """
-#     df_results = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
-    
-#     if len(df_results) == 0:
-#         return []
-#     else:
-#         strains_all = np.sort(df_results['strain'].values)
-#         return strains_all
-        
-#         # ### remove duplicative data
-#         # strains = []
-#         # for i in range(len(strains_all)):
-#         #     if i == 0:
-#         #         strains.append(strains_all[0])
-#         #     else:
-#         #         if strains_all[i] - strains_all[i-1] > tol_strain:
-#         #             strains.append(strains_all[i])
-#         # strains = np.asarray(strains)
-#         # return strains
-
-# def _get_calculated_volumes_and_energies(
-#     base_dir, keys=['volume', 'energy', 'filename'], cell_pristine=None, dim=3):
-#     """ Read info from strain.yaml files and return a DataFrame. """
-#     value_tmp = _get_calculated_results(base_dir, cell_pristine=cell_pristine, dim=dim)
-    
-#     dump = []
-#     for each in value_tmp:
-#         dump.append([])
-#         for i, name in enumerate(keys):
-#             if name == 'energy':
-#                 val = each[i][0]
-#             else:
-#                 val = each[i]
-#             dump[-1].append(val)
-    
-#     df = pd.DataFrame(dump, columns=keys)
-#     df = df.sort_values(by='volume')
-    
-#     return df
 
 def get_strained_structure(structure0, strain, format='pmg', dim=3):
     """
@@ -643,10 +693,11 @@ def relaxation_with_different_volumes(
         
         ### Get each result
         out_data = _make_strain_yaml(outdir, cell_pristine=struct_init.lattice.matrix, dim=dim)
-        volume = out_data['volume']
-        vol_unit = out_data['volume_unit']
-        energy = out_data['energy']
-        ene_unit = out_data['energy_unit']
+        vol_unit = 'A^3'
+        ene_unit = "eV"
+        volume = out_data['volume[A^3]']
+        energy = out_data[f'energy[{ene_unit}]']
+        # ene_unit = out_data['energy_unit']
         
         if verbose > 0:
             msg = (
@@ -690,6 +741,19 @@ def get_volume(struct, dim=3):
         vol = vol * thickness / cell_height
     
     return vol
+
+def _find_zero_crossings(x, y):
+    idx_order = np.argsort(x)
+    x = np.array(x)[idx_order]
+    y = np.array(y)[idx_order]
+    zero_crossings = []
+    for i in range(len(y) - 1):
+        if y[i] * y[i+1] < 0:
+            x0, x1 = x[i], x[i+1]
+            y0, y1 = y[i], y[i+1]
+            x_zero = x0 - y0 * (x1 - x0) / (y1 - y0)
+            zero_crossings.append(x_zero)
+    return zero_crossings
 
 #from pymatgen.io.vasp import Poscar
 #

@@ -134,6 +134,7 @@ def main():
             celltype_relax_given=ak_params['relaxed_cell'],
             dim=ak_params['mater_dim'],
         ))
+    nac = ak_params['nonanalytic']
     
     ### If the previous structure was not the same as the given structure,
     if structures.get('supercell', None) is not None:
@@ -165,6 +166,7 @@ def main():
     ak_log.print_conditions(cell_types=cell_types, 
                             trans_matrices=trans_matrices,
                             kpts_all=kpts_used)
+    ak_log.print_space_group(structures['primitive'])
     
     ### write file
     os.makedirs(out_dirs["result"], exist_ok=True)
@@ -215,15 +217,9 @@ def main():
             nsw_params=ak_params["nsw_params"],
             )
     
-    # ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # ## For debug: check the order of elements in the system
-    # symbols = structures["unitcell"].get_chemical_symbols()
-    # print("Elements in the system:", list(dict.fromkeys(symbols).keys()))
-    # for key in apdb.structures.keys():
-    #     symbols = apdb.structures[key].get_chemical_symbols()
-    #     print(key, list(dict.fromkeys(symbols).keys()), len(symbols))
-    # exit()
-    # ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    ### Get relaxed structures
+    structures_relax = apdb.structures.copy()
+    apdb.output_structures()
     
     ### Stop the calculation because of the symmetry error
     if out < 0:
@@ -232,8 +228,8 @@ def main():
     ## Modify the cutoff for harmonic force constants
     if ak_params['mater_dim'] == 2:
         from auto_kappa.structure.two import suggest_fc2_cutoff, print_length_info
-        cutoff_harm = suggest_fc2_cutoff(apdb.structures['super'])
-        print_length_info(apdb.structures['super'])
+        cutoff_harm = suggest_fc2_cutoff(structures_relax['super'])
+        print_length_info(structures_relax['super'])
     else:
         cutoff_harm = -1
     
@@ -244,9 +240,6 @@ def main():
             "note": "structure optimization",
             }
     write_output_yaml(yaml_outdir, "relax", info)
-    
-    ### Get relaxed structures
-    structures_relax = apdb.structures.copy()
     
     ### Calculate Born effective charge
     if nac:

@@ -469,6 +469,10 @@ def analyze_harmonic_properties(
     almcalc.write_alamode_input(propt='suggest', order=1)
     almcalc.run_alamode(propt='suggest', order=1, ignore_log=True)
     
+    # from auto_kappa.almlog import ALMLOG
+    # logfile = almcalc.out_dirs['harm']['suggest'] + '/suggest.log'
+    # almlog = ALMLOG(logfile)
+    
     ### calculate forces for the harmonic FCs
     almcalc.calc_forces(order=1, calculator=calculator)
     

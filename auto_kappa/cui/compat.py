@@ -287,6 +287,7 @@ def _check_previous_structures(base_dir):
         'cube_fd'   : "./" + base_dir + "/" + output_directories['cube']['force_fd'] + "/prist/POSCAR",
         'cube_lasso': "./" + base_dir + "/" + output_directories['cube']['force_lasso'] + "/prist/POSCAR"
     }
+    
     structures = {}
     for key, file in structure_files.items():
         try:
@@ -302,15 +303,17 @@ def _check_previous_structures(base_dir):
             if struct1 is None or struct2 is None:
                 continue
             
-            if key1 in ['relax', 'nac', 'opt_unit'] or key2 in ['relax', 'nac', 'opt_unit']:
-                primitive_cell = True
-            else:
-                primitive_cell = False
-            
             ## Use the strict conditions
             ## StructureMatcher may sometimes be instable.
+            if len(struct1) != len(struct2):
+                primitive_cell = True
+                ignore_order = True
+            else:
+                primitive_cell = False
+                ignore_order = False
+            
             match = match_structures(struct1, struct2, primitive_cell=primitive_cell, 
-                                     ltol=1e-7, stol=1e-7, ignore_order=True, verbose=False)
+                                     ltol=1e-7, stol=1e-7, ignore_order=ignore_order, verbose=False)
             
             if not match:
                 if first_output:
@@ -319,7 +322,7 @@ def _check_previous_structures(base_dir):
                 msg = f" - %s and %s" % (structure_files[key1], structure_files[key2])
                 logger.info(msg)
 
-    
+
 def _check_previous_parameters(given_params, prev_params, file_prev=None):
     """ Check if the current parameters match the previous ones.
     """
