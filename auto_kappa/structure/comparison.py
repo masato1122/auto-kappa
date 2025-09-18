@@ -157,8 +157,12 @@ def atoms_equal(atoms1, atoms2, tol=1e-5, ignore_order=False):
 #     return map_s2p, shift
 
 def generate_mapping_s2p(supercell, primitive, tol_zero=1e-3):
-    """ Generate mapping from supercell to primitive cell 
+    """ Generate mapping from supercell to primitive cell.
+    This function was made based on the function in an ALAMODE tool.
     """
+    if len(supercell) < len(primitive):
+        raise RuntimeError("The supercell must be larger than the primitive cell.")
+    
     scell = supercell.cell.array
     pcell = primitive.cell.array
     frac_coords_super = supercell.get_scaled_positions(wrap=True)

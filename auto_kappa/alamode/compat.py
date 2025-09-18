@@ -440,7 +440,22 @@ def _relative_path(filename):
         return filename
 
 def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_mat=None):
+    """ Check the previous structures used for force and FCs calculations.
+    If multiple structures are found, the first one is used.
     
+    Args
+    ------
+    outdirs : dict
+        The output directories for force and FCs calculations.
+    primitive : ase.Atoms
+        The primitive cell.
+    unitcell : ase.Atoms
+        The unit cell.
+    prim_mat : array-like
+        The transformation matrix from the unit cell to the primitive cell with the Phonopy representation.
+    sc_mat : array-like
+        The transformation matrix from the primitive cell to the supercell with the Phonopy representation.
+    """
     from auto_kappa.structure.comparison import generate_mapping_s2p
     from auto_kappa.io.fcs import FCSxml
     
@@ -487,25 +502,32 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     try:
         generate_mapping_s2p(primitive, ref_sc)
     except:
-        from auto_kappa.structure.comparison import match_structures
-        match = match_structures(primitive, ref_sc, ignore_order=False, verbose=False)
-        #print(match)
         
-        #
-        # TODO: find the compatible primitive cell
-        #
-        msg = "\n Error: The primitive cell does not match the supercell."
-        msg += "\n Please report the bug to the developer."
-        logger.error(msg)
-        sys.exit()
+        from auto_kappa.structure.crystal import get_primitive_structure_spglib
+        unit_new = inverse_transformation(ref_sc, sc_mat)
+        prim_new = get_primitive_structure_spglib(unit_new)
+        unitcell = unit_new.copy()
+        primitive = prim_new.copy()
+        
+        try:
+            generate_mapping_s2p(ref_sc, unitcell)
+            generate_mapping_s2p(ref_sc, primitive)
+        except:
+            #
+            # TODO: find the compatible primitive cell
+            #
+            msg = "\n Error(1): The primitive cell does not match the supercell."
+            msg += "\n Please report the bug to the developer."
+            logger.error(msg)
+            sys.exit()
     
     try:
-        generate_mapping_s2p(unitcell, ref_sc)
+        generate_mapping_s2p(ref_sc, unitcell)
     except:
         #
         # TODO: find the compatible unitcell
         #
-        msg = "\n Error: The unitcell cell does not match the supercell."
+        msg = "\n Error(2): The unitcell cell does not match the supercell."
         msg += "\n Please report the bug to the developer."
         logger.error(msg)
         sys.exit()
@@ -515,3 +537,40 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         'unitcell': unitcell,
         'supercell': ref_sc
     }
+
+from ase.geometry import get_duplicate_atoms
+
+def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atoms:
+    """ Get the small cell (e.g. unitcell) from the supercell and the transformation matrix
+    from the small cell to the supercell.
+    
+    Args
+    ------
+    supercell : ase.Atoms
+        The supercell structure.
+    sc_mat : array-like
+        The transformation matrix from the small cell to the supercell with the Phonopy representation.
+    """
+    ## Lattice vectors of the supercell
+    L_s = supercell.cell.array  # shape (3, 3)
+    
+    ## Lattice vectors of the unitcell
+    L_u = L_s @ np.linalg.inv(np.array(sc_mat).T)
+    
+    ## fractional coordinates of the unitcell
+    unitcell = ase.Atoms(
+        symbols=supercell.get_chemical_symbols(),
+        positions=supercell.get_positions(),
+        cell=L_u,
+        pbc=True
+    )
+    
+    ## Remove duplicate atoms (exclude repetitions within the supercell) 
+    dup_pairs = get_duplicate_atoms(unitcell, cutoff=1e-3)
+    
+    if len(dup_pairs) > 0:
+        to_delete = np.unique(dup_pairs[:, 1])
+        unitcell = unitcell.copy()
+        del unitcell[to_delete]
+    
+    return unitcell

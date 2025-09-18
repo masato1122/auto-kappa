@@ -163,7 +163,15 @@ def get_standardized_structure(struct_orig, to_primitive=False, format='ase', ve
 def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
     from phonopy.structure.cells import get_supercell
     mat_p2u = np.linalg.inv(primitive_matrix)
-    mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    
+    ### old vertion
+    # mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    
+    ### New version
+    if not np.allclose(mat_p2u, np.rint(mat_p2u)):
+        raise ValueError("Inverse of primitive_matrix is not an integer matrix")
+    mat_p2u = np.rint(mat_p2u).astype(int)
+    
     unitcell = get_supercell(change_structure_format(primitive, format='phonopy'), mat_p2u)
     unitcell = change_structure_format(unitcell, format=format)
     return unitcell

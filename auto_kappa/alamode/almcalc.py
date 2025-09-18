@@ -412,7 +412,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             
             ### check previously used supercell
             from auto_kappa.alamode.compat import check_previous_structures
-            structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell)
+            structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell,
+                                                   prim_mat=self.primitive_matrix,
+                                                   sc_mat=self.scell_matrix,)
             self._primitive = structures['primitive']
             self._unitcell = structures['unitcell']
             self._supercell = structures['supercell']
