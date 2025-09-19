@@ -475,7 +475,6 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     for line in lines:
         
         fns = glob.glob(line)
-        print(line)
         if len(fns) == 0:
             continue
         fn = fns[0]

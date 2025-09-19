@@ -945,6 +945,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         ################################################
         ## Generate displacements using AlamodeDisplace
         try:
+            
+            if self.supercell is None or self.primitive is None:
+                pass
+            else:
+                from auto_kappa.structure.comparison import generate_mapping_s2p
+                generate_mapping_s2p(self.supercell, self.primitive)
+            
             almdisp = AlamodeDisplace(
                         displacement_mode, codeobj,
                         file_evec=file_evec,

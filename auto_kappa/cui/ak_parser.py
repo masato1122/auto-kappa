@@ -23,6 +23,7 @@ def get_parser():
     ## Input and output directories
     parser.add_argument("-d", "--directory", dest="directory", type=str, default=None,
                       help=
+                      "[This option will be deprecated in future versions.]\n"
                       "Name of the directory for the PhononDB dataset, containing files \n"
                       "such as POSCAR-unitcell, phonopy.conf, KPOINTS-**, etc. are located.\n"
                       "``--directory`` or ``--file_structure`` must be given. \n"
@@ -35,9 +36,6 @@ def get_parser():
                       "Different kinds of format including POSCAR and CIF file can be read \n"
                       "using ``Structure.from_file`` module in ``Pymatgen.core.structure``.")
     
-    # parser.add_argument(
-    #         "--material_name", dest="material_name", type=str, default=None,
-    #         help="This options is not used any more. See --outdir option. ")
     parser.add_argument("--outdir", dest="outdir", type=str, default="./out", 
                         help="Output directory name [./out]\n\n\n")
     
@@ -46,10 +44,6 @@ def get_parser():
     #     help="Material dimension [3]")
     
     ### Parameters that need to be modified depending on the environment
-    # parser.add_argument(
-    #     "--ncores", dest="ncores", type=int, default=None, 
-    #     help="Number of cores used for the calculation "
-    #     "(This option is not used any more, please use 'nprocs' instead.)")
     parser.add_argument("-n", "--nprocs", dest="nprocs", type=int, default=2, 
                         help="Number of processes for the calculation [2]")
     
