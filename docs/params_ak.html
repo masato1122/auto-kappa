@@ -1,0 +1,389 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. Parameters for auto-kappa &mdash; auto-kappa Sept. 1st, 2025 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=3b6d8bf3"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="4. Parameters for VASP" href="params_vasp.html" />
+    <link rel="prev" title="2. How to Use auto-kappa" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">2. How to Use auto-kappa</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Parameters for auto-kappa</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#brief-description">3.1. Brief Description</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input-output">Input/Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-calculations-and-commands">Parallel calculations and commands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#accuracy">Accuracy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#supercell-size">Supercell size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#displacement">Displacement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#beyond-three-phonon-scattering">Beyond three phonon scattering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#utilities">Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#others">Others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#detailed-description">3.2. Detailed Description</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#auto_kappa.cui.ak_parser-get_parser-named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="params_vasp.html">4. Parameters for VASP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">5. Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto-kappa/modules.html">6. auto_kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">3. </span>Parameters for auto-kappa</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/params_ak.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="parameters-for-auto-kappa">
+<h1><span class="section-number">3. </span>Parameters for auto-kappa<a class="headerlink" href="#parameters-for-auto-kappa" title="Link to this heading"></a></h1>
+<section id="brief-description">
+<span id="sec-params-ak-brief"></span><h2><span class="section-number">3.1. </span>Brief Description<a class="headerlink" href="#brief-description" title="Link to this heading"></a></h2>
+<p>Please see <a class="reference internal" href="#sec-params-ak-detailed"><span class="std std-ref">Detailed Description</span></a> for details of each parameter.</p>
+<section id="input-output">
+<h3>Input/Output<a class="headerlink" href="#input-output" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--file_structure</span></code>, <code class="docutils literal notranslate"><span class="pre">--otudir</span></code>: Input structure and output directories</p></li>
+</ul>
+</section>
+<section id="parallel-calculations-and-commands">
+<h3>Parallel calculations and commands<a class="headerlink" href="#parallel-calculations-and-commands" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nprocs</span></code>, <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>: Parameters for parallel calculations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">command_{vasp/vasp_gam/alm/anphon/anphon_ver2}</span></code>: Commands for VASP and ALAMODE</p></li>
+</ul>
+</section>
+<section id="accuracy">
+<h3>Accuracy<a class="headerlink" href="#accuracy" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">k_length</span></code>: k-point mesh for VASP calculations (<a class="reference external" href="https://www.vasp.at/wiki/index.php/KPOINTS">official page</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nsw_params</span></code>: NSW for relaxation calculations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cutoff_cubic</span></code>, <code class="docutils literal notranslate"><span class="pre">min_nearest</span></code>: Cutoff distance for cubic FCs in unit of Å or nearest neighbors</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">volume_relaxation</span></code>: Whether to perform relaxation calculation with the Birch-Murnaghan equation of state</p></li>
+</ul>
+</section>
+<section id="supercell-size">
+<h3>Supercell size<a class="headerlink" href="#supercell-size" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">analyze_with_larger_supercell</span></code>, <code class="docutils literal notranslate"><span class="pre">max_loop_for_largesc</span></code>: Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_natoms</span></code>, <code class="docutils literal notranslate"><span class="pre">delta_max_natoms</span></code>: Maximum number of atoms allowed in supercells</p></li>
+</ul>
+</section>
+<section id="displacement">
+<h3>Displacement<a class="headerlink" href="#displacement" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">frac_nrandom</span></code>, <code class="docutils literal notranslate"><span class="pre">--frac_nrandom_higher</span></code>: Fractional number of random displacement patterns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mag_harm</span></code>, <code class="docutils literal notranslate"><span class="pre">mag_cubic</span></code>, <code class="docutils literal notranslate"><span class="pre">random_disp_temperature</span></code>: Displacement magnitudes for harmonic, cubic, and higher-order FCs</p></li>
+</ul>
+</section>
+<section id="beyond-three-phonon-scattering">
+<h3>Beyond three phonon scattering<a class="headerlink" href="#beyond-three-phonon-scattering" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>: Threshold of suggested patterns to use the LASSO regression for cubic FCs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scph</span></code>, <code class="docutils literal notranslate"><span class="pre">four</span></code>: Self-consistent phonon (SCPH) approach and four-phonon scattering processes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frac_kdensity_4ph</span></code>: q-point mesh for four-phonon scattering processes</p></li>
+</ul>
+</section>
+<section id="utilities">
+<h3>Utilities<a class="headerlink" href="#utilities" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">calculate_forces</span></code></p></li>
+</ul>
+<p>This option is useful to analyze single material with multiple machines while <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code> is available on single node only.
+If this flag is 0, the relaxation calculation is performed and the structures with displacements are generated,
+but the force calculations are not performed. You can perform the force calculations with multiple machines.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">harmonic_only</span></code>: Whether to calculate harmonic FCs only</p></li>
+</ul>
+</section>
+<section id="others">
+<h3>Others<a class="headerlink" href="#others" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nonanalytic</span></code>, <code class="docutils literal notranslate"><span class="pre">negative_freq</span></code>, <code class="docutils literal notranslate"><span class="pre">vasp_parameters</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="detailed-description">
+<span id="sec-params-ak-detailed"></span><h2><span class="section-number">3.2. </span>Detailed Description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
+<p><p>Parser for akrun command</p>
+</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">auto</span><span class="o">-</span><span class="n">kappa</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="n">DIRECTORY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">file_structure</span> <span class="n">FILE_STRUCTURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">outdir</span> <span class="n">OUTDIR</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NPROCS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mpirun</span> <span class="n">MPIRUN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_vasp</span> <span class="n">COMMAND_VASP</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_vasp_gam</span> <span class="n">COMMAND_VASP_GAM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_alm</span> <span class="n">COMMAND_ALM</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">command_anphon</span> <span class="n">COMMAND_ANPHON</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_anphon_ver2</span> <span class="n">COMMAND_ANPHON_VER2</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nonanalytic</span> <span class="n">NONANALYTIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cutoff_cubic</span> <span class="n">CUTOFF_CUBIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">min_nearest</span> <span class="n">MIN_NEAREST</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nmax_suggest</span> <span class="n">NMAX_SUGGEST</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom</span> <span class="n">FRAC_NRANDOM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom_higher</span> <span class="n">FRAC_NRANDOM_HIGHER</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mag_harm</span> <span class="n">MAG_HARM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mag_cubic</span> <span class="n">MAG_CUBIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">negative_freq</span> <span class="n">NEGATIVE_FREQ</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">volume_relaxation</span> <span class="n">VOLUME_RELAXATION</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">k_length</span> <span class="n">K_LENGTH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">max_natoms</span> <span class="n">MAX_NATOMS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">analyze_with_larger_supercell</span> <span class="n">ANALYZE_WITH_LARGERSC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">delta_max_natoms</span> <span class="n">DELTA_MAX_NATOMS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">max_loop_for_largesc</span> <span class="n">MAX_LOOP_FOR_LARGESC</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">nsw_params</span> <span class="n">NSW_PARAMS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">calculate_forces</span> <span class="n">CALCULATE_FORCES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">harmonic_only</span> <span class="n">HARMONIC_ONLY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_dfc2</span> <span class="n">COMMAND_DFC2</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">scph</span> <span class="n">SCPH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">four</span> <span class="n">FOUR</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_kdensity_4ph</span> <span class="n">FRAC_KDENSITY_4PH</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">random_disp_temperature</span> <span class="n">RANDOM_DISP_TEMPERATURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vasp_parameters</span> <span class="n">VASP_PARAMETERS</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="auto_kappa.cui.ak_parser-get_parser-named-arguments">
+<h3>Named Arguments<a class="headerlink" href="#auto_kappa.cui.ak_parser-get_parser-named-arguments" title="Link to this heading"></a></h3>
+<dl class="option-list">
+<dt><kbd>-d, --directory</kbd></dt>
+<dd><p>[This option will be deprecated in future versions.]
+Name of the directory for the PhononDB dataset, containing files
+such as POSCAR-unitcell, phonopy.conf, KPOINTS-<a href="#id1"><span class="problematic" id="id2">**</span></a>, etc. are located.
+<code class="docutils literal notranslate"><span class="pre">--directory</span></code> or <code class="docutils literal notranslate"><span class="pre">--file_structure</span></code> must be given.
+When both of them are given, <code class="docutils literal notranslate"><span class="pre">--directory</span></code> takes priority
+over <code class="docutils literal notranslate"><span class="pre">--file_structure</span></code>.</p>
+</dd>
+<dt><kbd>--file_structure</kbd></dt>
+<dd><p>Name of the structure file:
+Different kinds of format including POSCAR and CIF file can be read
+using <code class="docutils literal notranslate"><span class="pre">Structure.from_file</span></code> module in <code class="docutils literal notranslate"><span class="pre">Pymatgen.core.structure</span></code>.</p>
+</dd>
+<dt><kbd>--outdir</kbd></dt>
+<dd><p>Output directory name [./out]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'./out'</span></code></p>
+</dd>
+<dt><kbd>-n, --nprocs</kbd></dt>
+<dd><p>Number of processes for the calculation [2]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">2</span></code></p>
+</dd>
+<dt><kbd>--mpirun</kbd></dt>
+<dd><p>MPI command [mpirun]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'mpirun'</span></code></p>
+</dd>
+<dt><kbd>--command_vasp</kbd></dt>
+<dd><p>Command to run vasp [vasp]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'vasp'</span></code></p>
+</dd>
+<dt><kbd>--command_vasp_gam</kbd></dt>
+<dd><p>Command to run vasp_gam [vasp_gam]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'vasp_gam'</span></code></p>
+</dd>
+<dt><kbd>--command_alm</kbd></dt>
+<dd><p>Command to run alm [alm]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'alm'</span></code></p>
+</dd>
+<dt><kbd>--command_anphon</kbd></dt>
+<dd><p>Command to run anphon [anphon]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'anphon'</span></code></p>
+</dd>
+<dt><kbd>--command_anphon_ver2</kbd></dt>
+<dd><p>Command to run anphon for 4-phonon scattering [anphon.2.0]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'anphon.2.0'</span></code></p>
+</dd>
+<dt><kbd>--nonanalytic</kbd></dt>
+<dd><p>NONANALYTIC tag for Anphon calculation [2]:
+While the default value is 2, the value is adjusted
+when imaginary frequencies are present.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">2</span></code></p>
+</dd>
+<dt><kbd>--cutoff_cubic</kbd></dt>
+<dd><p>Cutoff distance for cubic force constants (Å) [4.3]:
+If the provided value is too small, the cutoff distance will be adjusted
+using <code class="docutils literal notranslate"><span class="pre">min_nearest</span></code> option.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">4.3</span></code></p>
+</dd>
+<dt><kbd>--min_nearest</kbd></dt>
+<dd><p>Minimum nearest neighbor atoms considered for cubic FCs [3]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">3</span></code></p>
+</dd>
+<dt><kbd>--nmax_suggest</kbd></dt>
+<dd><p>Threshold of suggested patterns for cubic FCs [100]:
+The default value will be changed to ‘1’ in order to always use
+the LASSO regression method.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">100</span></code></p>
+</dd>
+<dt><kbd>--frac_nrandom</kbd></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">{frac_nrandom}</span> <span class="pre">=</span> <span class="pre">Npattern</span> <span class="pre">*</span> <span class="pre">Natom</span> <span class="pre">/</span> <span class="pre">Nfc3</span></code>:
+- Npattern: number of generated random displacement patterns
+- Natom   : number of atoms in a supercell
+- Nfc3    : number of FC3 [1.0].
+{frac_nrandom} should be larger than 1/3.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code></p>
+</dd>
+<dt><kbd>--frac_nrandom_higher</kbd></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">Npattern</span> <span class="pre">*</span> <span class="pre">Natom</span> <span class="pre">/</span> <span class="pre">Nfc4</span></code> [0.34],
+- <code class="docutils literal notranslate"><span class="pre">Npattern</span></code>: number of generated random displacement patterns,
+- <code class="docutils literal notranslate"><span class="pre">Natom</span></code>   : number of atoms in the supercell,
+- <code class="docutils literal notranslate"><span class="pre">Nfc4</span></code>    : number of FC4
+See the comment for <code class="docutils literal notranslate"><span class="pre">frac_nrandom</span></code> option.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0.34</span></code></p>
+</dd>
+<dt><kbd>--mag_harm</kbd></dt>
+<dd><p>Displacement magnitude for harmonic FCs (Å) [0.01]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0.01</span></code></p>
+</dd>
+<dt><kbd>--mag_cubic</kbd></dt>
+<dd><p>Displacement magnitude for cubic FCs (Å) [0.03]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0.03</span></code></p>
+</dd>
+<dt><kbd>--negative_freq</kbd></dt>
+<dd><p>Threshold for negative frequency (cm^-1) [-0.001]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">-0.001</span></code></p>
+</dd>
+<dt><kbd>--volume_relaxation</kbd></dt>
+<dd><p>Flag for the strict structure relaxation
+using the Birch-Murnaghan equation of state (0.off or 1.on) [1]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+</dd>
+<dt><kbd>--k_length</kbd></dt>
+<dd><p>Length to determine k-mesh for VASP calculations [20].
+The following equation is used to determine the k-mesh;
+<code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">=</span> <span class="pre">max(1,</span> <span class="pre">int(k_length</span> <span class="pre">*</span> <span class="pre">|a|^*</span> <span class="pre">+</span> <span class="pre">0.5))</span></code>.
+10 for large gap insulators and 100 for d metals are recommended.
+See the official documentation at <a class="reference external" href="https://www.vasp.at/wiki/index.php/KPOINTS">https://www.vasp.at/wiki/index.php/KPOINTS</a>.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">20</span></code></p>
+</dd>
+<dt><kbd>--max_natoms</kbd></dt>
+<dd><p>Initial maximum number of atoms in supercells [150]:
+If imaginary frequencies are found, the maximum limit for harmonic FCs
+is increased in steps of <code class="docutils literal notranslate"><span class="pre">delta_max_natoms</span></code>.
+The supercell size for cubic FCs is not changed during the simulation.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">150</span></code></p>
+</dd>
+<dt><kbd>--analyze_with_larger_supercell</kbd></dt>
+<dd><p>Flag for analyzing harmonic properties with larger supercells
+if negative frequencies are present. (0.no, 1.yes) [0]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd>
+<dt><kbd>--delta_max_natoms</kbd></dt>
+<dd><p>Increasing interval of the maximum number of atoms in the supercell
+for calculating FC2 [50].
+This option is used only when <code class="docutils literal notranslate"><span class="pre">--analyze_with_largersc</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">50</span></code></p>
+</dd>
+<dt><kbd>--max_loop_for_largesc</kbd></dt>
+<dd><p>Maximum number of loops for increasing the supercell size [1].
+This option is used only when <code class="docutils literal notranslate"><span class="pre">--analyze_with_largersc</span> <span class="pre">=</span> <span class="pre">1</span></code>.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+</dd>
+<dt><kbd>--nsw_params</kbd></dt>
+<dd><p>Parameters which determine NSW for relaxation calculations [200:20:20].
+“{nsw_init}:{nsw_diff}:{nsw_min}”: NSW = min(<code class="docutils literal notranslate"><span class="pre">nsw_min</span></code>,
+<code class="docutils literal notranslate"><span class="pre">nsw_init</span></code> - <code class="docutils literal notranslate"><span class="pre">nsw_diff</span></code> * <code class="docutils literal notranslate"><span class="pre">num_errors</span></code>), where
+<code class="docutils literal notranslate"><span class="pre">num_errors</span></code> is the number of errors.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'200:20:20'</span></code></p>
+</dd>
+<dt><kbd>--calculate_forces</kbd></dt>
+<dd><p>For calculating forces (0: off, 1: on) [1].
+If set to 1, forces are calculated.
+If set to 0, forces are not calculated but displacement structures are generated.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+</dd>
+<dt><kbd>--harmonic_only</kbd></dt>
+<dd><p>Calculate harmonic properties only (0.No, 1.Yes) [0]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd>
+<dt><kbd>--command_dfc2</kbd></dt>
+<dd><p>Command to run ‘dfc2’ implemented in ALAMODE package. [dfc2]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'dfc2'</span></code></p>
+</dd>
+<dt><kbd>--scph</kbd></dt>
+<dd><p>Flag for considering the phonon renormalization
+using self-consistent phonon (SCP) approach. (0. off, 1. on) [0]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd>
+<dt><kbd>--four</kbd></dt>
+<dd><p>Flag for considering four-phonon scattering (0.off, 1.on) [0].
+If ‘scph’ option is also set to 1, SCPH+4ph is performed.
+–command_anphon_ver2 must be set properly.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd>
+<dt><kbd>--frac_kdensity_4ph</kbd></dt>
+<dd><p>Fractional k-point density for four-phonon scattering relative to the
+k-point density used in three-phonon scattering calculations [0.13].</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0.13</span></code></p>
+</dd>
+<dt><kbd>--random_disp_temperature</kbd></dt>
+<dd><p>Temperature for the random displacement method in high-order FC calculations [500]</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">500.0</span></code></p>
+</dd>
+<dt><kbd>--vasp_parameters</kbd></dt>
+<dd><p>VASP parameters: For example, “ISORBIT=False,DIFFG=1e-7”</p>
+</dd>
+</dl>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="2. How to Use auto-kappa" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="params_vasp.html" class="btn btn-neutral float-right" title="4. Parameters for VASP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

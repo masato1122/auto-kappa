@@ -1,0 +1,734 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>auto_kappa.io package &mdash; auto-kappa Sept. 1st, 2025 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=3b6d8bf3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="auto_kappa.plot package" href="auto_kappa.plot.html" />
+    <link rel="prev" title="auto_kappa.cui package" href="auto_kappa.cui.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parameters.html">2. Default parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">3. How to Use auto-kappa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/index.html">4. Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">5. auto_kappa</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="auto_kappa.html">5.1. auto_kappa package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="auto_kappa.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.alamode.html">auto_kappa.alamode package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.cui.html">auto_kappa.cui package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">auto_kappa.io package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.plot.html">auto_kappa.plot package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.structure.html">auto_kappa.structure package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_kappa.vasp.html">auto_kappa.vasp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.apdb">auto_kappa.apdb module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#auto-kappa-calculator-module">auto_kappa.calculator module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.units">auto_kappa.units module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa.version">auto_kappa.version module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auto_kappa.html#module-auto_kappa">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html"><span class="section-number">5. </span>auto_kappa</a></li>
+          <li class="breadcrumb-item"><a href="auto_kappa.html"><span class="section-number">5.1. </span>auto_kappa package</a></li>
+      <li class="breadcrumb-item active">auto_kappa.io package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/auto-kappa/auto_kappa.io.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="auto-kappa-io-package">
+<h1>auto_kappa.io package<a class="headerlink" href="#auto-kappa-io-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-auto_kappa.io.alm">
+<span id="auto-kappa-io-alm-module"></span><h2>auto_kappa.io.alm module<a class="headerlink" href="#module-auto_kappa.io.alm" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">AlamodeInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MSONable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.as_dict">
+<span class="sig-name descname"><span class="pre">as_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.as_dict" title="Link to this definition"></a></dt>
+<dd><p>A JSON serializable dict representation of an object.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.dim">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dim</span></span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.dim" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.from_dict">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alm_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.from_dict" title="Link to this definition"></a></dt>
+<dd><p>parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.from_file">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">AlmInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#auto_kappa.io.alm.AlamodeInput" title="auto_kappa.io.alm.AlamodeInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlamodeInput</span></code></a></p>
+<p>Class for writing and reading alm input file.
+See the following URL for more detailed description.
+<a class="reference external" href="https://alamode.readthedocs.io/en/latest/almdir/inputalm.html">https://alamode.readthedocs.io/en/latest/almdir/inputalm.html</a></p>
+<section id="reference">
+<h3>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h3>
+<p>pymatgen.io.shengbte.Control</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.check_parameters">
+<span class="sig-name descname"><span class="pre">check_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.check_parameters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.from_structure">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.from_structure" title="Link to this definition"></a></dt>
+<dd><p>Creat ALM variables from a structure object or a structure file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>str</strong> (<em>structure</em>)</p></li>
+<li><p><strong>(</strong><strong>I</strong><strong>)</strong><strong>Structure</strong> (<em>pymatgen's</em>)</p></li>
+<li><p><strong>Atoms</strong> (<em>ase's</em>)</p></li>
+<li><p><strong>file</strong> (<em>or structure</em>)</p></li>
+<li><p><strong>POSCAR</strong> (<em>such as</em>) – If param is string (structure file), the file will be read with
+pymatgen.loadfn.</p></li>
+<li><p><strong>.cif</strong> – If param is string (structure file), the file will be read with
+pymatgen.loadfn.</p></li>
+<li><p><strong>etc.</strong><strong>)</strong> – If param is string (structure file), the file will be read with
+pymatgen.loadfn.</p></li>
+<li><p><strong>(</strong><strong>bool</strong><strong>)</strong> (<em>guess_primitive</em>) – If it’s True, the primitive structure will be guessed with spglib.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.from_structure_file">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_structure_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.from_structure_file" title="Link to this definition"></a></dt>
+<dd><p>Make ALM input parameters from a structure file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>filename</em>) – Format must be supported by pymatgen’s IStructure module: POSCAR,
+.cif. etc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.general_keys">
+<span class="sig-name descname"><span class="pre">general_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prefix',</span> <span class="pre">'mode',</span> <span class="pre">'nat',</span> <span class="pre">'nkd',</span> <span class="pre">'kd',</span> <span class="pre">'tolerance',</span> <span class="pre">'printsym',</span> <span class="pre">'fcsym_basis',</span> <span class="pre">'magmom',</span> <span class="pre">'noncollinear',</span> <span class="pre">'periodic',</span> <span class="pre">'nmaxsave',</span> <span class="pre">'hessian',</span> <span class="pre">'fc3_shengbte',</span> <span class="pre">'fc_zero_thr']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.general_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.get_primitive">
+<span class="sig-name descname"><span class="pre">get_primitive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.get_primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.interaction_keys">
+<span class="sig-name descname"><span class="pre">interaction_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['norder',</span> <span class="pre">'nbody']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.interaction_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.optimize_keys">
+<span class="sig-name descname"><span class="pre">optimize_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['lmodel',</span> <span class="pre">'dfset',</span> <span class="pre">'ndata',</span> <span class="pre">'nstart',</span> <span class="pre">'nend',</span> <span class="pre">'skip',</span> <span class="pre">'iconst',</span> <span class="pre">'rotaxis',</span> <span class="pre">'fc2xml',</span> <span class="pre">'fc3xml',</span> <span class="pre">'sparse',</span> <span class="pre">'sparsesolver',</span> <span class="pre">'maxiter',</span> <span class="pre">'conv_tol',</span> <span class="pre">'l1_ratio',</span> <span class="pre">'l1_alpha',</span> <span class="pre">'cv',</span> <span class="pre">'dfset_cv',</span> <span class="pre">'ndata_cv',</span> <span class="pre">'nstart_cv',</span> <span class="pre">'nend_cv',</span> <span class="pre">'cv_minalpha',</span> <span class="pre">'cv_maxalpha',</span> <span class="pre">'cv_nalpha',</span> <span class="pre">'standardize',</span> <span class="pre">'enet_dnorm',</span> <span class="pre">'solution_path',</span> <span class="pre">'debias_ols',</span> <span class="pre">'stop_criterion']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.optimize_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.primitive">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">primitive</span></span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.required_params">
+<span class="sig-name descname"><span class="pre">required_params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'always':</span> <span class="pre">{'cell',</span> <span class="pre">'cutoff',</span> <span class="pre">'kd',</span> <span class="pre">'mode',</span> <span class="pre">'nat',</span> <span class="pre">'nkd',</span> <span class="pre">'norder',</span> <span class="pre">'position',</span> <span class="pre">'prefix'},</span> <span class="pre">'norder&gt;=4':</span> <span class="pre">{'nbody'},</span> <span class="pre">'optimize':</span> <span class="pre">{'always':</span> <span class="pre">{'dfset'},</span> <span class="pre">'lmodel!=ols':</span> <span class="pre">{'always':</span> <span class="pre">{'conv_tol',</span> <span class="pre">'fc2xml'},</span> <span class="pre">'cv!=5':</span> <span class="pre">{'cv_maxalpha',</span> <span class="pre">'cv_minalpha',</span> <span class="pre">'cv_nalpha'}}}}</span></em><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.required_params" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.to_file">
+<span class="sig-name descname"><span class="pre">to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.to_file" title="Link to this definition"></a></dt>
+<dd><p>Make ALM input file
+:param filename (str):
+:type filename (str): ALM input file name</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">AnphonInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#auto_kappa.io.alm.AlamodeInput" title="auto_kappa.io.alm.AlamodeInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlamodeInput</span></code></a></p>
+<p>Class for writing and reading anphon input file.
+See the following URL for more detailed description.
+<a class="reference external" href="https://alamode.readthedocs.io/en/latest/anphondir/inputanphon.html">https://alamode.readthedocs.io/en/latest/anphondir/inputanphon.html</a></p>
+<section id="id1">
+<h3>Reference<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>pymatgen.io.shengbte.Control</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.all_keys">
+<span class="sig-name descname"><span class="pre">all_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prefix',</span> <span class="pre">'mode',</span> <span class="pre">'nkd',</span> <span class="pre">'kd',</span> <span class="pre">'mass',</span> <span class="pre">'fcsxml',</span> <span class="pre">'fc2xml',</span> <span class="pre">'fc3xml',</span> <span class="pre">'fcsfile',</span> <span class="pre">'fc2file',</span> <span class="pre">'fc3file',</span> <span class="pre">'tolerance',</span> <span class="pre">'printsym',</span> <span class="pre">'nonanalytic',</span> <span class="pre">'na_sigma',</span> <span class="pre">'borninfo',</span> <span class="pre">'bornsym',</span> <span class="pre">'tmin',</span> <span class="pre">'tmax',</span> <span class="pre">'dt',</span> <span class="pre">'emin',</span> <span class="pre">'emax',</span> <span class="pre">'delta_e',</span> <span class="pre">'ismear',</span> <span class="pre">'epsilon',</span> <span class="pre">'bconnect',</span> <span class="pre">'classical',</span> <span class="pre">'trisym',</span> <span class="pre">'restart',</span> <span class="pre">'kmesh_interpolate',</span> <span class="pre">'kmesh_scph',</span> <span class="pre">'self_offdiag',</span> <span class="pre">'tol_scph',</span> <span class="pre">'mixalpha',</span> <span class="pre">'maxiter',</span> <span class="pre">'lower_temp',</span> <span class="pre">'warmstart',</span> <span class="pre">'ialgo',</span> <span class="pre">'restart_scph',</span> <span class="pre">'bubble',</span> <span class="pre">'relax_str',</span> <span class="pre">'kmesh_interpolate',</span> <span class="pre">'kmesh_qha',</span> <span class="pre">'relax_str',</span> <span class="pre">'lower_temp',</span> <span class="pre">'qha_scheme',</span> <span class="pre">'relax_algo',</span> <span class="pre">'alpha_stdecent',</span> <span class="pre">'max_str_iter',</span> <span class="pre">'add_hess_diag',</span> <span class="pre">'coord_conv_tol',</span> <span class="pre">'mixbeta_coord',</span> <span class="pre">'cell_conv_tol',</span> <span class="pre">'mixbeta_cell',</span> <span class="pre">'set_init_str',</span> <span class="pre">'cooling_u0_index',</span> <span class="pre">'cooling_u0_thr',</span> <span class="pre">'stat_pressure',</span> <span class="pre">'renorm_2to1st',</span> <span class="pre">'renorm_34to1st',</span> <span class="pre">'renorm_3to2nd',</span> <span class="pre">'strain_ifc_dir',</span> <span class="pre">'gruneisen',</span> <span class="pre">'printevec',</span> <span class="pre">'printxsf',</span> <span class="pre">'printvel',</span> <span class="pre">'printmsd',</span> <span class="pre">'pdos',</span> <span class="pre">'tdos',</span> <span class="pre">'sps',</span> <span class="pre">'printpr',</span> <span class="pre">'kappa_coherent',</span> <span class="pre">'kappa_spec',</span> <span class="pre">'isotope',</span> <span class="pre">'isofact',</span> <span class="pre">'ucorr',</span> <span class="pre">'shift_ucorr',</span> <span class="pre">'zmode',</span> <span class="pre">'anime',</span> <span class="pre">'anime_frames',</span> <span class="pre">'anime_cellsize',</span> <span class="pre">'anime_format',</span> <span class="pre">'kappa_coherent',</span> <span class="pre">'kmesh_coarse',</span> <span class="pre">'ismear_4ph',</span> <span class="pre">'interpolator',</span> <span class="pre">'adaptive_factor',</span> <span class="pre">'kappa_spec',</span> <span class="pre">'isotope',</span> <span class="pre">'isofact',</span> <span class="pre">'cell',</span> <span class="pre">'kpoint',</span> <span class="pre">'kpmode']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.all_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.analysis_keys">
+<span class="sig-name descname"><span class="pre">analysis_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['gruneisen',</span> <span class="pre">'printevec',</span> <span class="pre">'printxsf',</span> <span class="pre">'printvel',</span> <span class="pre">'printmsd',</span> <span class="pre">'pdos',</span> <span class="pre">'tdos',</span> <span class="pre">'sps',</span> <span class="pre">'printpr',</span> <span class="pre">'kappa_coherent',</span> <span class="pre">'kappa_spec',</span> <span class="pre">'isotope',</span> <span class="pre">'isofact',</span> <span class="pre">'ucorr',</span> <span class="pre">'shift_ucorr',</span> <span class="pre">'zmode',</span> <span class="pre">'anime',</span> <span class="pre">'anime_frames',</span> <span class="pre">'anime_cellsize',</span> <span class="pre">'anime_format']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.analysis_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.analysis_keys_2">
+<span class="sig-name descname"><span class="pre">analysis_keys_2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['quartic']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.analysis_keys_2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.atoms_no_mass">
+<span class="sig-name descname"><span class="pre">atoms_no_mass</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Tc',</span> <span class="pre">'Pm',</span> <span class="pre">'Po',</span> <span class="pre">'At',</span> <span class="pre">'Rn',</span> <span class="pre">'Fr',</span> <span class="pre">'Ra',</span> <span class="pre">'Ac',</span> <span class="pre">'Np',</span> <span class="pre">'Pu']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.atoms_no_mass" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.check_parameters">
+<span class="sig-name descname"><span class="pre">check_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.check_parameters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.from_structure">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structure</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.from_structure" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>object</strong><strong>)</strong> (<em>structure</em><em> (</em><em>structure</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.from_structure_file">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_structure_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.from_structure_file" title="Link to this definition"></a></dt>
+<dd><p>Make ANPHON input parameters from a structure file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>filename</em>) – Object should be supported by pymatgen’s IStructure module: POSCAR,
+.cif. etc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.general_keys">
+<span class="sig-name descname"><span class="pre">general_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prefix',</span> <span class="pre">'mode',</span> <span class="pre">'nkd',</span> <span class="pre">'kd',</span> <span class="pre">'mass',</span> <span class="pre">'fcsxml',</span> <span class="pre">'fc2xml',</span> <span class="pre">'fc3xml',</span> <span class="pre">'fcsfile',</span> <span class="pre">'fc2file',</span> <span class="pre">'fc3file',</span> <span class="pre">'tolerance',</span> <span class="pre">'printsym',</span> <span class="pre">'nonanalytic',</span> <span class="pre">'na_sigma',</span> <span class="pre">'borninfo',</span> <span class="pre">'bornsym',</span> <span class="pre">'tmin',</span> <span class="pre">'tmax',</span> <span class="pre">'dt',</span> <span class="pre">'emin',</span> <span class="pre">'emax',</span> <span class="pre">'delta_e',</span> <span class="pre">'ismear',</span> <span class="pre">'epsilon',</span> <span class="pre">'bconnect',</span> <span class="pre">'classical',</span> <span class="pre">'trisym',</span> <span class="pre">'restart']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.general_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.get_primitive">
+<span class="sig-name descname"><span class="pre">get_primitive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.get_primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.kappa_keys_2">
+<span class="sig-name descname"><span class="pre">kappa_keys_2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['kappa_coherent',</span> <span class="pre">'kmesh_coarse',</span> <span class="pre">'ismear_4ph',</span> <span class="pre">'interpolator',</span> <span class="pre">'adaptive_factor',</span> <span class="pre">'kappa_spec',</span> <span class="pre">'isotope',</span> <span class="pre">'isofact']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.kappa_keys_2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.norm_idx">
+<span class="sig-name descname"><span class="pre">norm_idx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.norm_idx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.primitive">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">primitive</span></span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.qha_keys">
+<span class="sig-name descname"><span class="pre">qha_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['kmesh_interpolate',</span> <span class="pre">'kmesh_qha',</span> <span class="pre">'relax_str',</span> <span class="pre">'lower_temp',</span> <span class="pre">'qha_scheme']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.qha_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.relax_keys">
+<span class="sig-name descname"><span class="pre">relax_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['relax_algo',</span> <span class="pre">'alpha_stdecent',</span> <span class="pre">'max_str_iter',</span> <span class="pre">'add_hess_diag',</span> <span class="pre">'coord_conv_tol',</span> <span class="pre">'mixbeta_coord',</span> <span class="pre">'cell_conv_tol',</span> <span class="pre">'mixbeta_cell',</span> <span class="pre">'set_init_str',</span> <span class="pre">'cooling_u0_index',</span> <span class="pre">'cooling_u0_thr',</span> <span class="pre">'stat_pressure',</span> <span class="pre">'renorm_2to1st',</span> <span class="pre">'renorm_34to1st',</span> <span class="pre">'renorm_3to2nd',</span> <span class="pre">'strain_ifc_dir']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.relax_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.required_params">
+<span class="sig-name descname"><span class="pre">required_params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'always':</span> <span class="pre">{'cell',</span> <span class="pre">'fcsxml',</span> <span class="pre">'kd',</span> <span class="pre">'kpmode',</span> <span class="pre">'mode',</span> <span class="pre">'nkd',</span> <span class="pre">'prefix'}}</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.required_params" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.scph_keys">
+<span class="sig-name descname"><span class="pre">scph_keys</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['kmesh_interpolate',</span> <span class="pre">'kmesh_scph',</span> <span class="pre">'self_offdiag',</span> <span class="pre">'tol_scph',</span> <span class="pre">'mixalpha',</span> <span class="pre">'maxiter',</span> <span class="pre">'lower_temp',</span> <span class="pre">'warmstart',</span> <span class="pre">'ialgo',</span> <span class="pre">'restart_scph',</span> <span class="pre">'bubble',</span> <span class="pre">'relax_str']</span></em><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.scph_keys" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.set_kpoint">
+<span class="sig-name descname"><span class="pre">set_kpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.set_kpoint" title="Link to this definition"></a></dt>
+<dd><p>Set suggeted k-point parameters. This module may not well written.</p>
+<p>## kpoint_keys = [‘kpmode’, ‘kpoints’, ‘kpath’, ‘kpts’, ‘deltak’]
+If kpmode == 0, separated kpoints should be given
+If kpmode == 1, deltak (default: 0.01) and kpath will be set.
+If kpmode == 2, deltak (default: 0.2) and kpts will be set.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.set_primitive">
+<span class="sig-name descname"><span class="pre">set_primitive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structure</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.set_primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.to_file">
+<span class="sig-name descname"><span class="pre">to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.to_file" title="Link to this definition"></a></dt>
+<dd><p>Make ANPHON input file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>filename</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.calc_g2_factor">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">calc_g2_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isotopes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.calc_g2_factor" title="Link to this definition"></a></dt>
+<dd><p>Calculate g2 factor for Tamura model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isotopes</strong> (<em>dictionary</em>) – each element containes “mass” and “composition”</p></li>
+<li><p><strong>element</strong> (<em>string</em>) – Name of element. If <code class="docutils literal notranslate"><span class="pre">element</span></code> is given, check whether the averaged
+mass is realistic or not.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.get_alamode_variables_from_structure">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">get_alamode_variables_from_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">structure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.get_alamode_variables_from_structure" title="Link to this definition"></a></dt>
+<dd><p>Get alm variables determined by the structure</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.get_isofact_info">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">get_isofact_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.get_isofact_info" title="Link to this definition"></a></dt>
+<dd><p>Get isofact info</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>elements</strong> (<em>array</em><em> of </em><em>string</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>g2_factors</strong> – array for g2 factors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array, float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.get_kpoint_path">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">get_kpoint_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">primitive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nk_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.get_kpoint_path" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>object</strong><strong>)</strong> (<em>primitive</em><em> (</em><em>pymatgen's</em><em> (</em><em>I</em><em>)</em><em>Structure</em>) – primitive structure</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>key of dictionary is a name of symmetric point and the contained value
+is the corresponding k-point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>kpoints (array of array of dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.get_mass_info">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">get_mass_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.get_mass_info" title="Link to this definition"></a></dt>
+<dd><p>get mass info</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>elements</strong> (<em>array</em><em> of </em><em>string</em>) – name of elements</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>array of float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.proc_val">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">proc_val</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.proc_val" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.read_alamode_input">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">read_alamode_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.read_alamode_input" title="Link to this definition"></a></dt>
+<dd><p>Read alamode input file and output a dictionary</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.alm.read_structure_from_file">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.alm.</span></span><span class="sig-name descname"><span class="pre">read_structure_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.read_structure_from_file" title="Link to this definition"></a></dt>
+<dd><p>Read alamode input file and return an ASE Atoms object.</p>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.io.files">
+<span id="auto-kappa-io-files-module"></span><h2>auto_kappa.io.files module<a class="headerlink" href="#module-auto_kappa.io.files" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.files.convert_numpy">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.files.</span></span><span class="sig-name descname"><span class="pre">convert_numpy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.files.convert_numpy" title="Link to this definition"></a></dt>
+<dd><p>Convert numpy data types to native Python types.</p>
+<section id="how-to-use">
+<h3>How to use<a class="headerlink" href="#how-to-use" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;output.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">convert_numpy</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.files.extract_data_from_file">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.files.</span></span><span class="sig-name descname"><span class="pre">extract_data_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.files.extract_data_from_file" title="Link to this definition"></a></dt>
+<dd><p>Return data for <code class="docutils literal notranslate"><span class="pre">word</span></code> in <code class="docutils literal notranslate"><span class="pre">filename</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.files.write_output_yaml">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.files.</span></span><span class="sig-name descname"><span class="pre">write_output_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.files.write_output_yaml" title="Link to this definition"></a></dt>
+<dd><p>Write an output directory name in a yaml file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>string</em>) – yaml file name</p></li>
+<li><p><strong>name</strong> (<em>string</em>) – name of a dictionary</p></li>
+<li><p><strong>info</strong> (<em>dict</em>) – dictionary</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.io.phonondb">
+<span id="auto-kappa-io-phonondb-module"></span><h2>auto_kappa.io.phonondb module<a class="headerlink" href="#module-auto_kappa.io.phonondb" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.phonondb.</span></span><span class="sig-name descname"><span class="pre">Phonondb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Read files in phonondb
+:param mode: “relax”, “force”, “nac”, …
+:type mode: string</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.filenames">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filenames</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.filenames" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.filenames_as_dict">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filenames_as_dict</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.filenames_as_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.get_kpoints">
+<span class="sig-name descname"><span class="pre">get_kpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.get_kpoints" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kpoints</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Kpoints obj for the given mode</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.get_primitive">
+<span class="sig-name descname"><span class="pre">get_primitive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'phonopy'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.get_primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.get_supercell">
+<span class="sig-name descname"><span class="pre">get_supercell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'phonopy'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.get_supercell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.get_unitcell">
+<span class="sig-name descname"><span class="pre">get_unitcell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'phonopy'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.get_unitcell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.nac">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nac</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.nac" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.phonon">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">phonon</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.phonon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.primitive">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">primitive</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.primitive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.primitive_matrix">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">primitive_matrix</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.primitive_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.scell_matrix">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scell_matrix</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.scell_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.supercell">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">supercell</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.supercell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.Phonondb.unitcell">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unitcell</span></span><a class="headerlink" href="#auto_kappa.io.phonondb.Phonondb.unitcell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.read_forcesets">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.phonondb.</span></span><span class="sig-name descname"><span class="pre">read_forcesets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.read_forcesets" title="Link to this definition"></a></dt>
+<dd><p>Read and return data in <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> in phonondb</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.phonondb.read_phonopy_conf">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.phonondb.</span></span><span class="sig-name descname"><span class="pre">read_phonopy_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.phonondb.read_phonopy_conf" title="Link to this definition"></a></dt>
+<dd><p>Read phonopy.conf in phonondb
+:param filename:
+:type filename: string, phonopy.conf</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>sc_mat</strong> (<em>shape=(3,3), int</em>)</p></li>
+<li><p><strong>prim_mat</strong> (<em>shape=(3,3), flaot</em>) – default: identity matrix</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.io.times">
+<span id="auto-kappa-io-times-module"></span><h2>auto_kappa.io.times module<a class="headerlink" href="#module-auto_kappa.io.times" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.times.get_all_directories">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.times.</span></span><span class="sig-name descname"><span class="pre">get_all_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.times.get_all_directories" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.times.get_times">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.times.</span></span><span class="sig-name descname"><span class="pre">get_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.times.get_times" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-auto_kappa.io.vasp">
+<span id="auto-kappa-io-vasp-module"></span><h2>auto_kappa.io.vasp module<a class="headerlink" href="#module-auto_kappa.io.vasp" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.get_born_charges">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">get_born_charges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.get_born_charges" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>filename</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.get_dfset">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">get_dfset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_xml</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fd2d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.get_dfset" title="Link to this definition"></a></dt>
+<dd><p>Get dataset of displacements and forces from many vasprun.xml files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> (<em>string</em>) – vasprun.xml can be found under ${directory}/*/
+while ${directory}/prist/vasprun.xml is ignored.</p></li>
+<li><p><strong>offset_xml</strong> (<em>string</em>) – vasprun.xml name for offset</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – if given, dfset is saved.</p></li>
+<li><p><strong>nset</strong> (<em>int</em>) – Number of data set. If not given, all data will be read.</p></li>
+<li><p><strong>fd2d</strong> (<em>bool</em>) – If True, the displacement method was finite difference for 2D systems.
+The translational displacement is allowed along the out-of-plane direction.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.print_vasp_params">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">print_vasp_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.print_vasp_params" title="Link to this definition"></a></dt>
+<dd><p>print the contents of a dictionary</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.read_dfset">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">read_dfset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">natoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nstructures</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.read_dfset" title="Link to this definition"></a></dt>
+<dd><p>Read DFSET with Alamode format and return displacements and forces.
+If natoms and nstrctures are set, size of matrices are determined with
+them.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.read_incar">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">read_incar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.read_incar" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.read_kpoints">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">read_kpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.read_kpoints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.read_outcar">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">read_outcar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.read_outcar" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>string</em>) – path for OUTCAR</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.read_poscar">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">read_poscar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.read_poscar" title="Link to this definition"></a></dt>
+<dd><p>Read filename
+filename : string, POSCAR filename</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.wasfinished">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">wasfinished</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vasprun.xml'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.wasfinished" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>string</em>) – Path for the directory to be checked. Note that the path should be that
+inside the tar.gz file when tar is not None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="auto_kappa.io.vasp.write_born_info">
+<span class="sig-prename descclassname"><span class="pre">auto_kappa.io.vasp.</span></span><span class="sig-name descname"><span class="pre">write_born_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'BORNINFO'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.vasp.write_born_info" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>filename</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-auto_kappa.io">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-auto_kappa.io" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="auto_kappa.cui.html" class="btn btn-neutral float-left" title="auto_kappa.cui package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="auto_kappa.plot.html" class="btn btn-neutral float-right" title="auto_kappa.plot package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

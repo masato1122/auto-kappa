@@ -1,0 +1,147 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5.2. Useful Tips &mdash; auto-kappa Sept. 1st, 2025 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=c21d2128" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=3b6d8bf3"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="6. auto_kappa" href="../auto-kappa/modules.html" />
+    <link rel="prev" title="5.1. Input Scripts for ALAMODE Calculations" href="alamode.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            auto-kappa
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">2. How to Use auto-kappa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../params_ak.html">3. Parameters for auto-kappa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../params_vasp.html">4. Parameters for VASP</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="alamode.html">5.1. Input Scripts for ALAMODE Calculations</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.2. Useful Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#make-dfset-file-for-alamode">Make DFSET file for Alamode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-phonon-dispersion-and-dos">Plot phonon dispersion and DOS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../auto-kappa/modules.html">6. auto_kappa</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">auto-kappa</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html"><span class="section-number">5. </span>Tutorial</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5.2. </span>Useful Tips</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/tips.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="useful-tips">
+<h1><span class="section-number">5.2. </span>Useful Tips<a class="headerlink" href="#useful-tips" title="Link to this heading"></a></h1>
+<section id="make-dfset-file-for-alamode">
+<h2>Make DFSET file for Alamode<a class="headerlink" href="#make-dfset-file-for-alamode" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">auto_kappa.io.vasp.get_dfset</span></code> helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
+Many directories which contain a vasprun.xml file are supposed to be located under the given directory.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ls<span class="w"> </span>.
+<span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>...<span class="w"> </span>prist
+
+$<span class="w"> </span>ls<span class="w"> </span>./1
+...<span class="w"> </span>...<span class="w"> </span>vasprun.xml<span class="w"> </span>...<span class="w"> </span>...
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io.vasp</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dfset</span>
+
+<span class="n">directory</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+<span class="n">offset_xml</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/prist/vasprun.xml&#39;</span>
+<span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;DFSET&#39;</span>
+<span class="n">disps</span><span class="p">,</span> <span class="n">force</span> <span class="o">=</span> <span class="n">get_dfset</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">offset_xml</span><span class="o">=</span><span class="n">offset_xml</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="plot-phonon-dispersion-and-dos">
+<h2>Plot phonon dispersion and DOS<a class="headerlink" href="#plot-phonon-dispersion-and-dos" title="Link to this heading"></a></h2>
+<p>Preparing…</p>
+<p>(Please see <code class="docutils literal notranslate"><span class="pre">.../examples/8_plot</span></code> to plot phonon dispersion and DOS)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="alamode.html" class="btn btn-neutral float-left" title="5.1. Input Scripts for ALAMODE Calculations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../auto-kappa/modules.html" class="btn btn-neutral float-right" title="6. auto_kappa" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, M. Ohnishi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
