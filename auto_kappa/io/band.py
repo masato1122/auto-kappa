@@ -81,6 +81,7 @@ class Band:
             k-points for symmetry points
         
         """
+        self.filename = filename
         self.band_type = 'normal'
         self.unit = "cm^1"
         self._kmax = None
@@ -273,6 +274,7 @@ class Band:
 class SCPHBand(Band):
     def __init__(self, filename=None):
         super().__init__()
+        self.filename = filename
         self.band_type = 'scph'
         self.temperatures = None
         if filename is not None:
@@ -421,7 +423,7 @@ def get_band_section_indices_labels(kpoints, symmetry_kpoints, symmetry_labels, 
     def _get_min_index(kpoints, ktarget, tol=1e-7):
         min_diff = np.min(abs(kpoints - ktarget))
         return np.where(abs(abs(kpoints - ktarget) - min_diff) < tol)[0]
-
+    
     count = 0
     indices_plt = []
     _symmetry_kpoints = []
@@ -431,9 +433,15 @@ def get_band_section_indices_labels(kpoints, symmetry_kpoints, symmetry_labels, 
         l1 = symmetry_labels[isec + 1]
         k0 = symmetry_kpoints[isec]
         k1 = symmetry_kpoints[isec + 1]
-        i0 = _get_min_index(kpoints, k0)[-1]
-        i1 = _get_min_index(kpoints, k1)[0]
-        indices_plt.append([i0, i1])
+        
+        if k0 < k1: # normal case
+            i0 = _get_min_index(kpoints, k0)[-1]
+            i1 = _get_min_index(kpoints, k1)[0]
+        else: # rare case
+            i0 = _get_min_index(kpoints, k0)[0]
+            i1 = _get_min_index(kpoints, k1)[-1]
+        
+        indices_plt.append([int(i0), int(i1)])
         _symmetry_kpoints.append(k0)
         _symmetry_labels.append(l0)
         if l0.startswith('G') or l1.startswith('G'):

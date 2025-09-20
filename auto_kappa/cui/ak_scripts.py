@@ -134,7 +134,6 @@ def main():
             celltype_relax_given=ak_params['relaxed_cell'],
             dim=ak_params['mater_dim'],
         ))
-    nac = ak_params['nonanalytic']
     
     ### If the previous structure was not the same as the given structure,
     if structures.get('supercell', None) is not None:

@@ -330,7 +330,7 @@ def _check_previous_parameters(given_params, prev_params, file_prev=None):
         'cutoff_cubic', 'min_nearest', 'nmax_suggest', 'frac_nrandom',
         'mag_harm', 'mag_cubic', 'negative_freq', 'relaxed_cell', 
         'k_length', 'max_natoms', 'random_disp_temperature',
-        'volume_relaxation']
+        'volume_relaxation', 'nonanalytic']
     
     base_dir = os.path.dirname(file_prev) if file_prev is not None else None
     

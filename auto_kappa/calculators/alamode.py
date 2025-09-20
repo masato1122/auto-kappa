@@ -22,7 +22,7 @@ from auto_kappa.apdb import ApdbVasp
 from auto_kappa.alamode.almcalc import AlamodeCalc
 from auto_kappa.alamode.helpers import should_rerun_alamode
 from auto_kappa.alamode.log_parser import AkLog
-from auto_kappa.structure.crystal import get_automatic_kmesh
+from auto_kappa.structure.crystal import get_automatic_kmesh, change_structure_format
 from auto_kappa.cui.suggest import klength2mesh
 from auto_kappa.cui import ak_log
 from auto_kappa.calculators.compat import remove_old_kappa_data
@@ -407,6 +407,23 @@ def analyze_harmonic_with_larger_supercells(
                 dim=almcalc_orig.dim,
                 calculate_forces=almcalc_orig.calculate_forces,
                 )
+        
+        ### Check structures >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        from auto_kappa.structure.comparison import match_structures
+        match = match_structures(almcalc_orig.primitive, almcalc_new.primitive,
+                                 ignore_order=False)
+        if not match:
+            from phonopy.structure.cells import get_supercell
+            almcalc_new._unitcell = almcalc_orig.primitive
+            almcalc_new._primitive = almcalc_orig.primitive
+            sc = get_supercell(
+                change_structure_format(almcalc_orig.unitcell, format='phonopy'),
+                almcalc_new.scell_matrix)
+            almcalc_new._supercell = change_structure_format(sc, format='ase')
+        
+        from auto_kappa.structure.comparison import generate_mapping_s2p
+        generate_mapping_s2p(almcalc_new.supercell, almcalc_new.primitive)
+        ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
         start_larger_supercell(almcalc_new)
         
