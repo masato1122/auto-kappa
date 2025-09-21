@@ -107,7 +107,7 @@ G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
 
 - [**Phonopy**](https://phonopy.github.io/phonopy/): A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-- [**Pymatgen**](https://pymatgen.org/): and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- [**Pymatgen** and **Custodian**](https://pymatgen.org/): S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
 - [**ASE**](https://ase-lib.org/): A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
