@@ -16,6 +16,7 @@
       <script src="_static/documentation_options.js?v=3b6d8bf3"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -46,7 +47,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">2. How to use auto-kappa</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">3. Parameters for auto-kappa</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#brief-description">3.1. Brief Description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#brief-description">3.1. Brief description</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#input-output">Input/Output</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#parallel-calculations-and-commands">Parallel calculations and commands</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#accuracy">Accuracy</a></li>
@@ -57,7 +58,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#others">Others</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#detailed-description">3.2. Detailed Description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#detailed-description">3.2. Detailed description</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#auto_kappa.cui.ak_parser-get_parser-named-arguments">Named Arguments</a></li>
 </ul>
 </li>
@@ -95,8 +96,8 @@
   <section id="parameters-for-auto-kappa">
 <h1><span class="section-number">3. </span>Parameters for auto-kappa<a class="headerlink" href="#parameters-for-auto-kappa" title="Link to this heading"></a></h1>
 <section id="brief-description">
-<span id="sec-params-ak-brief"></span><h2><span class="section-number">3.1. </span>Brief Description<a class="headerlink" href="#brief-description" title="Link to this heading"></a></h2>
-<p>Please see <a class="reference internal" href="#sec-params-ak-detailed"><span class="std std-ref">Detailed Description</span></a> for details of each parameter.</p>
+<span id="sec-params-ak-brief"></span><h2><span class="section-number">3.1. </span>Brief description<a class="headerlink" href="#brief-description" title="Link to this heading"></a></h2>
+<p>Please see <a class="reference internal" href="#sec-params-ak-detailed"><span class="std std-ref">Detailed description</span></a> for details of each parameter.</p>
 <section id="input-output">
 <h3>Input/Output<a class="headerlink" href="#input-output" title="Link to this heading"></a></h3>
 <ul class="simple">
@@ -129,6 +130,9 @@
 <section id="displacement">
 <h3>Displacement<a class="headerlink" href="#displacement" title="Link to this heading"></a></h3>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>:
+Threshold of suggested displacement patterns (<span class="math notranslate nohighlight">\(N_{sugget}\)</span>) for the finite-displacement approach.
+If <span class="math notranslate nohighlight">\(N_{suggest}\)</span> exceeds <code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>, the LASSO regression is employed.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">frac_nrandom</span></code>, <code class="docutils literal notranslate"><span class="pre">--frac_nrandom_higher</span></code>: Fractional number of random displacement patterns</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mag_harm</span></code>, <code class="docutils literal notranslate"><span class="pre">mag_cubic</span></code>, <code class="docutils literal notranslate"><span class="pre">random_disp_temperature</span></code>: Displacement magnitudes for harmonic, cubic, and higher-order FCs</p></li>
 </ul>
@@ -136,7 +140,6 @@
 <section id="beyond-three-phonon-scattering">
 <h3>Beyond three phonon scattering<a class="headerlink" href="#beyond-three-phonon-scattering" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>: Threshold of suggested patterns to use the LASSO regression for cubic FCs</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">scph</span></code>, <code class="docutils literal notranslate"><span class="pre">four</span></code>: Self-consistent phonon (SCPH) approach and four-phonon scattering processes</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">frac_kdensity_4ph</span></code>: q-point mesh for four-phonon scattering processes</p></li>
 </ul>
@@ -161,7 +164,7 @@ but the force calculations are not performed. You can perform the force calculat
 </section>
 </section>
 <section id="detailed-description">
-<span id="sec-params-ak-detailed"></span><h2><span class="section-number">3.2. </span>Detailed Description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
+<span id="sec-params-ak-detailed"></span><h2><span class="section-number">3.2. </span>Detailed description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
 <p><p>Parser for akrun command</p>
 </p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">auto</span><span class="o">-</span><span class="n">kappa</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="n">DIRECTORY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">file_structure</span> <span class="n">FILE_STRUCTURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">outdir</span> <span class="n">OUTDIR</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NPROCS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mpirun</span> <span class="n">MPIRUN</span><span class="p">]</span>

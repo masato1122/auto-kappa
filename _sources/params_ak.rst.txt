@@ -4,7 +4,7 @@ Parameters for auto-kappa
 
 .. _sec_params_ak_brief:
 
-Brief Description
+Brief description
 ==================
 
 Please see :ref:`sec_params_ak_detailed` for details of each parameter.
@@ -42,14 +42,16 @@ Supercell size
 Displacement
 -------------
 
+- ``nmax_suggest``: 
+  Threshold of suggested displacement patterns (:math:`N_{sugget}`) for the finite-displacement approach.
+  If :math:`N_{suggest}` exceeds ``nmax_suggest``, the LASSO regression is employed.
+
 - ``frac_nrandom``, ``--frac_nrandom_higher``: Fractional number of random displacement patterns
 
 - ``mag_harm``, ``mag_cubic``, ``random_disp_temperature``: Displacement magnitudes for harmonic, cubic, and higher-order FCs
   
 Beyond three phonon scattering
 -------------------------------
-
-- ``nmax_suggest``: Threshold of suggested patterns to use the LASSO regression for cubic FCs
 
 - ``scph``, ``four``: Self-consistent phonon (SCPH) approach and four-phonon scattering processes
 
@@ -74,7 +76,7 @@ Others
 
 .. _sec_params_ak_detailed:
 
-Detailed Description
+Detailed description
 =====================
 
 .. argparse::
