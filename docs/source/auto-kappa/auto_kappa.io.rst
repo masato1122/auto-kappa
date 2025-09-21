@@ -4,149 +4,27 @@ auto\_kappa.io package
 Submodules
 ----------
 
-auto\_kappa.io.alm module
--------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: auto_kappa.io.alm
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.analyzer module
-------------------------------
-
-.. automodule:: auto_kappa.io.analyzer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.band module
---------------------------
-
-.. automodule:: auto_kappa.io.band
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.born module
---------------------------
-
-.. automodule:: auto_kappa.io.born
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.dos module
--------------------------
-
-.. automodule:: auto_kappa.io.dos
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.fcs module
--------------------------
-
-.. automodule:: auto_kappa.io.fcs
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.files module
----------------------------
-
-.. automodule:: auto_kappa.io.files
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.gruneisen module
--------------------------------
-
-.. automodule:: auto_kappa.io.gruneisen
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.isotope module
------------------------------
-
-.. automodule:: auto_kappa.io.isotope
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.kl module
-------------------------
-
-.. automodule:: auto_kappa.io.kl
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.participation module
------------------------------------
-
-.. automodule:: auto_kappa.io.participation
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.phonondb module
-------------------------------
-
-.. automodule:: auto_kappa.io.phonondb
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.result module
-----------------------------
-
-.. automodule:: auto_kappa.io.result
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.scattering module
---------------------------------
-
-.. automodule:: auto_kappa.io.scattering
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.suggest module
------------------------------
-
-.. automodule:: auto_kappa.io.suggest
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.thermo module
-----------------------------
-
-.. automodule:: auto_kappa.io.thermo
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.times module
----------------------------
-
-.. automodule:: auto_kappa.io.times
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.io.vasp module
---------------------------
-
-.. automodule:: auto_kappa.io.vasp
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   auto_kappa.io.alm
+   auto_kappa.io.analyzer
+   auto_kappa.io.band
+   auto_kappa.io.born
+   auto_kappa.io.dos
+   auto_kappa.io.fcs
+   auto_kappa.io.files
+   auto_kappa.io.gruneisen
+   auto_kappa.io.isotope
+   auto_kappa.io.kl
+   auto_kappa.io.participation
+   auto_kappa.io.phonondb
+   auto_kappa.io.result
+   auto_kappa.io.scattering
+   auto_kappa.io.suggest
+   auto_kappa.io.thermo
+   auto_kappa.io.times
+   auto_kappa.io.vasp
 
 Module contents
 ---------------

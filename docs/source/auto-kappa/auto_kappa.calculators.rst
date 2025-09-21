@@ -4,37 +4,13 @@ auto\_kappa.calculators package
 Submodules
 ----------
 
-auto\_kappa.calculators.alamode module
---------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: auto_kappa.calculators.alamode
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.calculators.compat module
--------------------------------------
-
-.. automodule:: auto_kappa.calculators.compat
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.calculators.scph module
------------------------------------
-
-.. automodule:: auto_kappa.calculators.scph
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-auto\_kappa.calculators.vasp module
------------------------------------
-
-.. automodule:: auto_kappa.calculators.vasp
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   auto_kappa.calculators.alamode
+   auto_kappa.calculators.compat
+   auto_kappa.calculators.scph
+   auto_kappa.calculators.vasp
 
 Module contents
 ---------------
