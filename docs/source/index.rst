@@ -3,7 +3,7 @@
     September 1, 2025.
 
 Auto-kappa
-===========
+============
 
 .. toctree::
     :maxdepth: 2
