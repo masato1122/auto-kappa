@@ -82,7 +82,8 @@ def get_parser():
                         help="Minimum nearest neighbor atoms considered for cubic FCs [3]")
     
     parser.add_argument("--nmax_suggest", dest="nmax_suggest", type=int, default=100, 
-                        help="Threshold of suggested patterns for cubic FCs [100]:\n"
+                        help="Threshold of suggested patterns (``N_{suggest}``) for the finite-displacement method [100]:\n"
+                        "If ``N_{suggest}`` exceeds ``nmax_suggest``, LASSO regression is applied.\n"
                         "The default value will be changed to '1' in order to always use \n"
                         "the LASSO regression method.")
     
