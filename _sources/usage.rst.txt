@@ -1,5 +1,5 @@
 =======================
-How to Use auto-kappa
+How to use auto-kappa
 =======================
 
 Examples
