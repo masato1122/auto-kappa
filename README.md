@@ -94,7 +94,7 @@ References
 
 - [**ALAMODE**](https://alamode.readthedocs.io/en/latest): T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-- **ALAMODE (SCP):** T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
+- [**ALAMODE (SCP)**](https://alamode.readthedocs.io/en/latest/anphondir/formalism_anphon.html#self-consistent-phonon-scph-calculation): T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
 - [**VASP**](https://www.vasp.at/wiki/The_VASP_Manual): G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
 
