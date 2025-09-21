@@ -16,3 +16,4 @@ Auto-kappa
     params_vasp
     tutorial/index
     auto-kappa/modules
+
