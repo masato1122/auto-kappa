@@ -45,8 +45,8 @@ ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
 3. Run the command: ``akrun --file_structure POSCAR.Si --outdir Si``.
 
-Some Options
--------------
+Several Important Options
+---------------------------
 
 You can view a description of the options using ``akrun -h``. 
 Frequently used commands are listed below.
@@ -74,6 +74,12 @@ Frequently used commands are listed below.
 - **four**: Flag for considering four phonon scattering. The "command_anphon_ver2" option must be set properly. [Default: 0]
 
 <!-- - **material_dimension**: Dimension of the material (2 or 3) [Default: 3] -->
+
+Documentation
+-------------
+
+For more details on auto-kappa, please visit the following webpage: `HERE <https://masato1122.github.io/auto-kappa>`_.
+
 
 Citation
 ---------
