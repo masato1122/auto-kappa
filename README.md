@@ -40,15 +40,16 @@ Please refer to example jobs in ``auto_kappa/examples`` and the manual for detai
 1. Set the ``VASP_PP_PATH`` environment variable so that ASE can locate VASP pseudopotential files:
 ([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
 
-ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
+ASE expects the pseudopotential files to be in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
-3. Run the command: ``akrun --file_structure POSCAR.Si --outdir Si``.
+3. Run the following command: ``akrun --file_structure POSCAR.Si --outdir Si``.
 
 Several Important Options
 ---------------------------
 
-You can view a description of the options using ``akrun -h``. 
+You can view a description of the options using ``akrun -h`` 
+as well as in the [maunal](https://masato1122.github.io/auto-kappa/params_ak.html).
 Frequently used commands are listed below.
 
 - **file_structure**: Structure file name. Different formats, including POSCAR and CIF, are accepted.
@@ -92,11 +93,13 @@ If you use auto-kappa, please cite the following paper, along with any related p
 References
 -----------
 
-- [**ALAMODE**](https://alamode.readthedocs.io/en/latest): T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- [**ALAMODE**](https://alamode.readthedocs.io/en/latest): 
+T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
 - [**ALAMODE (SCP)**](https://alamode.readthedocs.io/en/latest/anphondir/formalism_anphon.html#self-consistent-phonon-scph-calculation): T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
-- [**VASP**](https://www.vasp.at/wiki/The_VASP_Manual): G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
+- [**VASP**](https://www.vasp.at/wiki/The_VASP_Manual): 
+G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
 
 - [**Spglib**](https://spglib.readthedocs.io/en/stable/): A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
