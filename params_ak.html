@@ -123,7 +123,8 @@
 <section id="supercell-size">
 <h3>Supercell size<a class="headerlink" href="#supercell-size" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">analyze_with_larger_supercell</span></code>, <code class="docutils literal notranslate"><span class="pre">max_loop_for_largesc</span></code>: Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">analyze_with_larger_supercell</span></code>, <code class="docutils literal notranslate"><span class="pre">max_loop_for_largesc</span></code>:
+Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">max_natoms</span></code>, <code class="docutils literal notranslate"><span class="pre">delta_max_natoms</span></code>: Maximum number of atoms allowed in supercells</p></li>
 </ul>
 </section>
@@ -132,9 +133,10 @@
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>:
 Threshold of suggested displacement patterns (<span class="math notranslate nohighlight">\(N_{sugget}\)</span>) for the finite-displacement approach.
-If <span class="math notranslate nohighlight">\(N_{suggest}\)</span> exceeds <code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>, the LASSO regression is employed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">frac_nrandom</span></code>, <code class="docutils literal notranslate"><span class="pre">--frac_nrandom_higher</span></code>: Fractional number of random displacement patterns</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">mag_harm</span></code>, <code class="docutils literal notranslate"><span class="pre">mag_cubic</span></code>, <code class="docutils literal notranslate"><span class="pre">random_disp_temperature</span></code>: Displacement magnitudes for harmonic, cubic, and higher-order FCs</p></li>
+If <span class="math notranslate nohighlight">\(N_{suggest}\)</span> exceeds <code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>, LASSO regression is applied.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frac_nrandom</span></code>, <code class="docutils literal notranslate"><span class="pre">frac_nrandom_higher</span></code>: Fractional number of random displacement patterns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mag_harm</span></code>, <code class="docutils literal notranslate"><span class="pre">mag_cubic</span></code>, <code class="docutils literal notranslate"><span class="pre">random_disp_temperature</span></code>:
+Displacement magnitudes for harmonic, cubic, and higher-order FCs</p></li>
 </ul>
 </section>
 <section id="beyond-three-phonon-scattering">
@@ -147,12 +149,10 @@ If <span class="math notranslate nohighlight">\(N_{suggest}\)</span> exceeds <co
 <section id="utilities">
 <h3>Utilities<a class="headerlink" href="#utilities" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">calculate_forces</span></code></p></li>
-</ul>
-<p>This option is useful to analyze single material with multiple machines while <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code> is available on single node only.
+<li><p><code class="docutils literal notranslate"><span class="pre">calculate_forces</span></code>: This option is useful to analyze single material with multiple machines
+while <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code> is available on single node only.
 If this flag is 0, the relaxation calculation is performed and the structures with displacements are generated,
-but the force calculations are not performed. You can perform the force calculations with multiple machines.</p>
-<ul class="simple">
+but the force calculations are not performed. You can perform the force calculations with multiple machines.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">harmonic_only</span></code>: Whether to calculate harmonic FCs only</p></li>
 </ul>
 </section>
@@ -167,18 +167,24 @@ but the force calculations are not performed. You can perform the force calculat
 <span id="sec-params-ak-detailed"></span><h2><span class="section-number">3.2. </span>Detailed description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
 <p><p>Parser for akrun command</p>
 </p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">auto</span><span class="o">-</span><span class="n">kappa</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="n">DIRECTORY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">file_structure</span> <span class="n">FILE_STRUCTURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">outdir</span> <span class="n">OUTDIR</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NPROCS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mpirun</span> <span class="n">MPIRUN</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">command_vasp</span> <span class="n">COMMAND_VASP</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_vasp_gam</span> <span class="n">COMMAND_VASP_GAM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_alm</span> <span class="n">COMMAND_ALM</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">auto</span><span class="o">-</span><span class="n">kappa</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="n">DIRECTORY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">file_structure</span> <span class="n">FILE_STRUCTURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">outdir</span> <span class="n">OUTDIR</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NPROCS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mpirun</span> <span class="n">MPIRUN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_vasp</span> <span class="n">COMMAND_VASP</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">command_vasp_gam</span> <span class="n">COMMAND_VASP_GAM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_alm</span> <span class="n">COMMAND_ALM</span><span class="p">]</span>
                   <span class="p">[</span><span class="o">--</span><span class="n">command_anphon</span> <span class="n">COMMAND_ANPHON</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_anphon_ver2</span> <span class="n">COMMAND_ANPHON_VER2</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">nonanalytic</span> <span class="n">NONANALYTIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cutoff_cubic</span> <span class="n">CUTOFF_CUBIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">min_nearest</span> <span class="n">MIN_NEAREST</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">nmax_suggest</span> <span class="n">NMAX_SUGGEST</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom</span> <span class="n">FRAC_NRANDOM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom_higher</span> <span class="n">FRAC_NRANDOM_HIGHER</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">nonanalytic</span> <span class="n">NONANALYTIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cutoff_cubic</span> <span class="n">CUTOFF_CUBIC</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">min_nearest</span> <span class="n">MIN_NEAREST</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nmax_suggest</span> <span class="n">NMAX_SUGGEST</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom</span> <span class="n">FRAC_NRANDOM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_nrandom_higher</span> <span class="n">FRAC_NRANDOM_HIGHER</span><span class="p">]</span>
                   <span class="p">[</span><span class="o">--</span><span class="n">mag_harm</span> <span class="n">MAG_HARM</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mag_cubic</span> <span class="n">MAG_CUBIC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">negative_freq</span> <span class="n">NEGATIVE_FREQ</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">volume_relaxation</span> <span class="n">VOLUME_RELAXATION</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">k_length</span> <span class="n">K_LENGTH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">max_natoms</span> <span class="n">MAX_NATOMS</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">analyze_with_larger_supercell</span> <span class="n">ANALYZE_WITH_LARGERSC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">delta_max_natoms</span> <span class="n">DELTA_MAX_NATOMS</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">volume_relaxation</span> <span class="n">VOLUME_RELAXATION</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">k_length</span> <span class="n">K_LENGTH</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">max_natoms</span> <span class="n">MAX_NATOMS</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">analyze_with_larger_supercell</span> <span class="n">ANALYZE_WITH_LARGERSC</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">delta_max_natoms</span> <span class="n">DELTA_MAX_NATOMS</span><span class="p">]</span>
                   <span class="p">[</span><span class="o">--</span><span class="n">max_loop_for_largesc</span> <span class="n">MAX_LOOP_FOR_LARGESC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nsw_params</span> <span class="n">NSW_PARAMS</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">calculate_forces</span> <span class="n">CALCULATE_FORCES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">harmonic_only</span> <span class="n">HARMONIC_ONLY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_dfc2</span> <span class="n">COMMAND_DFC2</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">scph</span> <span class="n">SCPH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">four</span> <span class="n">FOUR</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">frac_kdensity_4ph</span> <span class="n">FRAC_KDENSITY_4PH</span><span class="p">]</span>
-                  <span class="p">[</span><span class="o">--</span><span class="n">random_disp_temperature</span> <span class="n">RANDOM_DISP_TEMPERATURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vasp_parameters</span> <span class="n">VASP_PARAMETERS</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">calculate_forces</span> <span class="n">CALCULATE_FORCES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">harmonic_only</span> <span class="n">HARMONIC_ONLY</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">command_dfc2</span> <span class="n">COMMAND_DFC2</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">scph</span> <span class="n">SCPH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">four</span> <span class="n">FOUR</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">frac_kdensity_4ph</span> <span class="n">FRAC_KDENSITY_4PH</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">random_disp_temperature</span> <span class="n">RANDOM_DISP_TEMPERATURE</span><span class="p">]</span>
+                  <span class="p">[</span><span class="o">--</span><span class="n">vasp_parameters</span> <span class="n">VASP_PARAMETERS</span><span class="p">]</span>
 </pre></div>
 </div>
 <section id="auto_kappa.cui.ak_parser-get_parser-named-arguments">
@@ -246,7 +252,8 @@ using <code class="docutils literal notranslate"><span class="pre">min_nearest</
 <p>Default: <code class="docutils literal notranslate"><span class="pre">3</span></code></p>
 </dd>
 <dt><kbd>--nmax_suggest</kbd></dt>
-<dd><p>Threshold of suggested patterns for cubic FCs [100]:
+<dd><p>Threshold of suggested patterns (<code class="docutils literal notranslate"><span class="pre">N_{suggest}</span></code>) for the finite-displacement method [100]:
+If <code class="docutils literal notranslate"><span class="pre">N_{suggest}</span></code> exceeds <code class="docutils literal notranslate"><span class="pre">nmax_suggest</span></code>, LASSO regression is applied.
 The default value will be changed to ‘1’ in order to always use
 the LASSO regression method.</p>
 <p>Default: <code class="docutils literal notranslate"><span class="pre">100</span></code></p>

@@ -35,7 +35,8 @@ Accuracy
 Supercell size
 --------------
 
-- ``analyze_with_larger_supercell``, ``max_loop_for_largesc``: Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops
+- ``analyze_with_larger_supercell``, ``max_loop_for_largesc``: 
+  Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops
 
 - ``max_natoms``, ``delta_max_natoms``: Maximum number of atoms allowed in supercells
 
@@ -44,11 +45,12 @@ Displacement
 
 - ``nmax_suggest``: 
   Threshold of suggested displacement patterns (:math:`N_{sugget}`) for the finite-displacement approach.
-  If :math:`N_{suggest}` exceeds ``nmax_suggest``, the LASSO regression is employed.
+  If :math:`N_{suggest}` exceeds ``nmax_suggest``, LASSO regression is applied.
 
-- ``frac_nrandom``, ``--frac_nrandom_higher``: Fractional number of random displacement patterns
+- ``frac_nrandom``, ``frac_nrandom_higher``: Fractional number of random displacement patterns
 
-- ``mag_harm``, ``mag_cubic``, ``random_disp_temperature``: Displacement magnitudes for harmonic, cubic, and higher-order FCs
+- ``mag_harm``, ``mag_cubic``, ``random_disp_temperature``: 
+  Displacement magnitudes for harmonic, cubic, and higher-order FCs
   
 Beyond three phonon scattering
 -------------------------------
@@ -60,11 +62,10 @@ Beyond three phonon scattering
 Utilities
 ----------
 
-- ``calculate_forces``
-
-This option is useful to analyze single material with multiple machines while ``auto-kappa`` is available on single node only.
-If this flag is 0, the relaxation calculation is performed and the structures with displacements are generated, 
-but the force calculations are not performed. You can perform the force calculations with multiple machines.
+- ``calculate_forces``: This option is useful to analyze single material with multiple machines 
+  while ``auto-kappa`` is available on single node only.
+  If this flag is 0, the relaxation calculation is performed and the structures with displacements are generated, 
+  but the force calculations are not performed. You can perform the force calculations with multiple machines.
 
 - ``harmonic_only``: Whether to calculate harmonic FCs only
 
