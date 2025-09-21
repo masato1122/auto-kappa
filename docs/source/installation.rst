@@ -23,8 +23,8 @@ Preparation
 For phonon calculations using Auto-kappa, the ``alm``, ``anphon``, and ``vasp`` commands, 
 as well as the ``VASP_PP_PATH`` environment variable, are required. 
 
-VASP and Alamode
--------------------
+VASP and ALAMODE
+-----------------
 
 Auto-kappa requires ``vasp``, ``alm``, and ``anphon`` commands.
 Please install VASP and `ALAMODE <https://alamode.readthedocs.io/en/latest/index.html>`_ in advance.
@@ -50,14 +50,14 @@ ALAMODE requires
 `BOOST <https://www.boost.org/releases/latest/>`_, and
 `Spglib <https://spglib.readthedocs.io/en/stable/>`_.
 
-Please install these packages before installing ALAMODE.
+These packages must be installed before installing ALAMODE.
 Note that ALAMODE may not be compatible with the latest versions of these packages.
 You may need to install older versions to ensure compatibility.
 
 PhononDB
 ---------
 
-While Auto-kappa can perform phonon calculations solely from a structure file (e.g., POSCAR, CIF),
+While auto-kappa can perform phonon calculations solely from a structure file (e.g., POSCAR, CIF),
 it can also utilize parameters from PhononDB.
 To use the parameters from PhononDB, download the data from `HERE <https://github.com/WMD-group/phononDB>`_.
 
@@ -65,7 +65,7 @@ To use the parameters from PhononDB, download the data from `HERE <https://githu
 Installation
 =============
 
-1. Create a virtual environment of Python, ``kappa``.
+**1. Create a virtual Python environment**
 
 The following example creates a virtual environment named ``kappa`` in the ``.venv`` directory using ``python -m venv``.
 Alternatively, you may use ``conda`` or other tools to create a virtual environment, depending on your preference.
@@ -83,8 +83,7 @@ To set ``kappa`` as the default, add the following line in ``.bash_profile``.
 
     source ~/.venv/kappa/bin/activate
 
-
-2. Download the code with ``git`` command.
+**2. Download the code**
 
 .. code-block:: bash
     
@@ -108,14 +107,15 @@ After completing the process, verify the installation:
 Examples
 =========
 
-1. Test for VASP and ALAMODE
+**1. Test for VASP and ALAMODE**
 
 Test jobs are available in the ``auto-kappa/examples`` directory.
 Please refer to the ``README`` file in that directory for details.
 You will find ``1_alm``, ``2_anphon``, and so on, which are test jobs for
 ALAMODE (``alm`` and ``anphon``), ASE, Custodian, and Auto-kappa.
 
-2. ``database`` example
+
+**2. ``database`` example**
 
 The calculation in the database directory automatically computes the thermal conductivity of silicon.
 Since all processes are included in this job, it takes about half an hour to complete.

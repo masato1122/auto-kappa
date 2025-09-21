@@ -11,7 +11,8 @@ Auto-kappa
     :glob:
 
     installation
-    parameters
     usage
+    params_ak
+    params_vasp
     tutorial/index
     auto-kappa/modules

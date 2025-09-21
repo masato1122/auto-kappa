@@ -504,7 +504,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         return
     
     try:
-        generate_mapping_s2p(primitive, ref_sc)
+        generate_mapping_s2p(ref_sc, primitive)
     except:
         
         from auto_kappa.structure.crystal import get_primitive_structure_spglib

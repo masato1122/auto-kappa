@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    auto_kappa.alamode
+   auto_kappa.almlog
    auto_kappa.calculators
    auto_kappa.cui
    auto_kappa.io
@@ -19,13 +20,37 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+auto\_kappa.apdb module
+-----------------------
 
-   auto_kappa.apdb
-   auto_kappa.compat
-   auto_kappa.units
-   auto_kappa.version
+.. automodule:: auto_kappa.apdb
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+auto\_kappa.compat module
+-------------------------
+
+.. automodule:: auto_kappa.compat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+auto\_kappa.units module
+------------------------
+
+.. automodule:: auto_kappa.units
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+auto\_kappa.version module
+--------------------------
+
+.. automodule:: auto_kappa.version
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------

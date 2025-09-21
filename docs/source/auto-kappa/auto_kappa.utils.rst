@@ -4,11 +4,21 @@ auto\_kappa.utils package
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+auto\_kappa.utils.isotopes module
+---------------------------------
 
-   auto_kappa.utils.isotopes
-   auto_kappa.utils.version
+.. automodule:: auto_kappa.utils.isotopes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+auto\_kappa.utils.version module
+--------------------------------
+
+.. automodule:: auto_kappa.utils.version
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------

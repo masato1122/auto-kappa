@@ -2,7 +2,6 @@
 Useful Tips
 ==============
 
-
 Make DFSET file for Alamode
 ===============================
 

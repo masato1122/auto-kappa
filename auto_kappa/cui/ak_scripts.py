@@ -77,7 +77,8 @@ def main():
     
     ### Parse given parameters
     from auto_kappa.cui.ak_parser import get_parser
-    options = get_parser()
+    parser = get_parser()
+    options = parser.parse_args()
     
     ### Prepare the base directory
     base_dir = get_base_directory_name(options.outdir, restart=options.restart)
@@ -267,6 +268,7 @@ def main():
         }
     
     ### Set AlmCalc
+    # logger.debug(" >>>>>>> DEBUG")
     almcalc = AlamodeCalc(
             structures_relax['prim'],  # primitive structure
             base_directory=base_dir,
@@ -286,6 +288,7 @@ def main():
             dim=ak_params['mater_dim'],
             calculate_forces=ak_params['calculate_forces'],
             )
+    # logger.debug(" <<<<<<< DEBUG")
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation
     calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])

@@ -20,6 +20,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
+    "sphinxarg.ext",
 ]
 autosummary_generate = True
 

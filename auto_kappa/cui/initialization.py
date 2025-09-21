@@ -443,9 +443,9 @@ def read_parameters_from_phonondb(dir_phdb, k_length):
     >>> POSCAR-unitcell.yaml
 
     """
-    msg = f"\n Read Phonondb data from "
-    msg += f"\n {dir_phdb}"
-    logger.info(msg)
+    # msg = f"\n Read Phonondb data from "
+    # msg += f"\n {dir_phdb}"
+    # logger.info(msg)
     
     ### Read Phonondb directory
     unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)

@@ -415,83 +415,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell,
                                                    prim_mat=self.primitive_matrix,
                                                    sc_mat=self.scell_matrix,)
+            
             if structures is not None:
                 self._primitive = structures['primitive']
                 self._unitcell = structures['unitcell']
                 self._supercell = structures['supercell']
-                        
-            # try:
-            #     file_prim = self.out_dirs['relax'] + '/structures/POSCAR.prim'
-            #     file_unit = self.out_dirs['relax'] + '/structures/POSCAR.unit'
-            #     file_super = self.out_dirs['relax'] + '/structures/POSCAR.super'
-            #     prim = ase.io.read(file_prim, format='vasp', index=0)
-            #     unit = ase.io.read(file_unit, format='vasp', index=0)
-            #     sc_tmp = ase.io.read(file_super, format='vasp', index=0)
-                
-            #     generate_mapping_s2p(sc_tmp, prim)
-            #     generate_mapping_s2p(sc_tmp, unit)
-                
-            #     sc = sc_tmp.copy()
-            #     dir_structures = self.out_dirs['relax'] + '/structures'
-            #     if dir_structures.startswith("/"):
-            #         dir_structures = "./" + os.path.relpath(dir_structures, os.getcwd())
-            #     msg = "\n Structures are read from %s." % dir_structures
-            #     logger.info(msg)
-            #     self._primitive = change_structure_format(prim.copy(), format=format)
-            #     self._unitcell = change_structure_format(unit.copy(), format=format)
-            #     self._supercell = change_structure_format(sc.copy(), format=format)
-                
-            # except Exception:
-                
-            #     try:
-            #         ## Check previously used supercell
-            #         file_xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-            #         sc2 = ase.io.read(file_xml, format='vasp-xml', index=-1)
-                    
-            #         match_wo_order = match_structures(sc, sc2, ignore_order=True)
-            #         match_with_order = match_structures(sc, sc2, ignore_order=False)
-                    
-            #         if not match_wo_order:
-                        
-            #             sc = change_structure_format(sc, format="ase")
-                        
-            #             msg = "\n Lattice vectors 1:"
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[0])
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[1])
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc.cell[2])
-            #             msg += "\n (%d atoms)" % len(sc)
-            #             msg += "\n\n Lattice vectors 2 (%s):" % self.get_relative_path(file_xml)
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[0])
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[1])
-            #             msg += "\n " + "%13.5f " * 3 % tuple(sc2.cell[2])
-            #             msg += "\n (%d atoms)" % len(sc2)
-            #             logger.info(msg)
-                        
-            #             msg  = "\n Error: current supercell is not the same as the previous one,"
-            #             msg += "\n %s." % self.get_relative_path(file_xml)
-            #             msg += "\n\n You may need to run a new job as follows:"
-            #             base_dir = ("./" + os.path.relpath(self.base_directory, os.getcwd())
-            #                         if os.path.isabs(self.base_directory) else self.base_directory)
-            #             msg += f"\n > mv {base_dir} {base_dir}-old"
-            #             msg += f"\n > mkdir {base_dir}"
-            #             msg += f"\n > cp -r {base_dir}-old/relax {base_dir}/"
-            #             logger.error(msg)
-            #             sys.exit()
-                    
-            #         if not match_with_order:
-                        
-            #             msg = "\n Supercell is read from %s" % self.get_relative_path(file_xml)
-            #             logger.error(msg)
-            #             sc = sc2.copy()
-            #             self._supercell = change_structure_format(sc, format=format)
-                    
-            #         else:
-            #             pass
-            #     except Exception:
-            #         pass
-            
-            # except Exception:
-            #     pass
             
         elif self.dim == 2:
             sc = get_supercell(unit_pp, self.scell_matrix)

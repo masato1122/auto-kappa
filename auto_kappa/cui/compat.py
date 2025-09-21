@@ -21,7 +21,6 @@ import pickle
 import glob
 
 import ase.io
-from ase.build import make_supercell
 from ase.geometry import get_distances
 from pymatgen.io.vasp.inputs import Incar
 
@@ -80,28 +79,9 @@ def _check_command_options(params):
             if count == 0:
                 logger.info("")
             
-            msg = f" Warning : '{cmd}' does not exist in the PATH!"
-            logger.error(msg)
-            #if name == 'command_vasp_gam':
-            #    options.command_vasp_gam = options.command_vasp
-            #    msg = (
-            #        f" Warning : '{cmd}' command does not exist. "
-            #        f"--command_vasp_gam is set to '{options.command_vasp}'.")
-            #    logger.warning(msg)
-            #
-            #elif name == 'command_anphon_ver2' and options.four == 0:
-            #    options.command_anphon_ver2 = options.command_anphon
-            #    msg = f" Note : '{cmd}' command does not exist while it is used only when options.four == 1."
-            #    logger.info(msg)
-            #
-            #elif name == 'command_dfc2' and options.scph == 0:
-            #    msg = f" Note : '{cmd}' does not exist while it is used only when options.scph == 1."
-            #    logger.info(msg)
-            #
-            #else:
-            #    msg = f" Error : '{cmd}' does not exist in the PATH!"
-            #    logger.error(msg)
-            #    ##sys.exit()
+            #msg = f" Warning : '{cmd}' does not exist in the PATH!"
+            #logger.error(msg)
+            
             count += 1
 
 def _check_alamode_version(params):
@@ -305,12 +285,13 @@ def _check_previous_structures(base_dir):
             
             ## Use the strict conditions
             ## StructureMatcher may sometimes be instable.
+            ignore_order = True
             if len(struct1) != len(struct2):
                 primitive_cell = True
-                ignore_order = True
+                # ignore_order = True
             else:
                 primitive_cell = False
-                ignore_order = False
+                # ignore_order = False
             
             match = match_structures(struct1, struct2, primitive_cell=primitive_cell, 
                                      ltol=1e-7, stol=1e-7, ignore_order=ignore_order, verbose=False)
