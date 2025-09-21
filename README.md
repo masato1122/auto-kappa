@@ -48,8 +48,8 @@ ASE expects the pseudopotential files to be in ``${VASP_PP_PATH}/potpaw_PBE/{ele
 Several Important Options
 ---------------------------
 
-You can view a description of the options using ``akrun -h`` 
-as well as in the [maunal](https://masato1122.github.io/auto-kappa/params_ak.html).
+You can view the available options by running ``akrun -h`` 
+as well as in the [manual](https://masato1122.github.io/auto-kappa/params_ak.html).
 Frequently used commands are listed below.
 
 - **file_structure**: Structure file name. Different formats, including POSCAR and CIF, are accepted.
@@ -79,7 +79,7 @@ Frequently used commands are listed below.
 Documentation
 -------------
 
-For more details on auto-kappa, please visit the following webpage: [HERE](https://masato1122.github.io/auto-kappa).
+For more details on auto-kappa, please visit the following webpage: [**HERE**](https://masato1122.github.io/auto-kappa).
 
 
 Citation
