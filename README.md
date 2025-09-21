@@ -55,9 +55,9 @@ Frequently used commands are listed below.
 
 - **outdir**: Name of the output directory
 
-- **nprocs**: Number of processes for the calculation [Default: 2]
-
 - **mpirun**: MPI command [Default: mpirun]
+
+- **nprocs**: Number of processes for the calculation [Default: 2]
 
 - **command\_{vasp/vasp\_gam/alm/anphon/anphon_ver2}**: Command to run ``VASP``, ``alm``, and ``anphon`` [Default: vasp, vasp_gam, alm, anphon, anphon.2.0]
 
@@ -78,7 +78,7 @@ Frequently used commands are listed below.
 Documentation
 -------------
 
-For more details on auto-kappa, please visit the following webpage: `HERE <https://masato1122.github.io/auto-kappa>`_
+For more details on auto-kappa, please visit the following webpage: [HERE](https://masato1122.github.io/auto-kappa).
 
 
 Citation
