@@ -78,7 +78,7 @@ Frequently used commands are listed below.
 Documentation
 -------------
 
-For more details on auto-kappa, please visit the following webpage: `HERE <https://masato1122.github.io/auto-kappa>`_.
+For more details on auto-kappa, please visit the following webpage: `HERE <https://masato1122.github.io/auto-kappa>`_
 
 
 Citation
