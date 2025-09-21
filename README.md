@@ -92,21 +92,21 @@ If you use auto-kappa, please cite the following paper, along with any related p
 References
 -----------
 
-- **[ALAMODE(https://alamode.readthedocs.io/en/latest)]:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- [**ALAMODE**](https://alamode.readthedocs.io/en/latest): T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
 - **ALAMODE (SCP):** T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
-- **VASP:** G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
+- [**VASP**](https://www.vasp.at/wiki/The_VASP_Manual): G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
 
-- **Spglib:** A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
+- [**Spglib**](https://spglib.readthedocs.io/en/stable/): A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
-- **SeeK-path:** Y. Hinuma, G. Pizzi, Y. Kumagai, F. Oba, and I. Tanaka, Comp. Mat. Sci. 128, 140 (2017).
+- [**SeeK-path**](https://seekpath.readthedocs.io/en/latest/index.html): Y. Hinuma, G. Pizzi, Y. Kumagai, F. Oba, and I. Tanaka, Comp. Mat. Sci. 128, 140 (2017).
 
-- **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
+- [**Phonopy**](https://phonopy.github.io/phonopy/): A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
 
-- **Pymatgen** and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- [**Pymatgen**](https://pymatgen.org/): and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
 
-- **ASE:** A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
+- [**ASE**](https://ase-lib.org/): A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
 
 <!-- To Do
 ------
