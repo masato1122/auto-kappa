@@ -83,7 +83,8 @@ def get_parser():
     
     parser.add_argument("--nmax_suggest", dest="nmax_suggest", type=int, default=100, 
                         help="Threshold of suggested patterns (``N_{suggest}``) for the finite-displacement method [100]:\n"
-                        "If ``N_{suggest}`` exceeds ``nmax_suggest``, LASSO regression is applied.\n"
+                        "If ``N_{suggest}`` exceeds ``nmax_suggest``, LASSO regression is applied \n"
+                        "for computing cubic force constants.\n"
                         "The default value will be changed to '1' in order to always use \n"
                         "the LASSO regression method.")
     
