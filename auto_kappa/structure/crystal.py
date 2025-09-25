@@ -14,6 +14,8 @@ import numpy as np
 import spglib
 import ase
 
+from ase.geometry import get_duplicate_atoms
+
 import pymatgen.core.structure as str_pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Kpoints
@@ -160,48 +162,74 @@ def get_standardized_structure(struct_orig, to_primitive=False, format='ase', ve
     
     return change_structure_format(atoms, format=format)
 
-def convert_primitive_to_unitcell(primitive, primitive_matrix, format='ase'):
+def get_supercell(structure, transformation_matrix, format='ase'):
     from phonopy.structure.cells import get_supercell
-    mat_p2u = np.linalg.inv(primitive_matrix)
+    supercell = get_supercell(change_structure_format(structure, format='phonopy'), transformation_matrix)
+    supercell = change_structure_format(supercell, format=format)
+    return supercell
+
+def transform_unit2prim(unitcell, primitive_matrix, format='ase'):
+    from phonopy.structure.cells import get_primitive
+    primitive = get_primitive(change_structure_format(unitcell, format='phonopy'), primitive_matrix)
+    primitive = change_structure_format(primitive, format=format)
+    return primitive
+
+def transform_prim2unit(primitive, primitive_matrix, format='ase'):
+    """ Get the unitcell from the primitive cell and the transformation matrix
+    from the unitcell to the primitive cell.
     
-    ### old vertion
-    # mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
+    Args
+    ------
+    primitive : ase.Atoms
+        The primitive structure.
+    primitive_matrix : array-like
+        The transformation matrix from the unitcell to the primitive cell with the Phonopy representation.
+    
+    """
+    mat_p2u = np.linalg.inv(primitive_matrix)
     
     ### New version
     if not np.allclose(mat_p2u, np.rint(mat_p2u)):
         raise ValueError("Inverse of primitive_matrix is not an integer matrix")
-    mat_p2u = np.rint(mat_p2u).astype(int)
     
-    unitcell = get_supercell(change_structure_format(primitive, format='phonopy'), mat_p2u)
-    unitcell = change_structure_format(unitcell, format=format)
+    mat_p2u = np.rint(mat_p2u).astype(int)
+    return get_supercell(primitive, mat_p2u, format=format)
+
+def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atoms:
+    """ Get the small cell (e.g. unitcell) from the supercell and the transformation matrix
+    from the small cell to the supercell.
+    
+    Args
+    ------
+    supercell : ase.Atoms
+        The supercell structure.
+    sc_mat : array-like
+        The transformation matrix from the small cell to the supercell with the Phonopy representation.
+    """
+    ## Lattice vectors of the supercell
+    L_s = supercell.cell.array  # shape (3, 3)
+    
+    ## Lattice vectors of the unitcell
+    L_u = (L_s.T @ np.linalg.inv(np.array(sc_mat))).T
+    
+    ## fractional coordinates of the unitcell
+    unitcell = ase.Atoms(
+        symbols=supercell.get_chemical_symbols(),
+        positions=supercell.get_positions(),
+        cell=L_u,
+        pbc=True
+    )
+    
+    ## Remove duplicate atoms (exclude repetitions within the supercell) 
+    dup_pairs = get_duplicate_atoms(unitcell, cutoff=1e-3)
+    
+    if len(dup_pairs) > 0:
+        to_delete = np.unique(dup_pairs[:, 1])
+        unitcell = unitcell.copy()
+        del unitcell[to_delete]
+    
     return unitcell
 
-# def _make_new_atoms(cell, scaled_positions, numbers, pbc=True, center=False):
-#     """ Return an ase-Atoms object:
-
-#     Args
-#     -----
-#     cell : shape=(3,3)
-
-#     scaled_positions : shape=(natoms,3)
-#         scaled positions
-
-#     numbers : shape=(natoms)
-#         IDs of chemical symbol
-
-#     """
-#     # --- chemical symbols in the primitive cell
-#     symbols = []
-#     for ia, num in enumerate(numbers):
-#         symbols.append(ase.data.chemical_symbols[num])
-
-#     # --- make the primitive cell
-#     atoms_new = ase.Atoms(symbols, np.dot(scaled_positions, cell), cell=cell)
-#     if pbc:
-#         atoms_new.pbc = pbc
-#     if center:
-#         atoms_new.center()
-#     return atoms_new
 
 def get_formula(str_orig):    
     structure = change_structure_format(str_orig, format='pmg-istructure')

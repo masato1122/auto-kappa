@@ -20,12 +20,11 @@ import subprocess
 import shutil
 import multiprocessing as mp
 import ase.io
-from ase.geometry import get_duplicate_atoms
 
 from auto_kappa.io import AlmInput
 from auto_kappa.io.born import BORNINFO, read_born_info
-from auto_kappa.structure.crystal import change_structure_format, convert_primitive_to_unitcell
-from auto_kappa.structure.comparison import generate_mapping_s2p, match_structures, get_structure_matcher
+from auto_kappa.structure.crystal import change_structure_format, inverse_transformation
+from auto_kappa.structure.comparison import generate_mapping_s2p, match_structures
 
 import logging
 logger = logging.getLogger(__name__)
@@ -115,27 +114,6 @@ def adjust_keys_of_suggested_structures(new_structures, outdir, dim=3, nprocs=No
     logger.info("\n Check previous structures (Previous: %d, New: %d)...", 
                 len(prev_structures), len(new_structures))
     
-    ### Get index mapping from new to previous
-    ## ver.1: Serial
-    # map_new2prev = {}
-    # assigned_keys = []
-    # count = 0
-    # for new_key, new_structure in new_structures.items():
-    #     count += 1
-    #     for prev_key, prev_structure in prev_structures.items():
-            
-    #         if prev_key in assigned_keys:
-    #             continue
-            
-    #         match = match_structures(new_structure, prev_structure,
-    #                                  ignore_order=False, verbose=False)
-            
-    #         ## Found the same structure in the previous calculation
-    #         if match:
-    #             map_new2prev[new_key] = prev_key
-    #             assigned_keys.append(prev_key)
-    #             break
-    #
     ## ver.2: Parallel
     nprocs = nprocs if nprocs is not None else mp.cpu_count()
     map_new2prev = _parallel_structure_match(new_structures, prev_structures, nprocs=nprocs)
@@ -502,7 +480,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         return
     
     try:
-        generate_mapping_s2p(ref_sc, primitive)
+        generate_mapping_s2p(ref_sc, primitive, verbose=False)
     except:
         
         from auto_kappa.structure.crystal import get_primitive_structure_spglib
@@ -513,7 +491,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         primitive = prim_new.copy()
         
         try:
-            generate_mapping_s2p(ref_sc, unitcell)
+            generate_mapping_s2p(ref_sc, unitcell, verbose=False)
         except:
             #
             # _generate_consistent_structure(ref_sc, unitcell, sc_mat)
@@ -526,7 +504,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
             sys.exit()
             
         try:
-            generate_mapping_s2p(ref_sc, primitive)
+            generate_mapping_s2p(ref_sc, primitive, verbose=False)
         except:
             #
             # _generate_consistent_structure(unitcell, primitive, prim_mat)
@@ -541,7 +519,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
             sys.exit()
     
     try:
-        generate_mapping_s2p(ref_sc, unitcell)
+        generate_mapping_s2p(ref_sc, unitcell, verbose=False)
     except:
         #
         # TODO: find the compatible unitcell
@@ -558,14 +536,14 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     }
 
 # def _generate_consistent_structure(ref_sc, unit_given, sc_mat):
-    
-#     from phonopy.structure.cells import get_supercell
+
+#     from auto_kappa.structure.crystal import transform_prim2unit, get_supercell
     
 #     try:
 #         generate_mapping_s2p(ref_sc, unit_given)
 #         return unit_given
 #     except:
-#         # unit_check = convert_primitive_to_unitcell(prim_given, prim_mat)
+#         # unit_check = transform_prim2unit(prim_given, prim_mat)
         
 #         print(unit_given.cell.array)
 #         print(sc_mat)
@@ -589,38 +567,3 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
 #     exit()
 #     pass
     
-def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atoms:
-    """ Get the small cell (e.g. unitcell) from the supercell and the transformation matrix
-    from the small cell to the supercell.
-    
-    Args
-    ------
-    supercell : ase.Atoms
-        The supercell structure.
-    sc_mat : array-like
-        The transformation matrix from the small cell to the supercell with the Phonopy representation.
-    """
-    ## Lattice vectors of the supercell
-    L_s = supercell.cell.array  # shape (3, 3)
-    
-    ## Lattice vectors of the unitcell
-    L_u = (L_s.T @ np.linalg.inv(np.array(sc_mat))).T
-    
-    ## fractional coordinates of the unitcell
-    unitcell = ase.Atoms(
-        symbols=supercell.get_chemical_symbols(),
-        positions=supercell.get_positions(),
-        cell=L_u,
-        pbc=True
-    )
-    
-    ## Remove duplicate atoms (exclude repetitions within the supercell) 
-    dup_pairs = get_duplicate_atoms(unitcell, cutoff=1e-3)
-    
-    if len(dup_pairs) > 0:
-        to_delete = np.unique(dup_pairs[:, 1])
-        unitcell = unitcell.copy()
-        del unitcell[to_delete]
-    
-    return unitcell
-

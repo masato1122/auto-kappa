@@ -20,7 +20,7 @@ import ase.io
 # from auto_kappa.structure import change_structure_format
 from auto_kappa.structure.crystal import (
     get_primitive_structure_spglib, 
-    convert_primitive_to_unitcell
+    transform_prim2unit
 )
 from auto_kappa.structure.comparison import match_structures, cells_equal, atoms_equal
 
@@ -72,7 +72,7 @@ def get_previously_used_structure(base_dir, prim_matrix, orig_structures=None):
         structures_used['super'] = ase.io.read(file_used)
     
     structures_used['prim'] = get_primitive_structure_spglib(structures_used['super'])
-    structures_used['unit'] = convert_primitive_to_unitcell(structures_used['prim'], prim_matrix)
+    structures_used['unit'] = transform_prim2unit(structures_used['prim'], prim_matrix)
     
     ## Compare two structures using StructureMatcher
     type = 'unit'

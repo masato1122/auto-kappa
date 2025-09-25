@@ -18,14 +18,14 @@ import glob
 
 import ase.io
 from pymatgen.core.structure import Structure
-from phonopy.structure.cells import get_supercell
 
 from auto_kappa.structure.crystal import (
     get_primitive_structure_spglib,
     get_standardized_structure_spglib,
     change_structure_format,
     get_spg_number,
-    convert_primitive_to_unitcell
+    transform_prim2unit,
+    get_supercell
     )
 from auto_kappa.structure.two import adjust_vacuum_size
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
@@ -199,10 +199,7 @@ class ApdbVasp():
             unit = change_structure_format(unitcell , format=format)
             prim = get_primitive_structure_spglib(unitcell)
             prim = change_structure_format(prim, format=format)
-            sc = get_supercell(
-                    change_structure_format(unitcell, format='phonopy'),
-                    self.scell_matrix)
-            sc = change_structure_format(sc, format=format)
+            sc = get_supercell(unitcell, self.scell_matrix, format=format)
             
         structures = {"unit": unit, "prim": prim, "super": sc}
         return structures
@@ -360,7 +357,7 @@ class ApdbVasp():
             if os.path.isabs(filename):
                 filename = "./" + os.path.relpath(filename, os.getcwd())
             prim = ase.io.read(filename, format='vasp-xml')
-            unitcell = convert_primitive_to_unitcell(prim, self.primitive_matrix)
+            unitcell = transform_prim2unit(prim, self.primitive_matrix)
             self.update_structures(unitcell)
             msg = "\n Already finised with the old version (single full relaxation)"
             msg += "\n Read the structure from %s" % filename
@@ -541,7 +538,7 @@ class ApdbVasp():
             
             ### update structures
             if to_primitive:
-                unitcell = convert_primitive_to_unitcell(struct_ase, self.primitive_matrix, format='ase')
+                unitcell = transform_prim2unit(struct_ase, self.primitive_matrix, format='ase')
             else:
                 unitcell = struct_ase.copy()
             
@@ -738,7 +735,7 @@ class ApdbVasp():
             elif cell_type.startswith('prim'):
                 ### read primitive and transform it to the unit cell
                 new_prim = ase.io.read(vasprun, format='vasp-xml')
-                new_unitcell = convert_primitive_to_unitcell(new_prim, self.primitive_matrix)
+                new_unitcell = transform_prim2unit(new_prim, self.primitive_matrix)
             else:
                 msg = "\n Error: cell_type must be primitive or conventional/unitcell."
                 logger.info(msg)
@@ -834,12 +831,7 @@ def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True)
             if to_primitive:
                 opt_struct = change_structure_format(prim, format=format)
             else:
-                # unitcell = get_supercell(
-                #     change_structure_format(prim, format='phonopy'),
-                #     mat_p2u)
-                # unitcell = change_structure_format(unitcell, format=format)
-                
-                unitcell = convert_primitive_to_unitcell(prim, prim_matrix, format=format)
+                unitcell = transform_prim2unit(prim, prim_matrix, format=format)
                 opt_struct = unitcell
             
             return opt_struct

@@ -12,7 +12,7 @@
 # 
 import numpy as np
 import ase
-from ase.geometry import get_distances, find_mic
+from ase.geometry import get_distances
 from pymatgen.core import Structure
 from pymatgen.analysis.structure_matcher import StructureMatcher
 
@@ -157,7 +157,7 @@ def atoms_equal(atoms1, atoms2, tol=1e-5, ignore_order=False):
     
 #     return map_s2p, shift
 
-def generate_mapping_s2p(supercell, primitive, tol_zero=1e-3):
+def generate_mapping_s2p(supercell, primitive, tol_zero=1e-3, verbose=True):
     """ Generate mapping from supercell to primitive cell.
     This function was made based on the function in an ALAMODE tool.
     """
@@ -196,9 +196,10 @@ def generate_mapping_s2p(supercell, primitive, tol_zero=1e-3):
                 break
             
         if iloc == -1:
-            msg = f"\n min. diff. : {diff_min:.6f}"\
-                    "\n Warning : Equivalent atom not found. Check the relaxed structure."
-            logger.error(msg)
+            if verbose:
+                msg = f"\n min. diff. : {diff_min:.6f}"\
+                        "\n Warning : Equivalent atom not found. Check the relaxed structure."
+                logger.error(msg)
             raise RuntimeError("Equivalent atom not found")
         
         map_s2p[iat] = iloc

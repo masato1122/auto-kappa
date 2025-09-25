@@ -23,8 +23,7 @@ from pymatgen.io.vasp import Kpoints
 from auto_kappa.io.phonondb import Phonondb
 from auto_kappa import output_directories
 from auto_kappa.cui.suggest import klength2mesh
-from auto_kappa.structure import change_structure_format, get_transformation_matrix
-# from auto_kappa.structure.crystal import get_primitive_structure_spglib
+from auto_kappa.structure import get_transformation_matrix, get_supercell, transform_unit2prim
 
 import logging
 logger = logging.getLogger(__name__)
@@ -261,21 +260,14 @@ def _make_structures(unitcell, primitive_matrix=None, supercell_matrix=None):
     structures : dict of Structure obj
 
     """
-    from phonopy.structure.cells import get_supercell, get_primitive
-
-    unit_pp = change_structure_format(unitcell, format="phonopy")
-    
     structures = {}
-
     structures["unitcell"] = unitcell
     
     if primitive_matrix is not None:
-        structures["primitive"] = change_structure_format(
-                get_primitive(unit_pp, primitive_matrix), format='ase')
-    
+        structures['primitive'] = transform_unit2prim(unitcell, primitive_matrix, format='ase')
+        
     if supercell_matrix is not None:
-        structures["supercell"] = change_structure_format(
-                get_supercell(unit_pp, supercell_matrix), format='ase')
+        structures['supercell'] = get_supercell(unitcell, supercell_matrix, format='ase')
         
     #if supercell_matrix3 is not None:
     #    structures["supercell3"] = change_structure_format(

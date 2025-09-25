@@ -15,9 +15,8 @@ import numpy as np
 import ase
 import spglib
 from pymatgen.core.structure import Structure
-from phonopy.structure.cells import get_supercell, get_primitive
 
-from auto_kappa.structure import change_structure_format
+from auto_kappa.structure import change_structure_format, get_supercell, transform_unit2prim
 from auto_kappa.structure.supercell import estimate_supercell_matrix
 
 import logging
@@ -55,7 +54,7 @@ def suggest_structures_and_kmeshes(
     # if dim == 2:
     #     from auto_kappa.structure.two import set_out_of_plane_direction
     #     struct_ase = set_out_of_plane_direction(struct_ase)
-        
+    
     ### get the unitcell and the primitive matrix
     unitcell, prim_mat = get_unitcell_and_primitive_matrix(struct_ase)
     
@@ -69,23 +68,12 @@ def suggest_structures_and_kmeshes(
         logger.error("\n Error: dim must be 2 or 3.")
         sys.exit()
     
-    supercell = change_structure_format(
-            get_supercell(
-                change_structure_format(unitcell, format='phonopy'), 
-                sc_mat), 
-            format='ase')
+    ### get the supercell
+    supercell = get_supercell(unitcell, sc_mat, format='ase')
     
     ### get the primitive cell
-    primitive = get_primitive(
-                change_structure_format(unitcell, format='phonopy'),
-                prim_mat,
-                )
     try:
-        primitive = get_primitive(
-                change_structure_format(unitcell, format='phonopy'),
-                prim_mat,
-                )
-        primitive = change_structure_format(primitive, format='ase')
+        primitive = transform_unit2prim(unitcell, prim_mat, format='ase')
     except Exception:
         msg = " Error: the primitive cell could not be obtained."
         logger.error(msg)

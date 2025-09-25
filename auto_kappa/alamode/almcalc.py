@@ -16,15 +16,11 @@ import numpy as np
 import shutil
 import glob
 
-import ase
-import ase.io
-# from pymatgen.core import Structure
-from phonopy.structure.cells import get_primitive, get_supercell
-
 from auto_kappa import output_directories, output_files, default_amin_parameters
-from auto_kappa.structure import change_structure_format, match_structures
+from auto_kappa.structure import change_structure_format
 from auto_kappa.structure.crystal import (
-    get_formula, convert_primitive_to_unitcell, get_atomic_distance_list)
+    get_formula, transform_prim2unit, get_atomic_distance_list, 
+    get_supercell, transform_unit2prim)
 from auto_kappa.structure.comparison import generate_mapping_s2p
 from auto_kappa.alamode.runjob import run_alamode
 from auto_kappa.io.alm import AnphonInput
@@ -212,7 +208,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         #self._scell_matrix3 = scell_matrix3
         
         ### Make the unitcell from the primitive cell
-        unit_pp = convert_primitive_to_unitcell(
+        unit_pp = transform_prim2unit(
             prim_given, primitive_matrix, format='phonopy')
         
         ### set unitcell, primitive cell, and two kinds of supercells
@@ -397,18 +393,20 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         will be used.
         """
         ### unit cell
-        unit_pp = change_structure_format(unit_given, format="phonopy")
-        self._unitcell = change_structure_format(unit_pp, format=format)
+        self._unitcell = change_structure_format(unit_given, format=format)
         
         ### primitive cell
-        prim_pp = get_primitive(unit_pp, self.primitive_matrix)
-        self._primitive = change_structure_format(prim_pp, format=format)
+        ## old version
+        # prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        # self._primitive = change_structure_format(prim_pp, format=format)
+        #
+        ## new version
+        self._primitive = transform_unit2prim(unit_given, self.primitive_matrix, format=format)
         
         ### supercell for harmonic FCs
         if self.dim == 3:
             
-            sc = get_supercell(unit_pp, np.asarray(self.scell_matrix))
-            self._supercell = change_structure_format(sc, format=format)
+            self._supercell = get_supercell(unit_given, self.scell_matrix, format=format)
             
             ### check previously used supercell
             from auto_kappa.alamode.compat import check_previous_structures
@@ -422,7 +420,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                 self._supercell = structures['supercell']
             
         elif self.dim == 2:
-            sc = get_supercell(unit_pp, self.scell_matrix)
+            sc = get_supercell(unit_given, self.scell_matrix, format=format)
         else:
             msg = "\n Error: dim must be 2 or 3."
             logger.error(msg)
