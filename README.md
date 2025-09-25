@@ -1,9 +1,9 @@
-Auto-kappa
-============
+<!-- Auto-kappa
+============ -->
 
 <!-- ![logo](./docs/source/_static/ak_logo.png) -->
 <p align='left'>
-    <img src="./docs/source/_static/ak_logo.png" alt="logo" width="200"/>
+    <img src="./docs/source/_static/ak_logo.png" alt="logo" width="300"/>
 </p>
 
 Version 1.1.0
