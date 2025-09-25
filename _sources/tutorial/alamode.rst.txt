@@ -2,6 +2,11 @@
 Input Scripts for ALAMODE Calculations
 ========================================
 
+.. contents:: Contents
+   :local:
+   :depth: 1
+
+
 Preparation of ALAMODE input files
 ==================================
 
