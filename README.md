@@ -2,7 +2,7 @@
 ============ -->
 
 <p align='left'>
-    <img src="./docs/source/img/ak_logo.png" alt="logo" width="300"/>
+    <img src="./docs/source/img/ak_logo_trans.png" alt="logo" width="300"/>
 </p>
 
 Version 1.1.0
