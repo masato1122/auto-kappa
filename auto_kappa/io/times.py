@@ -117,39 +117,6 @@ def _get_kind_of_time(relative_path):
 
     return kind
 
-#def _get_time_outcar_in_tar(tar_file_path, file_to_read):
-#    """ Read and return the simulation time for VASP calculation compressed as a
-#    tar.gz file.
-#
-#    Args
-#    =====
-#    tar_file_path : string
-#        .tar.gz file name
-#    
-#    file_to_read : string
-#        relative path in .tar.gz directory, which may be "OUTCAR".
-#    """
-#    import tarfile
-#    
-#    line_searched = "Total CPU time used"
-#    
-#    with tarfile.open(tar_file_path, 'r:gz') as tar:
-#        try:
-#            file_info = tar.getmember(file_to_read)
-#            with tar.extractfile(file_info) as f:
-#                content = f.read().decode('utf-8')
-#                lines = content.split("\n")
-#                print(lines)
-#                for il, line in enumerate(lines, start=1):
-#                    if line_searched in line:
-#                        print(line)
-#        
-#        except KeyError:
-#            print(f"File '{file_to_read}' not found in the archive.")
-#    
-#    print(tar_file_path)
-#    exit()
-
 def _get_time_each(dir_name, dtype):
     """ Get simulation time for each directory
 

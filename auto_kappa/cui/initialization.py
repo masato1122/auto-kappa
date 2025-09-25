@@ -389,20 +389,26 @@ def get_required_parameters(
         kpts_prev = each_param.get('kpts', None)
         if kpts_prev is not None:
             if not np.allclose(kpts_calc_type[calc_type], kpts_prev):
-                msg  = f"\n Warning: previously used k-mesh for \"{calc_type}\" calculation "
-                msg += "is different from the suggested one."
-                msg += f"\n Suggested : {kpts_calc_type[calc_type]}"
-                msg += f"\n Previous  : {kpts_prev}"
-                logger.info(msg)
+                kpts_calc_type[calc_type] = kpts_prev
+                # msg  = f"\n Warning: previously used k-mesh for \"{calc_type}\" calculation "
+                # msg += "is different from the suggested one."
+                # msg += f"\n Suggested : {kpts_calc_type[calc_type]}"
+                # msg += f"\n Previous  : {kpts_prev}"
+                # logger.info(msg)
     
     ## Check transformation matrices
     for cell_type, mat1 in tmat_prev.items():
         if cell_type in trans_matrices:
-            if not np.allclose(trans_matrices[cell_type], mat1):
-                msg  = f"\n Error: transformation matrix for \"{cell_type}\" "
+            if not np.allclose(trans_matrices[cell_type], mat1, atol=0.01):
+                msg  = f"\n Caution: transformation matrix for \"{cell_type}\" "
                 msg += "is different from the previously used one."
-                msg += f"\n Suggested : {np.array(trans_matrices[cell_type]).flatten()}"
-                msg += f"\n Previous  : {mat1.flatten()}"
+                array1 = np.array(trans_matrices[cell_type]).flatten()
+                array2 = mat1.flatten()
+                names = ['Suggested', 'Previous']
+                for i, array in enumerate([array1, array2]):
+                    msg += f"\n {names[i]:<9s} : "
+                    for val in array:
+                        msg += f"{val:8.5f} "
                 logger.info(msg)
     
     ### Sort atoms in each structure according to the order of the supercell

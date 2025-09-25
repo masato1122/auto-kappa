@@ -57,7 +57,7 @@ html_theme_options = {
 html_static_path = ['_static']
 html_css_files = ['css/custom.css']
 html_favicon = '_static/favicon.ico'
-html_logo = '_static/ak_logo.png'
+html_logo = 'img/ak_logo.png'
 pygments_style = "sphinx"
 
 ## numbering
