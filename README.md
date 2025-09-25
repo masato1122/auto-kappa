@@ -21,8 +21,8 @@ Requirements
 
 ---
 
-\* Note: The force constant file format in Alamode 1.4 is incompatible with that of version 1.5.  
- For this reason, version 1.5 is recommended.
+\* Note: The force constant file format in Alamode 1.4 is incompatible with that of version 1.5. 
+For this reason, version 1.5 is recommended.
 
 Installation
 -------------
