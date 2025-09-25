@@ -1,6 +1,8 @@
 Auto-kappa
 ============
 
+![logo](../docs/source/_static/ak_logo.png)
+
 Version 1.1.0
 ---------------
 

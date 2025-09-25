@@ -6,14 +6,20 @@ sys.path.insert(0, os.path.abspath('..'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
-# -- Project information 
+# sys.path.insert(0, os.path.abspath('../auto_kappa'))
+# get version info
+from auto_kappa import __version__ as version
 
+version = str(version)
+release = version
+
+# -- Project information 
 project = 'auto-kappa'
 copyright = '2025, Masato Ohnishi'
 author = 'Masato Ohnishi'
 
 # The full version, including alpha/beta/rc tags
-release = 'Sept. 1st, 2025'
+# release = 'Sept. 1st, 2025'
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -44,9 +50,14 @@ exclude_patterns = []
 
 # -- Options for HTML output 
 html_theme = 'sphinx_rtd_theme'
+html_theme_options = {
+    'logo_only': True,
+}
+
 html_static_path = ['_static']
-html_style = 'css/custom.css'
+html_css_files = ['css/custom.css']
 html_favicon = '_static/favicon.ico'
+html_logo = '_static/ak_logo.png'
 pygments_style = "sphinx"
 
 ## numbering
@@ -55,7 +66,6 @@ math_numfig = True
 numfig_secnum_depth = 2
 math_eqref_format = "Eq.{number}"
 html_use_smartypants = False
-html_theme = 'sphinx_rtd_theme'
 
 ## Latex
 latex_engine = 'xelatex'
@@ -63,7 +73,9 @@ latex_elements = {
     'fontpkg': r'''
 ''',
     'preamble': r'''
-''',
+\usepackage{array}
+\renewcommand{\arraystretch}{1.2}
+'''
 }
 latex_show_urls = 'footnote'
 
@@ -75,3 +87,7 @@ latex_show_urls = 'footnote'
 #        external_links[i].setAttribute("rel", "noopener noreferrer");
 #    }
 #});
+
+def setup(app):
+    app.add_css_file('custom.css')
+

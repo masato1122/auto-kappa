@@ -13,7 +13,7 @@ import os
 import glob
 import numpy as np
 # from pymatgen.io.vasp.outputs import Vasprun
-from phonopy.interface.vasp import read_vasp
+# from phonopy.interface.vasp import read_vasp
 from pymatgen.io.vasp.inputs import Incar, Kpoints
 import ase.io
 
@@ -247,16 +247,16 @@ def wasfinished(directory, filename='vasprun.xml', tar=None):
                 return False
     return False
 
-def read_poscar(filename):
-    """ Read filename
-    filename : string, POSCAR filename
-    """
-    structure = None
-    try:
-        structure = read_vasp(filename)
-    except Exception:
-        logger.warning(f" Warning: cannot find {filename}")
-    return structure
+# def read_poscar(filename):
+#     """ Read filename
+#     filename : string, POSCAR filename
+#     """
+#     structure = None
+#     try:
+#         structure = read_vasp(filename)
+#     except Exception:
+#         logger.warning(f" Warning: cannot find {filename}")
+#     return structure
 
 def read_incar(filename):
     incar = None

@@ -2,6 +2,24 @@
 Parameters for auto-kappa
 ==========================
 
+.. contents:: Contents
+   :local:
+   :depth: 1
+   
+
+.. _sec_params_ak_recommendations:
+
+Recommendations for parameters
+================================
+
+.. csv-table:: Default and recommended parameters for VASP
+    :file: ./files/recommended_ak_params.csv
+    :header-rows: 1
+    :align: center
+    :width: 100%
+    :widths: 20 15 15 50
+
+
 .. _sec_params_ak_brief:
 
 Brief description
@@ -76,6 +94,7 @@ Others
 
 
 .. _sec_params_ak_detailed:
+
 
 Detailed description
 =====================

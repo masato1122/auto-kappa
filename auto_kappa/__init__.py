@@ -1,4 +1,4 @@
-
+from auto_kappa.version import __version__
 
 output_directories = {
         'relax': 'relax',

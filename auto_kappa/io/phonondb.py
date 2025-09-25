@@ -19,9 +19,10 @@ import yaml
 
 import ase.io
 from phonopy import Phonopy
+from phonopy.interface.vasp import read_vasp
 
 from auto_kappa.structure import change_structure_format
-from auto_kappa.io.vasp import read_poscar, read_kpoints
+from auto_kappa.io.vasp import read_kpoints
 
 class Phonondb:
     """ Read files in phonondb
@@ -100,13 +101,13 @@ class Phonondb:
     def unitcell(self):
         if self._unitcell is None:
             fn = self.directory + '/POSCAR-unitcell'
-            self._unitcell = read_poscar(fn)
+            self._unitcell = read_vasp(fn)
         return self._unitcell
     
     def get_unitcell(self, format='phonopy'):
         if self._unitcell is None:
             fn = self.directory + '/POSCAR-unitcell'
-            self._unitcell = read_poscar(fn)
+            self._unitcell = read_vasp(fn)
         return change_structure_format(self._unitcell, format=format)
     
     @property
@@ -142,7 +143,7 @@ class Phonondb:
     def get_kpoints(self, mode=None):
         """
         Return
-        -----------
+        -------
         kpoints : Kpoints obj for the given mode
         """
         key = 'KPOINTS-' + mode

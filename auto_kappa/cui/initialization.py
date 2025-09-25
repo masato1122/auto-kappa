@@ -427,18 +427,16 @@ def read_parameters_from_phonondb(dir_phdb, k_length):
     the k-meshes used for Phonondb basically will not be used for the
     automation calculation.
     
-    Example of the contents in Phonondb directory
-    ----------------------------------------------
-    >>> BORN       FORCE_SETS   INCAR-nac    KPOINTS-force  KPOINTS-relax
-    >>> phonon.yaml   POSCAR-unitcell        disp.yaml  INCAR-force
-    >>> INCAR-relax  KPOINTS-nac    PAW_dataset.txt  phonopy.conf
-    >>> POSCAR-unitcell.yaml
-
-    """
-    # msg = f"\n Read Phonondb data from "
-    # msg += f"\n {dir_phdb}"
-    # logger.info(msg)
+    Example
+    -------
     
+    The Phonondb data directory typically includes::
+    
+        BORN           FORCE_SETS       INCAR-nac       KPOINTS-force
+        KPOINTS-relax  phonon.yaml      POSCAR-unitcell disp.yaml
+        INCAR-force    INCAR-relax      KPOINTS-nac     PAW_dataset.txt
+        phonopy.conf   POSCAR-unitcell.yaml
+    """
     ### Read Phonondb directory
     unitcell, trans_matrices, _, nac = read_phonondb(dir_phdb)
     trans_matrices["unitcell"] = np.identity(3).astype(int)
