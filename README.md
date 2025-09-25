@@ -11,13 +11,18 @@ Requirements
 -------------
 
 * VASP >= 6.3.x
-* Alamode >= 1.4
-* anphon >= 1.9.9 for the four-phonon scattering
+* Alamode >= 1.4 (1.5 recommended) *
+* anphon >= 1.9.9 (required for four-phonon scattering)
 * Phonopy
 * ASE
 * Pymatgen
 * Spglib
 * Custodian
+
+---
+
+\* Note: The force constant file format in Alamode 1.4 is incompatible with that of version 1.5.  
+ For this reason, version 1.5 is recommended.
 
 Installation
 -------------
