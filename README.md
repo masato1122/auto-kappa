@@ -10,8 +10,11 @@ Auto-kappa is an automation framework for first-principles calculations of anhar
 Requirements
 -------------
 
+Users of auto-kappa need to install VASP and ALAMODE in advance,  
+while the required Python libraries are installed automatically along with auto-kappa.
+
 * VASP >= 6.3.x
-* Alamode >= 1.4 (1.5 recommended) *
+* ALAMODE >= 1.4 (1.5 recommended) *
 * [Optional] anphon >= 1.9.9 (required for four-phonon scattering)
 * Phonopy
 * ASE
@@ -21,7 +24,7 @@ Requirements
 
 ---
 
-\* Note: The force constant file format in Alamode 1.4 is incompatible with that of version 1.5. 
+\* Note: The force constant file format in ALAMODE 1.4 is incompatible with that of version 1.5. 
 Therfore, version 1.5 is recommended.
 
 Installation
