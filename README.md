@@ -10,7 +10,7 @@ Auto-kappa is an automation framework for first-principles calculations of anhar
 Requirements
 -------------
 
-Users of auto-kappa need to install VASP and ALAMODE in advance,  
+Users of auto-kappa need to install VASP and ALAMODE in advance, 
 while the required Python libraries are installed automatically along with auto-kappa.
 
 * VASP >= 6.3.x
