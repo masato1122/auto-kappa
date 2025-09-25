@@ -358,6 +358,7 @@ def main():
                 four=ak_params['four'],
                 frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
                 pes=ak_params['pes'],
+                use_mlips=ak_params['use_mlips'],
                 )
     
     ### plot and print calculation durations
