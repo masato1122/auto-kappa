@@ -159,10 +159,11 @@ different cell types while the default types are the conventional and
 primitive cells for the relaxation and NAC, respectively. Therefore,
 the k-meshes used for Phonondb basically will not be used for the
 automation calculation.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">BORN</span>       <span class="n">FORCE_SETS</span>   <span class="n">INCAR</span><span class="o">-</span><span class="n">nac</span>    <span class="n">KPOINTS</span><span class="o">-</span><span class="n">force</span>  <span class="n">KPOINTS</span><span class="o">-</span><span class="n">relax</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">phonon</span><span class="o">.</span><span class="n">yaml</span>   <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>        <span class="n">disp</span><span class="o">.</span><span class="n">yaml</span>  <span class="n">INCAR</span><span class="o">-</span><span class="n">force</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">INCAR</span><span class="o">-</span><span class="n">relax</span>  <span class="n">KPOINTS</span><span class="o">-</span><span class="n">nac</span>    <span class="n">PAW_dataset</span><span class="o">.</span><span class="n">txt</span>  <span class="n">phonopy</span><span class="o">.</span><span class="n">conf</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span><span class="o">.</span><span class="n">yaml</span>
+<p>The directory typically includes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BORN</span>           <span class="n">FORCE_SETS</span>       <span class="n">INCAR</span><span class="o">-</span><span class="n">nac</span>       <span class="n">KPOINTS</span><span class="o">-</span><span class="n">force</span>
+<span class="n">KPOINTS</span><span class="o">-</span><span class="n">relax</span>  <span class="n">phonon</span><span class="o">.</span><span class="n">yaml</span>      <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="n">disp</span><span class="o">.</span><span class="n">yaml</span>
+<span class="n">INCAR</span><span class="o">-</span><span class="n">force</span>    <span class="n">INCAR</span><span class="o">-</span><span class="n">relax</span>      <span class="n">KPOINTS</span><span class="o">-</span><span class="n">nac</span>     <span class="n">PAW_dataset</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">phonopy</span><span class="o">.</span><span class="n">conf</span>   <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span><span class="o">.</span><span class="n">yaml</span>
 </pre></div>
 </div>
 </div>
