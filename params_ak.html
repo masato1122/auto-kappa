@@ -100,16 +100,58 @@
 <nav class="contents local" id="table-of-contents">
 <p class="topic-title">Table of Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#recommendations-for-parameters" id="id1">Recommendations for parameters</a></p></li>
-<li><p><a class="reference internal" href="#brief-description" id="id2">Brief description</a></p></li>
-<li><p><a class="reference internal" href="#detailed-description" id="id3">Detailed description</a></p></li>
+<li><p><a class="reference internal" href="#recommendations-for-parameters" id="id2">Recommendations for parameters</a></p></li>
+<li><p><a class="reference internal" href="#brief-description" id="id3">Brief description</a></p></li>
+<li><p><a class="reference internal" href="#detailed-description" id="id4">Detailed description</a></p></li>
 </ul>
 </nav>
 <section id="recommendations-for-parameters">
-<span id="sec-params-ak-recommendations"></span><h2><a class="toc-backref" href="#id1" role="doc-backlink"><span class="section-number">3.1. </span>Recommendations for parameters</a><a class="headerlink" href="#recommendations-for-parameters" title="Link to this heading"></a></h2>
+<span id="sec-params-ak-recommendations"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink"><span class="section-number">3.1. </span>Recommendations for parameters</a><a class="headerlink" href="#recommendations-for-parameters" title="Link to this heading"></a></h2>
+<table class="docutils align-center" id="id1">
+<caption><span class="caption-number">Table 3.1.1 </span><span class="caption-text">Default parameters for VASP</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option name</p></th>
+<th class="head"><p>High-throughput (default)</p></th>
+<th class="head"><p>Accurate</p></th>
+<th class="head"><p>Note</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>k_length</p></td>
+<td><p>20</p></td>
+<td><p>≈50</p></td>
+<td><p>k-mesh density for VASP</p></td>
+</tr>
+<tr class="row-odd"><td><p>nsw_params</p></td>
+<td><p>100</p></td>
+<td><p>≥100</p></td>
+<td><p>NSW parameter for the relaxation calculation</p></td>
+</tr>
+<tr class="row-even"><td><p>volume_relaxation</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>Relaxation calculation with the Birch-Murnaghan equation of sate</p></td>
+</tr>
+<tr class="row-odd"><td><p>max_natoms</p></td>
+<td><p>150</p></td>
+<td><p>≥200</p></td>
+<td><p>Number of atoms in a supercell</p></td>
+</tr>
+<tr class="row-even"><td><p>cutoff_cubic</p></td>
+<td><p>4.3</p></td>
+<td><p>≥4.3</p></td>
+<td><p>Cutoff distance for cubic FCs (Angstrom)</p></td>
+</tr>
+<tr class="row-odd"><td><p>min_nearest</p></td>
+<td><p>3</p></td>
+<td><p>≥5</p></td>
+<td><p>Cutoff distance for cubic FCs</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="brief-description">
-<span id="sec-params-ak-brief"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink"><span class="section-number">3.2. </span>Brief description</a><a class="headerlink" href="#brief-description" title="Link to this heading"></a></h2>
+<span id="sec-params-ak-brief"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink"><span class="section-number">3.2. </span>Brief description</a><a class="headerlink" href="#brief-description" title="Link to this heading"></a></h2>
 <p>Please see <a class="reference internal" href="#sec-params-ak-detailed"><span class="std std-ref">Detailed description</span></a> for details of each parameter.</p>
 <section id="input-output">
 <h3>Input/Output<a class="headerlink" href="#input-output" title="Link to this heading"></a></h3>
@@ -177,7 +219,7 @@ but the force calculations are not performed. You can perform the force calculat
 </section>
 </section>
 <section id="detailed-description">
-<span id="sec-params-ak-detailed"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink"><span class="section-number">3.3. </span>Detailed description</a><a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
+<span id="sec-params-ak-detailed"></span><h2><a class="toc-backref" href="#id4" role="doc-backlink"><span class="section-number">3.3. </span>Detailed description</a><a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
 <p><p>Parser for akrun command</p>
 </p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">auto</span><span class="o">-</span><span class="n">kappa</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="n">DIRECTORY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">file_structure</span> <span class="n">FILE_STRUCTURE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">outdir</span> <span class="n">OUTDIR</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NPROCS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mpirun</span> <span class="n">MPIRUN</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">command_vasp</span> <span class="n">COMMAND_VASP</span><span class="p">]</span>
