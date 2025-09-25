@@ -1,7 +1,10 @@
 Auto-kappa
 ============
 
-![logo](./docs/source/_static/ak_logo.png)
+<!-- ![logo](./docs/source/_static/ak_logo.png) -->
+<p align='left'>
+    <img src="./docs/source/_static/ak_logo.png" alt="logo" width="200"/>
+</p>
 
 Version 1.1.0
 ---------------
