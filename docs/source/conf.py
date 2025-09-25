@@ -9,8 +9,8 @@ mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 # -- Project information 
 
 project = 'auto-kappa'
-copyright = '2025, M. Ohnishi'
-author = 'M. Ohnishi'
+copyright = '2025, Masato Ohnishi'
+author = 'Masato Ohnishi'
 
 # The full version, including alpha/beta/rc tags
 release = 'Sept. 1st, 2025'
@@ -46,6 +46,7 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 html_style = 'css/custom.css'
+html_favicon = '_static/favicon.ico'
 pygments_style = "sphinx"
 
 ## numbering

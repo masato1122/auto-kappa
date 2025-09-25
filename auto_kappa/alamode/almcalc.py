@@ -430,7 +430,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
         
         generate_mapping_s2p(self.supercell, self.primitive)
         generate_mapping_s2p(self.supercell, self.unitcell)
-    
+
     @property
     def magnitude(self):
         return self._magnitude

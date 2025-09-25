@@ -531,9 +531,12 @@ class ApdbVasp():
             except Exception:
                 pass
             
-            
+            ### output optimized structure file (POSCAR.opt)
             outfile = outdir + "/POSCAR.opt"
-            struct_ase = change_structure_format(struct_opt, format='ase')
+            if not isinstance(struct_opt, ase.Atoms):
+                struct_ase = change_structure_format(struct_opt, format='ase')
+            else:
+                struct_ase = struct_opt.copy()
             ase.io.write(outfile, struct_ase, format='vasp', direct=True, vasp5=True, sort=False)
             
             ### update structures

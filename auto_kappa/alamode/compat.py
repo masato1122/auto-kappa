@@ -24,9 +24,8 @@ from ase.geometry import get_duplicate_atoms
 
 from auto_kappa.io import AlmInput
 from auto_kappa.io.born import BORNINFO, read_born_info
-from auto_kappa.structure import change_structure_format
-# from auto_kappa.structure.two import get_normal_index
-from auto_kappa.structure.comparison import match_structures
+from auto_kappa.structure.crystal import change_structure_format, convert_primitive_to_unitcell
+from auto_kappa.structure.comparison import generate_mapping_s2p, match_structures, get_structure_matcher
 
 import logging
 logger = logging.getLogger(__name__)
@@ -457,7 +456,6 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     sc_mat : array-like
         The transformation matrix from the primitive cell to the supercell with the Phonopy representation.
     """
-    from auto_kappa.structure.comparison import generate_mapping_s2p
     from auto_kappa.io.fcs import FCSxml
     
     ref_sc = None
@@ -508,6 +506,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
     except:
         
         from auto_kappa.structure.crystal import get_primitive_structure_spglib
+        
         unit_new = inverse_transformation(ref_sc, sc_mat)
         prim_new = get_primitive_structure_spglib(unit_new)
         unitcell = unit_new.copy()
@@ -515,12 +514,28 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         
         try:
             generate_mapping_s2p(ref_sc, unitcell)
+        except:
+            #
+            # _generate_consistent_structure(ref_sc, unitcell, sc_mat)
+            #
+            # TODO: find the compatible unitcell
+            #
+            msg = "\n Error(1): The unitcell does not match the supercell."
+            msg += "\n Please report the bug to the developer."
+            logger.error(msg)
+            sys.exit()
+            
+        try:
             generate_mapping_s2p(ref_sc, primitive)
         except:
             #
+            # _generate_consistent_structure(unitcell, primitive, prim_mat)
+            #
+            # _regenerate_primitive_from_unitcell(unitcell)
+            #
             # TODO: find the compatible primitive cell
             #
-            msg = "\n Error(1): The primitive cell does not match the supercell."
+            msg = "\n Error(2): The primitive cell does not match the supercell."
             msg += "\n Please report the bug to the developer."
             logger.error(msg)
             sys.exit()
@@ -531,7 +546,7 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         #
         # TODO: find the compatible unitcell
         #
-        msg = "\n Error(2): The unitcell cell does not match the supercell."
+        msg = "\n Error(3): The unitcell cell does not match the supercell."
         msg += "\n Please report the bug to the developer."
         logger.error(msg)
         sys.exit()
@@ -542,6 +557,38 @@ def check_previous_structures(outdirs, primitive, unitcell, prim_mat=None, sc_ma
         'supercell': ref_sc
     }
 
+# def _generate_consistent_structure(ref_sc, unit_given, sc_mat):
+    
+#     from phonopy.structure.cells import get_supercell
+    
+#     try:
+#         generate_mapping_s2p(ref_sc, unit_given)
+#         return unit_given
+#     except:
+#         # unit_check = convert_primitive_to_unitcell(prim_given, prim_mat)
+        
+#         print(unit_given.cell.array)
+#         print(sc_mat)
+#         exit()
+        
+#         sc_check_pp = get_supercell(change_structure_format(unit_given, format='phonopy'), sc_mat)
+#         sc_check_pmg = change_structure_format(sc_check_pp, format='pmg')
+#         sc_check_ase = change_structure_format(sc_check_pmg, format='ase')
+        
+#         matcher = get_structure_matcher()
+#         transform = matcher.get_transformation(
+#             change_structure_format(ref_sc, format='pmg'), sc_check_pmg)
+        
+        
+#         print(ref_sc.cell.array)
+#         print(sc_check_pmg.lattice.matrix)
+#         print(transform)
+#         # tmat_pmg, frac_tvec_pmg, idx_map = transform
+    
+#     print("<<<<<<<<<<<<<")
+#     exit()
+#     pass
+    
 def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atoms:
     """ Get the small cell (e.g. unitcell) from the supercell and the transformation matrix
     from the small cell to the supercell.
@@ -557,7 +604,7 @@ def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atom
     L_s = supercell.cell.array  # shape (3, 3)
     
     ## Lattice vectors of the unitcell
-    L_u = L_s @ np.linalg.inv(np.array(sc_mat).T)
+    L_u = (L_s.T @ np.linalg.inv(np.array(sc_mat))).T
     
     ## fractional coordinates of the unitcell
     unitcell = ase.Atoms(
@@ -576,3 +623,4 @@ def inverse_transformation(supercell: ase.Atoms, sc_mat: np.ndarray) -> ase.Atom
         del unitcell[to_delete]
     
     return unitcell
+

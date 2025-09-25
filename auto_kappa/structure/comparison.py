@@ -21,7 +21,7 @@ from auto_kappa.structure import change_structure_format, get_primitive_structur
 import logging
 logger = logging.getLogger(__name__)
 
-def get_structure_matcher(atol=1e-5, ltol=1e-5, stol=1e-5, angle_tol=0.1, 
+def get_structure_matcher(ltol=1e-5, stol=1e-5, angle_tol=0.1, 
                           scale=False, primitive_cell=False):
     """ Get a StructureMatcher object with the specified tolerances. """
     return StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol, 
@@ -48,13 +48,14 @@ def match_structures(struct1, struct2, atol=1e-5, ltol=1e-5, stol=1e-5, angle_to
         return False
     
     if ignore_order:
-        matcher = get_structure_matcher(
-            atol=atol, ltol=ltol, stol=stol, angle_tol=angle_tol, 
+        matcher1 = get_structure_matcher(
+            ltol=ltol, stol=stol, angle_tol=angle_tol, 
             scale=False, primitive_cell=primitive_cell)
-        match = matcher.fit(struct1, struct2)
-        if match == False and verbose:
+        match1 = matcher1.fit(struct1, struct2)
+        
+        if match1 == False and verbose:
             logger.info("\n Atomic order mismatch")
-        return match
+        return match1
     else:
         ## Check cell size
         if not np.allclose(struct1.lattice.matrix, struct2.lattice.matrix, atol=atol):
