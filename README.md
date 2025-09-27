@@ -3,7 +3,7 @@
 
 <p align='left'>
   <a href="https://masato1122.github.io/auto-kappa/" target="_blank">
-    <img src="./docs/source/img/ak_logo_trans.png" alt="logo" width="200"/>
+    <img src="./docs/source/img/ak_logo_trans.png" alt="logo" width="300"/>
   </a>
 </p>
 
