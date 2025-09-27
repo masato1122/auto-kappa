@@ -50,7 +50,7 @@ exclude_patterns = []
 # -- Options for HTML output 
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    'logo_only': True,
+    'logo_only': False,
 }
 
 html_static_path = ['_static']
