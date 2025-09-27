@@ -27,7 +27,7 @@ def get_structure_matcher(ltol=1e-5, stol=1e-5, angle_tol=0.1,
     return StructureMatcher(ltol=ltol, stol=stol, angle_tol=angle_tol, 
                             scale=scale, primitive_cell=primitive_cell)
 
-def match_structures(struct1, struct2, atol=1e-5, ltol=1e-5, stol=1e-5, angle_tol=0.1, 
+def match_structures(struct1, struct2, atol=1e-3, ltol=1e-4, stol=1e-4, angle_tol=0.1, 
                      ignore_order=False, primitive_cell=False, verbose=True):
     """ Check if two structures are the same using pymatgen's StructureMatcher.
     """
@@ -75,9 +75,8 @@ def match_structures(struct1, struct2, atol=1e-5, ltol=1e-5, stol=1e-5, angle_to
         disp_max = np.max(np.diag(D_len))
         if disp_max > atol:
             if verbose:
-                logger.info("\n Cartesian coordinates mismatch")
+                logger.info("\n Cartesian coordinates mismatch (%.3e)" % disp_max)
             return False
-        
         return True
 
 def cells_equal(cell1, cell2, rtol=1e-5):
@@ -109,11 +108,17 @@ def atoms_equal(atoms1, atoms2, tol=1e-5, ignore_order=False):
         d1 = get_sorted_data(atoms1)
         d2 = get_sorted_data(atoms2)
     else:
-        d1 = list(zip(atoms1.get_chemical_symbols(), atoms1.get_positions()))
-        d2 = list(zip(atoms2.get_chemical_symbols(), atoms2.get_positions()))
+        d1 = list(zip(atoms1.get_chemical_symbols(), atoms1.get_scaled_positions()))
+        d2 = list(zip(atoms2.get_chemical_symbols(), atoms2.get_scaled_positions()))
     
     for (s1, p1), (s2, p2) in zip(d1, d2):
-        if s1 != s2 or not np.allclose(p1, p2, atol=tol):
+        if s1 != s2:
+            return False
+        diff = np.abs(p1 - p2)
+        diff = diff - np.floor(diff + 0.5) # map to [-0.5, 0.5)
+        distances = np.linalg.norm(diff)
+        dmax = np.max(np.abs(distances))
+        if dmax > tol:
             return False
     
     return True

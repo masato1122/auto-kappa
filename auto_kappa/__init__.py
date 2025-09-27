@@ -1,4 +1,5 @@
 from auto_kappa.version import __version__
+from auto_kappa.cui.ak_log import set_logging
 
 output_directories = {
         'relax': 'relax',

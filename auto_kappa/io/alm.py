@@ -18,6 +18,7 @@ import math
 import numpy as np
 
 from pymatgen.io.vasp import Poscar
+import ase
 from ase.data import atomic_masses as atomic_masses_ase
 from ase.data import atomic_numbers
 
@@ -72,7 +73,7 @@ class AlmInput(AlamodeInput):
     https://alamode.readthedocs.io/en/latest/almdir/inputalm.html
     
     Reference
-    -------------
+    ----------
     pymatgen.io.shengbte.Control
     """
     required_params = {
@@ -174,6 +175,32 @@ class AlmInput(AlamodeInput):
     def get_primitive(self):
         return get_primitive_structure_spglib(self.structure)
     
+    @property
+    def structure(self):
+        
+        try:
+            if self._structure is not None:
+                return self._structure
+        except:
+            pass
+        
+        try:
+            array = self['position']
+            element_index = [int(row[0]) for row in array]
+            positions = np.array([row[1:4] for row in array])
+            kd = self['kd']
+            cell = self['cell'] / AToBohr
+            symbols = [kd[i-1] for i in element_index]
+            self._structure = ase.Atoms(
+                symbols=symbols,
+                scaled_positions=positions,
+                cell=cell,
+                pbc=True
+            )
+            return self._structure
+        except:
+            return None
+    
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
         """ Make ALM input parameters from a structure file
@@ -271,7 +298,7 @@ class AlmInput(AlamodeInput):
         if mode == 'optimize':
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
-
+    
     def to_file(self, filename: str = None, version=None, verbose=None):
         """ Make ALM input file
         Args

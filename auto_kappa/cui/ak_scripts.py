@@ -92,7 +92,7 @@ def main():
     ak_log.start_autokappa()
     #ak_log.print_machine_info()
     
-    ### Auto-kappa parmaeters
+    ### Auto-kappa parameters
     from auto_kappa.cui.compat import check_ak_options, parse_vasp_params
     ak_params = vars(options)
     outfile = ak_params['outdir'] + "/parameters.json"

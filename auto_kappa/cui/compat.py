@@ -303,7 +303,7 @@ def _check_previous_structures(base_dir):
                 msg = f" - %s and %s" % (structure_files[key1], structure_files[key2])
                 logger.info(msg)
 
-def _check_previous_parameters(given_params, prev_params, file_prev=None):
+def _check_previous_parameters(given_params, prev_params, file_prev=None, rtol=1e-4):
     """ Check if the current parameters match the previous ones.
     """
     columns_must_be_same = [
@@ -330,7 +330,15 @@ def _check_previous_parameters(given_params, prev_params, file_prev=None):
             if len(dirs) == 0:
                 continue
         
-        if given_params[key] != prev_params[key]:
+        match = True
+        if isinstance(given_params[key], float):
+            if not np.isclose(given_params[key], prev_params[key], rtol=rtol):
+                match = False
+        else:
+            if given_params[key] != prev_params[key]:
+                match = False
+        
+        if not match:
             if count == 0:
                 if file_prev.startswith("/"):
                     file_prev = "./" + os.path.relpath(file_prev)
@@ -346,4 +354,3 @@ def _check_previous_parameters(given_params, prev_params, file_prev=None):
     
     if count != 0:
         logger.info("")
-

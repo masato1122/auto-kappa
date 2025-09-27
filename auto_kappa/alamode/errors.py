@@ -211,7 +211,7 @@ def _compress_cubic_fcs(dir_base):
         
         dir_name = output_directories["cube"][key]
         
-        if key in ["suggest", "lasso"]:
+        if key in ["suggest", "lasso", "gruneisen"]:
             files_disp.append(dir_name)
         
         elif key in ["kappa_fd", "kappa_lasso"]:

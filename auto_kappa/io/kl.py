@@ -44,8 +44,20 @@ class KappaShare:
             return None
 
 class Kboth(KappaShare):
-    
     def __init__(self, file_kp, file_kc):
+        """ Class to handle both kp and kc data obtained using ALAMODE.
+        
+        How to use
+        -----------
+        >>> file_kp = "./mp-149/cube/kappa_14x14x14/Si.kl"
+        >>> file_kc = "./mp-149/cube/kappa_14x14x14/Si.kl_coherent"
+        >>> kboth = Kboth(file_kp, file_kc)
+        >>> kboth.get_kappa(300)
+        >>> kboth.kp.data
+        >>> kboth.kc.data
+        >>> kboth.plot(ax)
+        
+        """
         self.file_kp = file_kp
         self.file_kc = file_kc
         self.kp = KL(file_kp)
@@ -131,6 +143,18 @@ class Kboth(KappaShare):
         
 class KL(KappaShare):
     def __init__(self, filename):
+        """ Class to handle both kp or kc data obtained using ALAMODE.
+        
+        How to use
+        -----------
+        >>> file_kp = "./mp-149/cube/kappa_14x14x14/Si.kl"
+        >>> kl = KL(file_kp)
+        >>> kl.get_kappa(300)
+        >>> kl.data
+        >>> kl.data
+        >>> kl.plot(ax)
+        
+        """
         self.filename = filename
         self.suffix = filename.split("/")[-1].split(".")[-1]
         self.data = read_kl_file(filename)

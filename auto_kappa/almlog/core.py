@@ -10,11 +10,13 @@
 # 
 import os
 import numpy as np
-from itertools import combinations
 from datetime import datetime
 
 from auto_kappa.almlog.utils import parse_data_line, replace_symbols_to_blank
 from auto_kappa.almlog.variables import read_variables
+
+import logging
+logger = logging.getLogger(__name__)
 
 class ALMLOG():
     def __init__(self, filename=None):
@@ -23,6 +25,19 @@ class ALMLOG():
         
         if os.path.exists(self.filename):
             self._info = read_alamode_log(self.filename)
+    
+    @property
+    def sections(self):
+        try:
+            return list(self._info.keys())
+        except:
+            return None
+    
+    def __getitem__(self, key):
+        if key in self._info:
+            return self._info[key]
+        else:
+            return None
     
     #######################
     ## Variables section ##
@@ -75,6 +90,9 @@ class ALMLOG():
                 return self._info['structure']['primitive']
         return None
     
+    # def get_structure(self):
+        
+    
     # @property
     # def variables(self):
     #     if self._vars is None:
@@ -126,8 +144,11 @@ def read_alamode_log(filename):
         title = "Phonon frequencies below"
         if line.lower().startswith(title.lower()):
             from auto_kappa.almlog.frequencies import read_frequencies
-            log_info['frequencies'] = read_frequencies(lines)
-            
+            try:
+                log_info['frequencies'] = read_frequencies(lines)
+            except Exception as e:
+                logger.info(f"Warning: Failed to read frequencies section: {e}")
+                log_info['frequencies'] = None
     
     ## Duration [seconds]
     if 'start_time' in log_info and 'finish_time' in log_info:
