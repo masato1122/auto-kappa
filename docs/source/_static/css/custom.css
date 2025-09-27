@@ -7,14 +7,52 @@ code.literal {
 }
 */
 
+/* hide text title */
+/* .project { 
+  display: none;
+} */
+
+/* display image as background in logo area */
+.logo a {
+  display: block;
+  /* width: 200px; */
+  /* height: 60px; */
+  width: 100%;
+  background: url('_static/ak_logo.png') no-repeat left center;
+  background-size: contain;
+  text-indent: -9999px;
+}
+
+div.document .logo,       /* logo */
+div.document .project,    /* project name (title) */
+div.related,              /* upper navigation (depends on theme) */
+header,                   /* for some themes */
+div.header {
+    background-color: white !important;
+    /* background-color: blue !important; */
+}
+
 .wy-nav-top {
+    /* background: white; */
     background: #154360;
+    /* background-color: #F8F8F8; */
+    color: black;
     /*#E5FFF3*/
 }
 
+.wy-nav-content {
+    max-width: 900px;
+    margin-left: 0;
+    margin-right: auto;
+}
 
 .wy-side-nav-search {
     background-color: #154360;
+    /* background-color: #F8F8F8; */
+    color: white;
 }
 
-
+table.docutils td {
+  white-space: normal !important;
+  word-break: break-word;
+}

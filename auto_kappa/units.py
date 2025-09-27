@@ -12,20 +12,41 @@
 import math
 
 pi = math.pi
-clight = 2.99792458e8      # m/s
-kb = 1.38064852e-23        # m2*kg/(s2K)
-plank = 6.62607004e-34     # m2*kg/s
+
+## Old version of auto-kappa
+##clight = 2.99792458e8      # m/s
+##kb = 1.38064852e-23        # m2*kg/(s2K)
+##plank = 6.62607004e-34     # m2*kg/s
+##AMU = 1.660539040e-27      # kg
+##AToBohr = 1.8897259886       # Bohr/A
+##BohrToA = (1./AToBohr)     # A/Bohr
+
+## Phonopy (2.43.1)
+#kb = 1.3806504e-23
+#plank = 4.13566733e-15   # eV*s
+#Nav = 6.02214179e23
+#clight = 299792458       # m/s
+#AMU = 1.6605402e-27      # kg
+#EvToJ = 1.60217733e-19   # J/eV
+#Me = 9.10938215e-31      # kg
+
+## Same as ALAMODE definition
+clight = 299792458          # m/s
+kb     = 1.3806488e-23      # J/K
+plank  = 6.62606896e-34     # m2*kg/s
+AMU    = 1.660538782e-27    # kg
+BohrToA = 0.52917721092      # A/Bohr
+AToBohr = (1./BohrToA)       # Bohr/A
+
+#
 hbar = plank/2./pi         # m2*kg/s
 eps0 = 8.85418782e-12      # m-3kg-1s4A2, vacuum permittivity
-AMU = 1.660539040e-27      # kg
 Nav = 6.02214086e23        # mol^-1
 
 ##
 DToCM = (1e-21/clight) # C*m/Debye
 
 ## Distance [M]
-AToBohr = 1.8897259886       # Bohr/A
-BohrToA = (1./AToBohr)       # A/Bohr
 BohrToM = BohrToA * 1e-10    # m/Bohr
 
 ## Energy

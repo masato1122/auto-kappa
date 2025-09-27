@@ -4,34 +4,19 @@ auto\_kappa.structure package
 Submodules
 ----------
 
-auto\_kappa.structure.cells module
-----------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: auto_kappa.structure.cells
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-auto\_kappa.structure.crystal module
-------------------------------------
-
-.. automodule:: auto_kappa.structure.crystal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-auto\_kappa.structure.supercell module
---------------------------------------
-
-.. automodule:: auto_kappa.structure.supercell
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   auto_kappa.structure.comparison
+   auto_kappa.structure.crystal
+   auto_kappa.structure.supercell
+   auto_kappa.structure.two
+   auto_kappa.structure.utils
 
 Module contents
 ---------------
 
 .. automodule:: auto_kappa.structure
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

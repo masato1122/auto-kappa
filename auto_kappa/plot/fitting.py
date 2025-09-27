@@ -11,23 +11,20 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import os
-import sys
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from .initialize import (set_matplot, set_axis, set_legend)
-import glob
+from auto_kappa.plot import set_matplot, set_axis
 
 import logging
 logger = logging.getLogger(__name__)
 
-def plot_fitting_result(bm, figname='fig.png', color='black',
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.6, lw=0.5, ms=2.3):
-    
-    set_matplot(fontsize=fontsize)
-    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+def plot_bm_result(
+        bm, ax=None, dim=3, modulus_info=None, figname=None, color='black',
+        dpi=600, fontsize=7, fig_width=2.5, aspect=0.7, lw=0.5, ms=2.3,
+        xlabel='Volume (${\\rm \\AA^3}$)', ylabel='Energy (eV)'
+        ):
     
     ### check fitting mode
     from pymatgen.analysis.eos import BirchMurnaghan
@@ -36,10 +33,14 @@ def plot_fitting_result(bm, figname='fig.png', color='black',
         logger.warning(msg)
         return None
     
-    ax = plt.subplot()
-    ax.set_xlabel('Volume (${\\rm \\AA^3}$)')
-    ax.set_ylabel('Energy (eV)')
+    if ax is None:
+        set_matplot(fontsize=fontsize)
+        fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+        ax = plt.subplot()
     
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
     ### plot original data
     xdat = bm.volumes
     ydat = bm.energies
@@ -62,17 +63,21 @@ def plot_fitting_result(bm, figname='fig.png', color='black',
     ax.set_ylim(ymax=ymax)
     
     ### show text
-    text = "Minimum energy = %.2f eV" % (bm.e0)
-    text += "\nMinimum or reference volume = %.2f eV" % (bm.v0)
-    text += "\nBulk modulus = %.2f ${\\rm eV/\\AA^3}$ GPa" % (bm.b0_GPa.real)
-    text += "\nDerivative of bulk modulus wrt pressure = %.2f" % (bm.b1)
-    ax.text(0.03, 0.97, text, fontsize=4, transform=ax.transAxes,
-            horizontalalignment="left", verticalalignment="top",
-            bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=0.0))
+    text = "Min. energy = %.2f eV" % (bm.e0)
+    text += "\nOpt. volume = %.2f ${\\rm \\AA^3}$" % (bm.v0)
+    if modulus_info is not None:
+        text += "\nBulk modulus = %.2f %s" % (modulus_info['value'], modulus_info['unit'])
+        if dim == 2:
+            text += "\nThickness = %.2f ${\\rm \\AA}$" % (modulus_info['thickness'])
+        text += "\nDerivative of bulk modulus wrt pressure = %.2f" % (bm.b1)
     
-    set_axis(ax)
-    fig.savefig(figname, dpi=dpi, bbox_inches='tight')
-    msg = " Output %s" % figname
-    logger.info(msg)
-    return fig
-
+    ax.text(0.03, 0.95, text, fontsize=4, transform=ax.transAxes,
+            horizontalalignment="left", verticalalignment="top",
+            bbox=dict(facecolor='white', edgecolor='none', alpha=0.8, pad=0.0))
+    
+    if ax is None and figname is not None:
+        set_axis(ax)
+        fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+        msg = " Output %s" % figname
+        logger.info(msg)
+        return fig

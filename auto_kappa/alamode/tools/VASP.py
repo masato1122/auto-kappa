@@ -67,7 +67,7 @@ class VaspParser(object):
         """ set initial structure 
         This module is added to the script in Alamode developped by T. Tadano.
         https://github.com/ttadano/alamode
-
+        
         Args
         ------
         structure : ASE Atoms object

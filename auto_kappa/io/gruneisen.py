@@ -1,0 +1,237 @@
+# 
+# gruneisen.py
+# 
+# Created on August 01, 2025
+# Copyright (c) 2025 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+# 
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+from auto_kappa.plot import set_axis, set_legend
+from auto_kappa.io.band import Band
+
+import logging
+logger = logging.getLogger(__name__)
+
+class GruAll:
+    """ Class to read and handle Gruneisen parameters from a .gru_all file
+    which was calculated with ``kpmode = 1`` in Alamode.
+    
+    How to use
+    ----------
+    >>> from auto_kappa.plot import make_figure
+    >>> from auto_kappa.io.gruneisen import GruAll
+    
+    >>> fig_width = 2.5; aspect = 0.9
+    >>> figname = 'fig_gru_all.png'; dpi = 600
+    
+    >>> fig, axes = make_figure(nrows=1, ncols=1, fig_width=fig_width, aspect=aspect)
+    >>> ax = axes[0][0]
+    
+    >>> filename = './mp-149/cube/gruneisen/Si.gru_all'
+    >>> gru_all = GruAll(filename)
+    >>> gru_all.plot(ax, show_legend=True
+    
+    >>> fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    """
+    def __init__(self, filename):
+        self._filename = filename
+        self._kpoints = None
+        self._frequencies = None
+        self._gru_params = None
+        try:
+            self._read_file()
+        except Exception as e:
+            msg = f"\n Error reading data from {self._filename}: {e}"
+            logger.warning(msg)
+
+    @property
+    def filename(self):
+        return self._filename
+    @property
+    def kpoints(self):
+        if self._kpoints is None:
+            self._read_file()
+        return self._kpoints
+    @property
+    def frequencies(self):
+        if self._frequencies is None:
+            self._read_file()
+        return self._frequencies
+    @property
+    def gru_params(self):
+        if self._gru_params is None:
+            self._read_file()
+        return self._gru_params
+    
+    def _read_file(self):
+        self._kpoints, self._frequencies, self._gru_params = parse_gru_all(self.filename)
+
+    def plot(self, ax, ms=1.3, lw=0.3, cmap='tab10', show_legend=True,
+             xlabel='Frequency (${\\rm cm^{-1}}$)', 
+             ylabel='Gr${\\rm \\ddot{u}}$neisen parameter'):
+        """ Plot Gruneisen parameters with respect to frequencies.
+        """
+        cmap = plt.get_cmap(cmap)
+        markers = ['o', 'v', 's', 'D']
+        for im in range(4):
+            if im < 3: ## Acoustic modes
+                xdat = self.frequencies[:, im].flatten()
+                ydat = self.gru_params[:, im].flatten()
+                color = cmap(im)
+                if im < 2:
+                    label = f"TA({im+1})"
+                elif im == 2:
+                    label = "LA"
+            elif im == 3: ## Optical modes
+                xdat = self.frequencies[:, 3:].flatten()
+                ydat = self.gru_params[:, 3:].flatten()
+                color = cmap(3)
+                label = "Optical"
+            
+            ax.plot(xdat, ydat, linestyle='None', 
+                    marker=markers[im], ms=ms, mec=color, mfc='None', mew=lw,
+                    label=label, zorder=10-im)
+        
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        set_axis(ax, xscale='linear', yscale='linear')
+        if show_legend:
+            set_legend(ax, loc='best', fontsize=6, alpha=0.5)
+
+class Gruneisen:
+    """ Class to read and handle Gruneisen parameters from a .gruneisen file
+    which was calculated with ``kpmode = 2`` in Alamode.
+    
+    How to use
+    ----------
+    >>> from auto_kappa.plot import make_figure
+    >>> from auto_kappa.io.gruneisen import Gruneisen
+    
+    >>> fig_width = 2.5; aspect = 0.5
+    >>> figname = 'fig_gruneisen.png'; dpi = 600
+    
+    >>> fig, axes = make_figure(nrows=1, ncols=1, fig_width=fig_width, aspect=aspect)
+    >>> ax = axes[0][0]
+    
+    >>> filename = './mp-149/cube/gruneisen/Si.gruneisen'
+    >>> gru = Gruneisen(filename)
+    >>> gru.plot(ax)
+    
+    >>> fig.savefig(figname, dpi=dpi, bbox_inches='tight')
+    
+    """
+    def __init__(self, filename):
+        if os.path.isabs(filename):
+            filename = os.path.relpath(filename, os.getcwd())
+        self._file_gruneisen = filename
+        self._file_bands = filename.replace('.gruneisen', '.bands')
+        self._kpoints = None
+        self._gru_params = None
+        self.band = None
+        try:
+            self._read_gruneisen_file()
+        except Exception as e:
+            msg = f"\n Error reading data from {self._file_gruneisen}: {e}"
+            logger.error(msg)
+        try:
+            self._read_band_file()
+        except Exception as e:
+            msg = f"\n Error reading data from {self._file_bands}: {e}"
+            logger.error(msg)
+    
+    @property
+    def kpoints(self):
+        if self._kpoints is None:
+            self._read_gruneisen_file()
+        return self._kpoints
+    @property
+    def frequencies(self):
+        if self.band is None:
+            self._read_band_file()
+        return self.band.frequencies
+    @property
+    def gru_params(self):
+        if self._gru_params is None:
+            self._read_gruneisen_file()
+        return self._gru_params
+
+    def _read_gruneisen_file(self):
+        dump = np.loadtxt(self._file_gruneisen, comments='#')
+        self._kpoints = dump[:,0]
+        self._gru_params = dump[:,1:]
+    
+    def _read_band_file(self):
+        self.band = Band(self._file_bands)
+    
+    def plot(self, ax, cmap='rainbow', plot_G2G=True, lw=0.5):
+        """ Plot band structure colored based on Gruneisen parameters 
+        """
+        cmin = self.gru_params.min()
+        cmax = self.gru_params.max()
+        cmax_abs = max(abs(cmin), abs(cmax))
+        norm = plt.Normalize(-cmax_abs, cmax_abs)
+        
+        self.band.plot_with_weighted_colors(
+            ax, self.gru_params, cmap=cmap, norm=norm, plot_G2G=plot_G2G, lw=lw,
+            clabel='Gr${\\rm \\ddot{u}}$neisen parameter')
+
+def parse_gru_all(filepath):
+    """ Reads the Gruneisen parameter data from a file. 
+    
+    Args
+    ----
+    filepath : str
+        .gru_all file generated by Alamode.
+    
+    Returns
+    -------
+    kpoints : np.ndarray, shape=(nk, 3)
+        Array of k-points.
+    
+    frequencies : np.ndarray, shape=(nk, nb)
+        Array of frequencies corresponding to the k-points.
+    
+    gruparams : np.ndarray, shape=(nk, nb)
+        Array of Gruneisen parameters corresponding to the k-points and frequencies.
+    
+    """
+    kpoints = []
+    frequencies = []
+    gruparams = []
+    
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if line.startswith("# knum ="):
+            # Read kpoint
+            kpoint = list(map(float, line.split("=")[1].strip().split()[1:]))
+            kpoints.append(kpoint)
+            
+            # Read Gruneisen parameter data
+            omega_gru = []
+            i += 1
+            while i < len(lines):
+                dataline = lines[i].strip()
+                if dataline.startswith("# knum =") or dataline == "":
+                    i -= 1  # Read at the next loop iteration
+                    break
+                data = dataline.split()
+                if len(data) >= 4:
+                    data = list(map(float, data[2:]))
+                    omega_gru.append(data)
+                i += 1
+            omega_gru = np.array(omega_gru)
+            frequencies.append(omega_gru[:, 0])
+            gruparams.append(omega_gru[:, 1])
+        i += 1
+    
+    return np.array(kpoints), np.array(frequencies), np.array(gruparams)

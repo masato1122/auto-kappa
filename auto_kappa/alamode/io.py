@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # io.py
 #
@@ -10,102 +9,35 @@
 # Please see the file 'LICENCE.txt' in the root directory
 # or http://opensource.org/licenses/mit-license.php for information.
 #
-#from optparse import OptionParser
+import os
 import sys
 import numpy as np
 import pandas as pd
+from ase.geometry import get_distances
 
 import logging
 logger = logging.getLogger(__name__)
 
-def read_fcs(filename):
-    
-    ## il at the beginning
-    lines = open(filename, 'r').readlines()
-    ilines = {}
-    order = None
-    for il, line in enumerate(lines):
-        data = line.split()
-        if len(data) == 0:
-            continue
-        if "*FC" in line:
-            if "**" in line:
-                break
-            order = int(data[0][-1].replace("FC", "")) - 1
-            ilines[order] = []
-            ilines[order].append(il + 1)
-    
-    ## il at the end
-    for order in ilines:
-        il0 = ilines[order][0]
-        for il in range(il0, len(lines)):
-            data = lines[il].split()
-            if len(data) == 0:
-                ilines[order].append(il-1)
-                break
-    
-    ### Read all FCs
-    dfs = {}
-    for order in ilines:
-        ndat = 6 + order
-        il0 = ilines[order][0]
-        il1 = ilines[order][1]
-        all_data = []
-        for j in range(ndat):
-            all_data.append([])
-        
-        ## set columns: FC[Ry/a0^(order+1)], Distance[Bohr]
-        columns = ['global_index', 'local_index', 'fc', 'multiplicity']
-        types = ["int", "int", "float", "int"]
-        for j in range(order+1):
-            columns.append("iatom%d" % (j+1))
-            types.append("str")
-        columns.append("distance")
-        types.append("float")
-         
-        ## read all data for FC*
-        for il in range(il0, il1+1):
-            data = lines[il].split()
-            for j in range(ndat):
-                if types[j] == "int":
-                    all_data[j].append(int(data[j]))
-                elif types[j] == "float":
-                    all_data[j].append(float(data[j]))
-                else:
-                    all_data[j].append(data[j])
-        
-        ## convert to DataFrame
-        df_each = pd.DataFrame()
-        for j in range(ndat):
-            df_each[columns[j]] = all_data[j]
-        
-        dfs[order] = df_each
-    
-    return dfs
-
 def wasfinished_alamode(logfile, tar=None):
-    """ Check the ALAMODE job has been finished or not with the log file.
+    """ Check the ALAMODE job has finished or not with the log file.
     """
+    out = {"value": None, "last_line": None}
     try:
         if tar is None:
             lines = open(logfile, 'r').readlines()
         else:
             lines_tmp = tar.extractfile(logfile).readlines()
             lines = [ll.decode('utf-8') for ll in lines_tmp]
-        
         ###
         n = len(lines)
         num_fin = 0
         for line in lines:
-            data = line.split()
-            if len(data) != 0:
-                if "Job finished" in line:
-                    num_fin += 1
+            if "Job finished" in line:
+                num_fin += 1
         ###
         if num_fin > 1:
-            msg = "\n Warning: ALAMODE was not compiled properly."
-            msg += "\n Please check %s " % logfile
-            msg += "and compile ALAMODE again."
+            msg  = "\n Warning: ALAMODE was not compiled properly."
+            msg += f"\n Please check {logfile} and compile ALAMODE again."
             logger.error(msg)
             sys.exit()
         return num_fin
@@ -160,3 +92,50 @@ def get_status(logfile, tar=None):
         return [statuses[0], "Job finished"]
     else:
         return [statuses[1], "Not yet finished"]
+
+def write_displacement_info(structure, pristine_structure=None, outdir=None, threshold=1e-5):
+    """ Write the displacement information of the structure.
+    
+    Args
+    ------
+    
+    structure : Structure object
+        The structure to write the displacement information.
+    
+    pristine_structure : Structure object, optional
+        The pristine structure for reference. If None, it will not be written.
+    
+    outdir : str, optional
+        The output directory where the file will be saved.
+    
+    """
+    outdir = "./" if outdir is None else outdir
+    os.makedirs(outdir, exist_ok=True)
+    
+    D, D_len = get_distances(
+        pristine_structure.get_positions(),
+        structure.get_positions(), 
+        cell=structure.cell,
+        pbc=structure.pbc
+    )
+    
+    ds = np.diag(D_len)
+    ids_disp = np.where(ds > threshold)[0]
+    if len(ids_disp) == 0:
+        return
+    
+    disp_info = []
+    for i in ids_disp:
+        disp_info.append({
+            "index": i + 1,
+            "atom": structure.get_chemical_symbols()[i],
+            "disp_mag": ds[i],
+            "dx": D[i,i,0],
+            "dy": D[i,i,1],
+            "dz": D[i,i,2]
+        })
+    
+    outfile = outdir + "/disp_info.csv"
+    df = pd.DataFrame(disp_info)
+    df.to_csv(outfile, float_format='%.8e', index=False)
+

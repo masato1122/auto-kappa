@@ -40,3 +40,32 @@ def write_output_yaml(filename, name, info, overwrite=True):
             yaml.dump(data, f, sort_keys=False)
     f.close()
 
+def extract_data_from_file(filename, word, index=-1):
+    """ Return data for ``word`` in ``filename``
+    """
+    lines = open(filename, 'r').readlines()
+    values_get = []
+    for line in lines:
+        if word.lower() in line.lower():
+            data = line.strip().split()[index]
+            values_get.append(float(data))
+    if len(values_get) == 0:
+        return None
+    else:
+        return values_get
+
+def convert_numpy(obj):
+    """ Convert numpy data types to native Python types.
+    
+    How to use
+    ----------
+    >>> with open("output.json", "w", encoding="utf-8") as f:
+    >>>     json.dump(data, f, indent=4, ensure_ascii=False, default=convert_numpy)
+    """
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return obj

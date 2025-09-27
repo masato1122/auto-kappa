@@ -1,23 +1,37 @@
-Auto-kappa
-============
+<!-- Auto-kappa
+============ -->
 
-Version 1.0.0
+<p align='left'>
+  <a href="https://masato1122.github.io/auto-kappa/" target="_blank">
+    <img src="./docs/source/img/ak_logo_trans.png" alt="logo" width="300"/>
+  </a>
+</p>
+
+Version 1.1.0
 ---------------
 
-Auto-kappa is an automation tool for calculating anharmonic phonon properties
-—including thermal conductivity and mode-dependent phonon lifetimes—using VASP and ALAMODE.
-
+Auto-kappa is an automation framework for first-principles calculations of anharmonic phonon properties
+—including thermal conductivity and mode-dependent phonon lifetimes—based on VASP and ALAMODE.
 
 Requirements
 -------------
 
+Users of auto-kappa need to install VASP and ALAMODE in advance, 
+while the required Python libraries are installed automatically along with auto-kappa.
+
 * VASP >= 6.3.x
-* Alamode >= 1.4.x
+* ALAMODE >= 1.4 (1.5 recommended) *
+* [Optional] anphon >= 1.9.9 (required for four-phonon scattering)
 * Phonopy
 * ASE
 * Pymatgen
 * Spglib
 * Custodian
+
+---
+
+\* Note: The force constant file format in ALAMODE 1.4 is incompatible with that of version 1.5. 
+Therfore, version 1.5 is recommended.
 
 Installation
 -------------
@@ -40,32 +54,47 @@ Please refer to example jobs in ``auto_kappa/examples`` and the manual for detai
 1. Set the ``VASP_PP_PATH`` environment variable so that ASE can locate VASP pseudopotential files:
 ([Pseudopotential with ASE](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#pseudopotentials))
 
-ASE expects the pseudopotential files in: ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
+ASE expects the pseudopotential files to be in ``${VASP_PP_PATH}/potpaw_PBE/{element name}``.
 
 2. Prepare a structure file, e.g., ``POSCAR.Si``
-3. Run the command: ``akrun --file_structure POSCAR.Si --material_name Si``.
+3. Run the following command: ``akrun --file_structure POSCAR.Si --outdir Si``.
 
-Some options
--------------
+Several Important Options
+---------------------------
 
-You can view a description of the options using ``akrun -h``. 
+You can view the available options by running ``akrun -h`` 
+as well as in the [manual](https://masato1122.github.io/auto-kappa/params_ak.html).
 Frequently used commands are listed below.
 
-- **file_structure**: Structure file name (Different formats are acceptable such as POSCAR, cif, etc.)
+- **file_structure**: Structure file name. Different formats, including POSCAR and CIF, are accepted.
 
-- **material\_name**: Name of the output directory
-
-- **nprocs**: Number of processes for the calculation [Default: 2]
+- **outdir**: Name of the output directory
 
 - **mpirun**: MPI command [Default: mpirun]
 
-- **command\_{vasp/alm/anphon}**: Command to run VASP, alm, and anphon [Default: VASP, alm, anphon]
+- **nprocs**: Number of processes for the calculation [Default: 2]
 
-- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state
+- **command\_{vasp/vasp\_gam/alm/anphon/anphon_ver2}**: Command to run ``VASP``, ``alm``, and ``anphon`` [Default: vasp, vasp_gam, alm, anphon, anphon.2.0]
 
-- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear
+- **volume\_relaxation**: Perform relaxation calculations using the Birch-Murnaghan equation of state [Default: 1]
 
-- **max\_natoms**: Maximum number of atoms in the supercell [Default: 150]
+- **analyze\_with\_larger\_supercell**: Use a larger supercell when imaginary frequencies appear [Default: 0]
+
+- **max\_natoms**: Maximum number of atoms in the supercell used for the force constant calculation [Default: 150]
+
+- **nmax\_suggest**: Maximum number of displacement patterns for the finite-displacement method. If the number of generated patterns exceeds this value, the LASSO regression approach will be applied [Default: 100].
+
+- **scph**: Flag for considering phonon renormalization using the self-consistent phonon (SCPH) approach [Default: 0]
+
+- **four**: Flag for considering four phonon scattering. The "command_anphon_ver2" option must be set properly. [Default: 0]
+
+<!-- - **material_dimension**: Dimension of the material (2 or 3) [Default: 3] -->
+
+Documentation
+-------------
+
+For more details on auto-kappa, please visit the following webpage: [**HERE**](https://masato1122.github.io/auto-kappa).
+
 
 Citation
 ---------
@@ -78,15 +107,28 @@ If you use auto-kappa, please cite the following paper, along with any related p
 References
 -----------
 
-- **ALAMODE:** T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
+- [**ALAMODE**](https://alamode.readthedocs.io/en/latest): 
+T. Tadano, Y. Gohda, and S. Tsuneyuki, J. Phys.: Condens. Matter 26, 225402 (2014).
 
-- **ALAMODE (SCP):** T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
+- [**ALAMODE (SCP)**](https://alamode.readthedocs.io/en/latest/anphondir/formalism_anphon.html#self-consistent-phonon-scph-calculation): T. Tadano and S. Tsuneyuki, Phys. Rev. B 92, 054301 (2015).
 
-- **Phonopy:** A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
+- [**VASP**](https://www.vasp.at/wiki/The_VASP_Manual): 
+G. Kresse, and J. Furthmuller, Phys. Rev. B 54, 11169-11186 (1996).
 
-- **Spglib:** A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
+- [**Spglib**](https://spglib.readthedocs.io/en/stable/): A. Togo, K. Shinohara, and I. Tanaka, Sci. technol. adv. material, Meth. 4, 1 (2025).
 
-- **Pymatgen** and **Custodian:** S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
+- [**SeeK-path**](https://seekpath.readthedocs.io/en/latest/index.html): Y. Hinuma, G. Pizzi, Y. Kumagai, F. Oba, and I. Tanaka, Comp. Mat. Sci. 128, 140 (2017).
 
-- **ASE:** A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
+- [**Phonopy**](https://phonopy.github.io/phonopy/): A. Togo and I. Tanaka, Scr. Mater., 108, 1-5 (2015).
+
+- [**Pymatgen** and **Custodian**](https://pymatgen.org/): S. P. Ong et al., Comp. Mater. Sci. 68, 314-319 (2013).
+
+- [**ASE**](https://ase-lib.org/): A. H. Larsen et al., J. Phys.: Cond. Matter 29, 273002 (2017).
+
+<!-- To Do
+------
+
+- Iterative calculation
+
+- Cell size for 2D systems: fix cell size for VASP calculations -->
 

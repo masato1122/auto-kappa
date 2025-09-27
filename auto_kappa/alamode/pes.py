@@ -1,14 +1,22 @@
-# -*- coding: utf-8 -*-
-import sys
+#
+# pes.py
+#
+# This module contains functions for calculating and plotting 
+# potential energy surfaces (PES) from ALAMODE calculations.
+#
+# Copyright (c) 2025 Masato Ohnishi
+#
+# This file is distributed under the terms of the MIT license.
+# Please see the file 'LICENCE.txt' in the root directory
+# or http://opensource.org/licenses/mit-license.php for information.
+#
 import os, os.path
-import math
 import numpy as np
-import pandas as pd
-import glob
 
 from auto_kappa.alamode.log_parser import (
-        get_eigenvalues_from_logfile,
-        get_minimum_frequency_from_logfile)
+        get_eigenvalues_from_logfile)
+from auto_kappa.io.born import write_born_info
+from auto_kappa.io.alm import AnphonInput
 
 import logging
 logger = logging.getLogger(__name__)
@@ -28,17 +36,14 @@ def calculate_pes(
             nac=nac, vasp_xml=vasp_xml, command=command)
      
     ### make vibration
-
+    logger.error("\n Error: make_vibration is not implemented yet.")
     exit()
     return None
 
 def calculate_evec(
         prim, kpoint, outdir="./evec", fcsxml=None, command=None,
-        vasp_xml=None, file_anphon="evec.in", nac=0):
+        vasp_xml=None, file_anphon="evec.in", nac=0, dim=3):
     """ Calculate eiven vector at the given kpoint """
-    
-    from auto_kappa.io.vasp import write_born_info
-    from auto_kappa.io.alm import AnphonInput
     
     ### move to the target directory
     cwd = os.getcwd()
@@ -56,7 +61,7 @@ def calculate_evec(
     ### make BORNINFO
     borninfo = "BORNINFO"
     if vasp_xml is not None:
-        write_born_info(vasp_xml, outfile=borninfo)
+        write_born_info(vasp_xml, file_fcs=fcsxml, outfile=borninfo)
     
     ### make AnphonInput obj
     inp = AnphonInput.from_structure(
@@ -64,6 +69,7 @@ def calculate_evec(
             fcsxml=os.path.relpath(fcsxml),
             nonanalytic=nac,
             borninfo=borninfo)
+    inp.dim = dim
     inp.update({"printevec": 1})
     inp.set_kpoint(kpoints=[kpoint])
     inp.to_file(filename=file_anphon)

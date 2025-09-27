@@ -1,5 +1,5 @@
 #
-# A very simple example to check if alm of Alamode command works properly.
+# A simple example to check alm command
 #
 alm suggest.in > suggest.log
 

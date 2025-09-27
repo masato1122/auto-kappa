@@ -1,6 +1,6 @@
 .. auto-kappa
     Written by M. Ohnishi
-    September 13, 2022.
+    September 1, 2025.
 
 Auto-kappa
 ============
@@ -9,11 +9,11 @@ Auto-kappa
     :maxdepth: 2
     :numbered: 2
     :glob:
-     
-    installation
-    parameters
-    tutorial/index
-    
-    auto-kappa/modules
 
+    installation
+    usage
+    params_ak
+    params_vasp
+    tutorial/index
+    auto-kappa/modules
 

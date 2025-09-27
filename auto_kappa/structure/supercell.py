@@ -12,8 +12,6 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import numpy as np
-import math
-from auto_kappa.structure.crystal import change_structure_format
 import spglib
 
 def estimate_supercell_matrix(structure, max_num_atoms=120, max_iter=100):
@@ -25,13 +23,19 @@ def estimate_supercell_matrix(structure, max_num_atoms=120, max_iter=100):
     
     spglib_dataset = spglib.get_symmetry_dataset(cell)
     
-    spg_num = spglib_dataset["number"]
-    num_atoms = len(spglib_dataset["std_types"])
+    try:
+        spg_num = spglib_dataset.number
+        num_atoms = len(spglib_dataset.std_types)
+        std_lattice = spglib_dataset.std_lattice
+    except Exception:
+        spg_num = spglib_dataset["number"]
+        num_atoms = len(spglib_dataset["std_types"])
+        std_lattice = spglib_dataset['std_lattice']
     
-    ### in Phonopy, which might be wrong
+    ### Line copied from the Phonopy code, which might be wrong
     #lengths = _get_lattice_parameters(spglib_dataset["std_lattice"])
     ### corrected
-    lengths = _get_lattice_parameters(spglib_dataset["std_lattice"].T)
+    lengths = _get_lattice_parameters(std_lattice.T)
     
     if spg_num <= 74:     # Triclinic, monoclinic, and orthorhombic
         multi = _get_multiplicity_abc(
@@ -63,6 +67,58 @@ def _get_lattice_parameters(lattice):
 
     """
     return np.array(np.sqrt(np.dot(lattice.T, lattice).diagonal()), dtype="double")
+
+def _get_multiplicity_abc(num_atoms, lengths, max_num_atoms, max_iter=20):
+    multi = [1, 1, 1]
+
+    for i in range(max_iter):
+        l_super = np.multiply(multi, lengths)
+        
+        ### ver.1 original (Phonopy)
+        min_index = np.argmin(l_super)
+        multi[min_index] += 1
+        if num_atoms * np.prod(multi) > max_num_atoms:
+            multi[min_index] -= 1
+        
+        #### ver.2 modified
+        #mod_index = _get_next_modification_index(lengths, multi)
+        #multi[mod_index] += 1
+        #if num_atoms * np.prod(multi) > max_num_atoms:
+        #    multi[mod_index] -= 1
+
+    return multi
+
+def _get_multiplicity_ac(num_atoms, lengths, max_num_atoms, max_iter=20):
+    multi = [1, 1]
+    a = lengths[0]
+    c = lengths[2]
+
+    for i in range(max_iter):
+        l_super = np.multiply(multi, [a, c])
+        
+        #### ver.1 Phonopy
+        min_index = np.argmin(l_super)
+        multi[min_index] += 1
+        if num_atoms * multi[0] ** 2 * multi[1] > max_num_atoms:
+            multi[min_index] -= 1
+        
+        ### ver.2 modified
+        #mod_index = _get_next_modification_index([a,c], multi)
+        #multi[mod_index] += 1
+        #if num_atoms * multi[0] ** 2 * multi[1] > max_num_atoms:
+        #    multi[mod_index] -= 1
+
+    return [multi[0], multi[0], multi[1]]
+
+def _get_multiplicity_a(num_atoms, lengths, max_num_atoms, max_iter=20):
+    multi = 1
+    for i in range(max_iter):
+        multi += 1
+        if num_atoms * multi**3 > max_num_atoms:
+            multi -= 1
+
+    return [multi, multi, multi]
+
 
 #def get_sphericity(lattice):
 #    """
@@ -110,57 +166,3 @@ def _get_lattice_parameters(lattice):
 #        lengths_sc = np.asarray(lengths) * np.asarray(multi_next)
 #        stds.append(np.std(lengths_sc))
 #    return np.argmin(stds)    
-
-def _get_multiplicity_abc(num_atoms, lengths, max_num_atoms, max_iter=20):
-    multi = [1, 1, 1]
-
-    for i in range(max_iter):
-        l_super = np.multiply(multi, lengths)
-        
-        ### ver.1 original (Phonopy)
-        min_index = np.argmin(l_super)
-        multi[min_index] += 1
-        if num_atoms * np.prod(multi) > max_num_atoms:
-            multi[min_index] -= 1
-        
-        #### ver.2 modified
-        #mod_index = _get_next_modification_index(lengths, multi)
-        #multi[mod_index] += 1
-        #if num_atoms * np.prod(multi) > max_num_atoms:
-        #    multi[mod_index] -= 1
-
-    return multi
-
-
-def _get_multiplicity_ac(num_atoms, lengths, max_num_atoms, max_iter=20):
-    multi = [1, 1]
-    a = lengths[0]
-    c = lengths[2]
-
-    for i in range(max_iter):
-        l_super = np.multiply(multi, [a, c])
-        
-        #### ver.1 Phonopy
-        min_index = np.argmin(l_super)
-        multi[min_index] += 1
-        if num_atoms * multi[0] ** 2 * multi[1] > max_num_atoms:
-            multi[min_index] -= 1
-        
-        ### ver.2 modified
-        #mod_index = _get_next_modification_index([a,c], multi)
-        #multi[mod_index] += 1
-        #if num_atoms * multi[0] ** 2 * multi[1] > max_num_atoms:
-        #    multi[mod_index] -= 1
-
-    return [multi[0], multi[0], multi[1]]
-
-
-def _get_multiplicity_a(num_atoms, lengths, max_num_atoms, max_iter=20):
-    multi = 1
-    for i in range(max_iter):
-        multi += 1
-        if num_atoms * multi**3 > max_num_atoms:
-            multi -= 1
-
-    return [multi, multi, multi]
-

@@ -11,16 +11,12 @@ import os
 import numpy as np
 import datetime
 import yaml
-import time
 
 import logging
 logger = logging.getLogger(__name__)
 
-def set_logging(
-        filename='log.txt',
-        level=logging.DEBUG,
-        format=" %(levelname)8s : %(message)s"
-        ):
+def set_logging(filename='log.txt', level=logging.DEBUG,
+                format=" %(levelname)8s : %(message)s"):
     
     ### file handler
     fh = logging.FileHandler(filename=filename, mode='w')
@@ -97,59 +93,64 @@ def start_larger_supercell(almcalc):
     logger.info(msg)
 
 def print_options(params):
-    msg = "\n"
-    msg += " Input parameters:\n"
-    msg += " =================\n"
+    msg = ""
+    msg += "\n Input parameters:"
+    msg += "\n ================="
     for key in params.keys():
         if params[key] is not None:
-            msg += " " + key.ljust(25) + " : " + str(params[key]) + "\n"
-    msg += "\n"
+            msg += "\n " + key.ljust(25) + " : " + str(params[key])
     logger.info(msg)
 
 def print_conditions(cell_types=None, trans_matrices=None, kpts_all=None):
 
     msg = ""
     if cell_types is not None:
-        msg += " Cell type\n"
-        msg += " ---------\n"
+        msg += "\n Cell type"
+        msg += "\n ---------"
         for cal_type in cell_types:
-            msg += " %6s : %10s\n" % (cal_type, cell_types[cal_type])
-        msg += "\n"
+            msg += "\n %6s : %10s" % (cal_type, cell_types[cal_type])
     
     ###
     if trans_matrices is not None:
-        msg += " Transformation matrix\n"
-        msg += " ---------------------\n"
+        msg += "\n\n Transformation matrix"
+        msg += "\n ---------------------"
         for cell_type in trans_matrices:
-            msg += " %10s : " % cell_type
+            msg += "\n %10s : " % cell_type
             for i in range(3):
                 vec = trans_matrices[cell_type][i]
                 if cell_type == "primitive":
                     msg += "%.3f " * 3 % tuple(vec)
                 else:
                     msg += "%d " * 3 % tuple(vec)
-            msg += "\n"
-        msg += "\n"
     
     ###
     if kpts_all is not None:
-        msg += " k-mesh\n"
-        msg += " ------\n"
+        msg += "\n\n k-mesh"
+        msg += "\n ------"
         for cal_type in kpts_all:
-            msg += (" %6s :" % (cal_type) +
-                    " %d" * 3 % tuple(kpts_all[cal_type]) +
-                    "\n")
+            msg += f"\n {cal_type:6s} :" + " %d" * 3 % tuple(kpts_all[cal_type])
+    logger.info(msg)
+
+def print_space_group(structure):
+    from auto_kappa.structure.crystal import get_symmetry_dataset
+    dataset = get_symmetry_dataset(structure)
+    try:
+        spg_number = dataset['number']
+        spg_name = dataset['international']
+    except Exception:
+        spg_number = dataset.number
+        spg_name = dataset.international
     
+    msg  = f"\n Space group : {spg_name} ({spg_number})"
     logger.info(msg)
 
 def print_times(times, labels):
 
-    msg = "\n"
+    msg = "\n\n"
     msg += " Calculation times:\n"
     msg += " ==================\n"
-    msg += "\n"
     logger.info(msg)
-
+    
     nchar = 0
     ttot = np.sum(np.asarray(times))
     for i, lab in enumerate(labels):
@@ -157,10 +158,9 @@ def print_times(times, labels):
         percentage = 100.*tt/ttot
         line = "%25s (sec): %13.2f (%.1f%%)" % (lab, tt, percentage)
         nchar = max(nchar, len(line))
-
         msg = " " + line
         logger.info(msg)
-
+        
     msg = " " + "-" * (nchar + 5) + "\n"
     msg += " %25s (sec): %13.2f \n" % ("total", ttot)
     logger.info(msg)

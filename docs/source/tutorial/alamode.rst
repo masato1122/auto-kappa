@@ -1,11 +1,14 @@
-===========================
-Input Scripts for ALAMODE
-===========================
+========================================
+Input Scripts for ALAMODE Calculations
+========================================
 
-.. You can find example scripts in example directory of aiida-alamode package.
+.. contents:: Contents
+   :local:
+   :depth: 1
 
-How to prepare input scripts for ALAMODE
-=========================================
+
+Preparation of ALAMODE input files
+==================================
 
 Force constants
 ---------------
@@ -43,8 +46,9 @@ from vasprun.xml
 
 .. code-block:: python
     
-    from auto_kappa.io.vasp import write_born_info
-    filename = 'vasprun.xml'
-    write_born_info(filename, outfile='BORNINFO')
-    
+    from auto_kappa.io.born import BORNINFO
+    file_vasp = 'vasprun.xml'
+    file_born = 'FC2.xml'
+    born = BORNINFO(file_vasp, file_born=file_born)
+    born.write(outfile='BORNINFO')
 

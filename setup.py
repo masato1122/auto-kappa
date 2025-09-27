@@ -1,8 +1,5 @@
-#from distutils.core import setup
-
-import shutil
 import pathlib
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def _get_version():
     
@@ -24,48 +21,33 @@ def _get_version():
 
 def main(build_dir):
     
-    packages_autokappa = [
-            'auto_kappa',
-            'auto_kappa.alamode',
-            'auto_kappa.calculators',
-            'auto_kappa.alamode.tools',
-            'auto_kappa.alamode.analyzer',
-            'auto_kappa.cui',
-            'auto_kappa.io',
-            'auto_kappa.io.alamode',
-            'auto_kappa.math',
-            'auto_kappa.plot',
-            'auto_kappa.plot.alamode',
-            'auto_kappa.structure',
-            'auto_kappa.vasp',
-            ]
-
     scripts_autokappa = [
             'scripts/akrun',
             #'scripts/ak-logger',
-            'scripts/ak-plotter',
+            #'scripts/ak-plotter',
             ]
     
     version = _get_version()
-
+    
     setup(
             name='auto_kappa',
             version=version,
             description='automation software for anharmonic phonon properties',
             author='Masato Ohnishi',
             author_email='masato.ohnishi.ac@gmail.com',
-            packages=packages_autokappa,
+            packages=find_packages(),
+            include_package_data=True,
             install_requires=[
               'numpy', 'phonopy', 'spglib', 'seekpath', 'ase', 'pymatgen', 
               'custodian', 'xmltodict', 'mkl', 'f90nml', 'PyYAML',
-              'psutil'
+              'psutil', 'scikit-learn', 'lxml'
               ],
             scripts=scripts_autokappa,
             url='https://github.com/masato1122/auto_kappa.git',
             license='MIT',
             provides=['auto_kappa'],
             )
- 
+
 if __name__ == "__main__":
     
     build_dir = pathlib.Path.cwd() / "_build"

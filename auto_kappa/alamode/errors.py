@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # errors.py
 #
@@ -77,7 +76,6 @@ def check_unexpected_errors(logfile, dir_base=None):
         ### FCs could not be deteremined uniquely
         if err_messages["numfcs"].lower() in line.lower():
             _print_error_message(logfile, line)
-            #flag += _solve_version_incompatibility(dir_base, logfile)
             
             msg = "\n Error: Rank deficient"
             msg += "\n Stop the calculation."
@@ -213,7 +211,7 @@ def _compress_cubic_fcs(dir_base):
         
         dir_name = output_directories["cube"][key]
         
-        if key in ["suggest", "lasso"]:
+        if key in ["suggest", "lasso", "gruneisen"]:
             files_disp.append(dir_name)
         
         elif key in ["kappa_fd", "kappa_lasso"]:
@@ -250,7 +248,7 @@ def _error_in_result_file():
     _move_and_compress_files(prefix, files_disp)
     return 0
 
-def check_rank_deficient(logfile):
+def found_rank_deficient(logfile):
     """ Check the previous force constant calculation
     If the following line is found in the logfile, return True.
     

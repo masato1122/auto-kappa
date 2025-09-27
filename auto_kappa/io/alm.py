@@ -14,13 +14,13 @@ from typing import Dict
 from monty.json import MSONable
 import sys
 import warnings
-import re
 import math
 import numpy as np
-import pymatgen
 
 from pymatgen.io.vasp import Poscar
-from ase import Atoms
+import ase
+from ase.data import atomic_masses as atomic_masses_ase
+from ase.data import atomic_numbers
 
 from auto_kappa.units import AToBohr
 from auto_kappa.structure.crystal import (
@@ -28,9 +28,7 @@ from auto_kappa.structure.crystal import (
         change_structure_format, 
         get_primitive_structure_spglib
         )
-
-from ase.data import atomic_masses as atomic_masses_ase
-from ase.data import atomic_numbers
+from auto_kappa.structure.two import get_normal_index
 
 import logging
 logger = logging.getLogger(__name__)
@@ -40,13 +38,42 @@ try:
 except ImportError:
     f90nml = None
 
-class AlmInput(MSONable, dict):
+class AlamodeInput(MSONable, dict):
+    def __init__(self, dim=3):
+        pass
+        
+    def as_dict(self):
+        return dict(self)
+    
+    @property
+    def dim(self):
+        return self._dim
+    
+    @dim.setter
+    def dim(self, value):
+        if value not in [2, 3]:
+            msg = "\n Error: dim must be 2 or 3."
+            logger.error(msg)
+            sys.exit()
+        self._dim = value
+    
+    @classmethod
+    def from_dict(cls, alm_dict: Dict):
+        """ parameters """
+        return cls(**alm_dict)
+    
+    @classmethod
+    def from_file(cls, filename: str=None):
+        inp_dict = read_alamode_input(filename)
+        return cls(**inp_dict)
+
+class AlmInput(AlamodeInput):
     """ Class for writing and reading alm input file.
     See the following URL for more detailed description.
     https://alamode.readthedocs.io/en/latest/almdir/inputalm.html
     
     Reference
-    -------------
+    ----------
     pymatgen.io.shengbte.Control
     """
     required_params = {
@@ -144,15 +171,35 @@ class AlmInput(MSONable, dict):
     @property
     def primitive(self):
         return self.get_primitive()
-
+    
     def get_primitive(self):
         return get_primitive_structure_spglib(self.structure)
-
-    @classmethod
-    def from_dict(cls, alm_dict: Dict):
-        """ Write a ALM input file
-        """
-        return cls(**alm_dict)
+    
+    @property
+    def structure(self):
+        
+        try:
+            if self._structure is not None:
+                return self._structure
+        except:
+            pass
+        
+        try:
+            array = self['position']
+            element_index = [int(row[0]) for row in array]
+            positions = np.array([row[1:4] for row in array])
+            kd = self['kd']
+            cell = self['cell'] / AToBohr
+            symbols = [kd[i-1] for i in element_index]
+            self._structure = ase.Atoms(
+                symbols=symbols,
+                scaled_positions=positions,
+                cell=cell,
+                pbc=True
+            )
+            return self._structure
+        except:
+            return None
     
     @classmethod
     def from_structure_file(cls, filename, norder=None, **kwargs):
@@ -251,8 +298,8 @@ class AlmInput(MSONable, dict):
         if mode == 'optimize':
             for param in self.required_params[mode]['always']:
                 _check_dict_contents(self.as_dict(), param)
-
-    def to_file(self, filename: str = None):
+    
+    def to_file(self, filename: str = None, version=None, verbose=None):
         """ Make ALM input file
         Args
         -------
@@ -302,19 +349,19 @@ class AlmInput(MSONable, dict):
         with open(filename, "w") as file:
             file.write(alm_str)
     
-    @classmethod
-    def from_file(cls, filename: str=None):
-        inp_dict = _read_alamode_input(filename)
-        return cls(**inp_dict)
+    # @classmethod
+    # def from_file(cls, filename: str=None):
+    #     inp_dict = read_alamode_input(filename)
+    #     return cls(**inp_dict)
     
-    def as_dict(self):
-        return dict(self)
-    
+    # def as_dict(self):
+    #     return dict(self)
+
 
 ## This part should be modified (rewrite).
 def _get_subdict(master_dict, subkeys):
-    """Get a set of keys """
-    """Helper method to get a set of keys from a larger dictionary"""
+    """ Get a set of keys 
+    Helper method to get a set of keys from a larger dictionary"""
     return {
             k: master_dict[k] 
             for k in subkeys 
@@ -397,7 +444,10 @@ def get_alamode_variables_from_structure(structure, norder=None):
     sym_all = []
     for each in structure.species:
         sym_all.append(each.name)
-    sym_list = sorted(set(sym_all), key=sym_all.index)
+    try:
+        sym_list = list(dict.fromkeys(sym_all))
+    except:
+        sym_list = sorted(set(sym_all), key=sym_all.index)
     
     ## get number of atoms for each species
     params['nkd'] = []
@@ -431,7 +481,7 @@ def get_alamode_variables_from_structure(structure, norder=None):
     
     return params
 
-class AnphonInput(MSONable, dict):
+class AnphonInput(AlamodeInput):
     """ Class for writing and reading anphon input file.
     See the following URL for more detailed description.
     https://alamode.readthedocs.io/en/latest/anphondir/inputanphon.html
@@ -454,6 +504,10 @@ class AnphonInput(MSONable, dict):
             'mass',         # weight of elements, Array of double
             'fcsxml',       # None, string
             'fc2xml',       # None, string
+            'fc3xml',       # None, string
+            'fcsfile',       # None, string (ver >= 1.9)
+            'fc2file',       # None, string (ver >= 1.9)
+            'fc3file',       # None, string (ver >= 1.9)
             'tolerance',    # 1e-6, double
             'printsym',     # 0,    integer
             'nonanalytic',  # 0,    integer
@@ -538,9 +592,25 @@ class AnphonInput(MSONable, dict):
             'anime_format',   # xyz,  string
             ]
     
+    ### Added for 4-phonon calculation
+    ## for version >= 1.9
+    analysis_keys_2 = [
+        'quartic',
+    ]
+    kappa_keys_2 = [
+            'kappa_coherent',   # 0, integer
+            'kmesh_coarse',
+            'ismear_4ph',
+            'interpolator',
+            'adaptive_factor',
+            'kappa_spec',       # 0, integer
+            'isotope',          # 0, integer
+            'isofact',          # Automatically calculated from the KD-tag
+            ]
+    
     all_keys = (
             general_keys + scph_keys + qha_keys + relax_keys +
-            analysis_keys + ['cell', 'kpoint', 'kpmode']
+            analysis_keys + kappa_keys_2 + ['cell', 'kpoint', 'kpmode']
             )
     
     ### added keys for k-point 
@@ -549,7 +619,7 @@ class AnphonInput(MSONable, dict):
     ### atomic massses which are not included in default setting of ALAMODE
     atoms_no_mass = ["Tc", "Pm", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Np", "Pu"]
     
-    def __init__(self, **kwargs):
+    def __init__(self, dim=None, **kwargs):
         """
         Args
         ------
@@ -558,11 +628,15 @@ class AnphonInput(MSONable, dict):
             - mode
         """
         super().__init__()
+        
+        self._dim = dim
+        self._norm_idx = None
+        
         self.update(kwargs)
         self._primitive = None
     
-    def as_dict(self):
-        return dict(self)
+    # def as_dict(self):
+    #     return dict(self)
     
     @property
     def primitive(self):
@@ -572,7 +646,7 @@ class AnphonInput(MSONable, dict):
     
     def set_primitive(self, structure):
         self._primitive = structure
-
+    
     def get_primitive(self):
         
         ### ver.1
@@ -583,15 +657,13 @@ class AnphonInput(MSONable, dict):
         #prim = struct_pmg.get_primitive_structure()
         #
         ### ver.3
-        prim = get_primitive_structure_spglib(self.structure, format='ase')
-        
+        prim = get_primitive_structure_spglib(self.structure, format='ase')    
         return prim
     
-    @classmethod
-    def from_dict(cls, alm_dict: Dict):
-        """ Write a ALM input file
-        """
-        return cls(**alm_dict)
+    def norm_idx(self):
+        if self._norm_idx is None:
+            self._norm_idx = get_normal_index(self.primitive)
+        return self._norm_idx
     
     @classmethod
     def from_structure_file(cls, filename, **kwargs):
@@ -644,7 +716,6 @@ class AnphonInput(MSONable, dict):
         anp_dict.update(kwargs)
         
         return AnphonInput(**anp_dict)
-     
     
     def set_kpoint(self, **kwargs):
         """ Set suggeted k-point parameters. This module may not well written.
@@ -662,7 +733,6 @@ class AnphonInput(MSONable, dict):
             else:
                 ValueError(' kpmode must be given.')
         
-        #exit()
         ## Check if kpmode key is set or not
         set_kpmode = False
         if 'kpmode' not in self.as_dict().keys():
@@ -700,10 +770,7 @@ class AnphonInput(MSONable, dict):
             if 'kpath' not in self.keys():
                 msg = "\n kpath is set automatically."
                 logger.info(msg)
-                self['kpath'] = get_kpoint_path(
-                        self.primitive, 
-                        deltak=self['deltak']
-                        )
+                self['kpath'] = get_kpoint_path(self.primitive, deltak=self['deltak'], dim=self.dim)
         elif self['kpmode'] == 2:
             lengths = self.primitive.lattice.reciprocal_lattice.lengths
             kpts = []
@@ -713,10 +780,7 @@ class AnphonInput(MSONable, dict):
             self['kpts'] = kpts
         
         self.update(kwargs)
-
-    #def guess_cutoff(self):
-    #    pass
-
+    
     def check_parameters(self):
         
         ## check required parameters
@@ -759,15 +823,16 @@ class AnphonInput(MSONable, dict):
             self["isotope"] = 1
             self["isofact"] = out
         
-    def to_file(self, filename: str = None, verbosity=0):
+    def to_file(self, filename: str = None, version=None, verbose=0):
         """ Make ANPHON input file
+        
         Args
         -------
         filename (str): ANPHON input file name
         """
         self.check_parameters()
         
-        if verbosity > 0:
+        if verbose > 0:
             msg = "\n Make an input script for ALAMODE : %s" % filename
             logger.info(msg)
         
@@ -817,7 +882,7 @@ class AnphonInput(MSONable, dict):
         relax_dict = _get_subdict(self, self.relax_keys)
         relax_nml = f90nml.Namelist({"relax": relax_dict})
         anp_str += str(relax_nml) + "\n"
-            
+        
         ## cell parameters
         lines = _write_cell(self['cell'])
         for line in lines:
@@ -828,10 +893,27 @@ class AnphonInput(MSONable, dict):
         for line in lines:
             anp_str += line + "\n"
         
-        ## analysis parameters
-        analysis_dict = _get_subdict(self, self.analysis_keys)
-        analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
-        anp_str += str(analysis_nml) + "\n"
+        ## check version
+        is_version_2 = False
+        if version is not None:
+            parts = version.split('.')
+            ver_float = float(parts[0] + '.' + parts[1])
+            if ver_float >= 1.9:
+                is_version_2 = True
+        
+        ## analysis parameters        
+        if is_version_2 == False:
+            analysis_dict = _get_subdict(self, self.analysis_keys)
+            analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
+            anp_str += str(analysis_nml) + "\n"
+        else:
+            analysis_dict = _get_subdict(self, self.analysis_keys_2)
+            analysis_nml = f90nml.Namelist({"analysis": analysis_dict})
+            anp_str += str(analysis_nml) + "\n"
+            
+            kappa_dict = _get_subdict(self, self.kappa_keys_2)
+            kappa_nml = f90nml.Namelist({"kappa": kappa_dict})
+            anp_str += str(kappa_nml) + "\n"
         
         ## characters to be replaced
         for char in [',', '\'']:
@@ -841,10 +923,10 @@ class AnphonInput(MSONable, dict):
         with open(filename, "w") as file:
             file.write(anp_str)
     
-    @classmethod
-    def from_file(cls, filename: str=None):
-        inp_dict = _read_alamode_input(filename)
-        return cls(**inp_dict)
+    # @classmethod
+    # def from_file(cls, filename: str=None):
+    #     inp_dict = read_alamode_input(filename)
+    #     return cls(**inp_dict)
 
 def get_mass_info(elements):
     """ get mass info 
@@ -928,7 +1010,7 @@ def get_isofact_info(elements):
         array for g2 factors
 
     """
-    from auto_kappa.io.isotopes import isotopes
+    from auto_kappa.utils.isotopes import isotopes
     msg = "\n Get IFOFACT info."
     g2_factors = []
     for el in elements:
@@ -978,7 +1060,7 @@ def _check_dict_contents(dictionary, key, message=True):
                 )
     return flag
 
-def get_kpoint_path(primitive, deltak=0.01):
+def get_kpoint_path(primitive, deltak=0.01, dim=3, nk_min=10):
     """
     Args
     --------
@@ -1003,22 +1085,60 @@ def get_kpoint_path(primitive, deltak=0.01):
             prim_pmg.frac_coords,
             prim_pmg.atomic_numbers
             ]
-    kpath = seekpath.get_path(
-            structure, with_time_reversal=True, recipe='hpkot')
+    kpath = seekpath.get_path(structure, with_time_reversal=True, recipe='hpkot')
+    
+    ##
+    if dim == 2:
+        norm_idx = get_normal_index(prim_pmg, base='xyz')
+    else:
+        norm_idx = None
     
     ## extract required data
     kpoints = []
     for each in kpath['path']:
-        kpoints.append([])
         k1 = np.asarray(kpath['point_coords'][each[1]])
         k0 = np.asarray(kpath['point_coords'][each[0]])
-        kvec = k1 - k0 
+        
+        if dim == 2:
+            if abs(k1[norm_idx]) > 1e-3 or abs(k0[norm_idx]) > 1e-3:
+                continue
+        
+        kvec = k1 - k0
         kleng = np.linalg.norm(kvec)
-        nk = max(int(np.ceil(kleng / deltak)), 3)
-        kpoints[-1] = [{each[0]: k0}, {each[1]: k1}, nk]
+        nk = max(int(np.ceil(kleng / deltak)), nk_min)
+        kpoints.append([{each[0]: k0}, {each[1]: k1}, nk])
     return kpoints
 
-def _read_alamode_input(filename):
+def read_structure_from_file(filename):
+    """ Read alamode input file and return an ASE Atoms object.
+    """
+    params = read_alamode_input(filename)
+    
+    ## Check if required keys are present
+    required_keys = ['cell', 'position', 'kd']
+    for key in required_keys:
+        if key not in params:
+            return None
+    
+    ## Make symbol and position list
+    symbols = []
+    scaled_positions = []
+    for data in params['position']:
+        symbol_idx = data[0] - 1
+        symbols.append(params['kd'][symbol_idx])
+        scaled_positions.append(data[1:4])
+    
+    ## Make ASE Atoms object
+    from ase import Atoms
+    atoms = Atoms(
+        cell=params['cell'] / AToBohr,
+        symbols=symbols,
+        scaled_positions=scaled_positions,
+        pbc=True
+    )
+    return atoms
+
+def read_alamode_input(filename):
     """ Read alamode input file and output a dictionary
     """
     with open(filename, 'r') as f:
@@ -1043,7 +1163,6 @@ def _read_alamode_input(filename):
     ##
     params = {}
     for sec in lines_alamode:
-
         if sec == 'cell':
             params.update(_parse_cell_lines(lines_alamode[sec]))
         elif sec == 'kpoint':
@@ -1128,14 +1247,23 @@ def _parse_normal_lines(lines):
     """
     params = {}
     for line in lines:
-        data = line.split()
-        ll = ""
-        for i in range(len(data)-2):
-            if i != 0:
-                ll += " "
-            ll += data[2+i]
-        val = proc_val(data[0], ll)
-        params[data[0]] = val
+        
+        # ## ver.1
+        # data = line.split()
+        # ll = ""
+        # for i in range(len(data)-2):
+        #     if i != 0:
+        #         ll += " "
+        #     ll += data[2+i]
+        # val = proc_val(data[0], ll)
+        # params[data[0]] = val
+        #
+        ## ver.2
+        name = line.split("=")[0].strip()
+        data_line = line.split("=")[1].strip()
+        val = proc_val(name, data_line)
+        params[name] = val
+        
     return params
 
 def proc_val(key, val):
@@ -1148,7 +1276,6 @@ def proc_val(key, val):
             'fc3xml',         # None,  string
             'fcsxml',         # None,  string
             ## alm
-            'kd',            # None, array of strings
             'fcsym_basis',   # Lattice, string
             'lmodel',         # least-squares, string
             'dfset',          # None,  string
@@ -1162,11 +1289,13 @@ def proc_val(key, val):
             'anime_format',  # xyz,  string
             ## relax
             'strain_ifc_dir', # None, string
+            ## added
+            'dbasis',
             )
     
     int_keys = (
             ## shared
-            'nkd',          # None, integer
+            'nkd',            # None, integer
             'norder',
             'printsym',       # 0,    integer
             ## alm
@@ -1235,6 +1364,16 @@ def proc_val(key, val):
             'renorm_2to1st',    # 2, integer
             'renorm_34to1st',   # 0, integer
             'renorm_3to2nd',    # 2, integer
+            ## added
+            'printvel',         # 0, integer
+            'printvec',        # 0, integer
+            'printxsf',       # 0, integer
+            'kpmode',
+            'newfcs',        # 0, integer
+            'nsym',         # 0, integer
+            'fcs_alamode', 
+            'fc4_shengbte',
+            'fc2_qefc',
             )
     
     double_keys = (

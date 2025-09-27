@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # pltalm.py
 #
@@ -18,22 +17,27 @@ import time
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from .initialize import (set_matplot, set_axis, set_legend)
+from auto_kappa.plot import set_matplot, set_axis, set_legend
 import glob
 
 import logging
 logger = logging.getLogger(__name__)
 
-def _plot_kappa_each(
-        ax, df, col='black', kappa_label=None, kappa_min=None, 
-        show_label=False):
+def _plot_each_kappa(
+        ax, df, col='black', kappa_label=None, kappa_min=None, show_label=False, 
+        dim=3):
     """ plot kappa for each condition (k-mesh) """
     markers = ['+', 'x', '_', 'o']
     
+    if dim == 3:
+        data_types = ['xx', 'yy', 'zz', 'ave']
+    elif dim == 2:
+        data_types = ['xx', 'yy', 'ave']
+        
     ### kp for different directions
     cont = 'kp'
     show_total = True
-    for jj, direct in enumerate(['xx', 'yy', 'zz', 'ave']):
+    for jj, direct in enumerate(data_types):
 
         lab = "%s_%s" % (cont, direct)
         xdat = df['temperature'].values
@@ -46,7 +50,7 @@ def _plot_kappa_each(
                     "%s is too small." % (direct, kappa_label))
             logger.warning(msg)
             continue
-
+        
         if direct == "ave" and show_total == False:
             continue
         
@@ -57,13 +61,9 @@ def _plot_kappa_each(
         
         ### marker width and size
         if direct == "ave":
-            alpha = 1.0
-            ms = 2.3
-            lw = 0.5
+            alpha, ms, lw = 1.0, 2.3, 0.5
         else:
-            alpha = 0.5
-            ms = 2.0
-            lw = 0.3
+            alpha, ms, lw = 0.5, 2.0, 0.3
         
         ax.plot(xdat, ydat, linestyle='None', lw=lw,
                 marker=markers[jj], markersize=ms,
@@ -76,13 +76,14 @@ def _plot_kappa_each(
         ydat = df['ksum_ave'].values
         
         lw = 0.5
-        label = "${\\rm \\kappa_p + \\kappa_c}$, %s" % kappa_label
+        label = "${\\rm \\kappa_{p+c}^{ave}}$, %s" % kappa_label
         if np.max(ydat) > kappa_min:
             ax.plot(xdat, ydat, linestyle='-', lw=lw, 
                     marker=None, c=col, label=label)
     
-def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9):
+def plot_all_kappa(
+    dfs, figname='fig_kappa.png', kappa_min=1e-7,
+    dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, dim=3):
     """ plot thermal conductivity """
     
     cmap = plt.get_cmap("tab10")
@@ -90,10 +91,10 @@ def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
 
     ax = plt.subplot()
-    ax.set_xlabel('T (K)')
-    ax.set_ylabel('${\\rm \\kappa_{lat}}$ ${\\rm (Wm^{-1}K^{-1})}$')
-    #ax.set_xlabel('Temperature (K)')
-    #ax.set_ylabel('Lattice thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
+    # ax.set_xlabel('T (K)')
+    # ax.set_ylabel('${\\rm \\kappa_{lat}}$ ${\\rm (Wm^{-1}K^{-1})}$')
+    ax.set_xlabel('Temperature (K)')
+    ax.set_ylabel('Thermal conductivity ${\\rm (Wm^{-1}K^{-1})}$')
     
     for ik, klab in enumerate(dfs):
 
@@ -103,165 +104,23 @@ def plot_kappa(dfs, figname='fig_kappa.png', kappa_min=1e-7,
             show_label = False
         
         try:
-            _plot_kappa_each(
+            _plot_each_kappa(
                     ax, dfs[klab], col=cmap(ik), kappa_label=klab,
-                    kappa_min=kappa_min, show_label=show_label)
+                    kappa_min=kappa_min, show_label=show_label, dim=dim)
         except Exception:
             msg = "\n Error while kappa is plotted."
             logger.error(msg)
             pass
     
     set_axis(ax, xscale='log', yscale='log')
-    set_legend(ax, fs=5, alpha=0.5)
-    
-    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
-    return fig
-
-def _get_log_range(vmin, vmax, space=0.05):
-
-    vmin_log = np.log10(vmin)
-    vmax_log = np.log10(vmax)
-    dv_log = vmax_log - vmin_log
-    v0_log = vmin_log - dv_log * space
-    v1_log = vmax_log + dv_log * space
-    v0 = np.power(10, v0_log)
-    v1 = np.power(10, v1_log)
-    return [v0, v1]
-
-def plot_lifetime(dfs, figname='fig_lifetime.png', xscale='linear',
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
-    
-    cmap = plt.get_cmap("tab10")
-    set_matplot(fontsize=fontsize)
-    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
-
-    ax = plt.subplot()
-    ax.set_xlabel('Frequency (${\\rm cm^{-1}}$)')
-    ax.set_ylabel('Lifetime (ps)')
-    
-    xlim = [100, -100]
-    ylim = [100, -100]
-    for it, key in enumerate(dfs):
-
-        df = dfs[key]
-        
-        xorig = df['frequency'].values
-        yorig = df['lifetime'].values
-        
-        ### get only available data
-        idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
-        
-        xdat = xorig[idx_pos]
-        ydat = yorig[idx_pos]
-        
-        label = "%d K" % int(key)
-        ax.plot(xdat, ydat, linestyle='None', lw=lw, 
-            marker='o', markersize=ms, mew=lw, mec=cmap(it), mfc='None',
-            label=label)
-        
-        ### axes range
-        idx_sort = np.argsort(xdat)
-        
-        if len(idx_sort) < 6:
-            msg = "\n"
-            msg += " Error: the number of available lifetime data is too "\
-                    "small.\n"
-            msg += " Something wrong may happen for the lifetime calculation.\n"
-            logger.warning(msg)
-            return -1
-        
-        xmin = np.min(xdat[idx_sort[5:]])
-        xmax = np.max(xdat)
-        xlim[0] = min(xlim[0], xmin)
-        xlim[1] = max(xlim[1], xmax)
-        
-        idx_sort = np.argsort(ydat)
-        n = len(idx_sort)
-        ymin = np.min(ydat[idx_sort[5:]])
-        ymax = np.max(ydat)
-        ylim[0] = min(ylim[0], ymin)
-        ylim[1] = max(ylim[1], ymax)
-    
-    ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
-    if xscale == 'log':
-        ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
-    else:
-        xlim[0] = 0.
-        xlim[0] = -0.05 * xlim[1]
-        xlim[1] = xlim[1] * 1.05
-        ax.set_xlim(xlim)
-
-    set_axis(ax, xscale=xscale, yscale='log')
-    set_legend(ax, fs=6, loc='best', alpha=0.5)
-    
-    savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
-    return 0
-
-def plot_scattering_rates(frequencies, scat_rates, labels, 
-        figname='fig_scat_rates.png', 
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
-    
-    cmap = plt.get_cmap("tab10")
-    set_matplot(fontsize=fontsize)
-    fig = plt.figure(figsize=(fig_width, aspect*fig_width))
-
-    ax = plt.subplot()
-    ax.set_xlabel('Frequency (${\\rm cm^{-1}}$)')
-    ax.set_ylabel('Scattering rate (${\\rm ps^{-1}}$)')
-    
-    markers = ['o', '^', 's', 'd', 'v']
-    xlim = [100, -100]
-    ylim = [100, -100]
-    for ik, key in enumerate(labels):
-
-        xorig = frequencies.copy()
-        yorig = scat_rates[key].copy()
-        label = labels[key]
-        
-        ### get only available data
-        idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
-        
-        if len(idx_pos) == 0:
-            continue
-        
-        xdat = xorig[idx_pos]
-        ydat = yorig[idx_pos]
-        
-        ax.plot(xdat, ydat, linestyle='None', lw=lw, 
-            marker=markers[ik%len(markers)], 
-            markersize=ms, mew=lw, mec=cmap(ik), mfc='None',
-            label=label
-            )
-        
-        ### axes range
-        idx_sort = np.argsort(xdat)
-        xmin = np.min(xdat[idx_sort[5:]])
-        xmax = np.max(xdat[idx_sort[:-5]])
-        
-        idx_sort = np.argsort(ydat)
-        n = len(idx_sort)
-        #ymin = np.min(ydat[idx_sort[5:]])
-        ymin = np.min(ydat)
-        ymax = np.max(ydat[idx_sort[:-5]])
-
-        xlim[0] = min(xmin, xlim[0])
-        xlim[1] = max(xmax, xlim[1])
-        ylim[0] = min(ymin, ylim[0])
-        ylim[1] = max(ymax, ylim[1])
-        
-    
-    ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
-    ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
-    
-    set_axis(ax, xscale='log', yscale='log')
-    set_legend(ax, fs=6, loc='best', alpha=0.5)
+    set_legend(ax, fs=5, alpha=0.5, loc='best')
     
     savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
     return fig
 
 def plot_cumulative_kappa(dfs, 
         figname='fig_kcumu.png', xlabel=None, ylabel=None, xscale='linear',
-        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8, ms=2.0):
+        dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.8):
     """ 
     dfs : dict of DataFrame
         key is temperature
@@ -499,3 +358,73 @@ def savefigure(fig, figname, dpi=600, bbox_inches="tight", max_waiting_time=300)
     
     return 0
 
+# def _get_log_range(vmin, vmax, space=0.05):
+
+#     vmin_log = np.log10(vmin)
+#     vmax_log = np.log10(vmax)
+#     dv_log = vmax_log - vmin_log
+#     v0_log = vmin_log - dv_log * space
+#     v1_log = vmax_log + dv_log * space
+#     v0 = np.power(10, v0_log)
+#     v1 = np.power(10, v1_log)
+#     return [v0, v1]
+
+# def plot_scattering_rates(frequencies, scat_rates, labels, 
+#                           figname='fig_scat_rates.png', 
+#                           dpi=600, fontsize=7, fig_width=2.3, aspect=0.9, lw=0.3, ms=1.3):
+    
+#     cmap = plt.get_cmap("tab10")
+#     set_matplot(fontsize=fontsize)
+#     fig = plt.figure(figsize=(fig_width, aspect*fig_width))
+
+#     ax = plt.subplot()
+#     ax.set_xlabel('Frequency (${\\rm cm^{-1}}$)')
+#     ax.set_ylabel('Scattering rate (${\\rm ps^{-1}}$)')
+    
+#     markers = ['o', '^', 's', 'd', 'v']
+#     xlim = [100, -100]
+#     ylim = [100, -100]
+#     for ik, key in enumerate(labels):
+
+#         xorig = frequencies.copy()
+#         yorig = scat_rates[key].copy()
+#         label = labels[key]
+        
+#         ### get only available data
+#         idx_pos = np.where((xorig > 0.) & (yorig > 1e-5))[0]
+        
+#         if len(idx_pos) == 0:
+#             continue
+        
+#         xdat = xorig[idx_pos]
+#         ydat = yorig[idx_pos]
+        
+#         ax.plot(xdat, ydat, linestyle='None', lw=lw, 
+#             marker=markers[ik%len(markers)], 
+#             markersize=ms, mew=lw, mec=cmap(ik), mfc='None',
+#             label=label
+#             )
+        
+#         ### axes range
+#         idx_sort = np.argsort(xdat)
+#         xmin = np.min(xdat[idx_sort[5:]])
+#         xmax = np.max(xdat[idx_sort[:-5]])
+        
+#         idx_sort = np.argsort(ydat)
+#         #ymin = np.min(ydat[idx_sort[5:]])
+#         ymin = np.min(ydat)
+#         ymax = np.max(ydat[idx_sort[:-5]])
+
+#         xlim[0] = min(xmin, xlim[0])
+#         xlim[1] = max(xmax, xlim[1])
+#         ylim[0] = min(ymin, ylim[0])
+#         ylim[1] = max(ymax, ylim[1])
+        
+#     ax.set_xlim(_get_log_range(xlim[0], xlim[1], space=0.05))
+#     ax.set_ylim(_get_log_range(ylim[0], ylim[1], space=0.05))
+    
+#     set_axis(ax, xscale='log', yscale='log')
+#     set_legend(ax, fs=6, loc='best', alpha=0.5)
+    
+#     savefigure(fig, figname, dpi=dpi, bbox_inches='tight')
+#     return fig

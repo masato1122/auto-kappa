@@ -13,18 +13,18 @@
 #
 import os.path
 import numpy as np
-import warnings
+# import warnings
 import glob
 import yaml
 
 import ase.io
 from phonopy import Phonopy
-from ase.calculators.vasp import Vasp
-from auto_kappa import output_directories
-from auto_kappa.structure.crystal import change_structure_format
-from auto_kappa.io.vasp import read_incar, read_poscar, read_kpoints, wasfinished
+from phonopy.interface.vasp import read_vasp
 
-class Phonondb():
+from auto_kappa.structure import change_structure_format
+from auto_kappa.io.vasp import read_kpoints
+
+class Phonondb:
     """ Read files in phonondb
     Args
     =========
@@ -101,13 +101,13 @@ class Phonondb():
     def unitcell(self):
         if self._unitcell is None:
             fn = self.directory + '/POSCAR-unitcell'
-            self._unitcell = read_poscar(fn)
+            self._unitcell = read_vasp(fn)
         return self._unitcell
     
     def get_unitcell(self, format='phonopy'):
         if self._unitcell is None:
             fn = self.directory + '/POSCAR-unitcell'
-            self._unitcell = read_poscar(fn)
+            self._unitcell = read_vasp(fn)
         return change_structure_format(self._unitcell, format=format)
     
     @property
@@ -143,7 +143,7 @@ class Phonondb():
     def get_kpoints(self, mode=None):
         """
         Return
-        -----------
+        -------
         kpoints : Kpoints obj for the given mode
         """
         key = 'KPOINTS-' + mode
@@ -178,11 +178,12 @@ def read_phonopy_conf(filename):
     """
     from phonopy.cui.settings import PhonopyConfParser
     confparser = PhonopyConfParser(filename=filename)
-    params = confparser.get_configures()
+    try:
+        params = confparser.get_configures()
+    except:
+        params = confparser.confs
+    
     from fractions import Fraction
-    # matrix = np.zeros((2,3,3,))
-    # matrix[0] = np.identity(3)
-    # matrix[1] = np.identity(3)
     matrix = []
     for ii, target in enumerate(['dim', 'primitive_axis']):
         matrix.append(np.identity(3))

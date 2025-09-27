@@ -11,23 +11,24 @@
 # or http://opensource.org/licenses/mit-license.php for information.
 #
 import os
-import os.path
-import logging
+import sys
 import subprocess
 import time
+import signal
 
 try:
     import psutil
 except ImportError:
     pass
 
-from auto_kappa.alamode.io import wasfinished_alamode, get_status
+from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.errors import check_unexpected_errors
 
+import logging
 logger = logging.getLogger(__name__)
 
 def run_alamode(
-        filename, logfile, workdir='.', neglect_log=0, file_err="std_err.txt",
+        filename, logfile, workdir='.', ignore_log=False, file_err="std_err.txt",
         mpirun='mpirun', nprocs=1, nthreads=1, command='anphon',
         max_num_corrections=None):
     """ Run alamode with a command (alm or anphon)
@@ -63,7 +64,7 @@ def run_alamode(
     count = 0
     while True:
         
-        if wasfinished_alamode(logfile) and neglect_log == False:
+        if wasfinished_alamode(logfile) and ignore_log == False:
             status = -1
             break
         
@@ -83,8 +84,9 @@ def run_alamode(
                 break
             
             ###
-            msg = "\n Processes per node : %d => %d" % (ppn_prev, ppn_i)
-            #msg += "\n %s " % ("./" + os.path.relpath(os.getcwd(), dir_init))
+            if count == 1:
+                logger.info("")
+            msg = " Processes per node : %d => %d" % (ppn_prev, ppn_i)
             logger.info(msg)
         
         ### set number of parallelization
@@ -125,68 +127,72 @@ def _run_job(cmd, logfile="log.txt", file_err="std_err.txt"):
     """ Run a job with subprocss
     
     Args
-    -------
-
+    -----
     cmd : string
         command to run a job
-    
     """    
     ## run the job!!
     status = None
-    with open(logfile, 'w') as f, open(file_err, "w", buffering=1) as f_err:
-        
-        ### Error file, termination check
+    proc = None
+    
+    def terminate(signum, frame):
+        logger.info(f" Received signum {signum}, terminating the subprocess group...")
+        if proc and proc.poll() is None:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            except Exception as e:
+                logger.error(f" Error while terminating the subprocess group: {e}")
+        sys.exit(0)
+    
+    ## Register signal handlers
+    signal.signal(signal.SIGINT, terminate)
+    signal.signal(signal.SIGTERM, terminate)
+    
+    with open(logfile, 'w') as f_out, open(file_err, 'w', buffering=1) as f_err:
         proc = subprocess.Popen(
-                cmd, shell=True, env=os.environ,
-                stdout=f, stderr=f_err)
+            cmd, shell=True, env=os.environ,
+            stdout=f_out, stderr=f_err,
+            preexec_fn=os.setsid  # Start new process group (available on Linux only)
+            )
         
         count = 0
-        mem_max = -1
-        mem_info = None
-        while True:
-            
-            if proc.poll() is not None:
-                break
-            
-            ### get memory info if available
-            mem_percentage = 0.
-            try:
-                
-                ##### ver.2
-                ##process = psutil.Process(proc.pid)
-                ##mem_info = process.memory_info()
-                
-                #### ver.1
-                mem_info = psutil.virtual_memory()
-                mem_max = max(mem_max, mem_info.used)
-                # mem_tot = mem_info.total
-                mem_percentage = mem_info.percentage
-                
-                if mem_percentage > 95.:
-                    logger.info("\n Warning: memory usage is %.2f%%" % (
-                        mem_info.percentage))
+        mem_max = 0
+        process = psutil.Process(proc.pid)
+        try:
+            while True:
+                if proc.poll() is not None:
                     break
-
-            except Exception:
-                pass
-
-            waiting_time = min(10, count)
-            time.sleep(waiting_time)
-            count += 1
-        
-        # if mem_max > 0.:
-        #     msg = "\n Maximum memory usage : %.3f GB" % (mem_max / 1e9)
-        #     logger.info(msg)
-        
-        ##if mem_info is not None:
-        ##    try:
-        ##        msg = "\n Memory usage (GB) : %.3f (VMS), %.3f (RSS) " % (
-        ##                mem_info.vms/1e9, mem_info.rss/1e9)
-        ##        logger.info(msg)
-        ##    except Exception:
-        ##        pass
+                
+                try:
+                    ### Modified on 2025/09/06 (This may not be working properly.)
+                    mem_info = process.memory_info()
+                    mem_used_mb = mem_info.rss / (1024.**2)
+                    mem_max = max(mem_max, mem_used_mb)
+                    
+                    total_mem = psutil.virtual_memory().total / (1024.**2)
+                    percentage = mem_used_mb / total_mem * 100.
+                    
+                    if percentage > 95.:
+                        logger.info(f"\n ⚠️ Error: high memory usage: {percentage:.2f}%")
+                        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                        break
+                
+                except psutil.NoSuchProcess:
+                    break
+                
+                time.sleep(min(10, count + 1))
+                count += 1
             
-        status = proc.poll()
+            status = proc.wait()
+            
+        finally:
+            # Ensure that the process is terminated
+            if proc.poll() is None:
+                logger.info(" Clearning up: killing leftover subprocess group...")
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                except Exception as e:
+                    logger.error(f" Error while killing the subprocess group: {e}")
     
-    return 0
+    return status
 

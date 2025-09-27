@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # almcalc.py
 #
@@ -13,605 +12,56 @@
 import sys
 import os
 import os.path
-import math
 import numpy as np
-import logging
-
-import ase
 import shutil
-import pandas as pd
 import glob
-import itertools
-
-import ase.io
-from ase.geometry import get_distances
-
-# from phonopy import Phonopy
-from phonopy.structure.cells import get_primitive, get_supercell
 
 from auto_kappa import output_directories, output_files, default_amin_parameters
-from auto_kappa.units import AToBohr, BohrToA
-from auto_kappa.structure.crystal import change_structure_format, get_formula
-from auto_kappa.io.vasp import wasfinished, get_dfset, read_dfset, read_outcar, print_vasp_params
-from auto_kappa.calculators.vasp import run_vasp, backup_vasp
-from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile
-from auto_kappa.alamode.io import wasfinished_alamode
+from auto_kappa.structure import change_structure_format
+from auto_kappa.structure.crystal import (
+    get_formula, transform_prim2unit, get_atomic_distance_list, 
+    get_supercell, transform_unit2prim)
+from auto_kappa.structure.comparison import generate_mapping_s2p
 from auto_kappa.alamode.runjob import run_alamode
-from auto_kappa.cui import ak_log
-from auto_kappa.io.vasp import write_born_info
-from auto_kappa.io.alm import AlmInput, AnphonInput
+from auto_kappa.io.alm import AnphonInput
 from auto_kappa.io.files import write_output_yaml
-from auto_kappa.alamode.errors import check_rank_deficient
+from auto_kappa.io.born import BORNINFO
+from auto_kappa.alamode.log_parser import get_minimum_frequency_from_logfile, read_log_fc
+from auto_kappa.alamode.io import wasfinished_alamode
 from auto_kappa.alamode.compat import (
     check_directory_name_for_pristine,
     was_primitive_changed,
     was_tolerance_changed,
     backup_previous_results,
-    adjust_keys_of_suggested_structures
+    adjust_keys_of_suggested_structures,
+    get_previously_calculated_structure,
+    get_number_of_same_structures
 )
-from auto_kappa.units import BohrToA
-from auto_kappa.vasp.params import get_previous_parameters, get_amin_parameter
-        
+import auto_kappa.alamode.helpers as helper
+from auto_kappa.alamode.helpers import AlamodeForceCalculator, AlamodeInputWriter, NameHandler
+from auto_kappa.alamode.plotter import AlamodePlotter
+from auto_kappa.alamode.gruneisen import GruneisenCalculator
+from auto_kappa.utils import get_version
+from auto_kappa.units import BohrToA, AToBohr
+from auto_kappa.structure.two import get_normal_index, get_thickness
+
+import logging
 logger = logging.getLogger(__name__)
 
-try:
-    import psutil
-except ImportError:
-    pass
-
-class AlamodeForceCalculator():
-    
-    def _start_force_calculation(self, order, calculate_forces):
-        
-        ### Message to start force calculation
-        if calculate_forces:
-            line = f"Force calculation (order: {order})"
-        else:
-            line = f"Generate displacement structures (order: {order})"
-        msg = "\n\n " + line
-        msg += "\n " + "=" * (len(line))
-        logger.info(msg)
-        
-    def _get_base_directory_for_forces(self, order, nsuggest, nmax_suggest):
-        
-        if order == 1:
-            outdir = self.out_dirs['harm']['force']
-        elif order == 2:
-            if nsuggest <= nmax_suggest:
-                ## Avoid the unexpected error due to the rank deficiency
-                use_lasso = False
-                logfile = self.out_dirs['cube']['force_fd'] + '/fc3.log'
-                if os.path.exists(logfile):
-                    if check_rank_deficient(logfile):
-                        use_lasso = True                
-                
-                if use_lasso:
-                    self._fc3_type = 'lasso'
-                    outdir = self.out_dirs['cube']['force_lasso']
-                else:
-                    self._fc3_type = 'fd'
-                    outdir = self.out_dirs['cube']['force_fd']
-                
-            else:
-                self._fc3_type = 'lasso'
-                outdir = self.out_dirs['cube']['force_lasso']
-        elif order > 2:
-            outdir = self.out_dirs['higher']['force']
-        else:
-            msg = "\n WARNING: given order (%d) is not supported yet." % order
-            logger.error(msg)
-            sys.exit()
-        
-        return outdir
-    
-    def _get_suggested_structures_for_lasso(
-        self, order, num_fcs, num_atoms, frac_nrandom, nmax_suggest,
-        temperature=300, classical=False, nmin_generated=10):
-        
-        ### number of random displacement patters
-        nrandom = int(frac_nrandom * num_fcs / num_atoms)
-        
-        ngenerated = max(nmin_generated, nrandom)
-        
-        ### name of order
-        order_names = {1: "harmonic", 2: "cubic"}
-        if order <= 2:
-            name = order_names[order]
-        else:
-            name = "4th-order"
-        
-        msg = ""
-        msg += f"\n Maximum limit of the number of suggested patterns : {nmax_suggest}"
-        msg += f"\n The number of suggested patterns exceeds the maximum limit."
-        msg += f"\n"
-        msg += f"\n Number of generated random patterns (Ngen) : {ngenerated}"
-        msg += f"\n - Ngen = max({nmin_generated}, int(frac * Nfcs / Natoms))"
-        msg += f"\n - Nfcs   : Number of free {name} force constants, {num_fcs}"
-        msg += f"\n - Natoms : Number of atoms in a supercell, {num_atoms}"
-        msg += f"\n - frac   : Fractional number of random patterns, {frac_nrandom:.3f}"
-        logger.info(msg)
-        
-        if order == 2:
-            ## FC3 is obtained with random-displacement method
-            ## with a fixed displacement magnitude
-            structures = self.get_suggested_structures(
-                    order, 
-                    disp_mode='random',
-                    number_of_displacements=ngenerated,
-                    )
-        
-        elif order > 2:
-            ## High order FCs are obtained with
-            ## a random-displacment based on normal coordinate
-            structures = self.get_suggested_structures(
-                    order, 
-                    disp_mode='random_normalcoordinate',
-                    number_of_displacements=ngenerated,
-                    temperature=temperature,
-                    classical=classical
-                    )
-        return structures
-    
-    def _check_structures_identity(self, struct_this, struct_prev, tolerance=1e-3, key=None):
-        _, D_len = get_distances(
-            struct_prev.get_positions(),
-            struct_this.get_positions(),
-            cell=struct_prev.cell,
-            pbc=struct_prev.pbc)
-        dists = np.diag(D_len)
-        
-        flag = np.any(dists > tolerance)
-        if flag:
-            msg = (
-                f" Error: The structure is not the same as "
-                f"the previous one. ({key}, {np.max(dists)})")
-            logger.error(msg)
-            sys.exit()
-        
-    def _job_for_each_structure(
-        self, job_idx, structures, base_dir, order, calculator, 
-        calculate_forces=True, **amin_params_set):
-        
-        struct_keys = list(structures.keys())
-        key = struct_keys[job_idx]
-        
-        ### name of output directory
-        outdir = base_dir + '/' + str(key)
-        
-        ### get previous parameters
-        if job_idx == 0:
-            prev_params = None
-        else:
-            dir_prev = (base_dir + "/" + str(struct_keys[job_idx-1]))
-            prev_params = get_previous_parameters(dir_prev)
-        
-        ### Check whether structures are same for the finite-displacement method
-        if order == 2 and self.fc3_type == 'fd':
-            file_poscar = outdir + "/POSCAR"
-            if os.path.exists(file_poscar):        
-                structure_prev = ase.io.read(file_poscar)
-                self._check_structures_identity(
-                    structures[key], structure_prev, tolerance=1e-3, key=key)
-        
-        ### Wheter the calculation has been finished
-        filename = outdir + "/vasprun.xml"
-        if wasfinished(outdir):
-            if are_forces_available(filename):
-                path = self.get_relative_path(outdir)
-                msg = " ( %d / %d ) %s : skip" % (job_idx + 1, len(struct_keys), path)
-                logger.info(msg)
-                self._counter_done += 1
-                return
-            else:
-                out = backup_vasp(outdir)
-        
-        ## set output directory
-        calculator.directory = outdir
-        
-        if job_idx == 0:
-            print_vasp_params(calculator.asdict()['inputs'])
-            logger.info("")
-        
-        structure = structures[key].copy()
-        
-        ### set AMIN
-        try:
-            amin = prev_params["AMIN"]
-        except Exception:
-            amin = get_amin_parameter(
-                calculator.directory, structure.cell.array, **amin_params_set)
-        
-        if amin is not None:
-            calculator.set(amin=amin)
-            
-            ### once AMIN is used, AMIN is set for calculations afterward.
-            amin_params_set["num_of_errors"] = 0
-
-        ### Calculate forces with Custodian
-        if os.path.exists(calculator.directory) == False:
-            os.makedirs(calculator.directory, exist_ok=True)
-            calculator.write_input(structure)
-            
-        if calculate_forces:
-            self._calculate_forces_for_each(
-                calculator, structure, method='custodian', max_num_try=3)
-            self._counter_done += 1
-            
-        ### print log
-        time_min = self._print_each_end(
-            job_idx + 1, len(struct_keys),
-            self.get_relative_path(calculator.directory))
-        
-        ### estimate remaining time
-        if self._counter_calc == 0:
-            try:
-                num_remain = len(struct_keys) - job_idx - 1
-                rtime_est = time_min * num_remain / 60.  # hour
-                msg = "\n Estimated remaining time for this part : %.2f hours\n" % (rtime_est)
-                logger.info(msg)
-            except Exception:
-                pass
-        
-        self._counter_calc += 1
-        
-    def _calculate_forces_for_each(
-        self, calculator, structure, method='custodian', max_num_try=3):
-        count = 0
-        while True:    
-            run_vasp(calculator, structure, method='custodian')
-            
-            ### check forces
-            filename = calculator.directory + "/vasprun.xml"
-            if are_forces_available(filename):
-                break
-            else:
-                ### backup the previous result
-                backup_vasp(calculator.directory)
-            
-            count += 1
-            if count == max_num_try:
-                msg = " Error: atomic forces could not be calculated properly."
-                logger.error(msg)
-                sys.exit()
-
-    def _print_each_end(self, count, num_all, dir_each):
-        msg = f" ( {count} / {num_all} ) {dir_each}"
-        try:
-            outinfo = read_outcar(dir_each + "/OUTCAR")
-            msg += " : %7.2f min" % outinfo["cpu_time(min)"]
-            time = outinfo["cpu_time(min)"]
-        except Exception:
-            time = 0.0
-        logger.info(msg)
-        return time
-        
-    def _make_dfset_file(self, order, nsuggest, base_dir):
-        
-        if order == 1:
-            fn0 = self.outfiles['harm_dfset']
-        elif order == 2:
-            fn0 = self.outfiles['cube_%s_dfset' % self.fc3_type]
-        else:
-            fn0 = self.outfiles['higher_dfset']
-        
-        ###
-        os.makedirs(self.out_dirs['result'], exist_ok=True)
-        offset_xml = base_dir + '/prist/vasprun.xml'
-        outfile = self.out_dirs['result'] + "/" + fn0
-        
-        out = get_dfset(
-            base_dir, offset_xml=offset_xml,
-            outfile=self.get_relative_path(outfile),
-            nset=nsuggest-1)
-        
-        return out
-
-class AlamodeInputWriter():
-    
-    def get_filenames(self, propt, order, outdir, **kwargs):
-        
-        dir_result = self.out_dirs["result"]
-        
-        fc2xml = None
-        fc3xml = None
-        fcsxml = None
-        dfset = None
-        dir_work = None
-        
-        if propt in ['band', 'dos']:
-            dir_work = self.out_dirs['harm']['bandos']
-            relpath =  os.path.relpath(dir_result, dir_work)
-            fcsxml = relpath + '/' + self.outfiles['harm_xml']
-            
-        elif propt == 'evec_commensurate':
-            dir_work = self.out_dirs['harm']['evec']
-            relpath = os.path.relpath(dir_result, dir_work)
-            fcsxml = relpath + '/' + self.outfiles['harm_xml']
-            
-        elif propt == 'kappa':    
-            if outdir is not None and "fcsxml" in kwargs.keys():
-                """ Use harmonic and cubic FCs obtained using supercells of
-                different sizes
-                """
-                dir_work = outdir
-                fcsxml = kwargs["fcsxml"]
-            else:
-                dir_work = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-                relpath = os.path.relpath(dir_result, dir_work)
-                fcsxml = (
-                    relpath + '/' + 
-                    self.outfiles['cube_%s_xml' % self.fc3_type])
-        
-        elif propt in ['lasso', 'cv']:
-            if order == 2:
-                dir_work = self.out_dirs['cube'][propt]
-                relpath = os.path.relpath(dir_result, dir_work)
-                dfset = (relpath + '/' + 
-                        self.outfiles['cube_%s_dfset' % self.fc3_type])
-            
-            else:
-                dir_work = self.out_dirs['higher'][propt]
-                relpath = os.path.relpath(dir_result, dir_work)
-                dfset = relpath + '/' + self.outfiles['higher_dfset']
-                
-                ## get file name of FC3 (fc3xml)
-                fc3xml = (relpath + '/' + 
-                        self.outfiles['cube_%s_xml' % self.fc3_type])
-                fn_check = (
-                        self.out_dirs['result'] + '/' + 
-                        self.outfiles['cube_%s_xml' % self.fc3_type]
-                        )
-                if os.path.exists(fn_check) == False:
-                    msg = " Error: FC3 has not been calculated."
-                    logger.error(msg)
-                    sys.exit()
-            
-            ## get fc2xml
-            fc2xml = relpath + '/' + self.outfiles['harm_xml']
-            fn_check = (
-                    self.out_dirs['result'] + '/' + self.outfiles['harm_xml']
-                    )
-            if os.path.exists(fn_check) == False:
-                msg = " Error: FC2 has not been calculated."
-                logger.error(msg)
-                sys.exit()
-                
-        elif propt == 'fc2':
-            dir_work = self.out_dirs['harm']['force']
-            relpath = os.path.relpath(dir_result, dir_work)
-            dfset = relpath + '/' + self.outfiles['harm_dfset']
-            fc2xml = None
-        
-        elif propt == 'fc3':
-            dir_work = self.out_dirs['cube']['force_%s' % self.fc3_type]
-            relpath = os.path.relpath(dir_result, dir_work)
-            dfset = (relpath + '/' + 
-                    self.outfiles['cube_%s_dfset' % self.fc3_type])
-            fc2xml = relpath + '/' + self.outfiles['harm_xml']
-        
-        elif propt == 'scph':
-            dir_work = self.out_dirs['higher']['scph']
-            relpath = os.path.relpath(dir_result, dir_work)
-            fc2xml = relpath + "/" + self.outfiles['harm_xml']
-            fcsxml = relpath + "/" + self.outfiles["higher_xml"] 
-             
-        elif propt == 'suggest':
-            if order is None:
-                logger.info("\n Order is not given. Set order = 1.")
-                order = 1
-            
-            dfset = None
-            fc2xml = None
-            
-            if order == 1:
-                dir_work = self.out_dirs['harm']['suggest']
-            elif order == 2:
-                dir_work = self.out_dirs['cube']['suggest']
-            elif order > 2:
-                dir_work = self.out_dirs['higher']['suggest']
-            else:
-                msg = " Error: order= " + str(order) + " is not supported."
-                logger.error(msg)
-                sys.exit()
-        else:
-            msg = "\n Error: %s is not supported yet." % (propt)
-            logger.error(msg)
-            sys.exit()
-        
-        born_xml = self.out_dirs['nac'] + '/vasprun.xml'
-        
-        return {
-            'fc2xml': fc2xml, 'fc3xml': fc3xml, 'fcsxml': fcsxml, 
-            'dfset': dfset, 'dir_work': dir_work,
-            'born_xml': born_xml,
-        }
-
-    def _get_input_object(
-        self, alamode_type=None, mode=None, kpmode=None, fc2xml=None, fc3xml=None, fcsxml=None,
-        dfset=None, borninfo=None):
-        
-        if alamode_type.startswith('anphon'):
-            inp = AnphonInput.from_structure(
-                    self.primitive,
-                    mode=mode,
-                    kpmode=kpmode,
-                    fcsxml=fcsxml,
-                    nonanalytic=self.nac, 
-                    borninfo=borninfo
-                )
-            ### set primitive cell with Pymatgen-structure
-            inp.set_primitive(
-                change_structure_format(
-                    self.primitive, format="pymatgen-structure"))
-            
-        elif alamode_type == 'alm':
-            inp = AlmInput.from_structure(
-                    self.supercell,
-                    mode=mode,
-                    dfset=dfset,
-                    fc2xml=fc2xml,
-                    fc3xml=fc3xml,
-                    nonanalytic=self.nac, 
-                    borninfo=borninfo
-                )
-        return inp
-    
-    def _set_parameters_for_property(
-        self, inp, propt=None, deltak=None, kpts=None, order=None):
-        
-        if propt == 'band':    
-            inp.set_kpoint(deltak=deltak)
-        
-        elif propt == 'dos':
-            if self.frequency_range is not None:
-                diff = self.frequency_range[1] - self.frequency_range[0]
-                fmin = self.frequency_range[0] - diff * 0.05
-                fmax = self.frequency_range[1] + diff * 0.05
-                
-                npoints = 301
-                inp.update({'emin': fmin})
-                inp.update({'emax': fmax})
-                inp.update({'delta_e': (fmax-fmin)/(npoints-1)})
-            
-            inp.update({'kpts': kpts})
-            inp.update({'pdos': 1})
-        
-        elif propt == 'evec_commensurate':
-            from auto_kappa.alamode.parameters import set_parameters_evec
-            set_parameters_evec(inp, self.primitive_matrix, self.scell_matrix)
-        
-        elif propt.startswith('kappa'):
-            from auto_kappa.alamode.parameters import set_parameters_kappa
-            set_parameters_kappa(inp, kpts=kpts, nac=self.nac)
-            
-        elif propt == "scph":
-            from auto_kappa.calculators.scph import set_parameters_scph
-            set_parameters_scph(
-                    inp, primitive=self.primitive, deltak=deltak,
-                    kdensities=[30, 10])
-            
-        elif propt in ['cv', 'lasso', 'fc2', 'fc3', 'suggest']:
-            """
-            Comments
-            ---------
-            * maxalpha is automatically set by the code.
-            * minalpha = maxalpha * 1e-6 
-
-            * set nbody and cutoffs
-            
-            """
-            if propt == 'fc2':
-                order = 1
-            elif propt == 'fc3':
-                order = 2
-            elif propt == 'cv' or propt == 'lasso':
-                if order is None:
-                    logger.error("\n Error: order must be given.")
-                    sys.exit()
-            elif propt == 'suggest':
-                if order is None:
-                    logger.error("\n Error: order must be given.")
-                    sys.exit()
-            else:
-                logger.error(" Error")
-                sys.exit()
-            
-            if len(self.nbody) < order:
-                self.set_nbody_automatically()
-            
-            inp.update({'norder': order})
-            inp.update({'nbody': [self.nbody[i] for i in range(order)]})
-            
-            ### set cutoffs for alamode
-            cutoffs_alamode = {}
-            for i1 in range(self.num_elems):
-                for i2 in range(self.num_elems):
-                    lab = "%s-%s" % (
-                            inp.as_dict()['kd'][i1],
-                            inp.as_dict()['kd'][i2]
-                            )
-                    cutoffs_alamode[lab] = np.where(
-                            self.cutoffs[:order,i1,i2]<0., 
-                            None, self.cutoffs[:order,i1,i2]
-                            )
-            
-            inp.update({'cutoff': cutoffs_alamode})
-            
-            if propt in ['cv', 'lasso']:
-                inp.update({'lmodel': 'enet'})
-                inp.update({'l1_ratio': 1.0})
-                inp.update({'maxiter': 10000})   ## use the original default, 10000
-                inp.update({'conv_tol': 1e-10})  ## strincter than the default, 1e-8
-                if propt == 'cv':
-                    inp.update({'cv': 5})
-                    inp.update({'cv_nalpha': 50})
-                elif propt == 'lasso':
-                    alpha = self.get_suggested_l1alpha(order=order)
-                    inp.update({'cv': 0})
-                    inp.update({'l1_alpha': alpha})      ### read l1_alpha
-        
-        else:
-            logger.error(" Error: %s is not supported." % propt)
-            sys.exit()
-
-class AlamodeJobHandler():
-    
-    def _get_work_directory(self, propt, order=None):
-        
-        if propt in ['band', 'dos']:
-            workdir = self.out_dirs['harm']['bandos']
-            
-        elif propt == 'kappa':
-            workdir = self.out_dirs['cube']['kappa_%s' % self.fc3_type]
-        
-        elif propt == 'evec_commensurate':
-            workdir = self.out_dirs['harm']['evec']
-        
-        elif propt in ['cv', 'lasso']:
-            if order == 2:
-                workdir = self.out_dirs['cube'][propt]
-            else:
-                workdir = self.out_dirs['higher'][propt]
-            
-        elif propt == 'fc2':
-            workdir = self.out_dirs['harm']['force']
-        
-        elif propt == 'fc3':
-            workdir = self.out_dirs['cube']['force_%s' % self.fc3_type]
-        
-        elif propt == 'suggest':
-            if order is None:
-                order = 1
-            
-            if order == 1:
-                workdir = self.out_dirs['harm']['suggest']
-            elif order == 2:
-                workdir = self.out_dirs['cube']['suggest']
-            elif order > 2:
-                workdir = self.out_dirs['higher']['suggest']
-            else:
-                logger.error("\n Error: order must be given properly.")
-                sys.exit()
-        
-        elif propt == 'scph':
-            workdir = self.out_dirs['higher']['scph']
-        
-        else:
-            msg = "\n WARNING: %s property is not supported.\n" % (propt)
-            logger.error(msg)
-            sys.exit()
-        
-        return workdir
-
-class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler):
+class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
+                  NameHandler, GruneisenCalculator):
     
     ### k1: alamode type, k2: mode, k3: propt
     propts_mode_type = {
             'anphon': {
-                'phonons': ['band', 'dos', 'evec_commensurate'],
-                'rta': ['kappa'],
+                'phonons': ['band', 'dos', 'evec_commensurate', 
+                            'gruneisen_band', 'gruneisen_dos'],
+                'rta':  ['kappa', 'kappa_scph'],
                 'scph': ['scph'],
                 },
+            'anphon_ver2': {
+                'rta': ['kappa_4ph', 'kappa_scph_4ph'],
+            },
             'alm':{
                 'suggest': ['suggest'],
                 'optimize': ['fc2', 'fc3', 'cv', 'lasso'],
@@ -630,91 +80,70 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             magnitude=0.01, magnitude2=0.03, 
             ##mag_high=0.03,
             cutoff2=-1, cutoff3=4.3, 
+            min_nearest=3,
             #order_lasso=5,
             nac=None,
             commands=None,
-            verbosity=0,
+            verbose=0,
             yamlfile_for_outdir=None,
+            dim=3,
+            calculate_forces=True,
             ):
         """ This class helps to manage ALAMODE calculations including force
         calculations with VASP.
-        
-        Args
-        ------
 
-        prim_given : primitive structure
-            Different formats such as pymatgen and ASE are accepted while the
-            format is changed to ase-Atoms in this module.
-
-        base_directory : string
-            The top directory of the output directories. For example, material
-            ID of Materials Project or composition [apdb_output]
-        
-        additional_directory : string
-            ``base_directory`` + ``additional_directory`` will be used as the
-            base directory.
-        
+        Parameters
+        -----------
+        prim_given : pymatgen.core.Structure or ase.Atoms
+            Primitive cell. Various formats (pymatgen `Structure`, ASE `Atoms`) are
+            accepted; internally converted to `ase.Atoms`.
+        base_directory : str
+            Top-level output directory (e.g., Materials Project ID or composition).
+        additional_directory : str
+            Path segment appended to ``base_directory`` to form the working directory.
         restart : int, default 1
-            The calculation will restart (1) or NOT restart (0) when the
-            directory exists.
-
-        scell_matrix : array of float, shape=(3,3)
-            transformation matrix from the unitcell to a supercell
+            Whether to restart if the directory already exists (1 = restart, 0 = fresh).
+        scell_matrix : array_like of float, shape (3, 3), optional
+            Transformation matrix from the unit cell to a supercell.
+        primitive_matrix : array_like of float, shape (3, 3), optional
+            Transformation matrix from the unit cell to the primitive cell.
+        cutoffs : array_like, shape (order, num_elems, num_elems), optional
+            Cutoff radii for force constants in Å. If omitted, ``cutoff2`` and
+            ``cutoff3`` are used. Defaults: harmonic = -1 Å, cubic = 4.3 Å.
+        nbody : list of int, optional
+            ``nbody[i]``-body interaction is considered for ``(i+2)``-order FCs.
+            If omitted, defaults to ``[2, 3, 3, 2, 2, ...]``. See the ALAMODE tutorial.
+        cutoff2 : float, optional
+            Cutoff radius for harmonic FCs in Å (used when ``cutoffs`` is ``None``).
+        cutoff3 : float, optional
+            Cutoff radius for cubic/higher-order FCs in Å (LASSO uses ``cutoff3``).
+        min_nearest : int, optional
+            Minimum neighbor shell to include for cubic FCs. Ensures at least the
+            ``min_nearest``-th neighbors are included even if ``cutoff3`` is shorter.
+        nac : int, default 0
+            Non-analytical correction (NAC). If 0, disabled; otherwise enabled.
+        verbose : int, default 0
+            Verbosity level. 1 prints details; 0 stays quiet.
+        commands : dict, optional
+            External command settings (MPI/ANPHON/ALM). Example:
+            ``{'mpirun': 'mpirun', 'anphon_para': 'omp', 'nprocs': 1, 'anphon': 'anphon', 'alm': 'alm'}``
+        yamlfile_for_outdir : str, optional
+            YAML file name to write output directory names.
         
-        primitive_matrix : array of float, shape=(3,3)
-            transformation matrix from the unitcell to the primitive cell
-        
-        #scell_matrix3 : array of float, shape=(3,3)
-        #    transformation matrix from the unitcell to a supercell used to
-        #    calculate cubic FCs
-
-        cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
-            cutoff radii for force constants. If it's not given, it will be set
-            automatically with cutoff2 and cutoff3. Default cutoff radii are 
-            "-1" and "4.3" Angstrom for harmonic and cubid FCs, respectively.
-        
-        ndoby : list of int
-            nbody[i]-body interaction is considered for {i+2}-order FCs.
-            If it is not given, default value is [2,3,3,2,2,...].
-            See the tutorial of Alamode for details.
-         
-        cutoff2, cutoff3 : float, unit=[Ang]
-            cutoff radii.
-            If cutoffs is None, cutoff2 and cutoff3 are used.
-            For lasso calculation, cuttoff3 is used for higher order FCs.
-        
-        nac : int
-            If nac=0, nac is not considered while, if nac != 0, nac is considered.
-    
-        verbosity : int
-            If verbosity=1, details are output while, if 0, not.
-
-        commands : dict
-            Number of processes and threads are given.
-            default={
-                'mpirun': 'mpirun', "anphon_para": "omp", 
-                "nprocs": 1, "anphon": "anphon", "alm": "alm",
-                }
-        
-        yamlfile_for_outdir : string
-            yaml file name to write output directory names
-        
-        Example
-        ----------
+        Examples
+        --------
         >>> almcalc = AlamodeCalc(
-        >>>     primitive,
-        >>>     base_directory='mpid-149',
-        >>>     primitive_matrix=pmat,
-        >>>     scell_matrix=smat,
-        >>>     cutoff2=-1, cutoff3=4.3,
-        >>>     nbody=[2,3,3,2], magnitude=0.01,
-        >>>     nac=1,
-        >>>     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
-        >>>     verbosity=0
-        >>>     )
-        >>> calc_force = apdb.get_calculator('force', 
-        >>>     "./mp-149/harm/force", [4,4,4],
-        >>>     )
+        ...     primitive,
+        ...     base_directory='mpid-149',
+        ...     primitive_matrix=pmat,
+        ...     scell_matrix=smat,
+        ...     cutoff2=-1, cutoff3=4.3,
+        ...     nbody=[2,3,3,2], magnitude=0.01,
+        ...     nac=1,
+        ...     commands={'mpirun':'mpirun', 'anphon_para':'omp', 'nprocs':1,'anphon':'anphon'},
+        ...     verbose=0
+        ...     )
+        >>> calc_force = apdb.get_calculator('force', "./mp-149/harm/force", [4,4,4])
         >>> almcalc.calc_forces(1, calc_force)
         >>> almcalc.calc_harmonic_force_constants()
         >>> almcalc.write_alamode_input(propt='dos')
@@ -729,11 +158,11 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         self._commands = {
                 'vasp':{
                     'mpirun': 'mpirun', "nprocs": 1, "nthreads": 1, 
-                    'vasp': 'vasp'
+                    'vasp': 'vasp', 'vasp_gam': 'vasp_gam'
                     },
                 'alamode':{
                     'mpirun': 'mpirun', 'anphon_para': 1, 'nprocs': 2,
-                    'alm': 'alm', 'anphon': 'anphon',
+                    'alm': 'alm', 'anphon': 'anphon', 'anphon_ver2': 'anphon.2.0'
                     }
                 }
         self._commands.update(commands)
@@ -766,12 +195,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         ### matrices
         if primitive_matrix is None:
-            msg = " Error: primitive_matrix must be given."
-            logger.warning(msg)
+            logger.warning("\n Error: primitive_matrix must be given.")
         
         if scell_matrix is None:
-            msg = " Error: scell_matrix must be given."
-            logger.warning(msg)
+            logger.warning("\n Error: scell_matrix must be given.")
         
         #if scell_matrix3 is None:
         #    scell_matrix3 = scell_matrix.copy()
@@ -780,19 +207,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         self._scell_matrix = scell_matrix
         #self._scell_matrix3 = scell_matrix3
         
-        ### make the unitcell with ``get_supercell`` in Phonopy
-        mat_p2u = np.linalg.inv(primitive_matrix)
-        mat_p2u = np.array(np.sign(mat_p2u) * 0.5 + mat_p2u, dtype="intc")
-        unit_pp = get_supercell(
-                change_structure_format(prim_given, format='phonopy'), 
-                mat_p2u
-                )
+        ### Make the unitcell from the primitive cell
+        unit_pp = transform_prim2unit(
+            prim_given, primitive_matrix, format='phonopy')
         
         ### set unitcell, primitive cell, and two kinds of supercells
         self._primitive = None
         self._unitcell = None
         self._supercell = None
         #self._supercell3 = None
+        self._dim = dim
+        self._norm_idx_abc = None
+        self._norm_idx_xyz = None
+        self._thickness = None
         
         self._set_structures(unit_pp)
         
@@ -808,6 +235,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         self._cutoff2 = cutoff2
         self._cutoff3 = cutoff3
+        self.min_nearest = min_nearest
         self._cutoffs = cutoffs
         
         ##
@@ -827,17 +255,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             self.nac = nac_prev
         
         self.lasso = False
-        
         self._fc3_type = ""            ### 'df', 'lasso', or ''
-        
         self._nmax_suggest = None
-
         self._commands = commands
-        
-        #self._order_lasso = order_lasso
-        
-        #self._file_result = None
-        #self._file_isotope = None
         self._scat = None
         
         ###
@@ -845,13 +265,27 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         self._frequency_range = None
         #self._minimum_frequency = None
         
-        self._verbosity = verbosity
-        
+        self._verbose = verbose
         self._yamlfile_for_outdir = yamlfile_for_outdir
     
         self._fc2xml = None
         self._fc3xml = None
         self._fcsxml = None
+        self._higher_fcsxml = None
+        self._harm_dfset = None
+        self._cube_dfset = None
+        self._higher_dfset = None
+        self._calculate_forces = calculate_forces
+    
+    @property
+    def dim(self):
+        """ Dimension of the structure """
+        return self._dim
+    
+    @property
+    def calculate_forces(self):
+        """ Whether forces are calculated or not """
+        return self._calculate_forces
     
     def _get_previous_nac(self):
         """ Get previously used NAC option """
@@ -884,34 +318,74 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         abs_path : string
             absolute path
         """
-        try:
-            dir1 = "./" + self.base_directory.split("/")[-1]
-            relative_path = abs_path.replace(self.base_directory, dir1)
-            return relative_path
-        except Exception:
-            return abs_path
+        if abs_path.startswith("/"):
+            relpath = "./" + os.path.relpath(abs_path, os.getcwd())
+        else:
+            relpath = abs_path
+        return relpath
+        
+        ### old version
+        # try:
+        #     dir1 = "./" + self.base_directory.split("/")[-1]
+        #     relative_path = abs_path.replace(self.base_directory, dir1)
+        #     return relative_path
+        # except Exception:
+        #     return abs_path
 
     @property
     def fc2xml(self):
         if self._fc2xml is None:
-            self._fc2xml = self.out_dirs["result"] + "/FC2.xml"
-        
-        if os.path.exists(self._fc2xml) == False:
+            self._fc2xml = self.out_dirs['harm']['force'] + f"/{self.prefix}.xml"
+        if os.path.exists(self._fc2xml) == False and self.calculate_forces:
             self._fc2xml = None
-        
         return self._fc2xml
     
     @property
     def fc3xml(self):
         if self._fc3xml is None:
-            self._fc3xml = (
-                    self.out_dirs["result"] + 
-                    "/FC3_%s.xml" % (self.fc3_type))
-        
-        if os.path.exists(self._fc3xml) == False:
+            if self.fc3_type == 'fd':
+                self._fc3xml = self.out_dirs['cube'][f'force_fd'] + f"/{self.prefix}.xml"
+            elif self.fc3_type == 'lasso':
+                self._fc3xml = self.out_dirs['cube']['lasso'] + f"/{self.prefix}.xml"
+            else:
+                raise ValueError(
+                    f"\n Error: fc3_type must be 'fd' or 'lasso' but not '{self.fc3_type}'. "
+                    "If you want to use the default, set fc3_type='df'.")
+        if os.path.exists(self._fc3xml) == False and self.calculate_forces:
             self._fc3xml = None
-        
         return self._fc3xml
+    
+    @property
+    def higher_fcsxml(self):
+        if self._higher_fcsxml is None:
+            self._higher_fcsxml = self.out_dirs['higher']['lasso'] + f"/{self.prefix}.xml"
+        if os.path.exists(self._higher_fcsxml) == False and self.calculate_forces:
+            self._higher_fcsxml = None
+        return self._higher_fcsxml
+    
+    @property
+    def fcsxml(self):
+        # if self._fcsxml is None:
+        #     self._fcsxml = self.out_dirs["result"] + "/FCS.xml"
+        if os.path.exists(self._fcsxml) == False and self.calculate_forces:
+            self._fcsxml = None
+        return self._fcsxml
+    
+    @property
+    def harm_dfset(self):
+        if self._harm_dfset is None:
+            self._harm_dfset = self.out_dirs['result'] + '/' + self.outfiles['harm_dfset']
+        return self._harm_dfset
+    @property
+    def cube_dfset(self):
+        if self._cube_dfset is None:
+            self._cube_dfset = self.out_dirs['result'] + '/' + self.outfiles[f'cube_{self.fc3_type}_dfset']
+        return self._cube_dfset
+    @property
+    def higher_dfset(self):
+        if self._higher_dfset is None:
+            self._higher_dfset = self.out_dirs['result'] + '/' + self.outfiles['higher_dfset']
+        return self._higher_dfset
     
     def _set_structures(self, unit_given, format='ase'):
         """ Set every structures with the given format: primitive, unit, and two
@@ -919,23 +393,42 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         will be used.
         """
         ### unit cell
-        unit_pp = change_structure_format(unit_given, format="phonopy")
-        self._unitcell = change_structure_format(unit_pp, format=format)
+        self._unitcell = change_structure_format(unit_given, format=format)
         
         ### primitive cell
-        prim_pp = get_primitive(unit_pp, self.primitive_matrix)
-        
-        self._primitive = change_structure_format(prim_pp, format=format)
+        ## old version
+        # prim_pp = get_primitive(unit_pp, self.primitive_matrix)
+        # self._primitive = change_structure_format(prim_pp, format=format)
+        #
+        ## new version
+        self._primitive = transform_unit2prim(unit_given, self.primitive_matrix, format=format)
         
         ### supercell for harmonic FCs
-        xml = self.out_dirs['harm']['force'] + '/prist/vasprun.xml'
-        try:
-            sc = ase.io.read(xml, format='vasp-xml')
-        except Exception:
-            sc = get_supercell(unit_pp, self.scell_matrix)
+        if self.dim == 3:
+            
+            self._supercell = get_supercell(unit_given, self.scell_matrix, format=format)
+            
+            ### check previously used supercell
+            from auto_kappa.alamode.compat import check_previous_structures
+            structures = check_previous_structures(self.out_dirs, self.primitive, self.unitcell,
+                                                   prim_mat=self.primitive_matrix,
+                                                   sc_mat=self.scell_matrix,)
+            
+            if structures is not None:
+                self._primitive = structures['primitive']
+                self._unitcell = structures['unitcell']
+                self._supercell = structures['supercell']
+            
+        elif self.dim == 2:
+            sc = get_supercell(unit_given, self.scell_matrix, format=format)
+        else:
+            msg = "\n Error: dim must be 2 or 3."
+            logger.error(msg)
+            sys.exit()
         
-        self._supercell = change_structure_format(sc, format=format)
-        
+        generate_mapping_s2p(self.supercell, self.primitive)
+        generate_mapping_s2p(self.supercell, self.unitcell)
+
     @property
     def magnitude(self):
         return self._magnitude
@@ -989,8 +482,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         return self._prefix
     
     @property
-    def verbosity(self):
-        return self._verbosity
+    def verbose(self):
+        return self._verbose
     
     @property
     def yamlfile_for_outdir(self):
@@ -1018,36 +511,59 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
      
     @property
     def cutoff2(self):
-        return self._cutoff2
+        return self._cutoff2 # Bohr
     @cutoff2.setter
-    def cutoffs(self, c2):
+    def cutoff2(self, c2):
         self._cutoff2 = c2
 
     @property
     def cutoff3(self):
-        return self._cutoff3
-    
+        return self._cutoff3 # Bohr
     @cutoff3.setter
-    def cutoffs(self, c3):
+    def cutoff3(self, c3):
         self._cutoff3 = c3
+    
+    def adjust_cutoff3(self, index=3, buffer=0.001):
+        """ Adjust cutoff length for cubic force constants.
+        
+        Return
+        ------
+        bool : If cutoff3 is adjusted, return True, otherwise, return False.
+        """
+        d_list = get_atomic_distance_list(self.supercell, eps=1e-5)  # Angstrom
+        if len(d_list) >= index:
+            suggested_cutoff3 = d_list[index-1] + buffer
+        else:
+            suggested_cutoff3 = d_list[-1] + buffer
+        
+        if suggested_cutoff3 > self.cutoff3:
+            msg = f"\n * Modify cutoff3 from {self.cutoff3:.3f} Å to {suggested_cutoff3:.3f} Å."
+            logger.info(msg)
+            self.cutoff3 = suggested_cutoff3
+            self.set_cutoffs()
+            return True
+        else:
+            return False
     
     @property
     def cutoffs(self):
         if self._cutoffs is not None:
             return self._cutoffs
         else:
-            ### Angstrom => Bohr
-            self._cutoffs = get_cutoffs_automatically(
-                    cutoff2=self.cutoff2,
-                    cutoff3=self.cutoff3,
-                    num_elems=self.num_elems,
-                    order=len(self.nbody)
-                    ) * AToBohr
+            self.set_cutoffs()
         return self._cutoffs
     
-    @cutoffs.setter
-    def cutoffs(self, matrix):
-        self._cutoffs = matrix
+    def set_cutoffs(self):
+        ### Angstrom => Bohr
+        self._cutoffs = helper.get_cutoffs_automatically(
+            cutoff2=self.cutoff2,
+            cutoff3=self.cutoff3,
+            num_elems=self.num_elems,
+            order=len(self.nbody)
+            ) * AToBohr
+    # @cutoffs.setter
+    # def cutoffs(self, matrix):
+    #     self._cutoffs = matrix
 
     @property
     def nmax_suggest(self):
@@ -1099,6 +615,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         else:
             return self._supercell
 
+    @property
+    def norm_idx_abc(self):
+        """ Index of the out-of-plane direction for 2D structure """
+        if self._norm_idx_abc is None:
+            self._norm_idx_abc = get_normal_index(self.unitcell)
+        return self._norm_idx_abc
+    @property
+    def norm_idx_xyz(self):
+        """ Index of the out-of-plane direction for 2D structure """
+        if self._norm_idx_xyz is None:
+            self._norm_idx_xyz = get_normal_index(self.unitcell)
+        return self._norm_idx_xyz
+    @property
+    def thickness(self):
+        """ Thickness of the 2D structure """
+        if self._thickness is None:
+            self._thickness = get_thickness(self.unitcell)
+        return self._thickness
+    
     #@property
     #def supercell3(self):
     #    """
@@ -1117,7 +652,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 msg = " Phonon dispersion needs to be calculated."
                 logger.info(msg)
             else:
-                fmin, fmax = _read_frequency_range(fn, format='anphon')
+                fmin, fmax = helper.read_frequency_range(fn, format='anphon')
                 self._frequency_range = [fmin, fmax]
         return self._frequency_range
     
@@ -1125,12 +660,17 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
     def minimum_frequency(self):
         return self.get_minimum_frequency(which="both")
     
+    def get_fmin_scph(self, temperature=None):
+        from auto_kappa.calculators.scph import get_fmin_scph
+        filename = self.out_dirs['higher']['scph'] + f"/{self.prefix}.scph_bands"
+        return get_fmin_scph(filename, temperature=temperature)
+        
     def get_minimum_frequency(self, which="both"):
         """ Read minimum frequencies from log files for band (band.log) and DOS
         (dos.log) calculations and return the value
         """
-        #from auto_kappa.alamode.log_parser import (
-        #        get_minimum_frequency_from_logfile)
+        if self.calculate_forces == False:
+            return 0.
         
         if which == "both":
             properties = ["band", "dos"]
@@ -1141,6 +681,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         for propt in properties:
             
             logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+            if os.path.isabs(logfile):
+                logfile = "./" + os.path.relpath(logfile, os.getcwd())
+            
+            if os.path.exists(logfile) == False:
+                msg = "\n Warning: %s does not exist." % logfile
+                logger.warning(msg)
             
             try:
                 out = get_minimum_frequency_from_logfile(logfile)
@@ -1155,30 +701,6 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             return -1e6
         else:
             return fmin
-    
-    def _get_file_pattern(self, order):
-        
-        if order == 1:
-            filename = (self.out_dirs['harm']['suggest'] + 
-                    '/%s.pattern_HARMONIC' % (self.prefix))
-        elif order == 2:
-            filename = (self.out_dirs['cube']['suggest'] + 
-                    '/%s.pattern_ANHARM%d' % (self.prefix, order+1))
-        else:
-            msg = " Error: order %d is not supported." % order
-            logger.error(msg)
-            sys.exit()
-        return filename
-    
-    def _get_logfile_suggest(self, order):
-        
-        if order == 1:
-            filename = self.out_dirs['harm']['suggest'] + '/suggest.log'
-        elif order == 2:
-            filename = self.out_dirs['cube']['suggest'] + '/suggest.log'
-        else:
-            filename = self.out_dirs['higher']['suggest'] + "/suggest.log"
-        return filename
     
     def _get_number_of_suggested_structures(self, order: None):
         """ Return the number of the suggested structures for FD method """
@@ -1196,7 +718,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 count += 1
         return count
     
-    def _get_number_of_free_fcs(self, order: None, verbosity=False):
+    def _get_number_of_free_fcs(self, order: None, verbose=False):
         """ Return the number of the FCs for FD method """
         
         file_log = self._get_logfile_suggest(order)
@@ -1217,7 +739,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     nfc_free[ith] = int(data[-1])
         
         ### print
-        if verbosity:
+        if verbose:
             msg = "\n Number of free FCs :"
             names = {1: "harmonic", 2: "cubic"}
             for ii in nfc_free:
@@ -1263,24 +785,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         ### get displacements
         logger.info(f"\n Displacement mode : {disp_mode}\n")
         if disp_mode == "fd":
-            
-            ### filename for displacement patterns
             file_pattern = self._get_file_pattern(order)
-            
             all_disps = self._get_displacements(
                     "fd", file_pattern=file_pattern, order=order)
         
         elif disp_mode == "random_normalcoordinate":
-            
-            ### 
             logfile = self.out_dirs['harm']['evec'] + '/evec_commensurate.log'
             if wasfinished_alamode(logfile) == False:
                 propt = 'evec_commensurate'
                 self.write_alamode_input(propt=propt)
                 self.run_alamode(propt=propt)
             
-            ###
             file_evec = self.out_dirs['harm']['evec'] + '/' + self.prefix + '.evec'
+            
+            if os.path.exists(file_evec) == False:
+                msg = f"\n Error: '{disp_mode}' mode requires eigen vectors at commensurate points."
+                msg += f"\n Please calculate at least harmonic properties."
+                logger.error(msg)
+                sys.exit()
+            
             all_disps = self._get_displacements(
                     disp_mode,
                     file_evec=file_evec,
@@ -1289,22 +812,20 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     classical=classical)
          
         elif disp_mode == "random":
-            
             all_disps = self._get_displacements(
                     disp_mode,
                     number_of_displacements=number_of_displacements,
                     )
-         
         else:
-            msg = "\n Error: displacement mode %s is not supported" % disp_mode
-            logger.error(msg)
+            logger.error(f"\n Error: displacement mode {disp_mode} is not supported")
             sys.exit()
         
         ### error
         if all_disps is None:
+            # print(all_disps, disp_mode)
             msg = "\n Error: Failed to obtain displacement patterns."
-            msg += "\n The structures used in the current calculation may be "
-            msg += "incompatible with the ones used in the previous calculation."
+            msg += "\n The optimal structure might slightly changed from the previous one."
+            msg += "\n Please remove the previous output directory and try again."
             logger.error(msg)
             if can_return_none:
                 return None
@@ -1316,16 +837,14 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         structures['prist'] = structure.copy()
         
         ## set calculator for each pattern
+        disps_all = {}
         for i, displacements in enumerate(all_disps):
-            
             scell = structure.copy()
-            
-            ## displace atoms
             scell.translate(displacements)
-            
             structures[i+1] = scell
+            disps_all[i+1] = displacements
         
-        return structures
+        return structures, disps_all
     
     def _get_displacements(
             self, displacement_mode: None,
@@ -1349,26 +868,37 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         codeobj = VaspParser()
         codeobj.set_initial_structure(self.supercell)
         
-        ###########################################################
-        ##
-        ## This part may need to be fixed.
-        ##
+        ################################################
+        ## Generate displacements using AlamodeDisplace
         try:
+            
+            if self.supercell is None or self.primitive is None:
+                pass
+            else:
+                from auto_kappa.structure.comparison import generate_mapping_s2p
+                generate_mapping_s2p(self.supercell, self.primitive)
+            
+            almdisp = AlamodeDisplace(
+                        displacement_mode, codeobj,
+                        file_evec=file_evec,
+                        primitive=self.primitive,
+                        verbose=self.verbose)
+        except Exception as e:
+            msg  = "\n *** Warning ***"
+            msg += "\n The primitive cell is not applicable to AlamodeDisplace."
+            msg += "\n This warning may be caused by the primitive cell generated "
+            msg += "\n in the previous calculation and can usually be ignored."
+            msg += "\n To avoid this warning, please run the job as another calculation."
+            logger.warning(msg)
             almdisp = AlamodeDisplace(
                     displacement_mode, codeobj,
                     file_evec=file_evec,
-                    primitive=self.primitive,
-                    verbosity=self.verbosity
-                    )
-        except:
-            ## error which may due to the incompatible structures for 
-            ## the structure used and the one used in previous calculations
-            almdisp = None
-        
+                    verbose=self.verbose)
+            sys.exit()
+            
         if almdisp is None:
-            msg = " Error: Couldn't obtain AlamodeDisplace object properly."
-            logger.error(msg)
-            return None
+            logger.error("\n Error: Cannot obtain AlamodeDisplace object properly.")
+            sys.exit()
         
         msg = "\n"
         msg += " Generate displacement patterns with an Alamode tool\n"
@@ -1376,10 +906,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         logger.info(msg)
         
         if displacement_mode == 'fd':
-            
             if file_pattern is None:
-                msg = " Error: file_pattern must be given."
-                logger.error(msg)
+                logger.error("\n Error: file_pattern must be given.")
                 sys.exit()
             
             if order == 1:
@@ -1387,18 +915,13 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             elif order == 2:
                 mag = self.magnitude2
             
-            msg = " Displacement magnitude : %.2f Ang" % (mag)
-            logger.info(msg)
-
+            logger.info(f" Displacement magnitude : {mag:.2f} Ang")
             header_list, disp_list = almdisp.generate(
                     file_pattern=[file_pattern], magnitude=mag,
                     )
             
         elif displacement_mode == 'random_normalcoordinate':
-            
-            msg = " Temperature : %.1f K" % (temperature)
-            logger.info(msg)
-
+            logger.info(" Temperature : %.1f K" % (temperature))
             header_list, disp_list = almdisp.generate(
                     temperature=temperature,
                     number_of_displacements=number_of_displacements,
@@ -1406,34 +929,30 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     )
 
         elif displacement_mode == 'random':
-            
-            msg = " Displacement magnitude : %.2f Ang" % (self.magnitude2)
-            logger.info(msg)
-            
+            logger.info(" Displacement magnitude : %.2f Ang" % (self.magnitude2))
             header_list, disp_list = almdisp.generate(
                     number_of_displacements=number_of_displacements,
                     magnitude=self.magnitude2
                     )
-
+            
         else:
-            msg = "\n Error: %s is not supported." % (displacement_mode)
-            logger.warning(msg)
+            logger.warning("\n Error: %s is not supported." % (displacement_mode))
             sys.exit()
         
         all_disps = np.zeros_like(disp_list)
         for i, each in enumerate(disp_list):
             all_disps[i] = np.dot(each, self.supercell.cell)
         
-        return all_disps 
+        return all_disps
     
     def calc_forces(self, order: None, calculator=None, 
-            nmax_suggest=100, frac_nrandom=10., 
-            temperature=500., classical=False,
-            calculate_forces=True, 
-            output_dfset=None,
-            amin_params={},
-            # max_limit_of_estimated_time=24.*30.,
-            ):
+                    nmax_suggest=100, frac_nrandom=10., 
+                    temperature=500., classical=False,
+                    output_dfset=None,
+                    amin_params={},
+                    calculate_both_old_new_structures=False
+                    # max_limit_of_estimated_time=24.*30.,
+                    ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
         out_dirs['result'] directory.
         
@@ -1470,21 +989,25 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             If 1, output DFSET file only when it doesn't exist.
             If 2, output DFSET file even when it exists.
         
+        calculate_both_old_new_structures : bool, default=False
+            This options is used when the number of the unique structures
+            suggested in previous and current calculations exceeds ``nmax_suggest``.
+            If False, previous calculations are trusted.
+            If True, both old and new structures are calculated.
         """
-        # super().__init__()
-        
         if output_dfset is not None:
-            msg = " Caution: \"output_dfset\" option is no loger used."
+            msg = " Warning: \"output_dfset\" option is no longer used."
+            # logger.warning(msg)
         
         self._nmax_suggest = nmax_suggest
         
-        self._start_force_calculation(order, calculate_forces)
+        self._start_force_calculation(order, self.calculate_forces)
         
         ### get suggsted structures with ALM
         ### structures : dict of structure objects
         if order <= 2:
             nsuggest = self._get_number_of_suggested_structures(order)
-            msg = "\n Number of the suggested structures with ALM : %d" % (nsuggest)
+            msg = "\n Number of the suggested structures by ALM : %d" % (nsuggest)
         else:
             ### want to always use LASSO
             nsuggest = self.nmax_suggest + 1
@@ -1492,19 +1015,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         logger.info(msg)
         
         ### number of free FCs
-        nfcs_list = self._get_number_of_free_fcs(order, verbosity=True)
+        nfcs_list = self._get_number_of_free_fcs(order, verbose=True)
         nfcs = nfcs_list[min(3, order)]
         natoms = len(self.supercell)
         
         ### output directory
         outdir0 = self._get_base_directory_for_forces(order, nsuggest, nmax_suggest)
         
-        if order == 1:
-            mag = self.magnitude
-        elif order == 2:
-            mag = self.magnitude2
-        else:
-            mag = None
+        # if order == 1:
+        #     mag = self.magnitude
+        # elif order == 2:
+        #     mag = self.magnitude2
+        # else:
+        #     mag = None
         
         ### Check the directory name for the pristine structure (ver.1.4.0)
         if self.supercell is not None:
@@ -1523,19 +1046,37 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         else:
             fc_type = 'lasso'
         
+        prev_structures = None
+        calculated_every_structure = False
         if fc_type == 'lasso':
-            structures = self._get_suggested_structures_for_lasso(
+            structures, _ = self._get_suggested_structures_for_lasso(
                 order, nfcs, natoms, frac_nrandom, nmax_suggest,
                 temperature=temperature, classical=classical)
         else:
             ## if order == 1 or (order == 2 and self.fc3_type == 'fd'):
-            structures_tmp = self.get_suggested_structures(order, disp_mode='fd')
+            structures_tmp, _ = self.get_suggested_structures(order, disp_mode='fd')
             
             ## Adjust keys of structures
-            structures = adjust_keys_of_suggested_structures(
-                structures_tmp, outdir0, 
-                prist_structure=self.supercell,
-                mag=mag)
+            nprocs = self.commands["alamode"]["nprocs"]
+            structures = adjust_keys_of_suggested_structures(structures_tmp, outdir0, 
+                                                             dim=self.dim, nprocs=nprocs)
+            
+            ### Check the number of already calculated structures
+            prev_structures = get_previously_calculated_structure(outdir0, include_pristine=True)
+            if len(prev_structures) >= nsuggest + 1:
+                ## The number of calculated structures is larger than the
+                ## number of suggested structures.
+                logger.info('\n Get number of same structures...')
+                num_same = get_number_of_same_structures(structures, prev_structures)                
+                msg  = "\n Number of structures (including the pristine structure):"
+                msg += "\n - already calculated  : %d" % len(prev_structures)
+                msg += "\n - currently suggested : %d" % len(structures)
+                msg += "\n - same                : %d" % num_same
+                if num_same < len(prev_structures):
+                    msg += "\n Suggested structures were changed from the previous calculation "
+                    msg += "\n while this does not cause an error."
+                logger.info(msg)
+                calculated_every_structure = not calculate_both_old_new_structures
         
         ### If something wrong, return None
         if structures is None:
@@ -1549,39 +1090,46 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     pp[key] = amin_params[key]
         amin_params_set = pp.copy()
         
-        ### start the force calculation
+        ### Calculate atomic forces
+        if calculated_every_structure == False:
+            target_structures = structures.copy()
+        else:
+            target_structures = prev_structures.copy()
+        
         self._counter_done = 0
         self._counter_calc = 0
-        struct_keys = list(structures.keys())
-        logger.info("")
-        for ii, key in enumerate(struct_keys):
+        for ii, key in enumerate(target_structures):
+            if ii == 0:
+                logger.info("")
+            
             self._job_for_each_structure(
-                ii, structures, outdir0, order, calculator, 
-                calculate_forces=calculate_forces, **amin_params_set)
+                ii, target_structures, outdir0, order, calculator, 
+                **amin_params_set)
             
         ### output DFSET
         nsuggest =  len(structures)
-        # if num_done == len(structures) and output_dfset:
-        if self._counter_done == len(structures):
-            self._make_dfset_file(order, nsuggest, outdir0)
-            
+        if self._counter_done >= len(structures):
+            if fc_type == 'fd' and self.dim == 2:
+                fd2d = True
+            else:
+                fd2d = False
+            self._make_dfset_file(order, nsuggest, outdir0, fd2d=fd2d)
         logger.info("")
-
+    
     def _write_alamode_input_harmonic(
         self, propt, outdir=None, deltak=None, reciprocal_density=None, **kwargs):
         """ Make an input script for the ALAMODE job for an harmonic property
         """
         from auto_kappa.structure.crystal import get_automatic_kmesh
-        
         if propt == "band":
             self.write_alamode_input(
                     propt=propt, deltak=deltak, outdir=outdir, **kwargs)
         elif propt == "dos":
-            nkts = get_automatic_kmesh(
+            kpts = get_automatic_kmesh(
                     self.primitive,
-                    reciprocal_density=reciprocal_density)
+                    reciprocal_density=reciprocal_density, dim=self.dim)
             self.write_alamode_input(
-                    propt=propt, nkts=nkts, outdir=outdir, **kwargs)
+                    propt=propt, kpts=kpts, outdir=outdir, **kwargs)
         elif propt == "fc2":
             self.write_alamode_input(
                     propt=propt, outdir=outdir, **kwargs)
@@ -1600,7 +1148,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         Args
         -----
         propt : string
-            "band", "phonons", "kappa", 'evec_commensurate'
+            "band", "phonons", "kappa", 'kappa_scph', 'kappa_4ph', 'kappa_scph_4ph', 'evec_commensurate'
         
         kpts : list of int, shape=(3)
             k-points
@@ -1628,7 +1176,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         mode = out[1]
         
         ### prepare filenames
-        files = self.get_filenames(propt, order, outdir, **kwargs)
+        files = self._get_filenames(propt, order, **kwargs)
+        for key in ['fc2xml', 'fc3xml', 'fcsxml', 'dfset', 'dir_work', 'born_xml']:
+            if kwargs.get(key, None) is not None:
+                files[key] = kwargs[key]
         fc2xml = files['fc2xml']
         fc3xml = files['fc3xml']
         fcsxml = files['fcsxml']
@@ -1655,25 +1206,49 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         info = {"directory": dir_work.replace(self.base_directory, "."),
                 "kind": "ALAMODE",
-                "note": "ALAMODE calculation for %s" % (propt)}
+                f"note": "ALAMODE calculation for {propt}"}
         write_output_yaml(self.yamlfile_for_outdir, name, info)
         
         ## non-analytical term
         if self.nac != 0 and alamode_type.startswith('anphon'):
             
+            ### ver.1: make BORNINFO file
             borninfo = 'BORNINFO'
+            outfile = dir_work + f'/{borninfo}'
+            # write_born_info_old(born_xml, outfile=outfile)
             
-            ## make BORNINFO file
-            outfile = dir_work + '/BORNINFO'
-            write_born_info(born_xml, outfile=outfile) 
+            ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            ### ver.2: write BORNINFO and check previous BORNINFO
+            # Check previous file!!
+            # Previous result files will be removed when the BORNINFO is changed.
+            from auto_kappa.alamode.compat import check_previous_borninfo
+            try:
+                check_previous_borninfo(dir_work, born_xml, fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml)
+            except Exception as e:
+                pass
+            
+            ## Write the new BORNINFO file
+            files = []
+            for fn in [fc2xml, fc3xml, fcsxml]:
+                if fn is not None:
+                    if os.path.isabs(fn):
+                        files.append(fn)
+                    else:
+                        files.append(os.path.join(dir_work, fn))
+            
+            if self.calculate_forces:
+                born = BORNINFO(born_xml, file_fcs=files[0])
+                born.write(outfile=outfile)
+            ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            
         else:
             borninfo = None
         
         ## set kpmode
         kpmode = None
-        if propt in ['band', 'scph']:
+        if propt in ['band', 'scph', 'gruneisen_band']:
             kpmode = 1
-        elif propt in ['dos', 'kappa']:
+        elif propt in ['dos', 'gruneisen_dos'] or propt.startswith('kappa'):
             kpmode = 2
         elif propt in ['evec_commensurate']:
             kpmode = 0
@@ -1685,12 +1260,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             fc2xml=fc2xml, fc3xml=fc3xml, fcsxml=fcsxml, 
             dfset=dfset, borninfo=borninfo)
         
+        ####
         self._prefix = inp['prefix']
         
         ################################################
         ### Set parameters for the specific calculation
-        self._set_parameters_for_property(
-            inp, propt=propt, deltak=deltak, kpts=kpts, order=order)
+        self._set_parameters_for_property(inp, propt=propt, deltak=deltak, kpts=kpts, order=order)
         
         ### modify path of filenames
         filename_keys = ["fc2xml", "fc3xml", "fcsxml"]
@@ -1699,10 +1274,16 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             if key in filename_keys:
                 if given_params[key][0] == "/":
                     given_params[key] = os.path.relpath(given_params[key], dir_work)
-        
+             
         ### make input script for ALAMODE
         inp.update({'tolerance': tolerance})
         inp.update(given_params)
+        
+        ### Modify parameters for 4 phonon scattering (anphon >= ver.1.9)
+        if '4ph' in propt:
+            params = self.modify_parameters_for_4ph(inp.as_dict())
+            inp = AnphonInput.from_dict(params)
+            inp.dim = self.dim
         
         ## Check if the tolerance was changed
         ## Settting of "tolerance" was added from ver.0.4.0.
@@ -1712,7 +1293,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 directory = os.path.dirname(filename)
                 backup_previous_results(directory, propt, prefix=self.prefix)
         
-        inp.to_file(filename=filename)
+        ## Write input file
+        if alamode_type.startswith('anphon'):
+            ver_alamode = get_version(self.commands['alamode'][alamode_type])
+        else:
+            ver_alamode = None
+        
+        # if os.path.exists(filename):
+        #     if alamode_type.startswith('alm'):
+        #         inp_prev = AlmInput.from_file(filename)
+        #     else:
+        #         inp_prev = AnphonInput.from_file(filename)
+            
+        inp.to_file(filename=filename, version=ver_alamode)
         
         # msg = "\n Make an input script for ALAMODE : %s." % (
         #         self.get_relative_path(filename))
@@ -1724,6 +1317,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         else:
             fn = self.out_dirs['higher']['cv']+'/'+self.prefix+'.cvscore'
         
+        if os.path.isabs(fn):
+            fn = "./" + os.path.relpath(fn, os.getcwd())
+        
         try:
             lines = open(fn, 'r').readlines()
             for ll in lines:
@@ -1732,9 +1328,31 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                     return alpha
             return None
         except Exception:
-            msg = " Warning: cannot find %s" % fn
+            msg = "\n Warning: cannot find %s" % fn
             logger.warning(msg)
             return None
+    
+    def modify_parameters_for_4ph(self, params):
+        """ Modify parameters for 4-phonon scattering using anphon >= ver.2.0
+        """
+        ### fc*xml => fc*file
+        params_file = {}
+        for key in params.keys():
+            if key.startswith('fc') and key.endswith('xml'):
+                params_file[key] = params[key]
+        for key in params_file:
+            params.pop(key, None)
+            params[key.replace('xml', 'file')] = params_file[key]
+        
+        params['nkd'] = None
+        params['kappa_spec'] = None
+        params['quartic'] = 1
+        params['ismear_4ph'] = 2   # adaptive smearing for 4ph
+        params['interpolator'] = 'log-linear' # linear, log-linear, modified-log-linear
+        # for adaptive smearing: default 1.0. 
+        # Smaller value makes the calculation faster, but less accurate.
+        params['adaptive_factor'] = 0.1
+        return params
     
     def _get_alamodetype_mode(self, propt):
         
@@ -1747,10 +1365,9 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         if flag == False:
             return None
     
-    def get_optimal_nac(
-            self, tol_neg_frac=0.03,
-            deltak=None, max_num_corrections=None, 
-            reciprocal_density=None, negative_freq=None):
+    def get_optimal_nac(self, tol_neg_frac=0.03,
+                        deltak=None, max_num_corrections=None, 
+                        reciprocal_density=None, negative_freq=None):
         """ Analyze harmonic properties with different methods for NAC when
         negative frequencies were obtained. Parameters are required for
         ``analyze_harmonic_property``.
@@ -1763,14 +1380,15 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             (num_neg) is less than ``tol_neg_frqc * num_kpt``, the optimal NAC
             option will be searched. 
         """
+        if self.calculate_forces == False:
+            return None
         
         nac_orig = self.nac
         
         ###
         try:
-            file_band_orig = (
-                    self.out_dirs["harm"]["bandos"] + "/" +
-                    self.prefix + ".bands")
+            file_band_orig = (self.out_dirs["harm"]["bandos"] + "/" + 
+                              self.prefix + ".bands")
             dump = np.genfromtxt(file_band_orig)
             frequencies = dump[:,1]
             num_neg = len(np.where(frequencies < negative_freq)[0])
@@ -1786,20 +1404,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         except Exception:
             pass
         
-        ### Store old results
+        ### Store results in ".../bandos/nac_{nac_orig}/"
         dir1 = self.out_dirs["harm"]["bandos"]
-        outdir = dir1 + "/nac_%d" % nac_orig
-        if os.path.exists(outdir) == False:
+        outdir = dir1 + f"/nac_{nac_orig}"
+        if not os.path.exists(outdir):
             os.makedirs(outdir, exist_ok=True)
-            for ff in glob.glob(dir1+"/*"):
+            for ff in glob.glob(dir1 + "/*"):
                 if os.path.isfile(ff):
                     shutil.move(ff, outdir)
-            ###
             msg = "\n >>> Move files in %s to %s." % (
                     self.get_relative_path(dir1),
                     self.get_relative_path(outdir))
             logger.info(msg)
-         
+        
         ### Analyze with different NAC options
         for nac in [2, 1, 3, 0]:
             
@@ -1810,9 +1427,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             outdir = self.out_dirs["harm"]["bandos"] + "/nac_%d" % nac
             for propt in ["band", "dos"]:
                 
-                fcsxml_abs = (
-                        self.out_dirs["harm"]["force"] + "/" + 
-                        self.prefix + ".xml")
+                fcsxml_abs = (self.out_dirs["harm"]["force"] + "/" + 
+                              self.prefix + ".xml")
                 fcsxml = os.path.relpath(fcsxml_abs, outdir)
                 
                 self.analyze_harmonic_property(
@@ -1821,9 +1437,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                         max_num_corrections=max_num_corrections,
                         deltak=deltak,
                         reciprocal_density=reciprocal_density,
-                        fcsxml=fcsxml,
-                        )
-            
+                        fcsxml=fcsxml)
+                
             ### log file names
             log_band = outdir + "/band.log"
             log_dos = outdir + "/dos.log"
@@ -1832,10 +1447,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             try:
                 out_band = get_minimum_frequency_from_logfile(log_band)
                 out_dos = get_minimum_frequency_from_logfile(log_dos)
-                fmin = min(
-                        out_band["minimum_frequency"],
-                        out_dos["minimum_frequency"]
-                        )
+                fmin = min(out_band["minimum_frequency"], out_dos["minimum_frequency"])
             except Exception:
                 fmin = -1e5
             
@@ -1843,20 +1455,32 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 self.nac = nac_orig
                 return nac
         
+        ### not found: restore original results
+        msg = f"\n >>> Copy files in {self.get_relative_path(dir1)}/nac_{nac_orig} to {self.get_relative_path(dir1)}."
+        logger.info(msg)
+        for ff in glob.glob(dir1 + f"/nac_{nac_orig}/*"):
+            if os.path.isfile(ff):
+                shutil.copy(ff, dir1)
+        
         self.nac = nac_orig
         return None
     
     def analyze_harmonic_property(
             self, propt,
-            outdir=None, max_num_corrections=None, neglect_log=None,
-            deltak=None, reciprocal_density=None, **kwargs):
+            outdir=None, max_num_corrections=None, ignore_log=None,
+            deltak=None, reciprocal_density=None, 
+            **kwargs):
         """ Analyze each harmonic property (why not anharmonic?) 
         
         Args
         -----
         propt : string
             "fc2", "band", or "dos"
-
+        
+        outdir : string
+            Output directory for the ALAMODE job. If None, the default output.
+            This option is given only when the output directory is not the default one.
+        
         kwargs : 
             Any ALAMODE parameters, including "fcsxml".
         """
@@ -1865,11 +1489,19 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             propt, outdir=outdir, deltak=deltak, 
             reciprocal_density=reciprocal_density, **kwargs)
         
+        if self.calculate_forces == False:
+            return None
+        
+        if propt == 'band':
+            file_band_pr = self.out_dirs['harm']['bandos'] + '/' + self.prefix + '.band.pr'
+            if os.path.exists(file_band_pr) == False:
+                ignore_log = True
+        
         ### get log file name
-        if propt == "fc2":
-            logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
-        else:
-            logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
+        # if propt == "fc2":
+        #     logfile = self.out_dirs["harm"]["force"] + "/%s.log" % propt
+        # else:
+        #     logfile = self.out_dirs["harm"]["bandos"] + "/%s.log" % propt
         
         count = 0
         nprocs = self.commands["alamode"]["nprocs"]
@@ -1877,27 +1509,34 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         while True:
             
             if count == 0:
-                if neglect_log is None:
-                    neg_log = 0
+                if ignore_log is None:
+                    neg_log = False
                 else:
-                    neg_log = neglect_log
+                    neg_log = ignore_log
             else:
-                neg_log = 1
+                neg_log = True
             
             ### calculate phonon property
-            self.run_alamode(
-                    propt=propt, neglect_log=neg_log, outdir=outdir)
+            job_output = self.run_alamode(propt=propt, ignore_log=neg_log, outdir=outdir)
+            
+            try:
+                if job_output.get('rerun', None) is not None:
+                    if job_output['rerun'] == False:
+                        break
+            except Exception:
+                pass
+            
             count += 1
             
             ### >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             ### check log file
-            flag = should_rerun_alamode(logfile)
+            flag = helper.should_rerun_alamode(job_output['logfile'])
             
             ### Check phonon band
             ## This part solves a bug in the old calculation.
             ## In old version, eigenvalues has sometimes contained ``nan`` values.
             if flag == False and propt == "band":
-                
+
                 if outdir is None:
                     file_band = (
                             self.out_dirs["harm"]["bandos"] + 
@@ -1905,11 +1544,10 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 else:
                     file_band = outdir + "/%s.bands" % self.prefix
                 
-                flag = _should_rerun_band(file_band)
+                flag = helper.should_rerun_band(file_band)
                 
                 if flag:
-                    msg = "\n Error in .bands file"
-                    logger.warning(msg)
+                    logger.warning("\n Error in .bands file")
             
             ### the property has been calculated properly
             if flag == False:
@@ -1919,15 +1557,12 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             ### Note: ALAMODE job sometimes exceeds the memory
             has_error = False
             if count == 1:
-                
                 ### Change to OpenMP parallelization
                 #ak_log.rerun_with_omp()
-                msg = "\n Rerun the ALAMODE job with OpenMP."
-                logger.error(msg)
+                logger.error("\n Rerun the ALAMODE job with OpenMP.")
                 self.commands['alamode']['anphon_para'] == "omp"
             
             elif count > 1 and count < max_num_corrections:
-
                 ### modify the number of threads (even number may be better)
                 nprocs /= 2
                 if nprocs > 1:
@@ -1940,25 +1575,58 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
 
                 if nprocs == 1:
                     count = max_num_corrections
-
+                
             else:
                 has_error = True
                 break
             ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        if propt == 'fc2':
+            self.print_fc_error(propt)
         
         if has_error:
             if max_num_corrections is not None:
                 logger.debug(" %d" % max_num_corrections)
             else:
                 logger.debug(" None")
-            msg = "\n Error: ALAMODE job for %s "\
-                    "has not been finished properly." % propt
-            msg += "\n A possible solution is to use a large memory node."
+            msg = f"\n Error: ALAMODE job for {propt} did not finish properly, possibly due to insufficient memory."
             msg += "\n Abort the job."
             logger.error(msg)
             sys.exit()
     
-    def run_alamode(self, propt=None, order=None, neglect_log=0, outdir=None):
+    def print_fc_error(self, propt, threshold=10.0):
+        try:
+            if propt == 'fc2':
+                filename = self.out_dirs['harm']['force'] + '/fc2.log'
+            elif propt == 'fc3':
+                filename = self.out_dirs['cube']['force_fd'] + '/fc3.log'
+            elif propt == 'lasso':
+                filename = self.out_dirs['cube']['lasso'] + '/lasso.log'
+            else:
+                logger.error(f" Error: {propt} is not supported for printing force constant error.")
+                return
+        except Exception:
+            logger.error(f" Error: Cannot find the log file for {propt}.")
+            return
+        
+        try:
+            out = read_log_fc(filename)
+            for key in ['fitting_error', 'residual']:
+                if out.get(key, None) is not None:
+                    name = key.capitalize().replace('_', ' ')
+                    msg = f"\n {name}: {out[key]['value']} {out[key]['unit']}"
+                    if out[key]['value'] > threshold:
+                        msg += "\n Warning: Force constant error may be too large!!"
+                    logger.info(msg)
+        except Exception as e:
+            if not self.calculate_forces:
+                return
+            else:
+                msg = "\n Warning: Cannot read the error from %s." % filename
+                logger.error(msg)
+                logger.error(e)
+    
+    def run_alamode(self, propt=None, order=None, ignore_log=False, outdir=None, logfile=None, verbose=True):
         """ Run anphon
         
         Args
@@ -1966,18 +1634,21 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         propt : string
             "band", "dos", "evec_commensurate", "fc*", "kappa", ...
 
-        neglect_log : int
+        ignore_log : bool
             If False, anphon will not be run if the same calculation had been
             conducted while, if True, anphon will be run forecely.
         
         """
+        if propt not in ['suggest'] and self.calculate_forces == False:
+            # logger.info("\n Note: ALAMODE job is not run because forces were not calculated.")
+            return None
+        
         ### get alamode_type and mode
         out = self._get_alamodetype_mode(propt)
-        if out is None:
-            msg = " Error: %s is not supported yet." % propt
-            logger.error(msg)
-            sys.exit()
         
+        if out is None:
+            logger.error(f" Error: {propt} is not supported yet.")
+            sys.exit()
         alamode_type = out[0]
         mode = out[1]
         
@@ -1989,18 +1660,21 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             workdir = outdir
         
         ### print title
-        msg = "\n"
-        line = "Run %s for %s:" % (alamode_type, propt)
-        msg += " " + line + "\n"
-        msg += " " + "-" * (len(line)) + "\n\n"
-        msg += " Working directory : " + self.get_relative_path(workdir)
-        logger.info(msg)
+        if verbose:
+            msg = "\n"
+            line = "Run %s for %s:" % (alamode_type, propt)
+            msg += " " + line + "\n"
+            msg += " " + "-" * (len(line)) + "\n\n"
+            msg += " Working directory : " + self.get_relative_path(workdir)
+            logger.info(msg)
         
-        filename = "%s.in" % propt
-        logfile = propt + '.log'
+        filename = f"{propt}.in"
+        if logfile is None:
+            logfile = f"{propt}.log"
         
         ## prepare command and environment
-        if (alamode_type == 'anphon' and 
+        # print(propt, alamode_type, mode)
+        if (alamode_type.startswith('anphon') and 
                 self.commands['alamode']['anphon_para'] == 'mpi'):
             _nprocs = self.commands['alamode']['nprocs']
             _nthreads = 1
@@ -2009,33 +1683,56 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
             _nthreads = self.commands['alamode']['nprocs']
         
         val = run_alamode(filename, logfile, workdir=workdir, 
-                neglect_log=neglect_log,
-                mpirun=self.commands['alamode']['mpirun'], 
-                nprocs=_nprocs,
-                nthreads=_nthreads,
-                command=self.commands['alamode'][alamode_type],
-                )
+                          ignore_log=ignore_log,
+                          mpirun=self.commands['alamode']['mpirun'], 
+                          nprocs=_nprocs,
+                          nthreads=_nthreads,
+                          command=self.commands['alamode'][alamode_type])
         
+        ## Read log file
+        filename = f"{workdir}/{logfile}"
+        last_line = open(filename, 'r').readlines()[-1]
+        
+        ## Plot force constants
+        if propt in ['fc2', 'fc3', 'lasso'] and self.calculate_forces:
+            orders = {'fc2': 1, 'fc3': 2, 'lasso': 3}
+            self.plot_force_constants(
+                outdir=workdir, force_plot=False,
+                order=orders.get(propt) if order is None else min(order, 3))
+        
+        output = {'rerun': None, 'last_line': last_line, 
+                  'logfile': os.path.join(workdir, logfile), 
+                  'workdir': workdir}
         if val == -1:
-            msg = " %s has already been calculated." % propt
-            logger.info(msg)
-        
+            logger.info(f" {propt} has already been calculated.")
+            output['rerun'] = False
+            return output
+        elif "ERROR in openfiles  MESSAGE: cannot open DFSET file" in last_line:
+            logger.info(f"{last_line}")
+            output['rerun'] = False
+            return output
+        elif "ERROR in parse_general_vars  MESSAGE: The following variable is not found in &general input region: FCSXML" in last_line:
+            logger.info(f"{last_line}")
+            output['rerun'] = False
+            return output
+        elif "ERROR in load_system_info_from_XML  MESSAGE: Cannot open file FCSXML" in last_line:
+            logger.info(f"{last_line}")
+            output['rerun'] = False
+            return output
         elif val == 1:
-            msg = "\n Error : ALAMODE job was not finished properly."
+            msg = "\n Error : ALAMODE job did not finish properly, possibly due to insufficient memory."
             msg += "\n Stop the calculation."
             logger.error(msg)
             sys.exit()
         
-        if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:
-            
+        if mode == 'optimize' and propt in ['lasso', 'fc2', 'fc3']:    
             ### copy the generated FCs file to "result" directory
-            self._copy_generated_fcsfiles(
-                    propt=propt, order=order,
-                    )
-            
+            self._copy_generated_fcsfiles(propt=propt, order=order)
             if propt in ['lasso']:
                 self._plot_cvsets(order=order)
-
+        
+        return output
+            
     def _copy_generated_fcsfiles(self, propt=None, order=None):
         """ Copyr a FCs file into the "result" directory.
         """
@@ -2077,10 +1774,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         ##
         if os.path.exists(fn1) == False:
-            
             msg = ' %s does not exist.' % self.get_relative_path(fn1)
             logger.info(msg)
-        
         else:
             if os.path.exists(fn2):
                 msg = "\n"
@@ -2090,387 +1785,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
                 msg += " %s was created." % self.get_relative_path(fn2)
             logger.info(msg)
             shutil.copy(fn1, fn2)
-    
-    #@property
-    #def file_result(self):
-    #    return self._file_result
-
-    #@property
-    #def file_isotope(self):
-    #    return self._file_isotope
-
-    @property
-    def scat(self):
-        return self._scat
-    
-    def set_scattering_info(
-            self, grain_size=None, temperature=300, calc_type="cubic", verbosity=True):
-        
-        ### directory name for kappa
-        dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
-        
-        ## get directory name for kappa with the finest k grid
-        dir_kappa = None
-        ksum = 0
-        for lab in dirs_kappa:
-            data = lab.lower().split("x")
-            if len(data) != 3:
-                continue
-            kpts = np.asarray([int(d) for d in data])
-            if np.sum(kpts) > ksum:
-                dir_kappa = dirs_kappa[lab]
-                lab_kpts = lab
-                ksum = np.sum(kpts)
-        
-        ### file check
-        file_result = dir_kappa + '/%s.result' % (self.prefix)
-        file_isotope = dir_kappa + '/%s.self_isotope' % (self.prefix)
-        
-        msg1 = "\n Scattering info is obtained from the following files:"
-        if os.path.exists(file_result) == False:
-            msg_error = " Error: %s does not exist." % (
-                    self.get_relative_path(file_result))
-            logger.error(msg_error)
-        else:
-            msg1 += "\n - %s." % (self.get_relative_path(file_result))
-        
-        if os.path.exists(file_isotope) == False:
-            msg_error = " Note : %s does not exist." % (
-                    self.get_relative_path(file_isotope))
-            logger.error(msg_error)
-            file_isotope = None
-        else:
-            msg1 += "\n - %s." % (self.get_relative_path(file_isotope))
-        
-        if verbosity:
-            logger.info(msg1)
-        
-        ###
-        from auto_kappa.alamode.analyzer.scattering import Scattering
-        self._scat = Scattering(
-                file_result, 
-                file_isotope=file_isotope,
-                grain_size=grain_size, 
-                temperature=temperature
-                )
-    
-    def write_lifetime_at_given_temperature(self, temperature=300, outfile=None, grain_size=None):
-        """ Write lifetime at a given temperature in a csv file in a format similar to ALAMODE.
-        
-        Args
-        ------
-        temperature : float
-            Temperature in K.
-        
-        outfile : string
-            Output file name.
-        
-        grain_size : float
-            Grain size in nm.
             
-        """
-        self.set_scattering_info(temperature=temperature, grain_size=grain_size, verbosity=False)
-        
-        dump = {"ik": [], "is": [], 
-                "frequency[cm^-1]": [], "lifetime[ps]": [], 
-                "|velocity|[m/s]": [], "MFP[nm]": [], "multiplicity": [],
-                "kxx": [], "kxy": [], "kxz": [],
-                "kyx": [], "kyy": [], "kyz": [],
-                "kzx": [], "kzy": [], "kzz": []}
-        
-        ## print(self.scat.result)
-        nk = len(self.scat.result['frequencies'])
-        nbands = len(self.scat.result['frequencies'][0])
-        for ik in range(nk):
-            multiplicity = self.scat.result['multiplicity'][ik]
-            for ib in range(nbands):
-                
-                frequency = self.scat.result['frequencies'][ik][ib] ## cm^-1
-                lifetime = self.scat.lifetime[ik][ib]  ## ps
-                
-                ## velocity
-                velo_all = self.scat.result['velocities'][ik][ib]  ## shape(multiplicity, 3)
-                velo_all = np.asarray(velo_all)
-                assert len(velo_all) == multiplicity
-                
-                vave = 0.
-                for im in range(multiplicity):
-                    vave += np.linalg.norm(velo_all[im]) / multiplicity
-                
-                ## kappa at each mode
-                kappa_each = np.zeros((3, 3))
-                for i1 in range(3):
-                    for i2 in range(3):
-                        kappa_each[i1, i2] += (
-                            self.scat.kmode[ik,ib,i1,i2] / multiplicity
-                        )
-                
-                dump["ik"].append(ik + 1)
-                dump["is"].append(ib + 1)
-                dump["frequency[cm^-1]"].append(frequency)
-                dump["lifetime[ps]"].append(lifetime)
-                dump["|velocity|[m/s]"].append(vave)
-                dump["MFP[nm]"].append(lifetime * vave)
-                dump["multiplicity"].append(multiplicity)
-                for i, j in itertools.product(range(3), repeat=2):
-                    dump["k" + "xyz"[i] + "xyz"[j]].append(kappa_each[i, j])
-            
-        ### write a csv file
-        if outfile is None:
-            outfile = self.out_dirs['result'] + '/tau_%dK.csv' % (int(temperature))
-        
-        df = pd.DataFrame(dump)
-        with open(outfile, 'w') as f:
-            f.write("# Created by auto-kappa in a format similar to ALAMODE\n")
-            f.write("# Input file   : %s\n" % self.get_relative_path(self.scat.result.filename))
-            if self.scat.file_isotope is not None:
-               if os.path.exists(self.scat.file_isotope):
-                    f.write("# Itotope      : %s\n" % self.get_relative_path(self.scat.file_isotope))
-            if grain_size is not None:
-                f.write("# Grain size   : %f nm\n" % grain_size)
-            f.write("# Temperature  : %d K\n" % temperature)
-            f.write("# kpoint range : 1 %d\n" % nk)
-            f.write("# mode   range : 1 %d\n" % nbands)
-            df.to_csv(f, index=False, float_format='%.7e')
-            msg = " Output %s" % self.get_relative_path(outfile)
-            logger.info(msg)
-        
-    
-    def plot_lifetime(
-            self, temperatures="300:500", calc_type="cubic", outputfile=True):
-        
-        data = temperatures.split(":")
-        ts = [float(t) for t in data]
-        
-        dfs = {}
-        for t in ts:
-            
-            self.set_scattering_info(temperature=t, grain_size=None, verbosity=False)
-            omegas = self.scat.result['frequencies']
-            taus = self.scat.lifetime
-            
-            nk = len(omegas)
-            nbands = len(omegas[0])
-            
-            dfs[int(t)] = pd.DataFrame()
-            dfs[int(t)]['frequency'] = omegas.reshape(nk*nbands)
-            dfs[int(t)]['lifetime'] = taus.reshape(nk*nbands)
-        
-        ### figname
-        prefix = self.out_dirs['result'] + '/fig_lifetime'
-        if calc_type != "cubic":
-            prefix += "_%s" % calc_type
-        figname = prefix + ".png"
-        
-        ### plot a figure
-        from auto_kappa.plot.pltalm import plot_lifetime
-        out = plot_lifetime(dfs, figname=self.get_relative_path(figname))
-        
-        return out
-    
-    def plot_scattering_rates(self, temperature=300., grain_size=1000.):
-        
-        if self.scat is None:
-            self.set_scattering_info(
-                    temperature=temperature,
-                    grain_size=grain_size)
-        
-        ## set temperature 
-        if abs(self.scat.temperature - temperature) > 0.1:
-            self.scat.change_temperature(temperature)
-        
-        ## set grain size
-        if self.scat.size is None:
-            self.scat.change_grain_size(grain_size)
-        else:
-            if abs(self.size - grain_size) > 1.:
-                self.scat.cahnge_grain_size(grain_size)
-        
-        ## get frequencies
-        frequencies = self.scat.result['frequencies']
-        n1 = len(frequencies)
-        n2 = len(frequencies[0])
-        frequencies = frequencies.reshape(n1*n2)
-        
-        ## get scattering rates and set labels
-        labels = {}
-        scat_rates = {}
-        for key in self.scat.scattering_rates:
-            
-            if self.scat.scattering_rates[key] is None:
-                continue
-            
-            scat_rates[key] = self.scat.scattering_rates[key].reshape(n1*n2)
-            
-            if key == 'phph':
-                labels[key] = '3ph (%dK)' % int(temperature)
-            elif key == 'isotope':
-                labels[key] = 'isotope'
-            elif key == 'boundary':
-                labels[key] = 'L=%dnm' % grain_size
-            else:
-                labels[key] = key
-        
-        ## plot a figure
-        figname = self.out_dirs['result'] + '/fig_scat_rates.png'
-        from auto_kappa.plot.pltalm import plot_scattering_rates
-        plot_scattering_rates(
-                frequencies, scat_rates, labels, 
-                figname=self.get_relative_path(figname))
-        
-    def _plot_cvsets(self, order=None):
-        
-        from auto_kappa.plot.pltalm import plot_cvsets
-        
-        msg = "\n ### Plot CV results ###"
-        logger.info(msg)
-        
-        if order == 2:
-            figname = self.out_dirs['result'] + '/fig_cvsets_cube.png'
-            plot_cvsets(
-                    directory=self.out_dirs['cube']['cv'],
-                    figname=figname)
-        else:
-            figname = self.out_dirs['result'] + '/fig_cvsets_high.png'
-            plot_cvsets(
-                    directory=self.out_dirs['higher']['cv'], 
-                    figname=figname)
-        
-        logger.info("")
-    
-    def plot_bandos(self, **kwargs):
-        
-        ### set figure name
-        if 'figname' not in kwargs.keys():
-            figname = self.out_dirs['result'] + '/fig_bandos.png'
-        else:
-            figname = kwargs['figname']
-        
-        from auto_kappa.plot.bandos import plot_bandos
-
-        ### output title
-        line = "Plot band and DOS:"
-        msg = "\n " + line + "\n"
-        msg += " " + "-" * len(line) + "\n"
-        logger.info(msg)
-        
-        fig = plot_bandos(
-                directory=self.get_relative_path(
-                    self.out_dirs['harm']['bandos']), 
-                prefix=self.prefix, 
-                figname=self.get_relative_path(figname),
-                **kwargs
-                )
-    
-    def get_kappa_directories(self, calc_type="cubic"):
-        
-        if calc_type == "cubic":
-            ll_tmp = self.out_dirs['cube']["kappa_%s" % self.fc3_type] + "_"
-        elif calc_type == "scph":
-            ll_tmp = self.out_dirs["higher"]["kappa"] + "_"
-        
-        line = ll_tmp + "*"
-        
-        dirs = glob.glob(line)
-        dirs_done = {}
-        for dd in dirs:
-            fn_log = dd + "/kappa.log"
-            if os.path.exists(fn_log) == False:
-                continue
-            if wasfinished_alamode(fn_log):
-                label = dd.split(ll_tmp)[1]
-                dirs_done[label] = dd
-        return dirs_done
-    
-    def plot_kappa(self, figname=None, calc_type="cubic"):
-        """
-        Args
-        ======
-
-        calc_type : string
-            "cubic", "scph"
-
-        """
-        
-        dirs_kappa = self.get_kappa_directories(calc_type=calc_type)
-        
-        keys = dirs_kappa.keys()
-        
-        dfs = {}
-        logger.info("")
-        for i, key in enumerate(keys):
-            try:
-                dir1 = self.get_relative_path(dirs_kappa[key])
-                msg = " Read %s" % (dir1)
-                logger.info(msg)
-                dfs[key] = _read_kappa(dirs_kappa[key], self.prefix)
-            except Exception:
-                continue
-        
-        from auto_kappa.plot.pltalm import plot_kappa
-        if figname is None:
-            figname = self.out_dirs['result'] + '/fig_kappa.png'
-        logger.info("")
-        plot_kappa(dfs, figname=self.get_relative_path(figname))
-        return 0
-    
-    def plot_cumulative_kappa(self, temperatures="100:300:500", wrt='frequency',
-            figname=None, xscale='linear', nbins=150):
-        
-        ## set grain size
-        if self.scat.size is not None:
-            self.scat.change_grain_size(None)
-        
-        ## set temperatures
-        data = temperatures.split(":")
-        ts = [float(t) for t in data]
-        dfs = {}
-        for t in ts:
-            
-            ## Calculate cumulative and spectral kappa at a given temperature
-            self.scat.change_temperature(t)
-            dfs[int(t)] = self.scat.get_cumulative_kappa(
-                    temperature=t, wrt=wrt, xscale=xscale, nbins=nbins)
-            
-            ## output file for the cumulative and spectral kappa
-            try:
-                df_each = dfs[int(t)].rename(columns={'xdat': wrt})
-                outfile = self.out_dirs['result'] + '/kspec_%s_%dK.csv' % (wrt, int(t))
-                
-                ### save spectral kappa
-                with open(outfile, 'w') as f:
-                    
-                    ## comment
-                    f.write("# Temperature : %d\n" % t)
-                    if self.scat.size is not None:
-                        f.write("# Grain size  : %f\n" % self.scat.size)
-                    
-                    df_each.to_csv(f, index=False, float_format='%.6e')
-                    msg = " Output %s" % self.get_relative_path(outfile)
-                    logger.info(msg)
-            except:
-                pass
-        
-        ##
-        lab_kappa = "${\\rm \\kappa_{lat}}$"
-        if 'freq' in wrt:
-            xlabel = "Frequency (${\\rm cm^{-1}}$)"
-            unit1 = "${\\rm Wm^{-1}K^{-1}/cm^{-1}}$"
-            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
-        else:
-            xlabel = "Mean free path (nm)"
-            unit1 = "${\\rm Wm^{-1}K^{-1}/nm}$"
-            ylabel1 = "Spectral %s (%s)" % (lab_kappa, unit1)
-        
-        if figname is None:
-            figname = self.out_dirs['result'] + '/fig_cumu_%s.png' % wrt
-            
-        from auto_kappa.plot.pltalm import plot_cumulative_kappa
-        plot_cumulative_kappa(
-                dfs, xlabel=xlabel, 
-                figname=self.get_relative_path(figname), 
-                xscale=xscale, ylabel=ylabel1)
-    
     def calculate_pes(self, negative_freq=-1e-3):
         """ Calculate PES """
         
@@ -2526,169 +1841,4 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodeJobHandler)
         
         ### move back to the initial directory
         os.chdir(dir_init)
-
-
-
-    
-    
-def get_cutoffs_automatically(cutoff2=-1, cutoff3=4.3, num_elems=None, order=5):
-    """ 
-    Args
-    -------
-    #cutoffs : shape=(order, num_elems, num_elems), unit=[Ang]
-    #    If cutoffs is given properly, cutoffs is used and cutoff2 and
-    #    cutoff3 are neglected.
-    #    If cutoffs is not given, cutoffs are given automatically with
-    #    cutoff2 and cutoff3.
-    cutoff2 : float, unit=Ang
-    cutoff3 : float, unit=Ang
-    """
-    cutoffs = []
-    n = num_elems
-    for i in range(order):
-        if i == 0:
-            cc = cutoff2
-        else:
-            cc = cutoff3
-        cutoffs.append(np.asarray(np.ones((n,n)) * cc))
-    return np.asarray(cutoffs)
-
-def _read_frequency_range(filename, format='anphon'):
-    """ read minimum and maximum frequencies from .bands file created by anphon 
-    """
-    if format == 'anphon':
-        
-        data = np.genfromtxt(filename)
-        
-        fmax = np.nan
-        fmin = np.nan
-        for idx in [-1, 1]:
-            branch = data[:,idx]
-            branch = branch[~np.isnan(branch)]
-            if idx == -1:
-                fmax = np.max(branch)
-            elif idx == 1:
-                fmin = np.min(branch)
-        
-        return fmin, fmax
-    else:
-        msg = " Error: %s is not supported yet." % format
-        logger.error(msg)
         sys.exit()
-
-def should_rerun_alamode(logfile):
-    """
-    Args
-    ======
-
-    logfile : string
-        alamode log file
-
-    """
-    if os.path.exists(logfile) == False:
-        return True
-    else:
-        if wasfinished_alamode(logfile) == False:
-            return True
-    return False
-
-def _should_rerun_band(filename):
-    """ Check phonon dispersion calculated with ALAMODE
-    Args
-    ======
-
-    filename : string
-        alamode band file (***.bands)
-
-    """
-    data = np.genfromtxt(filename)
-    data = data[:,1:]
-    n1 = len(data)
-    n2 = len(data[0])
-    eigenvalues = data.reshape(n1*n2)
-    nan_data = eigenvalues[np.isnan(eigenvalues)]
-    if len(nan_data) == 0:
-        return False
-    else:
-        return True
-
-   
-def _read_kappa(dir_kappa, prefix):
-    """ Read .kl and .kl_coherent files and return pandas.DataFrame object
-    
-    Args
-    ------
-    dir_kappa : string
-        directory in which .kl and .kl_coherent should exist.
-    
-    prefix : string
-    
-    """
-    fn_kp = dir_kappa + '/' + prefix + '.kl'
-    fn_kc = dir_kappa + '/' + prefix + '.kl_coherent'
-    
-    ##
-    if os.path.exists(fn_kp) == False:
-        return None
-    
-    df = pd.DataFrame()
-    data = np.genfromtxt(fn_kp)
-    
-    if os.path.exists(fn_kc) == False:
-        fn_kc = None
-        data2 = None
-    else:
-        data2 = np.genfromtxt(fn_kc)
-
-        if np.max(abs(data[:,0] - data2[:,0])) > 0.5:
-            msg = " Warning: temperatures are incompatible."
-            logger.warning(msg)
-    
-    nt = len(data)
-    df['temperature'] = data[:,0]
-    dirs = ['x', 'y', 'z']
-    for i1 in range(3):
-        d1 = dirs[i1]
-        
-        if data2 is not None:
-            dd = dirs[i1]
-            lab2 = 'kc_%s%s' % (dd, dd)
-            df[lab2] = data2[:,i1+1]
-        
-        for i2 in range(3):
-            d2 = dirs[i2]
-            num = i1*3 + i2 + 1
-            lab = 'kp_%s%s' % (d1, d2)
-            df[lab] = data[:,num]
-    
-    kave = (df['kp_xx'].values + df['kp_yy'].values + df['kp_zz'].values) / 3.
-    df['kp_ave'] = kave
-    
-    if data2 is not None:
-        kave = (df['kc_xx'].values + df['kc_yy'].values + df['kc_zz'].values) / 3.
-        df['kc_ave'] = kave
-        
-        for pre in ['xx', 'yy', 'zz', 'ave']:
-            key = 'ksum_%s' % pre
-            df[key] = df['kp_%s'%pre].values + df['kc_%s'%pre].values
-    
-    return df
-
-def are_forces_available(filename):
-    """ Check vasprun.xml file. If forces are available, return True, while if
-    not, return False. """
-    
-    import ase.io
-    try:
-        atoms = ase.io.read(filename, format='vasp-xml')
-        forces = atoms.get_forces()
-        n1 = len(forces)
-        for i1 in range(n1):
-            for j in range(3):
-                if isinstance(forces[i1,j], float) == False:
-                    return False
-        ##
-        return True
-    except Exception:
-        return False
-

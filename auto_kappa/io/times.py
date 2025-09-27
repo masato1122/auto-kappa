@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-from optparse import OptionParser
-
 import os
 import os.path
 import glob
+
+from auto_kappa.io.files import extract_data_from_file
 
 def get_all_directories(root_directory):
     directory_names = []
@@ -111,47 +109,13 @@ def _get_kind_of_time(relative_path):
             kind = _get_kind_of_time_eachstructure(data2)
             kind += "(SC:%s)" % label_sc_mat
         except Exception:
-            print("")
-            print(" Error with", data2)
+            #print(" Error with", data2)
             kind = "others"
         
     if kind is None:
         kind = "others"
 
     return kind
-
-#def _get_time_outcar_in_tar(tar_file_path, file_to_read):
-#    """ Read and return the simulation time for VASP calculation compressed as a
-#    tar.gz file.
-#
-#    Args
-#    =====
-#    tar_file_path : string
-#        .tar.gz file name
-#    
-#    file_to_read : string
-#        relative path in .tar.gz directory, which may be "OUTCAR".
-#    """
-#    import tarfile
-#    
-#    line_searched = "Total CPU time used"
-#    
-#    with tarfile.open(tar_file_path, 'r:gz') as tar:
-#        try:
-#            file_info = tar.getmember(file_to_read)
-#            with tar.extractfile(file_info) as f:
-#                content = f.read().decode('utf-8')
-#                lines = content.split("\n")
-#                print(lines)
-#                for il, line in enumerate(lines, start=1):
-#                    if line_searched in line:
-#                        print(line)
-#        
-#        except KeyError:
-#            print(f"File '{file_to_read}' not found in the archive.")
-#    
-#    print(tar_file_path)
-#    exit()
 
 def _get_time_each(dir_name, dtype):
     """ Get simulation time for each directory
@@ -163,8 +127,7 @@ def _get_time_each(dir_name, dtype):
     dtype : string
         "vasp" or "alamode"
     """
-    from auto_kappa.alamode.log_parser import (
-            _get_alamode_runtime, _extract_data)
+    from auto_kappa.alamode.log_parser import _get_alamode_runtime
     
     if dtype == "alamode":
         duration = 0.
@@ -183,7 +146,7 @@ def _get_time_each(dir_name, dtype):
         outcar = dir_name + "/OUTCAR"
         time_single = 0.
         if os.path.exists(outcar):
-            value = _extract_data(outcar, "Total CPU time used")
+            value = extract_data_from_file(outcar, "Total CPU time used")
             if value is not None:
                 time_single = float(value[0])
         

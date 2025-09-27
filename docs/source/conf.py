@@ -1,48 +1,64 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../..'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode/analyzer'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/io'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/plot/alamode'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/structure'))
-#sys.path.insert(0, os.path.abspath('../../auto_kappa/alamode_tools'))
+#
+# Configuration file for the Sphinx documentation builder.
+#
+import os, sys
+sys.path.insert(0, os.path.abspath('..'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
-# -- Project information 
+# get version info
+from auto_kappa import __version__ as version
 
+version = str(version)
+release = version
+
+# -- Project information 
 project = 'auto-kappa'
-copyright = '2022, M. Ohnishi'
-author = 'M. Ohnishi'
+copyright = '2025, Masato Ohnishi'
+author = 'Masato Ohnishi'
 
 # The full version, including alpha/beta/rc tags
-release = 'Oct. 3th, 2022'
+# release = 'Sept. 1st, 2025'
 
-# -- General configuration 
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
-    ]
+    "sphinxarg.ext",
+]
+autosummary_generate = True
+
+autosummary_filename_map = {
+    "auto_kappa.io": "auto_kappa.io",
+    "auto_kappa.plot": "auto_kappa.plot",
+}
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+    "inherited-members": True,
+    # "imported-members": True,
+}
+autoclass_content = "both"
+autodoc_typehints = "description"
 
 templates_path = ['_templates']
-
 exclude_patterns = []
 
-
 # -- Options for HTML output 
-
 html_theme = 'sphinx_rtd_theme'
+html_theme_options = {
+    'logo_only': False,
+}
 
 html_static_path = ['_static']
-
-html_style = 'css/custom.css'
-
+html_css_files = ['css/custom.css']
+html_favicon = '_static/favicon.ico'
+html_logo = 'img/ak_logo.png'
 pygments_style = "sphinx"
+html_show_sphinx = False
 
 ## numbering
 numfig = True
@@ -50,7 +66,6 @@ math_numfig = True
 numfig_secnum_depth = 2
 math_eqref_format = "Eq.{number}"
 html_use_smartypants = False
-html_theme = 'sphinx_rtd_theme'
 
 ## Latex
 latex_engine = 'xelatex'
@@ -58,7 +73,9 @@ latex_elements = {
     'fontpkg': r'''
 ''',
     'preamble': r'''
-''',
+\usepackage{array}
+\renewcommand{\arraystretch}{1.2}
+'''
 }
 latex_show_urls = 'footnote'
 
@@ -70,4 +87,7 @@ latex_show_urls = 'footnote'
 #        external_links[i].setAttribute("rel", "noopener noreferrer");
 #    }
 #});
+
+def setup(app):
+    app.add_css_file('custom.css')
 

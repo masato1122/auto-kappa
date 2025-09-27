@@ -12,28 +12,21 @@
 import sys
 import os
 import os.path
-import numpy as np
 import datetime
-import time
+import json
+# import numpy as np
 
 from auto_kappa.apdb import ApdbVasp
 from auto_kappa import output_directories
 from auto_kappa.alamode.almcalc import AlamodeCalc
-from auto_kappa.alamode.pes import calculate_pes
 from auto_kappa.io.files import write_output_yaml
-from auto_kappa.calculators.alamode import (
-        analyze_phonon_properties,
-        analyze_harmonic_with_larger_supercells,
-        calculate_cubic_force_constants,
-        calculate_thermal_conductivities,
-        )
+from auto_kappa.calculators.alamode import analyze_phonon_properties
 from auto_kappa.cui import ak_log
 from auto_kappa.cui.initialization import (
         use_omp_for_anphon,
         get_previous_nac,
         get_required_parameters,
         get_base_directory_name,
-        # read_phonondb,
         )
 
 import logging
@@ -75,31 +68,42 @@ def _stop_symmetry_error(out):
     msg += "\n"
     logger.error(msg)
     sys.exit()
-    
+
+def _store_parameters(outfile, params):
+    with open(outfile, 'w', encoding='utf-8') as f:
+        json.dump(params, f, indent=4, ensure_ascii=False)
+
 def main():
     
     ### Parse given parameters
-    from auto_kappa.cui.ak_parser import get_parser, parse_vasp_params
+    from auto_kappa.cui.ak_parser import get_parser
+    parser = get_parser()
+    options = parser.parse_args()
     
-    options = get_parser()
-    
-    ak_params = eval(str(options))
-    
-    vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
-    
-    ### Get the name of the base directory
-    base_dir = get_base_directory_name(
-            ak_params['material_name'], restart=ak_params['restart'])
+    ### Prepare the base directory
+    base_dir = get_base_directory_name(options.outdir, restart=options.restart)
     os.makedirs(base_dir, exist_ok=True)
     
-    ### set logger
+    ### Set logger
     logfile = os.path.join(base_dir, 'ak.log')
     ak_log.set_logging(filename=logfile, level=logging.DEBUG, format="%(message)s")
     
     ### Start auto-kappa
     ak_log.start_autokappa()
-    
     #ak_log.print_machine_info()
+    
+    ### Auto-kappa parameters
+    from auto_kappa.cui.compat import check_ak_options, parse_vasp_params
+    ak_params = vars(options)
+    outfile = ak_params['outdir'] + "/parameters.json"
+    check_ak_options(ak_params, outfile)
+    _store_parameters(outfile, ak_params)
+    vasp_params_mod = parse_vasp_params(ak_params['vasp_parameters'])
+    
+    ## Note for the 2D system
+    if ak_params['mater_dim'] == 2:
+        from auto_kappa.structure.two import print_2d_system_notation
+        print_2d_system_notation()
     
     ### Set output directories
     out_dirs = _set_outdirs(base_dir)
@@ -111,13 +115,6 @@ def main():
             logger.info(msg)
             ak_params["anphon_para"] = "omp"
     
-    ######################
-    ### Adjust options ###
-    ######################
-    ### max_natoms3: maximun limit of the number of atoms for FC3
-    #if options.max_natoms3 is None:
-    #    options.max_natoms3 = options.max_natoms
-    
     ### relaxed_cell
     if ak_params['relaxed_cell'] is not None:
         if (ak_params['relaxed_cell'].lower()[0] == "u" or 
@@ -125,7 +122,7 @@ def main():
             ak_params['relaxed_cell'] = "unitcell"
         elif ak_params['relaxed_cell'].lower()[0] == "p":
             ak_params['relaxed_cell'] = "primitive"
-     
+    
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
         get_required_parameters(
@@ -136,7 +133,16 @@ def main():
             #max_natoms3=ak_params['max_natoms3'],
             k_length=ak_params['k_length'],
             celltype_relax_given=ak_params['relaxed_cell'],
+            dim=ak_params['mater_dim'],
         ))
+    
+    ### If the previous structure was not the same as the given structure,
+    if structures.get('supercell', None) is not None:
+        num_new = len(structures['supercell'])
+        if ak_params['max_natoms'] < num_new:
+            ak_params['max_natoms'] = num_new + 1
+            msg = "\n Modify \"max_natoms\" parameter to %d." % (ak_params['max_natoms'])
+            logger.error(msg)
     
     ### NONANALYTIC (primitive)
     if nac != 0:
@@ -157,21 +163,15 @@ def main():
     
     ### print parameters
     ak_log.print_options(ak_params)
-    
-    ak_log.print_conditions(
-            cell_types=cell_types, 
-            trans_matrices=trans_matrices,
-            kpts_all=kpts_used,
-            )
+    ak_log.print_conditions(cell_types=cell_types, 
+                            trans_matrices=trans_matrices,
+                            kpts_all=kpts_used)
+    ak_log.print_space_group(structures['primitive'])
     
     ### write file
     os.makedirs(out_dirs["result"], exist_ok=True)
     filename = out_dirs["result"] + "/parameters.yaml"
-    ak_log.write_parameters(
-            filename,
-            structures["unitcell"], 
-            cell_types, trans_matrices, kpts_used, nac
-            )
+    ak_log.write_parameters(filename, structures["unitcell"], cell_types, trans_matrices, kpts_used, nac)
     
     try:
         fn_print = filename.replace(os.getcwd(), ".")
@@ -187,19 +187,13 @@ def main():
             "note": "results"}
     write_output_yaml(yaml_outdir, "result", info, overwrite=False)
     
-    ### For materials with negative frequencies, options.max_natoms3 may be
-    ### different from options.max_natoms.
-    #if options.max_natoms != options.max_natoms3:
-    #    msg = " Error: max_natoms != max_natoms3 is not supported yet."
-    #    logger.error(msg)
-    #    exti()
-    
     ### command to run VASP jobs
     command_vasp = {
             'mpirun': ak_params['mpirun'], 
             'nprocs': ak_params['nprocs'], 
             'nthreads': 1, 
             'vasp': ak_params['command_vasp'],
+            'vasp_gam': ak_params['command_vasp_gam'],
             }
     
     ### Set ApdbVasp object
@@ -209,7 +203,8 @@ def main():
             scell_matrix=trans_matrices["supercell"],
             command=command_vasp,
             params_modified=vasp_params_mod,
-            #yamlfile_for_outdir=yaml_outdir
+            mater_dim=ak_params['mater_dim'],
+            base_directory=base_dir
             )
     
     ### Relaxation calculation
@@ -218,15 +213,27 @@ def main():
             kpts_used["relax"],
             volume_relaxation=ak_params['volume_relaxation'],
             cell_type=cell_types["relax"],
-            max_error=ak_params["max_relax_error"],
+            # max_error=ak_params["max_relax_error"],
             nsw_params=ak_params["nsw_params"],
             )
+    
+    ### Get relaxed structures
+    structures_relax = apdb.structures.copy()
+    apdb.output_structures()
     
     ### Stop the calculation because of the symmetry error
     if out < 0:
         _stop_symmetry_error(out)
     
-    ### output yaml file
+    ## Modify the cutoff for harmonic force constants
+    if ak_params['mater_dim'] == 2:
+        from auto_kappa.structure.two import suggest_fc2_cutoff, print_length_info
+        cutoff_harm = suggest_fc2_cutoff(structures_relax['super'])
+        print_length_info(structures_relax['super'])
+    else:
+        cutoff_harm = -1
+    
+    ## output yaml file
     info = {
             "directory": out_dirs["relax"].replace(base_dir, "."), 
             "kind": "others",
@@ -234,13 +241,12 @@ def main():
             }
     write_output_yaml(yaml_outdir, "relax", info)
     
-    ### Get relaxed structures
-    structures_relax = apdb.structures.copy()
-    
     ### Calculate Born effective charge
     if nac:
         mode = 'nac'
-        apdb.run_vasp(mode, out_dirs[mode], kpts_used["nac"], print_params=True)
+        vaccum_thickness = 20. if ak_params['mater_dim'] == 2 else None
+        apdb.run_vasp(mode, out_dirs[mode], kpts_used["nac"], 
+                      print_params=True, vaccum_thickness=vaccum_thickness)
         
         ### output yaml file
         info = {
@@ -258,37 +264,43 @@ def main():
         'anphon': ak_params['command_anphon'],
         'alm': ak_params['command_alm'],
         'dfc2': ak_params['command_dfc2'],
+        'anphon_ver2': ak_params['command_anphon_ver2'],
         }
     
     ### Set AlmCalc
+    # logger.debug(" >>>>>>> DEBUG")
     almcalc = AlamodeCalc(
-            structures_relax['prim'],
+            structures_relax['prim'],  # primitive structure
             base_directory=base_dir,
             restart=ak_params['restart'],
             primitive_matrix=trans_matrices['primitive'],
             scell_matrix=trans_matrices['supercell'],
-            cutoff2=-1,
+            cutoff2=cutoff_harm,
             cutoff3=ak_params['cutoff_cubic'],
+            min_nearest=ak_params['min_nearest'],
             magnitude=ak_params['mag_harm'],
             magnitude2=ak_params['mag_cubic'],
             ##mag_high=ak_params['mag_high'],
             nac=nac,
             commands={'alamode': command_alamode, 'vasp': command_vasp},
-            verbosity=ak_params['verbosity'],
+            verbose=ak_params['verbose'],
             yamlfile_for_outdir=yaml_outdir,
+            dim=ak_params['mater_dim'],
+            calculate_forces=ak_params['calculate_forces'],
             )
+    # logger.debug(" <<<<<<< DEBUG")
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation
     calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
     
     ### Analyze phonon properties
-    neglect_log = ak_params['neglect_log']
+    ignore_log = ak_params['ignore_log']
     out = analyze_phonon_properties(
             almcalc,
             calc_force=calc_force,
             negative_freq=ak_params['negative_freq'],
-            material_name=ak_params['material_name'],
-            neglect_log=neglect_log,
+            base_dir=base_dir,
+            ignore_log=ignore_log,
             harmonic_only=ak_params['harmonic_only'],
             #
             nmax_suggest=ak_params['nmax_suggest'],
@@ -299,6 +311,9 @@ def main():
             scph=ak_params['scph'],
             disp_temp=ak_params['random_disp_temperature'],
             frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+            #
+            four=ak_params['four'],
+            frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
             )
     
     ### Calculate PES
@@ -309,65 +324,28 @@ def main():
     ########################
     ##  Larger supercell  ##
     ########################
-    ### calculate harmonic properteis with larger supercells
-    if (almcalc.minimum_frequency < ak_params['negative_freq'] and 
-            ak_params["analyze_with_largersc"] == 1):
-        
-        almcalc_large = analyze_harmonic_with_larger_supercells(
-                almcalc,
-                base_dir=base_dir,
-                #
-                max_natoms_init=ak_params['max_natoms'],
-                delta_max_natoms=options.delta_max_natoms,
-                max_loop=options.max_loop_for_largesc,
-                #
+    ### calculate phonon properties with larger supercells
+    if ak_params["analyze_with_largersc"]:
+        if almcalc.minimum_frequency < ak_params['negative_freq'] or ak_params['calculate_forces'] == False:
+            from auto_kappa.calculators.alamode import analyze_phonon_properties_with_larger_supercells
+            analyze_phonon_properties_with_larger_supercells(
+                base_dir, almcalc, calc_force,
+                max_natoms=ak_params['max_natoms'],
+                delta_max_natoms=ak_params['delta_max_natoms'],
+                max_loop_for_largesc=ak_params['max_loop_for_largesc'],
                 k_length=ak_params['k_length'],
                 negative_freq=ak_params['negative_freq'],
-                neglect_log=neglect_log,
-                #
+                ignore_log=ignore_log,
                 restart=ak_params['restart'],
+                harmonic_only=ak_params['harmonic_only'],
+                nmax_suggest=ak_params['nmax_suggest'],
+                frac_nrandom=ak_params['frac_nrandom'],
+                frac_nrandom_higher=ak_params['frac_nrandom_higher'],
+                random_disp_temperature=ak_params['random_disp_temperature'],
+                four=ak_params['four'],
+                frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
+                pes=ak_params['pes'],
                 )
-        
-        ### plot band and DOS
-        from auto_kappa.plot.bandos import plot_bandos_for_different_sizes
-        figname = almcalc.out_dirs["result"] + "/fig_bandos.png"
-        plot_bandos_for_different_sizes(
-                almcalc_large, almcalc, figname=figname)
-        
-        ### If negative frequencies could be removed, calculate cubic FCs with
-        ### the supercell of initial size
-        if (almcalc_large.minimum_frequency > ak_params["negative_freq"] and 
-                ak_params['harmonic_only'] == 0):
-            
-            calculate_cubic_force_constants(
-                    almcalc, calc_force,
-                    nmax_suggest=ak_params['nmax_suggest'], 
-                    frac_nrandom=ak_params['frac_nrandom'], 
-                    neglect_log=neglect_log
-                    )
-            
-            almcalc_large._fc3_type = almcalc.fc3_type
-            
-            ### calculate kappa
-            kdensities = [500, 1000, 1500]
-            calculate_thermal_conductivities(
-                    almcalc_large, 
-                    kdensities=kdensities,
-                    neglect_log=neglect_log,
-                    temperatures_for_spectral="300:500",
-                    fc2xml = almcalc_large.fc2xml,
-                    fcsxml = almcalc.fc3xml
-                    )
-            
-        else:
-            
-            ak_log.negative_frequency(almcalc_large.minimum_frequency)
-            
-            ### calculate PES
-            if ak_params['pes'] > 0:
-                almcalc_large.calculate_pes(
-                        negative_freq=ak_params['negative_freq'])
-                sys.exit()
     
     ### plot and print calculation durations
     from auto_kappa.io.times import get_times

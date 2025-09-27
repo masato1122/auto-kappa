@@ -16,9 +16,12 @@ import random
 import copy
 import math
 import cmath
+from ase import Atoms
 
 import logging
 logger = logging.getLogger(__name__)
+
+from auto_kappa.units import BohrToA, kb, RyToJ, AMU
 
 class AlamodeDisplace(object):
 
@@ -28,7 +31,7 @@ class AlamodeDisplace(object):
                  file_evec=None,
                  file_primitive=None,
                  primitive=None,
-                 verbosity=1):
+                 verbose=0):
         self._pattern = []
         self._primitive_lattice_vector = None
         self._inverse_primitive_lattice_vector = None
@@ -38,7 +41,7 @@ class AlamodeDisplace(object):
         self._counter = 1
         self._displacement_magnitude = 0.02
         self._md_snapshots = None  # displacements in angstrom unit
-        self._verbosity = verbosity
+        self._verbose = verbose
         self._classical = False
         self._commensurate_qpoints = []
         self._mapping_shift = None
@@ -53,11 +56,17 @@ class AlamodeDisplace(object):
 
         self._displacement_mode = displacement_mode.lower()
         self._supercell = codeobj_base
-
-        self._BOHR_TO_ANGSTROM = 0.5291772108
-        self._K_BOLTZMANN = 1.3806488e-23
-        self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
-        amu = 1.660538782e-27
+        
+        ###
+        self._BOHR_TO_ANGSTROM = BohrToA
+        self._K_BOLTZMANN = kb
+        self._RYDBERG_TO_JOULE = RyToJ
+        amu = AMU
+        ###
+        # self._BOHR_TO_ANGSTROM = 0.5291772108
+        # self._K_BOLTZMANN = 1.3806488e-23
+        # self._RYDBERG_TO_JOULE = 4.35974394e-18 / 2.0
+        # amu = 1.660538782e-27
         electron_mass = 9.10938215e-31
         self._AMU_RYD = amu / electron_mass / 2.0
         
@@ -74,7 +83,7 @@ class AlamodeDisplace(object):
             self._generate_mapping_s2p()
         
         elif primitive:
-
+            
             pcell = primitive.cell.array.copy()
             self._primitive_lattice_vector = pcell.T
             self._inverse_primitive_lattice_vector = np.linalg.inv(pcell.T)
@@ -95,23 +104,23 @@ class AlamodeDisplace(object):
                         nat_elem.append(1)
                     else:
                         nat_elem[-1] += 1
-
+            
             nat = np.sum(nat_elem)
-
+            
             kd = []
             for i in range(len(nat_elem)):
                 kd.extend([i] * nat_elem[i])
             self._primitive_kd = kd
-
+            
             self._find_commensurate_q()
             self._generate_mapping_s2p()
-
+            
         else:
             if self._displacement_mode == "random_normalcoordinate" \
                     or self._displacement_mode == "pes":
                 raise RuntimeError("The --prim option is necessary when '--random_normalcoord' "
                                    "or '--pes' is invoked.")
-
+        
         if file_evec:
             self._load_phonon_results(file_evec)
 
@@ -156,7 +165,7 @@ class AlamodeDisplace(object):
                  option_qrange=None,
                  ignore_imag=False,
                  imag_evec=False):
-
+        
         self._counter = 1
         self._displacement_magnitude = magnitude
         self._classical = classical
@@ -170,7 +179,7 @@ class AlamodeDisplace(object):
                 raise RuntimeError("pattern file must be given with --pattern option")
             self._parse_displacement_patterns(file_pattern)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Finite displacement\n")
                 print(" %d displacement patterns are generated from\n"
                       " the given *.pattern_* files" % len(self._pattern))
@@ -186,12 +195,12 @@ class AlamodeDisplace(object):
 
         if self._displacement_mode == "random":
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Random displacement\n")
                 print(" %d randomly-displaced configurations are generated from\n"
-                      " the original supercell structure" % number_of_displacements)
+                      " the original supercell structure." % number_of_displacements)
                 print(" The direction of displacement is random, but the displacement\n"
-                      " magnitude of each atom is fixed to %.2f Angstrom" % self._displacement_magnitude)
+                      " magnitude of each atom is fixed to %.2f Angstrom." % self._displacement_magnitude)
                 print("")
 
             disp_random = self._get_random_displacements(number_of_displacements,
@@ -209,7 +218,7 @@ class AlamodeDisplace(object):
 
             list_every = self._sample_md_snapshots(file_mddata, option_every)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : MD sampling\n")
                 print(" Sampling range and interval: [%d:%d], interval = %d"
                       % (list_every[0] + 1, list_every[1], list_every[2]))
@@ -237,7 +246,7 @@ class AlamodeDisplace(object):
 
             list_every = self._sample_md_snapshots(file_mddata, option_every)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : MD sampling + random displacement\n")
                 print(" Sampling range and interval: [%d:%d], interval = %d"
                       % (list_every[0] + 1, list_every[1], list_every[2]))
@@ -269,7 +278,7 @@ class AlamodeDisplace(object):
 
         if self._displacement_mode == "random_normalcoordinate":
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Random displacement in normal coordinate\n")
                 print(" %d randomly-displaced configurations are generated from\n"
                       " the original supercell structure" % number_of_displacements)
@@ -303,7 +312,7 @@ class AlamodeDisplace(object):
             Qmin, Qmax = option_qrange.split()
             Qlist = np.linspace(float(Qmin), float(Qmax), number_of_displacements)
 
-            if self._verbosity > 0:
+            if self._verbose > 0:
                 print(" Displacement mode              : Along specific normal coordinate\n")
                 print(" %d configurations are generated from\n"
                       " the original supercell structure" % number_of_displacements)
@@ -563,12 +572,12 @@ class AlamodeDisplace(object):
                 if self._omega2[iq, imode] < 0.0:
                     if ignore_imag:
                         omega[iq, imode] = 0.0
-                        if self._verbosity > 0:
+                        if self._verbose > 0:
                             print("Warning: Detected imaginary mode at iq = %d, imode = %d.\n"
                                   "This more will be ignored.\n" % (iq + 1, imode + 1))
                     else:
                         omega[iq, imode] = math.sqrt(-self._omega2[iq, imode])
-                        if self._verbosity > 0:
+                        if self._verbose > 0:
                             print("Warning: Detected imaginary mode at iq = %d, imode = %d.\n"
                                   "Use the absolute frequency for this mode.\n" % (iq + 1, imode + 1))
                 else:
@@ -752,15 +761,11 @@ class AlamodeDisplace(object):
 
         self._commensurate_qpoints = qlist
 
-    def _generate_mapping_s2p(self):
-
-        tol_zero = 1.0e-3
+    def _generate_mapping_s2p(self, tol_zero=1.0e-3):
+        
         convertor = np.dot(self._supercell.lattice_vector.transpose(),
                            self._inverse_primitive_lattice_vector.transpose())
-
-        for i in range(3):
-            for j in range(3):
-                convertor[i, j] = float(round(convertor[i, j]))
+        convertor = np.round(convertor).astype(float)
         
         shift = np.zeros((self._supercell.nat, 3))
         map_s2p = np.zeros(self._supercell.nat, dtype=int)
@@ -785,12 +790,10 @@ class AlamodeDisplace(object):
                     break
             
             if iloc == -1:
-                print(diff_min)
-                msg = "\n"
-                msg += " min. diff. : %f\n" % diff_min
-                msg += " Error : Equivalent atom not found. "\
-                        "Check the relaxed structure. The relaxation "\
-                        "calculation may need to be run again."
+                msg  = "\n min. diff. : %f" % diff_min
+                msg += "\n Warning : Equivalent atom not found. "\
+                        "Check the relaxed structure. "
+                        # " The relaxation calculation may need to be run again."
                 logger.error(msg)
                 raise RuntimeError("Equivalent atom not found")
             
