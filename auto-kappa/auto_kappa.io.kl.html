@@ -111,6 +111,17 @@
 <dt class="sig sig-object py" id="auto_kappa.io.kl.KL">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.kl.</span></span><span class="sig-name descname"><span class="pre">KL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.kl.KL" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auto_kappa.io.kl.KappaShare" title="auto_kappa.io.kl.KappaShare"><code class="xref py py-class docutils literal notranslate"><span class="pre">KappaShare</span></code></a></p>
+<p>Class to handle both kp or kc data obtained using ALAMODE.</p>
+<section id="how-to-use">
+<h2>How to use<a class="headerlink" href="#how-to-use" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_kp</span> <span class="o">=</span> <span class="s2">&quot;./mp-149/cube/kappa_14x14x14/Si.kl&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kl</span> <span class="o">=</span> <span class="n">KL</span><span class="p">(</span><span class="n">file_kp</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kl</span><span class="o">.</span><span class="n">get_kappa</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kl</span><span class="o">.</span><span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kl</span><span class="o">.</span><span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.kl.KL.get_kappa">
 <span class="sig-name descname"><span class="pre">get_kappa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.kl.KL.get_kappa" title="Link to this definition"></a></dt>
@@ -133,6 +144,7 @@
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">temperatures</span></span><a class="headerlink" href="#auto_kappa.io.kl.KL.temperatures" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+</section>
 </dd></dl>
 
 <dl class="py class">
@@ -156,6 +168,18 @@
 <dt class="sig sig-object py" id="auto_kappa.io.kl.Kboth">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">auto_kappa.io.kl.</span></span><span class="sig-name descname"><span class="pre">Kboth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_kp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_kc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.kl.Kboth" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auto_kappa.io.kl.KappaShare" title="auto_kappa.io.kl.KappaShare"><code class="xref py py-class docutils literal notranslate"><span class="pre">KappaShare</span></code></a></p>
+<p>Class to handle both kp and kc data obtained using ALAMODE.</p>
+<section id="id1">
+<h2>How to use<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_kp</span> <span class="o">=</span> <span class="s2">&quot;./mp-149/cube/kappa_14x14x14/Si.kl&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">file_kc</span> <span class="o">=</span> <span class="s2">&quot;./mp-149/cube/kappa_14x14x14/Si.kl_coherent&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kboth</span> <span class="o">=</span> <span class="n">Kboth</span><span class="p">(</span><span class="n">file_kp</span><span class="p">,</span> <span class="n">file_kc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kboth</span><span class="o">.</span><span class="n">get_kappa</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kboth</span><span class="o">.</span><span class="n">kp</span><span class="o">.</span><span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kboth</span><span class="o">.</span><span class="n">kc</span><span class="o">.</span><span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kboth</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.kl.Kboth.get_kappa">
 <span class="sig-name descname"><span class="pre">get_kappa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.kl.Kboth.get_kappa" title="Link to this definition"></a></dt>
@@ -172,6 +196,7 @@
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">temperatures</span></span><a class="headerlink" href="#auto_kappa.io.kl.Kboth.temperatures" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+</section>
 </dd></dl>
 
 <dl class="py function">
