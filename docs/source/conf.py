@@ -58,6 +58,7 @@ html_css_files = ['css/custom.css']
 html_favicon = '_static/favicon.ico'
 html_logo = 'img/ak_logo.png'
 pygments_style = "sphinx"
+html_show_sphinx = False
 
 ## numbering
 numfig = True
