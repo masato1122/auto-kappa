@@ -1,5 +1,5 @@
 auto-kappa
-=============
+===========
 
 .. toctree::
     :maxdepth: 2

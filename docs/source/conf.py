@@ -6,7 +6,6 @@ sys.path.insert(0, os.path.abspath('..'))
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
-# sys.path.insert(0, os.path.abspath('../auto_kappa'))
 # get version info
 from auto_kappa import __version__ as version
 
