@@ -1,7 +1,9 @@
 
-# Ver. 1.1.1 ()
+# Ver. 1.0.0 (Sept. 28, 2025)
 
 ## New
+
+- Release the package
 
 - Add 'command_vasp_gam' for Gamma point calculation.
 
@@ -11,20 +13,7 @@
 
 - Add 'calculate_forces' option. When this option is set to be "0", forces are not calculate but structure with displacement patterns are prepared.
 
-
-# Ver. 1.1.0 (July 8, 2025)
-
-## New
-
 - Add 'four', 'command_anphon_ver2', and 'frac_kdensity_4ph' options.
-
-- Add 'material_dimension' option for calculating 2D materials.
-
-# Ver. 1.0.0 (July 7, 2025)
-
-## New
-
-- Update the version for release the package
 
 # Ver. 0.4.0 (April 24, 2023)
 
