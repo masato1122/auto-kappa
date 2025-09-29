@@ -59,7 +59,9 @@
 <li class="toctree-l2"><a class="reference internal" href="alamode.html">5.1. Input Scripts for ALAMODE Calculations</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">5.2. Useful Tips</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#make-dfset-file-for-alamode">Make DFSET file for Alamode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#make-borninfo-file-for-alamode">Make BORNINFO file for ALAMODE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#plot-phonon-dispersion-and-dos">Plot phonon dispersion and DOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-force-constants">Plot force constants</a></li>
 </ul>
 </li>
 </ul>
@@ -114,10 +116,198 @@ $<span class="w"> </span>ls<span class="w"> </span>./1
 </pre></div>
 </div>
 </section>
+<section id="make-borninfo-file-for-alamode">
+<h2>Make BORNINFO file for ALAMODE<a class="headerlink" href="#make-borninfo-file-for-alamode" title="Link to this heading"></a></h2>
+<p>Please also see <code class="docutils literal notranslate"><span class="pre">.../examples/6_parser/basic</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BORNINFO</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    
+    <span class="kn">from</span><span class="w"> </span><span class="nn">plot_bandos</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_formula</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="n">get_formula</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="p">)</span>
+    <span class="n">file_vasprun</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/nac/vasprun.xml&quot;</span>
+    <span class="n">file_fc2</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/harm/force/</span><span class="si">{</span><span class="n">formula</span><span class="si">}</span><span class="s2">.xml&quot;</span>
+    
+    <span class="c1"># BORNINFO object creats BORNINFO file from vasprun.xml </span>
+    <span class="c1"># adjusting the order of atoms for ALAMODE force constants file.</span>
+    <span class="n">born</span> <span class="o">=</span> <span class="n">BORNINFO</span><span class="p">(</span><span class="n">file_vasprun</span><span class="p">,</span> <span class="n">file_fcs</span><span class="o">=</span><span class="n">file_fc2</span><span class="p">)</span>
+    <span class="n">born</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">outfile</span><span class="o">=</span><span class="s2">&quot;BORNINFO&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Primitive cell from vasprun.xml&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;===============================&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">born</span><span class="o">.</span><span class="n">prim_vasp</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Primitive cell from ALAMODE force constants file&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;================================================&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">born</span><span class="o">.</span><span class="n">prim_fcs</span><span class="p">)</span>
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Input parameters&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--base_dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;base_dir&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./mp-22862&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;directory of auto-kappa output&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>    
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    
+</pre></div>
+</div>
+</section>
 <section id="plot-phonon-dispersion-and-dos">
 <h2>Plot phonon dispersion and DOS<a class="headerlink" href="#plot-phonon-dispersion-and-dos" title="Link to this heading"></a></h2>
-<p>Preparing…</p>
-<p>(Please see <code class="docutils literal notranslate"><span class="pre">.../examples/8_plot</span></code> to plot phonon dispersion and DOS)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">Band</span><span class="p">,</span> <span class="n">Dos</span><span class="p">,</span> <span class="n">BandPR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.plot.initialize</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_matplot</span><span class="p">,</span> <span class="n">set_axis</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.gridspec</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gridspec</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_formula</span><span class="p">(</span><span class="n">base_dir</span><span class="p">):</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/harm/bandos/*.bands&quot;</span>
+    <span class="n">fns</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot; No band file found&quot;</span><span class="p">)</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">fns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    
+    <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">fig_width</span> <span class="o">=</span> <span class="mf">3.5</span>
+    <span class="n">aspect</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">dpi</span> <span class="o">=</span> <span class="mi">600</span>
+    
+    <span class="c1">## Prepare figure frame</span>
+    <span class="n">set_matplot</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="n">fig_width</span><span class="p">,</span> <span class="n">aspect</span><span class="o">*</span><span class="n">fig_width</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">width_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="c1">## Get file names</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="n">get_formula</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="p">)</span>
+    <span class="c1"># file_band = f&quot;{options.base_dir}/harm/bandos/{formula}.bands&quot;</span>
+    <span class="n">file_band_pr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/harm/bandos/</span><span class="si">{</span><span class="n">formula</span><span class="si">}</span><span class="s2">.band.pr&quot;</span>
+    <span class="n">file_dos</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/harm/bandos/</span><span class="si">{</span><span class="n">formula</span><span class="si">}</span><span class="s2">.dos&quot;</span>
+    <span class="n">figname</span> <span class="o">=</span> <span class="s2">&quot;fig_bandos.png&quot;</span>
+    
+    <span class="c1">## Make Band and Dos objects</span>
+    <span class="c1"># band = Band(file_band)</span>
+    <span class="n">band_pr</span> <span class="o">=</span> <span class="n">BandPR</span><span class="p">(</span><span class="n">file_band_pr</span><span class="p">)</span>
+    <span class="n">dos</span> <span class="o">=</span> <span class="n">Dos</span><span class="p">(</span><span class="n">file_dos</span><span class="p">)</span>
+    
+    <span class="c1">## Plot band and DOS</span>
+    <span class="c1"># band.plot(ax1, plot_G2G=False)</span>
+    <span class="n">band_pr</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">plot_G2G</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cbar_location</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+    <span class="n">dos</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax2</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    
+    <span class="c1">## Use same y limit</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ax1</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">())</span>
+    
+    <span class="c1">## Adjust figure</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">set_axis</span><span class="p">(</span><span class="n">ax1</span><span class="p">)</span>
+    <span class="n">set_axis</span><span class="p">(</span><span class="n">ax2</span><span class="p">)</span>
+    
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figname</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Output&quot;</span><span class="p">,</span> <span class="n">figname</span><span class="p">)</span>
+    
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Input parameters&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--base_dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;base_dir&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./mp-22862&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;directory of auto-kappa output&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>    
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    
+</pre></div>
+</div>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/fig_bandos.png"><img alt="../_images/fig_bandos.png" src="../_images/fig_bandos.png" style="height: 250px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 5.2.1 </span><span class="caption-text">Phonon dispersion with participation ratio and DOS of Silicon</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="plot-force-constants">
+<h2>Plot force constants<a class="headerlink" href="#plot-force-constants" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">FCSxml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.plot.initialize</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_matplot</span><span class="p">,</span> <span class="n">set_axis</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.gridspec</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gridspec</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    
+    <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">fig_width</span> <span class="o">=</span> <span class="mf">2.8</span>
+    <span class="n">aspect</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">dpi</span> <span class="o">=</span> <span class="mi">600</span>
+    
+    <span class="c1">## Prepare figure frame</span>
+    <span class="n">set_matplot</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="n">fig_width</span><span class="p">,</span> <span class="n">aspect</span><span class="o">*</span><span class="n">fig_width</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ifig</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ifig</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+    
+    <span class="c1">## Get file name</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">plot_bandos</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_formula</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="n">get_formula</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="p">)</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/cube/*/</span><span class="si">{</span><span class="n">formula</span><span class="si">}</span><span class="s2">.xml&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">file_fc3</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; No FCS file found&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    
+    <span class="c1">## Read FCS file</span>
+    <span class="n">fcs</span> <span class="o">=</span> <span class="n">FCSxml</span><span class="p">(</span><span class="n">file_fc3</span><span class="p">)</span>
+    
+    <span class="c1">## Plot FCs</span>
+    <span class="n">fcs</span><span class="o">.</span><span class="n">plot_fc2</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">fcs</span><span class="o">.</span><span class="n">plot_fc3</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelbottom</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="c1">## Save figure</span>
+    <span class="n">figname</span> <span class="o">=</span> <span class="s2">&quot;fig_fcs.png&quot;</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figname</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Output&quot;</span><span class="p">,</span> <span class="n">figname</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;FC2:&quot;</span><span class="p">,</span> <span class="n">fcs</span><span class="o">.</span><span class="n">fc2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;FC3:&quot;</span><span class="p">,</span> <span class="n">fcs</span><span class="o">.</span><span class="n">fc3</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Input parameters&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--base_dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;base_dir&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./mp-22862&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;directory of auto-kappa output&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>    
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    
+</pre></div>
+</div>
+<figure class="align-center" id="id2">
+<a class="reference internal image-reference" href="../_images/fig_fcs.png"><img alt="../_images/fig_fcs.png" src="../_images/fig_fcs.png" style="height: 250px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 5.2.2 </span><span class="caption-text">Force constants of NaCl</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
 </section>
 </section>
 

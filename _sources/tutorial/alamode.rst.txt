@@ -37,18 +37,3 @@ Thermal conductivity
 
 .. literalinclude:: ./examples/mkkappa.py
 
-
-BORNINFO file for ALM
-======================
-
-from vasprun.xml
-------------------
-
-.. code-block:: python
-    
-    from auto_kappa.io.born import BORNINFO
-    file_vasp = 'vasprun.xml'
-    file_born = 'FC2.xml'
-    born = BORNINFO(file_vasp, file_born=file_born)
-    born.write(outfile='BORNINFO')
-
