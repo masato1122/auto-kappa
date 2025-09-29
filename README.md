@@ -7,7 +7,7 @@
   </a>
 </p>
 
-Version 1.1.0
+Version 1.0.0
 ---------------
 
 Auto-kappa is an automation framework for first-principles calculations of anharmonic phonon properties
