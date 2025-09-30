@@ -26,6 +26,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
     "sphinxarg.ext",
+    'sphinx_copybutton',
 ]
 autosummary_generate = True
 

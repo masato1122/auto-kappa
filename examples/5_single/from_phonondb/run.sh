@@ -4,7 +4,6 @@
 # can be calculated automatically. Then, other materials can be easily 
 # calculated if a few variables are modified in this script.
 #
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CONDA_PREFIX}/lib
 
 ########################################
 ##
@@ -28,5 +27,6 @@ akrun \
     --mpirun mpirun \
     --command_vasp vasp \
     --command_alm alm \
-    --command_anphon anphon 
+    --command_anphon anphon \
+    --volume_relaxation 1
 

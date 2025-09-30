@@ -2,85 +2,45 @@
 Useful Tips
 ==============
 
+Examples in this page assume that ``mp-22862`` (NaCl) has been computed using auto-kappa.
+Please also see ``auto-kappa/examples/6_parser/basic``.
+
 Make DFSET file for Alamode
 ===============================
 
-``auto_kappa.io.vasp.get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
-Many directories which contain a vasprun.xml file are supposed to be located under the given directory.
+.. literalinclude:: ./basic/make_dfset.py
 
-.. code-block:: shell
-    
-    $ ls .
-    1 2 3 4 ... prist
+.. literalinclude:: ./basic/DFSET.cube
+   :lines: 1-10
 
-    $ ls ./1
-    ... ... vasprun.xml ... ...
 
-.. code-block:: python
+Make BORNINFO file for ALAMODE
+===============================
 
-    from auto_kappa.io.vasp import get_dfset
-    
-    directory = '.'
-    offset_xml = directory + '/prist/vasprun.xml'
-    outfile = 'DFSET'
-    disps, force = get_dfset(directory, offset_xml=offset_xml, outfile=outfile)
-..
+.. literalinclude:: ./basic/make_borninfo.py
 
 
 Plot phonon dispersion and DOS
 ===============================
 
-Preparing...
+.. literalinclude:: ./basic/plot_bandos.py
 
-(Please see ``.../examples/8_plot`` to plot phonon dispersion and DOS)
-
-
-.. Plot phonon dispersion and DOS
-.. =================================
-
-.. ``plot_bandos`` helps to plot the phonon dispersion and DOS.
-.. Different files such as .bands, .dos, .band.pr are supposed to be in the same directory.
-
-.. .. code-block:: shell
+.. figure:: ./basic/fig_bandos.png
+    :height: 300px
+    :align: center
     
-..     $ ls
-..     ... Si.bands Si.dos Si.band.pr ...
-.. ..
+    Phonon dispersion with participation ratio and DOS of Silicon
 
-.. .. code-block:: python
+Plot force constants
+====================
 
-..     from auto_kappa.plot.bandos import plot_bandos
+.. literalinclude:: ./basic/plot_fcs.py
 
-..     plot_bandos(directory='.', prefix='Si',
-..                 figname='fig_bandos.png',
-..                 plot_pr=True)
-.. ..
-
-.. .. figure:: ../files/fig_bandos.png
-..     :height: 250px
-..     :align: center
+.. figure:: ./basic/fig_fcs.png
+    :height: 300px
+    :align: center
     
-..     Phonon dispersion with participation ratio and DOS of Silicon
-
-.. ..
-
-.. A more flexible way is as follows:
-
-.. .. code-block:: python
-
-..     import matplotlib.pyplot as plt
-..     from auto_kappa.plot.alamode.band import Band
-..     from auto_kappa.plot.bandos import plot_bands_with_symmetry_points
-
-..     fig, ax = plt.subplots(figsize=(5, 3))
-    
-..     file_band = 'Si.bands'
-..     band = Band(file_band)
-..     plot_bands_with_symmetry_points(ax, band)
-
-..     fig.savefig('fig_band.png', dpi=600, bbox_inches='tight')
-    
-.. ..
+    Force constants of NaCl
 
 
 .. Plot results of cross validation

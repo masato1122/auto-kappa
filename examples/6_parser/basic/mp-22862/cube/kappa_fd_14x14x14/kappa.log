@@ -1,0 +1,342 @@
+ +-----------------------------------------------------------------+
+ +                         Program ANPHON                          +
+ +                             Ver.  1.5.0                         +
+ +-----------------------------------------------------------------+
+
+ Job started at Thu Aug 28 23:14:45 2025
+
+ The number of MPI processes: 32
+
+
+ Input variables:
+ -----------------------------------------------------------------
+ General:
+  PREFIX = NaCl
+  MODE = RTA
+  FCSXML = ../force_fd/NaCl.xml
+
+  NKD = 2; KD =   Cl  Na
+  MASS = 
+  NSYM = 0; TOLERANCE = 1.88973e-05; PRINTSYM = 0
+
+  NONANALYTIC = 2
+  BORNINFO = BORNINFO; NA_SIGMA = 0.1
+
+  TMIN = 50; TMAX = 1000; DT = 50
+  EMIN = -12.8247; EMAX = 269.318; DELTA_E = 0.940477
+
+  ISMEAR = -1; EPSILON = 10
+
+  CLASSICAL = 0
+  BCONNECT = 0
+
+  RESTART = 0
+  TRISYM = 1
+
+
+ Kpoint:
+  KPMODE (1st entry for &kpoint) = 2
+
+
+ Analysis:
+  ISOTOPE = 2
+  ISOFACT = 
+  KAPPA_SPEC = 1
+
+
+ -----------------------------------------------------------------
+
+                        MODE = RTA                           
+                                                             
+      Calculation of phonon line width (lifetime) and        
+      lattice thermal conductivity within the RTA            
+      (relaxation time approximation).                       
+      Harmonic and anharmonic force constants will be used.  
+
+ -----------------------------------------------------------------
+
+ Crystal structure
+ =================
+
+ Lattice Vectors:
+
+ * Supercell (from ../force_fd/NaCl.xml )
+
+    2.117249e+01   0.000000e+00   0.000000e+00 : a1
+    0.000000e+00   2.117249e+01   0.000000e+00 : a2
+    0.000000e+00   0.000000e+00   2.117249e+01 : a3
+
+    2.967617e-01   0.000000e+00   0.000000e+00 : b1
+    0.000000e+00   2.967617e-01   0.000000e+00 : b2
+    0.000000e+00   0.000000e+00   2.967617e-01 : b3
+
+ * Primitive cell 
+
+    0.000000e+00   5.293124e+00   5.293124e+00 : a1
+    5.293124e+00   0.000000e+00   5.293124e+00 : a2
+    5.293124e+00   5.293124e+00   0.000000e+00 : a3
+
+   -5.935234e-01   5.935234e-01   5.935234e-01 : b1
+    5.935234e-01  -5.935234e-01   5.935234e-01 : b2
+    5.935234e-01   5.935234e-01  -5.935234e-01 : b3
+
+
+  Volume of the primitive cell : 2.965966e+02 (a.u.)^3
+
+  Number of atoms in the supercell     : 64
+  Number of atoms in the primitive cell: 2
+
+  Atomic positions in the primitive cell (fractional):
+   1:   0.000000e+00   0.000000e+00   0.000000e+00  Cl
+   2:   5.000000e-01   5.000000e-01   5.000000e-01  Na
+
+  Mass of atomic species (u):
+  Cl:   35.453000
+  Na:   22.989769
+
+
+ Symmetry
+ ========
+
+  NSYM = 0 is given: Trying to find symmetry operations.
+
+  Number of symmetry operations : 48
+ k points
+ ========
+
+  KPMODE = 2: Uniform grid
+  Gamma-centered uniform grid with the following mesh density: 
+  nk1:  14
+  nk2:  14
+  nk3:  14
+
+  Number of k points : 2744
+  Number of irreducible k points : 104
+
+  List of irreducible k points (reciprocal coordinate, weight) : 
+      1:   0.00000e+00   0.00000e+00   0.00000e+00   0.000364
+      2:   0.00000e+00   0.00000e+00   7.14286e-02   0.002915
+      3:   0.00000e+00   0.00000e+00   1.42857e-01   0.002915
+      4:   0.00000e+00   0.00000e+00   2.14286e-01   0.002915
+      5:   0.00000e+00   0.00000e+00   2.85714e-01   0.002915
+      6:   0.00000e+00   0.00000e+00   3.57143e-01   0.002915
+      7:   0.00000e+00   0.00000e+00   4.28571e-01   0.002915
+      8:   0.00000e+00   0.00000e+00  -5.00000e-01   0.001458
+      9:   0.00000e+00   7.14286e-02   7.14286e-02   0.002187
+     10:   0.00000e+00   7.14286e-02   1.42857e-01   0.008746
+     11:   0.00000e+00   7.14286e-02   2.14286e-01   0.008746
+     12:   0.00000e+00   7.14286e-02   2.85714e-01   0.008746
+     13:   0.00000e+00   7.14286e-02   3.57143e-01   0.008746
+     14:   0.00000e+00   7.14286e-02   4.28571e-01   0.008746
+     15:   0.00000e+00   7.14286e-02  -5.00000e-01   0.008746
+     16:   0.00000e+00   7.14286e-02  -4.28571e-01   0.008746
+     17:   0.00000e+00   7.14286e-02  -3.57143e-01   0.008746
+     18:   0.00000e+00   7.14286e-02  -2.85714e-01   0.008746
+     19:   0.00000e+00   7.14286e-02  -2.14286e-01   0.008746
+     20:   0.00000e+00   7.14286e-02  -1.42857e-01   0.008746
+     21:   0.00000e+00   7.14286e-02  -7.14286e-02   0.004373
+     22:   0.00000e+00   1.42857e-01   1.42857e-01   0.002187
+     23:   0.00000e+00   1.42857e-01   2.14286e-01   0.008746
+     24:   0.00000e+00   1.42857e-01   2.85714e-01   0.008746
+     25:   0.00000e+00   1.42857e-01   3.57143e-01   0.008746
+     26:   0.00000e+00   1.42857e-01   4.28571e-01   0.008746
+     27:   0.00000e+00   1.42857e-01  -5.00000e-01   0.008746
+     28:   0.00000e+00   1.42857e-01  -4.28571e-01   0.008746
+     29:   0.00000e+00   1.42857e-01  -3.57143e-01   0.008746
+     30:   0.00000e+00   1.42857e-01  -2.85714e-01   0.008746
+     31:   0.00000e+00   1.42857e-01  -2.14286e-01   0.008746
+     32:   0.00000e+00   1.42857e-01  -1.42857e-01   0.004373
+     33:   0.00000e+00   2.14286e-01   2.14286e-01   0.002187
+     34:   0.00000e+00   2.14286e-01   2.85714e-01   0.008746
+     35:   0.00000e+00   2.14286e-01   3.57143e-01   0.008746
+     36:   0.00000e+00   2.14286e-01   4.28571e-01   0.008746
+     37:   0.00000e+00   2.14286e-01  -5.00000e-01   0.008746
+     38:   0.00000e+00   2.14286e-01  -4.28571e-01   0.008746
+     39:   0.00000e+00   2.14286e-01  -3.57143e-01   0.008746
+     40:   0.00000e+00   2.14286e-01  -2.85714e-01   0.008746
+     41:   0.00000e+00   2.14286e-01  -2.14286e-01   0.004373
+     42:   0.00000e+00   2.85714e-01   2.85714e-01   0.002187
+     43:   0.00000e+00   2.85714e-01   3.57143e-01   0.008746
+     44:   0.00000e+00   2.85714e-01   4.28571e-01   0.008746
+     45:   0.00000e+00   2.85714e-01  -5.00000e-01   0.008746
+     46:   0.00000e+00   2.85714e-01  -4.28571e-01   0.008746
+     47:   0.00000e+00   2.85714e-01  -3.57143e-01   0.008746
+     48:   0.00000e+00   2.85714e-01  -2.85714e-01   0.004373
+     49:   0.00000e+00   3.57143e-01   3.57143e-01   0.002187
+     50:   0.00000e+00   3.57143e-01   4.28571e-01   0.008746
+     51:   0.00000e+00   3.57143e-01  -5.00000e-01   0.008746
+     52:   0.00000e+00   3.57143e-01  -4.28571e-01   0.008746
+     53:   0.00000e+00   3.57143e-01  -3.57143e-01   0.004373
+     54:   0.00000e+00   4.28571e-01   4.28571e-01   0.002187
+     55:   0.00000e+00   4.28571e-01  -5.00000e-01   0.008746
+     56:   0.00000e+00   4.28571e-01  -4.28571e-01   0.004373
+     57:   0.00000e+00  -5.00000e-01  -5.00000e-01   0.001093
+     58:   7.14286e-02   1.42857e-01   2.14286e-01   0.008746
+     59:   7.14286e-02   1.42857e-01   2.85714e-01   0.017493
+     60:   7.14286e-02   1.42857e-01   3.57143e-01   0.017493
+     61:   7.14286e-02   1.42857e-01   4.28571e-01   0.017493
+     62:   7.14286e-02   1.42857e-01  -5.00000e-01   0.017493
+     63:   7.14286e-02   1.42857e-01  -4.28571e-01   0.008746
+     64:   7.14286e-02   2.14286e-01   2.85714e-01   0.008746
+     65:   7.14286e-02   2.14286e-01   3.57143e-01   0.017493
+     66:   7.14286e-02   2.14286e-01   4.28571e-01   0.017493
+     67:   7.14286e-02   2.14286e-01  -5.00000e-01   0.017493
+     68:   7.14286e-02   2.14286e-01  -4.28571e-01   0.017493
+     69:   7.14286e-02   2.14286e-01  -3.57143e-01   0.017493
+     70:   7.14286e-02   2.14286e-01  -2.85714e-01   0.017493
+     71:   7.14286e-02   2.14286e-01  -2.14286e-01   0.017493
+     72:   7.14286e-02   2.14286e-01  -1.42857e-01   0.008746
+     73:   7.14286e-02   2.85714e-01   3.57143e-01   0.008746
+     74:   7.14286e-02   2.85714e-01   4.28571e-01   0.017493
+     75:   7.14286e-02   2.85714e-01  -5.00000e-01   0.017493
+     76:   7.14286e-02   2.85714e-01  -4.28571e-01   0.017493
+     77:   7.14286e-02   2.85714e-01  -3.57143e-01   0.017493
+     78:   7.14286e-02   2.85714e-01  -2.85714e-01   0.017493
+     79:   7.14286e-02   2.85714e-01  -2.14286e-01   0.008746
+     80:   7.14286e-02   3.57143e-01   4.28571e-01   0.008746
+     81:   7.14286e-02   3.57143e-01  -5.00000e-01   0.017493
+     82:   7.14286e-02   3.57143e-01  -4.28571e-01   0.017493
+     83:   7.14286e-02   3.57143e-01  -3.57143e-01   0.017493
+     84:   7.14286e-02   3.57143e-01  -2.85714e-01   0.008746
+     85:   7.14286e-02   4.28571e-01  -5.00000e-01   0.008746
+     86:   7.14286e-02   4.28571e-01  -4.28571e-01   0.017493
+     87:   7.14286e-02   4.28571e-01  -3.57143e-01   0.008746
+     88:   7.14286e-02  -5.00000e-01  -4.28571e-01   0.004373
+     89:   1.42857e-01   2.85714e-01   4.28571e-01   0.008746
+     90:   1.42857e-01   2.85714e-01  -5.00000e-01   0.017493
+     91:   1.42857e-01   2.85714e-01  -4.28571e-01   0.017493
+     92:   1.42857e-01   2.85714e-01  -3.57143e-01   0.008746
+     93:   1.42857e-01   3.57143e-01  -5.00000e-01   0.008746
+     94:   1.42857e-01   3.57143e-01  -4.28571e-01   0.017493
+     95:   1.42857e-01   3.57143e-01  -3.57143e-01   0.017493
+     96:   1.42857e-01   3.57143e-01  -2.85714e-01   0.017493
+     97:   1.42857e-01   3.57143e-01  -2.14286e-01   0.008746
+     98:   1.42857e-01   4.28571e-01  -4.28571e-01   0.008746
+     99:   1.42857e-01   4.28571e-01  -3.57143e-01   0.017493
+    100:   1.42857e-01   4.28571e-01  -2.85714e-01   0.008746
+    101:   1.42857e-01  -5.00000e-01  -3.57143e-01   0.004373
+    102:   2.14286e-01   4.28571e-01  -3.57143e-01   0.008746
+    103:   2.14286e-01   4.28571e-01  -2.85714e-01   0.008746
+    104:   2.14286e-01  -5.00000e-01  -2.85714e-01   0.004373
+
+ Force constant
+ ==============
+
+  Reading force constants from the XML file ... done !
+  Number of non-zero IFCs for 2 order: 990
+  Number of non-zero IFCs for 3 order: 14940
+
+  Maximum deviation from the translational invariance: 
+   Order 2 : 6.074073e-17
+   Order 3 : 1.754036e-17
+
+
+ Dynamical matrix
+ ================
+
+  NONANALYTIC = 2 : Non-analytic part of the dynamical matrix will be included 
+                    by the mixed-space approach.
+
+  Dielectric constants and Born effective charges are read from BORNINFO.
+
+  Dielectric constant tensor in Cartesian coordinate : 
+   2.601446e+00  -0.000000e+00   0.000000e+00
+  -0.000000e+00   2.601446e+00  -0.000000e+00
+   0.000000e+00   0.000000e+00   2.601446e+00
+
+  Born effective charge tensor in Cartesian coordinate
+  Atom    1( Cl) :
+       1.103388      -0.000000       0.000000
+      -0.000000       1.103388      -0.000000
+       0.000000       0.000000       1.103388
+  Atom    2( Na) :
+      -1.103388       0.000000      -0.000000
+       0.000000      -1.103388       0.000000
+      -0.000000      -0.000000      -1.103388
+
+ -----------------------------------------------------------------
+
+
+ ISMEAR = -1: Tetrahedron method will be used.
+
+ Now, move on to phonon calculations.
+
+ Diagonalizing dynamical matrices for all k points ... done!
+ ISOTOPE >= 1: Isotope scattering effects will be considered
+               with the following scattering factors.
+   Cl:     5.827013e-04
+   Na:     0.000000e+00
+
+ Calculating self-energies from isotope scatterings ... done!
+ Calculating group velocity matrix of phonons on uniform grid ... done!
+
+ Start calculating anharmonic phonon self-energies ... 
+ Total Number of phonon modes to be calculated : 624
+ All modes are distributed to MPI threads as the following :
+ RANK:     1 MODES:    20
+ RANK:     2 MODES:    20
+ RANK:     3 MODES:    20
+ RANK:     4 MODES:    20
+ RANK:     5 MODES:    20
+ RANK:     6 MODES:    20
+ RANK:     7 MODES:    20
+ RANK:     8 MODES:    20
+ RANK:     9 MODES:    20
+ RANK:    10 MODES:    20
+ RANK:    11 MODES:    20
+ RANK:    12 MODES:    20
+ RANK:    13 MODES:    20
+ RANK:    14 MODES:    20
+ RANK:    15 MODES:    20
+ RANK:    16 MODES:    20
+ RANK:    17 MODES:    19
+ RANK:    18 MODES:    19
+ RANK:    19 MODES:    19
+ RANK:    20 MODES:    19
+ RANK:    21 MODES:    19
+ RANK:    22 MODES:    19
+ RANK:    23 MODES:    19
+ RANK:    24 MODES:    19
+ RANK:    25 MODES:    19
+ RANK:    26 MODES:    19
+ RANK:    27 MODES:    19
+ RANK:    28 MODES:    19
+ RANK:    29 MODES:    19
+ RANK:    30 MODES:    19
+ RANK:    31 MODES:    19
+ RANK:    32 MODES:    19
+
+ MODE     1 done.
+ MODE     2 done.
+ MODE     3 done.
+ MODE     4 done.
+ MODE     5 done.
+ MODE     6 done.
+ MODE     7 done.
+ MODE     8 done.
+ MODE     9 done.
+ MODE    10 done.
+ MODE    11 done.
+ MODE    12 done.
+ MODE    13 done.
+ MODE    14 done.
+ MODE    15 done.
+ MODE    16 done.
+ MODE    17 done.
+ MODE    18 done.
+ MODE    19 done.
+ MODE    20 done.
+
+ KAPPA_SPEC = 1 : Calculating thermal conductivity spectra ...  done!
+
+ -----------------------------------------------------------------
+
+ Lattice thermal conductivity is stored in the file NaCl.kl
+ Thermal conductivity spectra is stored in the file NaCl.kl_spec
+ Coherent part is stored in the file NaCl.kl_coherent
+
+ ISOTOPE = 2: Phonon selfenergy due to phonon-isotope 
+              scatterings is stored in the file NaCl.self_isotope
+
+ Job finished at Thu Aug 28 23:14:49 2025
+

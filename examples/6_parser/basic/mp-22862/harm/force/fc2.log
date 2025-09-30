@@ -1,0 +1,317 @@
+ +-----------------------------------------------------------------+
+ +                         Program ALM                             +
+ +                             Ver.  1.5.0                         +
+ +-----------------------------------------------------------------+
+
+ Number of OpenMP threads = 2
+
+ Job started at Thu Sep 18 19:30:14 2025
+
+
+ Input variables:
+ -------------------------------------------------------------------
+ General:
+  PREFIX = NaCl
+  MODE = optimize
+  NAT = 64; NKD = 2
+  PRINTSYM = 0; TOLERANCE = 1.88973e-05
+  KD =   Na  Cl
+  FCSYM_BASIS = Lattice
+  PERIODIC =   1  1  1
+  MAGMOM = 
+  FCS_ALAMODE = 1;  NMAXSAVE = 5
+  FC3_SHENGBTE = 0
+  FC4_SHENGBTE = 0
+  FC2_QEFC = 0
+  HESSIAN = 0
+  FC_ZERO_THR = 1e-12
+
+ Interaction:
+  NORDER = 1
+  NBODY =   2
+
+ Optimize:
+  LMODEL = least-squares
+  DFSET = ../../result/DFSET.harm
+  NDATA = 2; NSTART = 1; NEND = 2   SKIP = 
+
+  ICONST = 11
+  ROTAXIS = 
+  FC2XML = 
+  FC3XML = 
+
+  SPARSE = 0
+  SPARSESOLVER = SimplicialLDLT
+  CONV_TOL = 1e-08
+  MAXITER = 10000
+  PERIODIC_IMAGE_CONV = 1
+
+ -------------------------------------------------------------------
+
+ SYSTEM
+ ======
+
+  Lattice Vector
+    2.117250e+01   0.000000e+00   0.000000e+00 : a1
+    0.000000e+00   2.117250e+01   0.000000e+00 : a2
+    0.000000e+00   0.000000e+00   2.117250e+01 : a3
+
+  Cell volume = 9.491092e+03
+
+  Reciprocal Lattice Vector
+    2.967617e-01   0.000000e+00   0.000000e+00 : b1
+    0.000000e+00   2.967617e-01   0.000000e+00 : b2
+    0.000000e+00   0.000000e+00   2.967617e-01 : b3
+
+  Atomic species:
+     1   Na
+     2   Cl
+
+  Atomic positions in fractional basis and atomic species
+     1   0.000000e+00   0.000000e+00   0.000000e+00    1
+     2   2.500000e-01   2.500000e-01   0.000000e+00    1
+     3   2.500000e-01   0.000000e+00   2.500000e-01    1
+     4   0.000000e+00   2.500000e-01   2.500000e-01    1
+     5   0.000000e+00   0.000000e+00   5.000000e-01    1
+     6   2.500000e-01   2.500000e-01   5.000000e-01    1
+     7   2.500000e-01   0.000000e+00   7.500000e-01    1
+     8   0.000000e+00   2.500000e-01   7.500000e-01    1
+     9   0.000000e+00   5.000000e-01   0.000000e+00    1
+    10   2.500000e-01   7.500000e-01   0.000000e+00    1
+    11   2.500000e-01   5.000000e-01   2.500000e-01    1
+    12   0.000000e+00   7.500000e-01   2.500000e-01    1
+    13   0.000000e+00   5.000000e-01   5.000000e-01    1
+    14   2.500000e-01   7.500000e-01   5.000000e-01    1
+    15   2.500000e-01   5.000000e-01   7.500000e-01    1
+    16   0.000000e+00   7.500000e-01   7.500000e-01    1
+    17   5.000000e-01   0.000000e+00   0.000000e+00    1
+    18   7.500000e-01   2.500000e-01   0.000000e+00    1
+    19   7.500000e-01   0.000000e+00   2.500000e-01    1
+    20   5.000000e-01   2.500000e-01   2.500000e-01    1
+    21   5.000000e-01   0.000000e+00   5.000000e-01    1
+    22   7.500000e-01   2.500000e-01   5.000000e-01    1
+    23   7.500000e-01   0.000000e+00   7.500000e-01    1
+    24   5.000000e-01   2.500000e-01   7.500000e-01    1
+    25   5.000000e-01   5.000000e-01   0.000000e+00    1
+    26   7.500000e-01   7.500000e-01   0.000000e+00    1
+    27   7.500000e-01   5.000000e-01   2.500000e-01    1
+    28   5.000000e-01   7.500000e-01   2.500000e-01    1
+    29   5.000000e-01   5.000000e-01   5.000000e-01    1
+    30   7.500000e-01   7.500000e-01   5.000000e-01    1
+    31   7.500000e-01   5.000000e-01   7.500000e-01    1
+    32   5.000000e-01   7.500000e-01   7.500000e-01    1
+    33   2.500000e-01   2.500000e-01   2.500000e-01    2
+    34   0.000000e+00   0.000000e+00   2.500000e-01    2
+    35   0.000000e+00   2.500000e-01   0.000000e+00    2
+    36   2.500000e-01   0.000000e+00   0.000000e+00    2
+    37   2.500000e-01   2.500000e-01   7.500000e-01    2
+    38   0.000000e+00   0.000000e+00   7.500000e-01    2
+    39   0.000000e+00   2.500000e-01   5.000000e-01    2
+    40   2.500000e-01   0.000000e+00   5.000000e-01    2
+    41   2.500000e-01   7.500000e-01   2.500000e-01    2
+    42   0.000000e+00   5.000000e-01   2.500000e-01    2
+    43   0.000000e+00   7.500000e-01   0.000000e+00    2
+    44   2.500000e-01   5.000000e-01   0.000000e+00    2
+    45   2.500000e-01   7.500000e-01   7.500000e-01    2
+    46   0.000000e+00   5.000000e-01   7.500000e-01    2
+    47   0.000000e+00   7.500000e-01   5.000000e-01    2
+    48   2.500000e-01   5.000000e-01   5.000000e-01    2
+    49   7.500000e-01   2.500000e-01   2.500000e-01    2
+    50   5.000000e-01   0.000000e+00   2.500000e-01    2
+    51   5.000000e-01   2.500000e-01   0.000000e+00    2
+    52   7.500000e-01   0.000000e+00   0.000000e+00    2
+    53   7.500000e-01   2.500000e-01   7.500000e-01    2
+    54   5.000000e-01   0.000000e+00   7.500000e-01    2
+    55   5.000000e-01   2.500000e-01   5.000000e-01    2
+    56   7.500000e-01   0.000000e+00   5.000000e-01    2
+    57   7.500000e-01   7.500000e-01   2.500000e-01    2
+    58   5.000000e-01   5.000000e-01   2.500000e-01    2
+    59   5.000000e-01   7.500000e-01   0.000000e+00    2
+    60   7.500000e-01   5.000000e-01   0.000000e+00    2
+    61   7.500000e-01   7.500000e-01   7.500000e-01    2
+    62   5.000000e-01   5.000000e-01   7.500000e-01    2
+    63   5.000000e-01   7.500000e-01   5.000000e-01    2
+    64   7.500000e-01   5.000000e-01   5.000000e-01    2
+
+
+  Time Elapsed: 0.004451 sec.
+
+ -------------------------------------------------------------------
+
+ SYMMETRY
+ ========
+
+  Space group: Fm-3m (225)
+  Number of symmetry operations = 1536
+
+  Given system is not a primitive cell.
+  There are    32 translation operations.
+  Primitive cell contains 2 atoms
+
+  **Cell-Atom Correspondens Below**
+  CELL |  ATOM
+     1 |     1   33
+     2 |     5   37
+     3 |     4   48
+     4 |     8   44
+     5 |     9   41
+     6 |    13   45
+     7 |    12   40
+     8 |    16   36
+     9 |     3   55
+    10 |     7   51
+    11 |     2   58
+    12 |     6   62
+    13 |    11   63
+    14 |    15   59
+    15 |    10   50
+    16 |    14   54
+    17 |    17   49
+    18 |    21   53
+    19 |    20   64
+    20 |    24   60
+    21 |    25   57
+    22 |    29   61
+    23 |    28   56
+    24 |    32   52
+    25 |    19   39
+    26 |    23   35
+    27 |    18   42
+    28 |    22   46
+    29 |    27   47
+    30 |    31   43
+    31 |    26   34
+    32 |    30   38
+
+  Time Elapsed: 0.059425 sec.
+
+ -------------------------------------------------------------------
+
+ INTERACTION
+ ===========
+
+check permutation symmetry of the clusters.
+(if no message is printed out, the permutation symmetry is satisfied.)
+done.
+
+  +++ Cutoff Radii Matrix (NKD x NKD matrix) +++
+   HARMONIC
+     None     None
+     None     None
+
+
+  List of neighboring atoms below.
+  Format [N th-nearest shell, distance (Number of atoms on the shell)]
+
+    1 ( Na):   1   5.29312 (  6) -  34( Cl)  35( Cl)  36( Cl)  38( Cl)
+                                    43( Cl)  52( Cl)
+               2   7.48561 ( 12) -   2( Na)   3( Na)   4( Na)   7( Na)
+                                     8( Na)  10( Na)  12( Na)  16( Na)
+                                    18( Na)  19( Na)  23( Na)  26( Na)
+               3   9.16796 (  8) -  33( Cl)  37( Cl)  41( Cl)  45( Cl)
+                                    49( Cl)  53( Cl)  57( Cl)  61( Cl)
+               4   10.5862 (  3) -   5( Na)   9( Na)  17( Na)
+               5   11.8358 ( 12) -  39( Cl)  40( Cl)  42( Cl)  44( Cl)
+                                    46( Cl)  47( Cl)  50( Cl)  51( Cl)
+                                    54( Cl)  56( Cl)  59( Cl)  60( Cl)
+               6   12.9655 ( 12) -   6( Na)  11( Na)  14( Na)  15( Na)
+                                    20( Na)  22( Na)  24( Na)  27( Na)
+                                    28( Na)  30( Na)  31( Na)  32( Na)
+               7   14.9712 (  3) -  13( Na)  21( Na)  25( Na)
+               8   15.8794 (  6) -  48( Cl)  55( Cl)  58( Cl)  62( Cl)
+                                    63( Cl)  64( Cl)
+               9   18.3359 (  1) -  29( Na)
+
+   33 ( Cl):   1   5.29312 (  6) -   2( Na)   3( Na)   4( Na)   6( Na)
+                                    11( Na)  20( Na)
+               2   7.48561 ( 12) -  34( Cl)  35( Cl)  36( Cl)  39( Cl)
+                                    40( Cl)  42( Cl)  44( Cl)  48( Cl)
+                                    50( Cl)  51( Cl)  55( Cl)  58( Cl)
+               3   9.16796 (  8) -   1( Na)   5( Na)   9( Na)  13( Na)
+                                    17( Na)  21( Na)  25( Na)  29( Na)
+               4   10.5862 (  3) -  37( Cl)  41( Cl)  49( Cl)
+               5   11.8358 ( 12) -   7( Na)   8( Na)  10( Na)  12( Na)
+                                    14( Na)  15( Na)  18( Na)  19( Na)
+                                    22( Na)  24( Na)  27( Na)  28( Na)
+               6   12.9655 ( 12) -  38( Cl)  43( Cl)  46( Cl)  47( Cl)
+                                    52( Cl)  54( Cl)  56( Cl)  59( Cl)
+                                    60( Cl)  62( Cl)  63( Cl)  64( Cl)
+               7   14.9712 (  3) -  45( Cl)  53( Cl)  57( Cl)
+               8   15.8794 (  6) -  16( Na)  23( Na)  26( Na)  30( Na)
+                                    31( Na)  32( Na)
+               9   18.3359 (  1) -  61( Cl)
+
+  Time Elapsed: 0.06467 sec.
+
+ -------------------------------------------------------------------
+
+ FORCE CONSTANT
+ ==============
+
+  Symmetry is handled in crystallographic (fractional) coordinates.
+
+  Number of  HARMONIC FCs : 33
+
+  Time Elapsed: 0.067662 sec.
+
+ -------------------------------------------------------------------
+
+ CONSTRAINT
+ ==========
+
+  ICONST = 1: Constraints for translational invariance
+              will be considered.
+
+  Generating constraints for translational invariance ...
+   HARMONIC ... done.
+  Finished !
+
+  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:
+   HARMONIC      2    0    0
+
+  Constraints of T-inv and R-inv (self) are merged.
+  If there are redundant constraints, they are removed in this process.
+
+  Number of inequivalent constraints (self, cross) : 
+   HARMONIC      2    0
+
+  ICONST >= 10 : Constraints will be considered algebraically.
+
+  Number of free HARMONIC FCs : 31
+
+  Time Elapsed: 0.067911 sec.
+
+ -------------------------------------------------------------------
+
+ OPTIMIZATION
+ ============
+
+  LMODEL = least-squares
+
+  Training data file (DFSET) : ../../result/DFSET.harm
+
+  NSTART = 1; NEND = 2
+  2 entries will be used for training.
+
+  Total Number of Parameters : 33
+  Total Number of Free Parameters : 31
+
+  Entering fitting routine: SVD with constraints considered algebraically.
+  SVD has started ... finished !
+
+  RANK of the matrix = 31
+
+  Residual sum of squares for the solution: 1.7692e-05
+  Fitting error (%) : 1.23956
+
+  Time Elapsed: 0.07207 sec.
+
+ -------------------------------------------------------------------
+
+ The following files are created:
+
+ Force constants in a human-readable format : NaCl.fcs
+ Input data for the phonon code ANPHON      : NaCl.xml
+
+ Job finished at Thu Sep 18 19:30:14 2025
+

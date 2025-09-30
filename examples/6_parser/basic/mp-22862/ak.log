@@ -1,0 +1,374 @@
+
+              ___  __                __   __       
+     /\  |  |  |  /  \ __ |__/  /\  |__) |__)  /\  
+    /~~\ \__/  |  \__/    |  \ /~~\ |    |    /~~\ 
+    ver. 1.0.0
+
+ Start at 09/30/2025 07:51:55
+
+
+ Input parameters:
+ =================
+ directory                 : /home/apdb/phonondb-20180417/mp-22862
+ outdir                    : mp-22862
+ nprocs                    : 2
+ anphon_para               : mpi
+ mpirun                    : mpirun
+ command_vasp              : vasp
+ command_vasp_gam          : vasp_gam
+ command_alm               : alm
+ command_anphon            : anphon
+ command_anphon_ver2       : anphon.2.0
+ nonanalytic               : 2
+ cutoff_cubic              : 4.3
+ min_nearest               : 3
+ nmax_suggest              : 100
+ frac_nrandom              : 1.0
+ frac_nrandom_higher       : 0.34
+ mag_harm                  : 0.01
+ mag_cubic                 : 0.03
+ negative_freq             : -0.001
+ volume_relaxation         : 0
+ k_length                  : 20
+ max_natoms                : 150
+ analyze_with_largersc     : 0
+ delta_max_natoms          : 50
+ max_loop_for_largesc      : 1
+ nsw_params                : 200:20:20
+ calculate_forces          : 1
+ harmonic_only             : 0
+ command_dfc2              : dfc2
+ scph                      : 0
+ four                      : 0
+ frac_kdensity_4ph         : 0.13
+ random_disp_temperature   : 500.0
+ restart                   : 1
+ verbose                   : 1
+ ignore_log                : 0
+ max_relax_error           : 500
+ mater_dim                 : 3
+ pes                       : 0
+
+ Cell type
+ ---------
+  relax :  primitive
+    nac :  primitive
+   harm :  supercell
+   cube :  supercell
+
+ Transformation matrix
+ ---------------------
+  primitive : 0.000 0.500 0.500 0.500 0.000 0.500 0.500 0.500 0.000 
+  supercell : 2 0 0 0 2 0 0 0 2 
+   unitcell : 1 0 0 0 1 0 0 0 1 
+
+ k-mesh
+ ------
+ relax  : 4 4 4
+ nac    : 4 4 4
+ harm   : 2 2 2
+ cube   : 2 2 2
+
+ Space group : Fm-3m (225)
+
+ Output ./mp-22862/result/parameters.yaml
+
+
+ Structure optimization
+ ======================
+
+ Cell type : primitive
+
+ Output ./mp-22862/relax/structures/POSCAR.unit
+ Output ./mp-22862/relax/structures/POSCAR.prim
+ Output ./mp-22862/relax/structures/POSCAR.super
+
+
+ VASP calculation (nac)
+ ======================
+
+ The calculation has already been done.
+
+ Run alm for suggest:
+ --------------------
+
+ Working directory : ./mp-22862/harm/suggest
+
+ Force calculation (order: 1)
+ ============================
+
+ Number of the suggested structures by ALM : 2
+
+ Number of free FCs :
+ - harmonic   :     33 
+
+ Displacement mode : fd
+
+
+ Generate displacement patterns with an Alamode tool
+ Displacement mode : fd
+ Displacement magnitude : 0.01 Ang
+
+ Check previous structures (Previous: 3, New: 3)...
+ Received signum 15, terminating the subprocess group...
+ Received signum 15, terminating the subprocess group...
+
+ Get number of same structures...
+
+ Number of structures (including the pristine structure):
+ - already calculated  : 3
+ - currently suggested : 3
+ - same                : 3
+
+ ( 1 / 3 ) ./mp-22862/harm/force/prist : skip | 1.4 mins
+ ( 2 / 3 ) ./mp-22862/harm/force/1 : skip | 2.2 mins
+ ( 3 / 3 ) ./mp-22862/harm/force/2 : skip | 2.1 mins
+
+ Output ./mp-22862/result/DFSET.harm
+
+
+ Run alm for fc2:
+ ----------------
+
+ Working directory : ./mp-22862/harm/force
+
+ Figure ./mp-22862/harm/force/fig_fc2.png already exists.
+ fc2 has already been calculated.
+
+ Fitting error: 1.23956 %
+
+ kpath is set automatically.
+
+ Run anphon for band:
+ --------------------
+
+ Working directory : ./mp-22862/harm/bandos
+ band has already been calculated.
+
+ Run anphon for dos:
+ -------------------
+
+ Working directory : ./mp-22862/harm/bandos
+ dos has already been calculated.
+
+ Plot band structure and DOS: ./mp-22862/harm/bandos/fig_bandos_pr.png
+ Plot thermodynamic properties: ./mp-22862/harm/bandos/fig_thermo.png
+
+ Run anphon for evec_commensurate:
+ ---------------------------------
+
+ Working directory : ./mp-22862/harm/evec
+ evec_commensurate has already been calculated.
+
+ * Modify cutoff3 from 4.300 Å to 4.852 Å.
+
+ Run alm for suggest:
+ --------------------
+
+ Working directory : ./mp-22862/cube/suggest
+
+ Force calculation (order: 2)
+ ============================
+
+ Number of the suggested structures by ALM : 43
+
+ Number of free FCs :
+ - harmonic   :     33 
+ - cubic      :     80 
+
+ Displacement mode : fd
+
+
+ Generate displacement patterns with an Alamode tool
+ Displacement mode : fd
+ Displacement magnitude : 0.03 Ang
+
+ Check previous structures (Previous: 44, New: 44)...
+ Received signum 15, terminating the subprocess group...
+
+ Get number of same structures...
+
+ Number of structures (including the pristine structure):
+ - already calculated  : 44
+ - currently suggested : 44
+ - same                : 44
+
+ ( 1 / 44 ) ./mp-22862/cube/force_fd/prist : skip | 1.0 mins
+ ( 2 / 44 ) ./mp-22862/cube/force_fd/1 : skip | 2.7 mins
+ ( 3 / 44 ) ./mp-22862/cube/force_fd/2 : skip | 3.0 mins
+ ( 4 / 44 ) ./mp-22862/cube/force_fd/3 : skip | 3.7 mins
+ ( 5 / 44 ) ./mp-22862/cube/force_fd/4 : skip | 3.8 mins
+ ( 6 / 44 ) ./mp-22862/cube/force_fd/5 : skip | 3.9 mins
+ ( 7 / 44 ) ./mp-22862/cube/force_fd/6 : skip | 3.5 mins
+ ( 8 / 44 ) ./mp-22862/cube/force_fd/7 : skip | 3.2 mins
+ ( 9 / 44 ) ./mp-22862/cube/force_fd/8 : skip | 3.1 mins
+ ( 10 / 44 ) ./mp-22862/cube/force_fd/9 : skip | 3.7 mins
+ ( 11 / 44 ) ./mp-22862/cube/force_fd/10 : skip | 4.3 mins
+ ( 12 / 44 ) ./mp-22862/cube/force_fd/11 : skip | 3.9 mins
+ ( 13 / 44 ) ./mp-22862/cube/force_fd/12 : skip | 2.9 mins
+ ( 14 / 44 ) ./mp-22862/cube/force_fd/13 : skip | 3.0 mins
+ ( 15 / 44 ) ./mp-22862/cube/force_fd/14 : skip | 3.1 mins
+ ( 16 / 44 ) ./mp-22862/cube/force_fd/15 : skip | 2.7 mins
+ ( 17 / 44 ) ./mp-22862/cube/force_fd/16 : skip | 3.1 mins
+ ( 18 / 44 ) ./mp-22862/cube/force_fd/17 : skip | 3.3 mins
+ ( 19 / 44 ) ./mp-22862/cube/force_fd/18 : skip | 4.4 mins
+ ( 20 / 44 ) ./mp-22862/cube/force_fd/19 : skip | 4.2 mins
+ ( 21 / 44 ) ./mp-22862/cube/force_fd/20 : skip | 4.3 mins
+ ( 22 / 44 ) ./mp-22862/cube/force_fd/21 : skip | 4.2 mins
+ ( 23 / 44 ) ./mp-22862/cube/force_fd/22 : skip | 3.5 mins
+ ( 24 / 44 ) ./mp-22862/cube/force_fd/23 : skip | 4.2 mins
+ ( 25 / 44 ) ./mp-22862/cube/force_fd/24 : skip | 3.7 mins
+ ( 26 / 44 ) ./mp-22862/cube/force_fd/25 : skip | 3.6 mins
+ ( 27 / 44 ) ./mp-22862/cube/force_fd/26 : skip | 4.4 mins
+ ( 28 / 44 ) ./mp-22862/cube/force_fd/27 : skip | 3.3 mins
+ ( 29 / 44 ) ./mp-22862/cube/force_fd/28 : skip | 3.1 mins
+ ( 30 / 44 ) ./mp-22862/cube/force_fd/29 : skip | 2.9 mins
+ ( 31 / 44 ) ./mp-22862/cube/force_fd/30 : skip | 3.0 mins
+ ( 32 / 44 ) ./mp-22862/cube/force_fd/31 : skip | 4.3 mins
+ ( 33 / 44 ) ./mp-22862/cube/force_fd/32 : skip | 3.6 mins
+ ( 34 / 44 ) ./mp-22862/cube/force_fd/33 : skip | 3.2 mins
+ ( 35 / 44 ) ./mp-22862/cube/force_fd/34 : skip | 3.2 mins
+ ( 36 / 44 ) ./mp-22862/cube/force_fd/35 : skip | 4.4 mins
+ ( 37 / 44 ) ./mp-22862/cube/force_fd/36 : skip | 4.0 mins
+ ( 38 / 44 ) ./mp-22862/cube/force_fd/37 : skip | 3.6 mins
+ ( 39 / 44 ) ./mp-22862/cube/force_fd/38 : skip | 3.5 mins
+ ( 40 / 44 ) ./mp-22862/cube/force_fd/39 : skip | 3.0 mins
+ ( 41 / 44 ) ./mp-22862/cube/force_fd/40 : skip | 3.3 mins
+ ( 42 / 44 ) ./mp-22862/cube/force_fd/41 : skip | 3.5 mins
+ ( 43 / 44 ) ./mp-22862/cube/force_fd/42 : skip | 4.4 mins
+ ( 44 / 44 ) ./mp-22862/cube/force_fd/43 : skip | 4.3 mins
+
+ Output ./mp-22862/result/DFSET.cube_fd
+
+
+ Run alm for fc3:
+ ----------------
+
+ Working directory : ./mp-22862/cube/force_fd
+
+ Figure ./mp-22862/cube/force_fd/fig_fc3.png already exists.
+
+ ./mp-22862/result/FC3_fd.xml was overwritten.
+
+ Fitting error: 0.601366 %
+
+ Calculate Grüneisen parameters:
+ -------------------------------
+
+ kpath is set automatically.
+ gruneisen_band has already been calculated.
+ Output : ./mp-22862/cube/gruneisen/fig_gruneisen.png
+
+ gruneisen_dos has already been calculated.
+ Output : ./mp-22862/cube/gruneisen/fig_gru_all.png
+
+ Run anphon for kappa:
+ ---------------------
+
+ Working directory : ./mp-22862/cube/kappa_fd_14x14x14
+ kappa has already been calculated.
+
+ Thermal conductivity at 300K (3ph):
+ kp_xx   :    3.883   kp_yy   :    3.883   kp_zz   :    3.884   kp_ave  :    3.883   
+ kc_xx   :    0.057   kc_yy   :    0.056   kc_zz   :    0.057   kc_ave  :    0.057   
+ klat_xx :    3.940   klat_yy :    3.940   klat_zz :    3.941   klat_ave:    3.940   
+
+ Output ./mp-22862/cube/kappa_fd_14x14x14/fig_kappa.png
+ Output ./mp-22862/cube/kappa_fd_14x14x14/tau_300K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/tau_500K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/fig_lifetime.png
+ Output ./mp-22862/cube/kappa_fd_14x14x14/fig_scat_rates.png
+ Output ./mp-22862/cube/kappa_fd_14x14x14/kspec_frequency_300K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/kspec_frequency_500K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/fig_cumu_frequency.png
+ Output ./mp-22862/cube/kappa_fd_14x14x14/kspec_mfp_300K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/kspec_mfp_500K.csv
+ Output ./mp-22862/cube/kappa_fd_14x14x14/fig_cumu_mfp.png
+ Read ./mp-22862/cube/kappa_fd_14x14x14/kappa_vs_grain_size.csv
+ Output: ./mp-22862/cube/kappa_fd_14x14x14/fig_kappa_vs_grain_size.png
+
+ Run anphon for kappa:
+ ---------------------
+
+ Working directory : ./mp-22862/cube/kappa_fd_17x17x17
+ kappa has already been calculated.
+
+ Thermal conductivity at 300K (3ph):
+ kp_xx   :    3.920   kp_yy   :    3.920   kp_zz   :    3.920   kp_ave  :    3.920   
+ kc_xx   :    0.060   kc_yy   :    0.060   kc_zz   :    0.060   kc_ave  :    0.060   
+ klat_xx :    3.979   klat_yy :    3.979   klat_zz :    3.979   klat_ave:    3.979   
+
+ Output ./mp-22862/cube/kappa_fd_17x17x17/fig_kappa.png
+ Output ./mp-22862/cube/kappa_fd_17x17x17/tau_300K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/tau_500K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/fig_lifetime.png
+ Output ./mp-22862/cube/kappa_fd_17x17x17/fig_scat_rates.png
+ Output ./mp-22862/cube/kappa_fd_17x17x17/kspec_frequency_300K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/kspec_frequency_500K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/fig_cumu_frequency.png
+ Output ./mp-22862/cube/kappa_fd_17x17x17/kspec_mfp_300K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/kspec_mfp_500K.csv
+ Output ./mp-22862/cube/kappa_fd_17x17x17/fig_cumu_mfp.png
+ Read ./mp-22862/cube/kappa_fd_17x17x17/kappa_vs_grain_size.csv
+ Output: ./mp-22862/cube/kappa_fd_17x17x17/fig_kappa_vs_grain_size.png
+
+ Run anphon for kappa:
+ ---------------------
+
+ Working directory : ./mp-22862/cube/kappa_fd_20x20x20
+ kappa has already been calculated.
+
+ Thermal conductivity at 300K (3ph):
+ kp_xx   :    3.845   kp_yy   :    3.845   kp_zz   :    3.844   kp_ave  :    3.844   
+ kc_xx   :    0.066   kc_yy   :    0.066   kc_zz   :    0.066   kc_ave  :    0.066   
+ klat_xx :    3.911   klat_yy :    3.911   klat_zz :    3.911   klat_ave:    3.911   
+
+ Output ./mp-22862/cube/kappa_fd_20x20x20/fig_kappa.png
+ Output ./mp-22862/cube/kappa_fd_20x20x20/tau_300K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/tau_500K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/fig_lifetime.png
+ Output ./mp-22862/cube/kappa_fd_20x20x20/fig_scat_rates.png
+ Output ./mp-22862/cube/kappa_fd_20x20x20/kspec_frequency_300K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/kspec_frequency_500K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/fig_cumu_frequency.png
+ Output ./mp-22862/cube/kappa_fd_20x20x20/kspec_mfp_300K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/kspec_mfp_500K.csv
+ Output ./mp-22862/cube/kappa_fd_20x20x20/fig_cumu_mfp.png
+ Read ./mp-22862/cube/kappa_fd_20x20x20/kappa_vs_grain_size.csv
+ Output: ./mp-22862/cube/kappa_fd_20x20x20/fig_kappa_vs_grain_size.png
+
+ - .... . .-. -- .- .-..   -.-. --- -. -.. ..- -.-. - - .. ...- .. - .. . ...   
+ .-- . .-. .   -.-. .- .-.. -.-. ..- .-.. .- - . -.
+
+ Plot thermal conductivity for different k-mesh densities:
+
+ Read ./mp-22862/cube/kappa_fd_14x14x14
+ Read ./mp-22862/cube/kappa_fd_17x17x17
+ Read ./mp-22862/cube/kappa_fd_20x20x20
+
+ Output ./mp-22862/result/fig_kappa.png
+
+ Output ./mp-22862/result/log.yaml
+ Output ./mp-22862/result/fig_times.png
+
+
+ Calculation times:
+ ==================
+
+                  harmonic (sec):        359.37 (3.7%)
+                     relax (sec):         92.63 (0.9%)
+               force(cube) (sec):       9303.52 (95.0%)
+                    others (sec):          5.00 (0.1%)
+           kappa(14x14x14) (sec):          4.00 (0.0%)
+           kappa(17x17x17) (sec):         10.00 (0.1%)
+           kappa(20x20x20) (sec):         22.00 (0.2%)
+ -----------------------------------------------------------
+                     total (sec):       9796.52 
+
+
+     ___       __  
+    |__  |\ | |  \ 
+    |___ | \| |__/ 
+    
+ at 09/30/2025 07:52:30 
+
