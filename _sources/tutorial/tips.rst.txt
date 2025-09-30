@@ -2,34 +2,18 @@
 Useful Tips
 ==============
 
+Examples in this page assume that ``mp-22862`` (NaCl) has been computed using auto-kappa.
+Please also see ``auto-kappa/examples/6_parser/basic``.
+
 Make DFSET file for Alamode
 ===============================
 
-``auto_kappa.io.vasp.get_dfset`` helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
-Many directories which contain a vasprun.xml file are supposed to be located under the given directory.
+.. literalinclude:: ./basic/make_dfset.py
 
-.. code-block:: shell
-    
-    $ ls .
-    1 2 3 4 ... prist
 
-    $ ls ./1
-    ... ... vasprun.xml ... ...
-
-.. code-block:: python
-
-    from auto_kappa.io.vasp import get_dfset
-    
-    directory = '.'
-    offset_xml = directory + '/prist/vasprun.xml'
-    outfile = 'DFSET'
-    disps, force = get_dfset(directory, offset_xml=offset_xml, outfile=outfile)
-..
 
 Make BORNINFO file for ALAMODE
 ===============================
-
-Please also see ``.../examples/6_parser/basic``.
 
 .. literalinclude:: ./basic/make_borninfo.py
 
@@ -40,7 +24,7 @@ Plot phonon dispersion and DOS
 .. literalinclude:: ./basic/plot_bandos.py
 
 .. figure:: ./basic/fig_bandos.png
-    :height: 250px
+    :height: 300px
     :align: center
     
     Phonon dispersion with participation ratio and DOS of Silicon
@@ -51,7 +35,7 @@ Plot force constants
 .. literalinclude:: ./basic/plot_fcs.py
 
 .. figure:: ./basic/fig_fcs.png
-    :height: 250px
+    :height: 300px
     :align: center
     
     Force constants of NaCl

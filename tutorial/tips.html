@@ -99,29 +99,37 @@
              
   <section id="useful-tips">
 <h1><span class="section-number">5.2. </span>Useful Tips<a class="headerlink" href="#useful-tips" title="Link to this heading"></a></h1>
+<p>Examples in this page assume that <code class="docutils literal notranslate"><span class="pre">mp-22862</span></code> (NaCl) has been computed using auto-kappa.
+Please also see <code class="docutils literal notranslate"><span class="pre">auto-kappa/examples/6_parser/basic</span></code>.</p>
 <section id="make-dfset-file-for-alamode">
 <h2>Make DFSET file for Alamode<a class="headerlink" href="#make-dfset-file-for-alamode" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">auto_kappa.io.vasp.get_dfset</span></code> helps to make a DFSET file containing displacements and forces extracted from many vasprun.xml files.
-Many directories which contain a vasprun.xml file are supposed to be located under the given directory.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>ls<span class="w"> </span>.
-<span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>...<span class="w"> </span>prist
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 
-$<span class="w"> </span>ls<span class="w"> </span>./1
-...<span class="w"> </span>...<span class="w"> </span>vasprun.xml<span class="w"> </span>...<span class="w"> </span>...
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io.vasp</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dfset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io.vasp</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dfset</span>
 
-<span class="n">directory</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
-<span class="n">offset_xml</span> <span class="o">=</span> <span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/prist/vasprun.xml&#39;</span>
-<span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;DFSET&#39;</span>
-<span class="n">disps</span><span class="p">,</span> <span class="n">force</span> <span class="o">=</span> <span class="n">get_dfset</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">offset_xml</span><span class="o">=</span><span class="n">offset_xml</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">options</span><span class="p">):</span>
+    
+    <span class="kn">from</span><span class="w"> </span><span class="nn">plot_bandos</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_formula</span>
+    <span class="n">formula</span> <span class="o">=</span> <span class="n">get_formula</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="p">)</span>    
+    <span class="n">dir_force</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">/cube/force_fd&quot;</span>
+    <span class="n">offset_xml</span> <span class="o">=</span> <span class="n">dir_force</span> <span class="o">+</span> <span class="s1">&#39;/prist/vasprun.xml&#39;</span>
+    
+    <span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;DFSET.cube&#39;</span>
+    <span class="n">disps</span><span class="p">,</span> <span class="n">force</span> <span class="o">=</span> <span class="n">get_dfset</span><span class="p">(</span><span class="n">dir_force</span><span class="p">,</span> <span class="n">offset_xml</span><span class="o">=</span><span class="n">offset_xml</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Input parameters&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--base_dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;base_dir&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./mp-22862&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;directory of auto-kappa output&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>    
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    
 </pre></div>
 </div>
 </section>
 <section id="make-borninfo-file-for-alamode">
 <h2>Make BORNINFO file for ALAMODE<a class="headerlink" href="#make-borninfo-file-for-alamode" title="Link to this heading"></a></h2>
-<p>Please also see <code class="docutils literal notranslate"><span class="pre">.../examples/6_parser/basic</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
@@ -234,7 +242,7 @@ $<span class="w"> </span>ls<span class="w"> </span>./1
 </pre></div>
 </div>
 <figure class="align-center" id="id1">
-<a class="reference internal image-reference" href="../_images/fig_bandos.png"><img alt="../_images/fig_bandos.png" src="../_images/fig_bandos.png" style="height: 250px;" />
+<a class="reference internal image-reference" href="../_images/fig_bandos.png"><img alt="../_images/fig_bandos.png" src="../_images/fig_bandos.png" style="height: 300px;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 5.2.1 </span><span class="caption-text">Phonon dispersion with participation ratio and DOS of Silicon</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
@@ -305,7 +313,7 @@ $<span class="w"> </span>ls<span class="w"> </span>./1
 </pre></div>
 </div>
 <figure class="align-center" id="id2">
-<a class="reference internal image-reference" href="../_images/fig_fcs.png"><img alt="../_images/fig_fcs.png" src="../_images/fig_fcs.png" style="height: 250px;" />
+<a class="reference internal image-reference" href="../_images/fig_fcs.png"><img alt="../_images/fig_fcs.png" src="../_images/fig_fcs.png" style="height: 300px;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Fig. 5.2.2 </span><span class="caption-text">Force constants of NaCl</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
