@@ -1,39 +1,28 @@
-========================================
-Input Scripts for ALAMODE Calculations
-========================================
-
-.. contents:: Contents
-   :local:
-   :depth: 1
-
 
 Preparation of ALAMODE input files
-==================================
+========================================
+
+.. contents:: Table of contents
+   :local:
+   :depth: 1
 
 Force constants
 ---------------
 
-To suggest structures for a brute force method:
+Script to suggest displacement patterns:
 
-.. literalinclude:: ./examples/mksuggest.py
+.. literalinclude:: ./scripts/mksuggest.py
 
-To calculate force constants with calculated forces:
+Script to calculate force constants after force calculations:
 
-.. literalinclude:: ./examples/mkoptimize.py
+.. literalinclude:: ./scripts/mkoptimize.py
 
 Phonon dispersion
 ------------------
 
-.. literalinclude:: ./examples/mkband.py
-
-.. Eigenvalues at commensurate points
-.. ----------------------------------
-.. 
-.. .. include:: ./examples/mkcommensurate.py
-
+.. literalinclude:: ./scripts/mkband.py
 
 Thermal conductivity
 --------------------
 
-.. literalinclude:: ./examples/mkkappa.py
-
+.. literalinclude:: ./scripts/mkkappa.py

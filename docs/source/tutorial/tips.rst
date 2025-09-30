@@ -1,12 +1,17 @@
-==============
+
 Useful Tips
 ==============
 
 Examples in this page assume that ``mp-22862`` (NaCl) has been computed using auto-kappa.
 Please also see ``auto-kappa/examples/6_parser/basic``.
 
+.. contents:: Table of contents
+   :local:
+   :depth: 1
+
+
 Make DFSET file for Alamode
-===============================
+-----------------------------
 
 .. literalinclude:: ./basic/make_dfset.py
 
@@ -15,13 +20,13 @@ Make DFSET file for Alamode
 
 
 Make BORNINFO file for ALAMODE
-===============================
+-------------------------------
 
 .. literalinclude:: ./basic/make_borninfo.py
 
 
 Plot phonon dispersion and DOS
-===============================
+-------------------------------
 
 .. literalinclude:: ./basic/plot_bandos.py
 
@@ -32,7 +37,7 @@ Plot phonon dispersion and DOS
     Phonon dispersion with participation ratio and DOS of Silicon
 
 Plot force constants
-====================
+--------------------
 
 .. literalinclude:: ./basic/plot_fcs.py
 
