@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Filename: plot_bandos.py
 import os
 import argparse
 import glob

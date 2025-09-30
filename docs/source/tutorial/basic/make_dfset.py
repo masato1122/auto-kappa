@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Filename: make_dfset.py
 import argparse
 
 from auto_kappa.io.vasp import get_dfset
