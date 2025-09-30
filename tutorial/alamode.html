@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Input Scripts for ALAMODE Calculations &mdash; auto-kappa 1.0.0 documentation</title>
+  <title>5.1. Preparation of ALAMODE input files &mdash; auto-kappa 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -24,7 +24,9 @@
       <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5.2. Useful Tips" href="tips.html" />
+    <link rel="prev" title="5. Tutorial" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,12 +53,21 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">1. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">2. How to use auto-kappa</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../params_ak.html">3. Parameters for auto-kappa</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../params_vasp.html">4. Parameters for VASP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html">5. Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.1. Preparation of ALAMODE input files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#force-constants">Force constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phonon-dispersion">Phonon dispersion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#thermal-conductivity">Thermal conductivity</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html">5.2. Useful Tips</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../auto-kappa/modules.html">6. auto_kappa</a></li>
 </ul>
 
@@ -74,7 +85,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Input Scripts for ALAMODE Calculations</li>
+          <li class="breadcrumb-item"><a href="index.html"><span class="section-number">5. </span>Tutorial</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5.1. </span>Preparation of ALAMODE input files</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/tutorial/alamode.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -84,20 +96,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="input-scripts-for-alamode-calculations">
-<h1>Input Scripts for ALAMODE Calculations<a class="headerlink" href="#input-scripts-for-alamode-calculations" title="Link to this heading"></a></h1>
-<nav class="contents local" id="contents">
-<p class="topic-title">Contents</p>
+  <section id="preparation-of-alamode-input-files">
+<h1><span class="section-number">5.1. </span>Preparation of ALAMODE input files<a class="headerlink" href="#preparation-of-alamode-input-files" title="Link to this heading"></a></h1>
+<nav class="contents local" id="table-of-contents">
+<p class="topic-title">Table of contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#preparation-of-alamode-input-files" id="id1">Preparation of ALAMODE input files</a></p></li>
+<li><p><a class="reference internal" href="#force-constants" id="id1">Force constants</a></p></li>
+<li><p><a class="reference internal" href="#phonon-dispersion" id="id2">Phonon dispersion</a></p></li>
+<li><p><a class="reference internal" href="#thermal-conductivity" id="id3">Thermal conductivity</a></p></li>
 </ul>
 </nav>
-<section id="preparation-of-alamode-input-files">
-<h2><a class="toc-backref" href="#id1" role="doc-backlink">Preparation of ALAMODE input files</a><a class="headerlink" href="#preparation-of-alamode-input-files" title="Link to this heading"></a></h2>
 <section id="force-constants">
-<h3>Force constants<a class="headerlink" href="#force-constants" title="Link to this heading"></a></h3>
-<p>To suggest structures for a brute force method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Force constants</a><a class="headerlink" href="#force-constants" title="Link to this heading"></a></h2>
+<p>Script to suggest displacement patterns:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># File:    mksuggest.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlmInput</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_cutoff_for_FC3</span><span class="p">(</span><span class="n">elems</span><span class="p">,</span> <span class="n">cutoff3</span><span class="o">=</span><span class="mf">4.3</span><span class="p">):</span>
@@ -112,7 +126,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;./FILES/POSCAR-supercell&#39;</span>
     <span class="n">supercell</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
-    <span class="n">elems</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">supercell</span><span class="o">.</span><span class="n">get_chemical_symbols</span><span class="p">()))</span>
+    <span class="n">elems</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">supercell</span><span class="o">.</span><span class="n">get_chemical_symbols</span><span class="p">()))</span>
     
     <span class="c1">## 1. suggest for FC2 (norder=1)</span>
     <span class="n">alminp</span> <span class="o">=</span> <span class="n">AlmInput</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
@@ -141,12 +155,15 @@
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>To calculate force constants with calculated forces:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
+<p>Script to calculate force constants after force calculations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># File:    mkoptimize.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlmInput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">AToBohr</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_cutoff_for_FC3</span><span class="p">(</span><span class="n">elems</span><span class="p">,</span> <span class="n">cutoff3</span><span class="o">=</span><span class="mf">4.3</span><span class="p">):</span>
-    <span class="n">cutoff3_bohr</span> <span class="o">=</span> <span class="n">cutoff3</span> <span class="o">*</span> <span class="mf">1.88973</span>
+    <span class="n">cutoff3_bohr</span> <span class="o">=</span> <span class="n">cutoff3</span> <span class="o">*</span> <span class="n">AToBohr</span>
     <span class="n">cutoffs</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">i1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)):</span>
         <span class="k">for</span> <span class="n">i2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)):</span>
@@ -161,7 +178,7 @@
     <span class="n">borninfo</span> <span class="o">=</span> <span class="s2">&quot;./FILES/BORNINFO&quot;</span>
 
     <span class="n">supercell</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
-    <span class="n">elems</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">supercell</span><span class="o">.</span><span class="n">get_chemical_symbols</span><span class="p">()))</span>
+    <span class="n">elems</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">supercell</span><span class="o">.</span><span class="n">get_chemical_symbols</span><span class="p">()))</span>
 
     <span class="n">cutoff_radii</span> <span class="o">=</span> <span class="n">get_cutoff_for_FC3</span><span class="p">(</span><span class="n">elems</span><span class="p">,</span> <span class="n">cutoff3</span><span class="o">=</span><span class="mf">4.3</span><span class="p">)</span>
 
@@ -186,24 +203,31 @@
 </div>
 </section>
 <section id="phonon-dispersion">
-<h3>Phonon dispersion<a class="headerlink" href="#phonon-dispersion" title="Link to this heading"></a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.io.vasp</span><span class="w"> </span><span class="kn">import</span> <span class="n">Poscar</span>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Phonon dispersion</a><a class="headerlink" href="#phonon-dispersion" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># File:    mkband.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_primitive_structure_spglib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnphonInput</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
+
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    
     <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;./FILES/POSCAR-supercell&#39;</span>
     <span class="n">fc2xml</span> <span class="o">=</span> <span class="s2">&quot;./FILES/FC2.xml&quot;</span>
     <span class="n">borninfo</span> <span class="o">=</span> <span class="s2">&quot;./FILES/BORNINFO&quot;</span>
     
-    <span class="n">supercell</span> <span class="o">=</span> <span class="n">Poscar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">structure</span>
-    <span class="n">primitive</span> <span class="o">=</span> <span class="n">supercell</span><span class="o">.</span><span class="n">get_primitive_structure</span><span class="p">()</span>
+    <span class="n">supercell</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
+    <span class="n">primitive</span> <span class="o">=</span> <span class="n">get_primitive_structure_spglib</span><span class="p">(</span><span class="n">supercell</span><span class="p">)</span>
     
     <span class="n">anpinp</span> <span class="o">=</span> <span class="n">AnphonInput</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
         <span class="n">primitive</span><span class="p">,</span>
         <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;phonons&#39;</span><span class="p">,</span>
         <span class="n">kpmode</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">fcsxml</span><span class="o">=</span><span class="n">fc2xml</span><span class="p">,</span>
-        <span class="n">nonanalytic</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">nonanalytic</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">borninfo</span><span class="o">=</span><span class="n">borninfo</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">anpinp</span><span class="o">.</span><span class="n">set_kpoint</span><span class="p">(</span><span class="n">deltak</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
@@ -218,26 +242,31 @@
 </div>
 </section>
 <section id="thermal-conductivity">
-<h3>Thermal conductivity<a class="headerlink" href="#thermal-conductivity" title="Link to this heading"></a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pymatgen.io.vasp</span><span class="w"> </span><span class="kn">import</span> <span class="n">Poscar</span><span class="p">,</span> <span class="n">Kpoints</span>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Thermal conductivity</a><a class="headerlink" href="#thermal-conductivity" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># File:    mkkappa.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ase.io</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnphonInput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_primitive_structure_spglib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">auto_kappa.cui.suggest</span><span class="w"> </span><span class="kn">import</span> <span class="n">klength2mesh</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;./FILES/POSCAR-supercell&#39;</span>
     <span class="n">fcsxml</span> <span class="o">=</span> <span class="s2">&quot;./FILES/FC3_lasso.xml&quot;</span>
     <span class="n">borninfo</span> <span class="o">=</span> <span class="s2">&quot;./FILES/BORNINFO&quot;</span>
+    <span class="n">k_length</span> <span class="o">=</span> <span class="mi">20</span>
     
-    <span class="n">structure</span> <span class="o">=</span> <span class="n">Poscar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">structure</span>
-    <span class="n">primitive</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">get_primitive_structure</span><span class="p">()</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
+    <span class="n">primitive</span> <span class="o">=</span> <span class="n">get_primitive_structure_spglib</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
     
-    <span class="n">kpts</span> <span class="o">=</span> <span class="n">Kpoints</span><span class="o">.</span><span class="n">automatic_density</span><span class="p">(</span><span class="n">primitive</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">kpts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">kpts</span> <span class="o">=</span> <span class="n">klength2mesh</span><span class="p">(</span><span class="n">k_length</span><span class="p">,</span> <span class="n">primitive</span><span class="o">.</span><span class="n">cell</span><span class="o">.</span><span class="n">array</span><span class="p">)</span>
     
     <span class="n">anpinp</span> <span class="o">=</span> <span class="n">AnphonInput</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
         <span class="n">primitive</span><span class="p">,</span>
         <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;rta&#39;</span><span class="p">,</span>
         <span class="n">kpmode</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">fcsxml</span><span class="o">=</span><span class="n">fcsxml</span><span class="p">,</span>
-        <span class="n">nonanalytic</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">nonanalytic</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">borninfo</span><span class="o">=</span><span class="n">borninfo</span><span class="p">,</span>
         <span class="n">kpts</span><span class="o">=</span><span class="n">kpts</span><span class="p">,</span>
         <span class="n">dt</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
@@ -256,12 +285,14 @@
 </div>
 </section>
 </section>
-</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="5. Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tips.html" class="btn btn-neutral float-right" title="5.2. Useful Tips" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
