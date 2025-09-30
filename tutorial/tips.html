@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>5.2. Useful Tips &mdash; auto-kappa 1.0.0 documentation</title>
+  <title>5.1. Useful Tips &mdash; auto-kappa 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -26,7 +26,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="6. auto_kappa" href="../auto-kappa/modules.html" />
-    <link rel="prev" title="5.1. Input Scripts for ALAMODE Calculations" href="alamode.html" /> 
+    <link rel="prev" title="5. Tutorial" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -59,8 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../params_ak.html">3. Parameters for auto-kappa</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../params_vasp.html">4. Parameters for VASP</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">5. Tutorial</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="alamode.html">5.1. Input Scripts for ALAMODE Calculations</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">5.2. Useful Tips</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.1. Useful Tips</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#make-dfset-file-for-alamode">Make DFSET file for Alamode</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#make-borninfo-file-for-alamode">Make BORNINFO file for ALAMODE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#plot-phonon-dispersion-and-dos">Plot phonon dispersion and DOS</a></li>
@@ -87,7 +86,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html"><span class="section-number">5. </span>Tutorial</a></li>
-      <li class="breadcrumb-item active"><span class="section-number">5.2. </span>Useful Tips</li>
+      <li class="breadcrumb-item active"><span class="section-number">5.1. </span>Useful Tips</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/tutorial/tips.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -98,7 +97,7 @@
            <div itemprop="articleBody">
              
   <section id="useful-tips">
-<h1><span class="section-number">5.2. </span>Useful Tips<a class="headerlink" href="#useful-tips" title="Link to this heading"></a></h1>
+<h1><span class="section-number">5.1. </span>Useful Tips<a class="headerlink" href="#useful-tips" title="Link to this heading"></a></h1>
 <p>Examples in this page assume that <code class="docutils literal notranslate"><span class="pre">mp-22862</span></code> (NaCl) has been computed using auto-kappa.
 Please also see <code class="docutils literal notranslate"><span class="pre">auto-kappa/examples/6_parser/basic</span></code>.</p>
 <section id="make-dfset-file-for-alamode">
@@ -132,9 +131,13 @@ Please also see <code class="docutils literal notranslate"><span class="pre">aut
  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>    <span class="mf">5.8858366632325e-05</span>  <span class="mf">2.3052079147308e-04</span> <span class="o">-</span><span class="mf">0.0000000000000e+00</span> 
  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>    <span class="mf">5.8858366632325e-05</span>  <span class="mf">0.0000000000000e+00</span>  <span class="mf">2.3052079147308e-04</span> 
  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>   <span class="o">-</span><span class="mf">6.4676878139020e-05</span> <span class="o">-</span><span class="mf">7.5998472487173e-07</span> <span class="o">-</span><span class="mf">7.5998472487173e-07</span> 
+ <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>   <span class="o">-</span><span class="mf">1.9478011781769e-06</span>  <span class="mf">0.0000000000000e+00</span>  <span class="mf">0.0000000000000e+00</span> 
+ <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>   <span class="o">-</span><span class="mf">1.3134434062906e-06</span> <span class="o">-</span><span class="mf">3.0123243061062e-06</span>  <span class="mf">0.0000000000000e+00</span> 
+ <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>    <span class="mf">5.8858366632325e-05</span>  <span class="mf">0.0000000000000e+00</span> <span class="o">-</span><span class="mf">2.3052079147308e-04</span> 
+ <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>   <span class="o">-</span><span class="mf">6.4676878139020e-05</span> <span class="o">-</span><span class="mf">7.5998472487173e-07</span>  <span class="mf">7.5998472487173e-07</span> 
+ <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>  <span class="mf">0.0000000000000</span>   <span class="o">-</span><span class="mf">1.9478011781769e-06</span>  <span class="mf">0.0000000000000e+00</span> <span class="o">-</span><span class="mf">0.0000000000000e+00</span> 
 </pre></div>
 </div>
-<p>…</p>
 </section>
 <section id="make-borninfo-file-for-alamode">
 <h2>Make BORNINFO file for ALAMODE<a class="headerlink" href="#make-borninfo-file-for-alamode" title="Link to this heading"></a></h2>
@@ -253,7 +256,7 @@ Please also see <code class="docutils literal notranslate"><span class="pre">aut
 <a class="reference internal image-reference" href="../_images/fig_bandos.png"><img alt="../_images/fig_bandos.png" src="../_images/fig_bandos.png" style="height: 300px;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Fig. 5.2.1 </span><span class="caption-text">Phonon dispersion with participation ratio and DOS of Silicon</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+<p><span class="caption-number">Fig. 5.1.1 </span><span class="caption-text">Phonon dispersion with participation ratio and DOS of Silicon</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
 </figcaption>
 </figure>
 </section>
@@ -324,7 +327,7 @@ Please also see <code class="docutils literal notranslate"><span class="pre">aut
 <a class="reference internal image-reference" href="../_images/fig_fcs.png"><img alt="../_images/fig_fcs.png" src="../_images/fig_fcs.png" style="height: 300px;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Fig. 5.2.2 </span><span class="caption-text">Force constants of NaCl</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+<p><span class="caption-number">Fig. 5.1.2 </span><span class="caption-text">Force constants of NaCl</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
 </figcaption>
 </figure>
 </section>
@@ -334,7 +337,7 @@ Please also see <code class="docutils literal notranslate"><span class="pre">aut
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="alamode.html" class="btn btn-neutral float-left" title="5.1. Input Scripts for ALAMODE Calculations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="5. Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../auto-kappa/modules.html" class="btn btn-neutral float-right" title="6. auto_kappa" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
