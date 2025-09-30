@@ -1,0 +1,60 @@
+result:
+  directory: ./result
+  kind: others
+  note: results
+relax:
+  directory: ./relax
+  kind: others
+  note: structure optimization
+nac:
+  directory: ./nac
+  kind: VASP
+  note: Born effective charge
+suggest_2x2x2:
+  directory: ./harm/suggest
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+fc2_2x2x2:
+  directory: ./harm/force
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+band_2x2x2:
+  directory: ./harm/bandos
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+dos_2x2x2:
+  directory: ./harm/bandos
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+evec_commensurate_2x2x2:
+  directory: ./harm/evec
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+suggest_2x2x2(2):
+  directory: ./cube/suggest
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}, overwritten
+fc3_2x2x2:
+  directory: ./cube/force_fd
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+gruneisen_band_2x2x2:
+  directory: ./cube/gruneisen
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+gruneisen_dos_2x2x2:
+  directory: ./cube/gruneisen
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+kappa_14x14x14_2x2x2:
+  directory: ./cube/kappa_fd_14x14x14
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+kappa_17x17x17_2x2x2:
+  directory: ./cube/kappa_fd_17x17x17
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
+kappa_20x20x20_2x2x2:
+  directory: ./cube/kappa_fd_20x20x20
+  kind: ALAMODE
+  note: ALAMODE calculation for {propt}
