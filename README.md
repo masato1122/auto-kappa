@@ -8,7 +8,7 @@
 </p>
 
 Version 1.0.0
---------------
+---------------
 
 Auto-kappa is an automation framework for first-principles calculations of anharmonic phonon properties
 —including thermal conductivity and mode-dependent phonon lifetimes—based on VASP and ALAMODE.
@@ -19,9 +19,10 @@ Requirements
 Users of auto-kappa need to install VASP and ALAMODE in advance, 
 while the required Python libraries are installed automatically along with auto-kappa.
 
-* VASP >= 6.3.x
-* ALAMODE >= 1.4 (1.5 recommended) *
-* [Optional] anphon >= 1.9.9 (required for four-phonon scattering)
+* VASP : 6.3.0 or later
+* ALAMODE : 1.4 or 1.5 (1.5 recommended) *
+* [Optional] anphon : 1.9.9 (required for four-phonon scattering)
+* Python : 3.9 or later
 * Phonopy
 * ASE
 * Pymatgen
