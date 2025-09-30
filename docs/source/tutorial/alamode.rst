@@ -2,6 +2,8 @@
 Preparation of ALAMODE input files
 ========================================
 
+The following Python scripts can be found in ``auto-kappa/examples/6_parser/alamode_inputs``.
+
 .. contents:: Table of contents
    :local:
    :depth: 1
