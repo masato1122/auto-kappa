@@ -1,0 +1,105 @@
+==========================
+Parameters for auto-kappa
+==========================
+
+.. contents:: Contents
+   :local:
+   :depth: 1
+   
+
+.. _sec_params_ak_recommendations:
+
+Recommendations for parameters
+================================
+
+.. csv-table:: Default and recommended parameters for VASP
+    :file: ./files/recommended_ak_params.csv
+    :header-rows: 1
+    :align: center
+    :width: 100%
+    :widths: 20 15 15 50
+
+
+.. _sec_params_ak_brief:
+
+Brief description
+==================
+
+Please see :ref:`sec_params_ak_detailed` for details of each parameter.
+
+Input/Output
+-------------
+
+- ``--file_structure``, ``--otudir``: Input structure and output directories
+
+Parallel calculations and commands
+-----------------------------------
+
+- ``nprocs``, ``mpirun``: Parameters for parallel calculations
+
+- ``command_{vasp/vasp_gam/alm/anphon/anphon_ver2}``: Commands for VASP and ALAMODE
+
+Accuracy
+---------
+
+- ``k_length``: k-point mesh for VASP calculations (`official page <https://www.vasp.at/wiki/index.php/KPOINTS>`_)
+
+- ``nsw_params``: NSW for relaxation calculations
+
+- ``cutoff_cubic``, ``min_nearest``: Cutoff distance for cubic FCs in unit of Å or nearest neighbors
+
+- ``volume_relaxation``: Whether to perform relaxation calculation with the Birch-Murnaghan equation of state
+
+Supercell size
+--------------
+
+- ``analyze_with_larger_supercell``, ``max_loop_for_largesc``: 
+  Whether to analyze with larger supercells when imaginary frequencies occur, and the maximum number of loops
+
+- ``max_natoms``, ``delta_max_natoms``: Maximum number of atoms allowed in supercells
+
+Displacement
+-------------
+
+- ``nmax_suggest``: 
+  Threshold of suggested displacement patterns (:math:`N_{sugget}`) for the finite-displacement approach.
+  If :math:`N_{suggest}` exceeds ``nmax_suggest``, LASSO regression is applied.
+
+- ``frac_nrandom``, ``frac_nrandom_higher``: Fractional number of random displacement patterns
+
+- ``mag_harm``, ``mag_cubic``, ``random_disp_temperature``: 
+  Displacement magnitudes for harmonic, cubic, and higher-order FCs
+  
+Beyond three phonon scattering
+-------------------------------
+
+- ``scph``, ``four``: Self-consistent phonon (SCPH) approach and four-phonon scattering processes
+
+- ``frac_kdensity_4ph``: q-point mesh for four-phonon scattering processes
+
+Utilities
+----------
+
+- ``calculate_forces``: This option is useful to analyze single material with multiple machines 
+  while ``auto-kappa`` is available on single node only.
+  If this flag is 0, the relaxation calculation is performed and the structures with displacements are generated, 
+  but the force calculations are not performed. You can perform the force calculations with multiple machines.
+
+- ``harmonic_only``: Whether to calculate harmonic FCs only
+
+Others
+-------
+
+- ``nonanalytic``, ``negative_freq``, ``vasp_parameters``
+
+
+.. _sec_params_ak_detailed:
+
+
+Detailed description
+=====================
+
+.. argparse::
+    :module: auto_kappa.cui.ak_parser
+    :func: get_parser
+    :prog: auto-kappa
