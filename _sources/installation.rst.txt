@@ -20,7 +20,7 @@ Python packages are installed automatically during setup, but VASP and ALAMODE m
 Preparation
 ============
 
-For phonon calculations using Auto-kappa, the ``alm``, ``anphon``, and ``vasp`` commands, 
+For phonon calculations using auto-kappa, the ``alm``, ``anphon``, and ``vasp`` commands, 
 as well as the ``VASP_PP_PATH`` environment variable, are required. 
 
 VASP and ALAMODE
