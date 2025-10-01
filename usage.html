@@ -109,7 +109,7 @@ An example job script is shown below. Please modify it according to your environ
 <span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Please set OMP_NUM_THREADS=1</span>
 <span class="nb">cd</span><span class="w"> </span><span class="nv">$PBS_O_WORKDIR</span>
 
-<span class="nv">nprocess</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## Number of processes</span>
+<span class="nv">nprocs</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## Number of processes</span>
 
 <span class="nv">mpid</span><span class="o">=</span>mp-149
 <span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span><span class="w">  </span><span class="c1">## This line must be modified.</span>
@@ -122,7 +122,7 @@ An example job script is shown below. Please modify it according to your environ
 akrun<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--directory<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--nprocess<span class="w"> </span><span class="nv">$nprocess</span>
+<span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span>
 </pre></div>
 </div>
 </section>

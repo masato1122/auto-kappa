@@ -23,7 +23,7 @@ An example job script is shown below. Please modify it according to your environ
     export OMP_NUM_THREADS=1  ## Please set OMP_NUM_THREADS=1
     cd $PBS_O_WORKDIR
 
-    nprocess=24               ## Number of processes
+    nprocs=24               ## Number of processes
 
     mpid=mp-149
     dir_db=${directory_of_downloaded_phoonondb}/${mpid}  ## This line must be modified.
@@ -36,7 +36,7 @@ An example job script is shown below. Please modify it according to your environ
     akrun \
         --directory $dir_db \
         --outdir $mpid \
-        --nprocess $nprocess
+        --nprocs $nprocs
 
 .. .. _sec-automation:
 
