@@ -15,7 +15,7 @@ parser = OptionParser()
 parser.add_option("-f", "--filename", dest="filename", type="string",
         default="POSCAR.unitcell", help="input file name")
 parser.add_option("-o", "--outdir", dest="outdir", type="string",
-        default="POSCAR.unitcell", help="input file name")
+        default="./out", help="output directory name")
 (options, args) = parser.parse_args()
 
 ### prepare structures
