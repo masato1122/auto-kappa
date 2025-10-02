@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import numpy as np
 from optparse import OptionParser
 
@@ -12,6 +13,8 @@ from auto_kappa.structure.crystal import (
 
 parser = OptionParser()
 parser.add_option("-f", "--filename", dest="filename", type="string",
+        default="POSCAR.unitcell", help="input file name")
+parser.add_option("-o", "--outdir", dest="outdir", type="string",
         default="POSCAR.unitcell", help="input file name")
 (options, args) = parser.parse_args()
 
@@ -27,8 +30,9 @@ pmat = np.dot(np.linalg.inv(unit.cell), prim.cell)
 apdb = ApdbVasp(unit, primitive_matrix=pmat, scell_matrix=np.identity(3))
 
 ### calculator
+os.makedirs(options.outdir, exist_ok=True)
 kpts = [4, 4, 4]
-calc = apdb.get_calculator('relax', './out', kpts)
+calc = apdb.get_calculator('relax', options.outdir, kpts)
 
 ###
 calc.write_input(prim)
