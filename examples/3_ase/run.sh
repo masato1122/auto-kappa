@@ -6,6 +6,12 @@
 #
 tdir=./tools
 
+if [ ! -e $VASP_PP_PATH/potpaw_PBE ]; then
+    echo " VASP_PP_PATH variable may not set properly."
+    echo " Please visit the GitHub page: https://github.com/masato1122/auto-kappa"
+    exit
+fi
+
 python $tdir/poscar2relax.py \
     -f ./POSCAR-unitcell
 
