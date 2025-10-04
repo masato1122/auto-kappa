@@ -106,20 +106,39 @@ An example job script is shown below.
 Since all processes are included in this job, it takes about half an hour to complete.
 It is recommended to use a job scheduler to submit this job.
 Please modify it according to your environment.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">### Description</span>
-<span class="c1"># volume_relaxation : relaxation calc. with the equation of state</span>
-<span class="c1"># max_natoms        : maximum number of atoms in a supercell</span>
-<span class="c1"># nmax_suggest      : maximum number of displacement patterns for the FD method</span>
-
-<span class="c1">### Abbreviation</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1">#</span>
+<span class="c1"># Description: </span>
+<span class="c1"># ------------</span>
+<span class="c1"># Example job script to run auto-kappa for Silicon</span>
+<span class="c1"># Please modify it according to your environment.</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># Description of auto-kappa options:</span>
+<span class="c1"># ----------------------------------</span>
+<span class="c1"># file_structure    : Input structure file (formats such as POSCAR, CIF, etc.)</span>
+<span class="c1"># outdir            : Output directory for results</span>
+<span class="c1"># nprocs            : Number of processors to use</span>
+<span class="c1"># mpirun            : Command to execute MPI jobs</span>
+<span class="c1"># command_vasp      : Command to execute VASP</span>
+<span class="c1"># command_alm       : Command to execute ALM</span>
+<span class="c1"># command_anphon    : Command to execute ANPHON</span>
+<span class="c1"># volume_relaxation : Whether to perform structural relaxation using an equation of state</span>
+<span class="c1"># analyze_with_larger_supercell : Analyze harmonic FCs with a larger supercell if imaginary (negative) frequencies are detected</span>
+<span class="c1"># max_natoms        : Maximum allowed number of atoms in a supercell</span>
+<span class="c1"># nmax_suggest      : Maximum number of displacement patterns in the FD method</span>
+<span class="c1"># calculate_forces  : Whether to calculate interatomic forces</span>
+<span class="c1">#</span>
+<span class="c1"># Abbreviation:</span>
+<span class="c1"># -------------</span>
 <span class="c1"># FC : force constant</span>
 <span class="c1"># FD : finite displacement</span>
-
-<span class="nv">nprocs</span><span class="o">=</span><span class="m">2</span>
+<span class="c1">#</span>
 
 <span class="c1">### Input for each material</span>
 <span class="nv">file_structure</span><span class="o">=</span>./POSCAR.Si
 <span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">   </span><span class="c1">## material ID for Silicon</span>
+<span class="nv">nprocs</span><span class="o">=</span><span class="m">2</span>
 
 <span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$file_structure</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Error: </span><span class="nv">$file_structure</span><span class="s2"> does not exist.&quot;</span>
@@ -132,10 +151,11 @@ Please modify it according to your environment.</p>
 <span class="nv">c_alm</span><span class="o">=</span>alm
 <span class="nv">c_anphon</span><span class="o">=</span>anphon
 
-<span class="c1">### Variables</span>
-<span class="nv">vol_relax</span><span class="o">=</span><span class="m">1</span><span class="w">     </span><span class="c1">## Whether to perform the structural relaxation with the equation of state</span>
-<span class="nv">nmax_suggest</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Maximum number of displacement patterns for the FD method. If 1, always use LASSO approach.</span>
-<span class="nv">max_natoms</span><span class="o">=</span><span class="m">150</span><span class="w">  </span><span class="c1">## Allowed maximum number of atoms in a supercell</span>
+<span class="c1">### Parameters for phonon calculation</span>
+<span class="nv">vol_relax</span><span class="o">=</span><span class="m">1</span>
+<span class="nv">larger_sc</span><span class="o">=</span><span class="m">0</span>
+<span class="nv">max_natoms</span><span class="o">=</span><span class="m">150</span>
+<span class="nv">nmax_suggest</span><span class="o">=</span><span class="m">1</span>
 
 <span class="c1">### Check command existence</span>
 <span class="k">for</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="nv">$c_alm</span><span class="w"> </span><span class="nv">$c_anphon</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
