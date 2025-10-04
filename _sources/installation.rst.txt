@@ -29,6 +29,15 @@ VASP and ALAMODE
 Auto-kappa requires ``vasp``, ``alm``, and ``anphon`` commands.
 Please install VASP and `ALAMODE <https://alamode.readthedocs.io/en/latest/index.html>`_ in advance.
 
+ALAMODE requires 
+`Eigen <https://eigen.tuxfamily.org/index.php?title=Main_Page>`_,
+`BOOST <https://www.boost.org/releases/latest/>`_, and
+`Spglib <https://spglib.readthedocs.io/en/stable/>`_.
+These packages must be installed before installing ALAMODE.
+Note that ALAMODE may not be compatible with the latest versions of these packages.
+You may need to install older versions to ensure compatibility.
+
+
 VASP_PP_PATH variable
 -----------------------
 
@@ -42,17 +51,6 @@ See `the ASE documentation <https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.h
     
 ``potpaw_PBE.54.tar.gz`` or ``potpaw_PBE.64.tar.gz`` supposed to be expanded in ``potpaw_PBE``.
 
-Tips for installing ALAMODE
------------------------------
-
-ALAMODE requires 
-`Eigen <https://eigen.tuxfamily.org/index.php?title=Main_Page>`_,
-`BOOST <https://www.boost.org/releases/latest/>`_, and
-`Spglib <https://spglib.readthedocs.io/en/stable/>`_.
-
-These packages must be installed before installing ALAMODE.
-Note that ALAMODE may not be compatible with the latest versions of these packages.
-You may need to install older versions to ensure compatibility.
 
 PhononDB
 ---------

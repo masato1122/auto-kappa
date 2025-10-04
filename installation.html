@@ -59,7 +59,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#preparation">1.2. Preparation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#vasp-and-alamode">VASP and ALAMODE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vasp-pp-path-variable">VASP_PP_PATH variable</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tips-for-installing-alamode">Tips for installing ALAMODE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#phonondb">PhononDB</a></li>
 </ul>
 </li>
@@ -122,6 +121,13 @@ as well as the <code class="docutils literal notranslate"><span class="pre">VASP
 <h3>VASP and ALAMODE<a class="headerlink" href="#vasp-and-alamode" title="Link to this heading"></a></h3>
 <p>Auto-kappa requires <code class="docutils literal notranslate"><span class="pre">vasp</span></code>, <code class="docutils literal notranslate"><span class="pre">alm</span></code>, and <code class="docutils literal notranslate"><span class="pre">anphon</span></code> commands.
 Please install VASP and <a class="reference external" href="https://alamode.readthedocs.io/en/latest/index.html">ALAMODE</a> in advance.</p>
+<p>ALAMODE requires
+<a class="reference external" href="https://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>,
+<a class="reference external" href="https://www.boost.org/releases/latest/">BOOST</a>, and
+<a class="reference external" href="https://spglib.readthedocs.io/en/stable/">Spglib</a>.
+These packages must be installed before installing ALAMODE.
+Note that ALAMODE may not be compatible with the latest versions of these packages.
+You may need to install older versions to ensure compatibility.</p>
 </section>
 <section id="vasp-pp-path-variable">
 <h3>VASP_PP_PATH variable<a class="headerlink" href="#vasp-pp-path-variable" title="Link to this heading"></a></h3>
@@ -132,16 +138,6 @@ See <a class="reference external" href="https://wiki.fysik.dtu.dk/ase/ase/calcul
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">potpaw_PBE.54.tar.gz</span></code> or <code class="docutils literal notranslate"><span class="pre">potpaw_PBE.64.tar.gz</span></code> supposed to be expanded in <code class="docutils literal notranslate"><span class="pre">potpaw_PBE</span></code>.</p>
-</section>
-<section id="tips-for-installing-alamode">
-<h3>Tips for installing ALAMODE<a class="headerlink" href="#tips-for-installing-alamode" title="Link to this heading"></a></h3>
-<p>ALAMODE requires
-<a class="reference external" href="https://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>,
-<a class="reference external" href="https://www.boost.org/releases/latest/">BOOST</a>, and
-<a class="reference external" href="https://spglib.readthedocs.io/en/stable/">Spglib</a>.</p>
-<p>These packages must be installed before installing ALAMODE.
-Note that ALAMODE may not be compatible with the latest versions of these packages.
-You may need to install older versions to ensure compatibility.</p>
 </section>
 <section id="phonondb">
 <h3>PhononDB<a class="headerlink" href="#phonondb" title="Link to this heading"></a></h3>
