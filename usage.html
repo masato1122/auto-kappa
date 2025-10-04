@@ -123,38 +123,43 @@ Please modify it according to your environment.</p>
 <span class="linenos">13</span><span class="nv">file_structure</span><span class="o">=</span>./POSCAR.Si
 <span class="linenos">14</span><span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">   </span><span class="c1">## material ID for Silicon</span>
 <span class="linenos">15</span>
-<span class="linenos">16</span><span class="c1">### Commands</span>
-<span class="linenos">17</span><span class="nv">c_mpirun</span><span class="o">=</span>mpirun
-<span class="linenos">18</span><span class="nv">c_vasp</span><span class="o">=</span>vasp
-<span class="linenos">19</span><span class="nv">c_alm</span><span class="o">=</span>alm
-<span class="linenos">20</span><span class="nv">c_anphon</span><span class="o">=</span>anphon
-<span class="linenos">21</span>
-<span class="linenos">22</span><span class="c1">### Variables</span>
-<span class="linenos">23</span><span class="nv">vol_relax</span><span class="o">=</span><span class="m">1</span><span class="w">     </span><span class="c1">## Structural relaxation with the equation of state</span>
-<span class="linenos">24</span><span class="nv">nmax_suggest</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Maximum number of displacement patterns for the FD method. If 1, always use LASSO approach.</span>
-<span class="linenos">25</span><span class="nv">max_natoms</span><span class="o">=</span><span class="m">150</span><span class="w">  </span><span class="c1">## Maximum number of atoms in a supercell</span>
+<span class="linenos">16</span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$file_structure</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="linenos">17</span><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Error: </span><span class="nv">$file_structure</span><span class="s2"> does not exist.&quot;</span>
+<span class="linenos">18</span><span class="w">    </span><span class="nb">exit</span>
+<span class="linenos">19</span><span class="k">fi</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="c1">### Commands</span>
+<span class="linenos">22</span><span class="nv">c_mpirun</span><span class="o">=</span>mpirun
+<span class="linenos">23</span><span class="nv">c_vasp</span><span class="o">=</span>vasp
+<span class="linenos">24</span><span class="nv">c_alm</span><span class="o">=</span>alm
+<span class="linenos">25</span><span class="nv">c_anphon</span><span class="o">=</span>anphon
 <span class="linenos">26</span>
-<span class="linenos">27</span><span class="c1">### Check command existence</span>
-<span class="linenos">28</span><span class="k">for</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="nv">$c_alm</span><span class="w"> </span><span class="nv">$c_anphon</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="linenos">29</span><span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span><span class="nv">$command</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="linenos">30</span><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$command</span><span class="s2"> could not be found&quot;</span>
-<span class="linenos">31</span><span class="w">        </span><span class="nb">exit</span>
-<span class="linenos">32</span><span class="w">    </span><span class="k">fi</span>
-<span class="linenos">33</span><span class="k">done</span>
-<span class="linenos">34</span>
-<span class="linenos">35</span><span class="c1">### Run auto-kappa</span>
-<span class="linenos">36</span>akrun<span class="w"> </span><span class="se">\</span>
-<span class="linenos">37</span><span class="w">    </span>--file_structure<span class="w"> </span><span class="nv">$file_structure</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">38</span><span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">39</span><span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">40</span><span class="w">    </span>--mpirun<span class="w">         </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">41</span><span class="w">    </span>--command_vasp<span class="w">   </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">42</span><span class="w">    </span>--command_alm<span class="w">    </span><span class="nv">$c_alm</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">43</span><span class="w">    </span>--command_anphon<span class="w"> </span><span class="nv">$c_anphon</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">44</span><span class="w">    </span>--volume_relaxation<span class="w"> </span><span class="nv">$vol_relax</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">45</span><span class="w">    </span>--max_natoms<span class="w">   </span><span class="nv">$max_natoms</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">46</span><span class="w">    </span>--nmax_suggest<span class="w"> </span><span class="nv">$nmax_suggest</span><span class="w"> </span><span class="se">\</span>
-<span class="linenos">47</span><span class="w">    </span>--calculate_forces<span class="w"> </span><span class="m">1</span>
+<span class="linenos">27</span><span class="c1">### Variables</span>
+<span class="linenos">28</span><span class="nv">vol_relax</span><span class="o">=</span><span class="m">1</span><span class="w">     </span><span class="c1">## Whether to perform the structural relaxation with the equation of state</span>
+<span class="linenos">29</span><span class="nv">nmax_suggest</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Maximum number of displacement patterns for the FD method. If 1, always use LASSO approach.</span>
+<span class="linenos">30</span><span class="nv">max_natoms</span><span class="o">=</span><span class="m">150</span><span class="w">  </span><span class="c1">## Allowed maximum number of atoms in a supercell</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="c1">### Check command existence</span>
+<span class="linenos">33</span><span class="k">for</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="nv">$c_alm</span><span class="w"> </span><span class="nv">$c_anphon</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="linenos">34</span><span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span><span class="nv">$command</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="linenos">35</span><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Error: </span><span class="nv">$command</span><span class="s2"> could not be found&quot;</span>
+<span class="linenos">36</span><span class="w">        </span><span class="nb">exit</span>
+<span class="linenos">37</span><span class="w">    </span><span class="k">fi</span>
+<span class="linenos">38</span><span class="k">done</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="c1">### Run auto-kappa</span>
+<span class="linenos">41</span>akrun<span class="w"> </span><span class="se">\</span>
+<span class="linenos">42</span><span class="w">    </span>--file_structure<span class="w"> </span><span class="nv">$file_structure</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">43</span><span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">44</span><span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">45</span><span class="w">    </span>--mpirun<span class="w">         </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">46</span><span class="w">    </span>--command_vasp<span class="w">   </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">47</span><span class="w">    </span>--command_alm<span class="w">    </span><span class="nv">$c_alm</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">48</span><span class="w">    </span>--command_anphon<span class="w"> </span><span class="nv">$c_anphon</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">49</span><span class="w">    </span>--volume_relaxation<span class="w"> </span><span class="nv">$vol_relax</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">50</span><span class="w">    </span>--max_natoms<span class="w">   </span><span class="nv">$max_natoms</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">51</span><span class="w">    </span>--nmax_suggest<span class="w"> </span><span class="nv">$nmax_suggest</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">52</span><span class="w">    </span>--calculate_forces<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
 </div>
