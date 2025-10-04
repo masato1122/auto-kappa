@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2. How to use auto-kappa &mdash; auto-kappa 1.0.0 documentation</title>
+  <title>2. Examples &mdash; auto-kappa 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -55,8 +55,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">2. How to use auto-kappa</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#examples">2.1. Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples-for-required-packages">2.1. 1. Examples for required packages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auto-kappa-example">2.2. 2. <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code> example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="params_ak.html">3. Parameters for auto-kappa</a></li>
@@ -79,7 +80,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><span class="section-number">2. </span>How to use auto-kappa</li>
+      <li class="breadcrumb-item active"><span class="section-number">2. </span>Examples</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,41 +90,73 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="how-to-use-auto-kappa">
-<h1><span class="section-number">2. </span>How to use auto-kappa<a class="headerlink" href="#how-to-use-auto-kappa" title="Link to this heading"></a></h1>
-<section id="examples">
-<h2><span class="section-number">2.1. </span>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<ol class="arabic simple">
-<li><p>Example for auto-kappa</p></li>
-</ol>
-<p>The <code class="docutils literal notranslate"><span class="pre">.../examples/5_single</span></code> directory contains an example to compute thermal conductivity of Silicon.
-While the <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script can be used to run this calculation, it is recommended to use a job scheduler to run this example.
-An example job script is shown below. Please modify it according to your environment.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
-<span class="c1">#PBS -q default</span>
-<span class="c1">#PBS -l nodes=1:ppn=24  ## Only single node calculation is available</span>
-<span class="c1">#PBS -j oe</span>
-<span class="c1">#PBS -N test            ## job name</span>
-
-<span class="nb">export</span><span class="w"> </span><span class="nv">LANG</span><span class="o">=</span>C
-<span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Please set OMP_NUM_THREADS=1</span>
-<span class="nb">cd</span><span class="w"> </span><span class="nv">$PBS_O_WORKDIR</span>
-
-<span class="nv">nprocs</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## Number of processes</span>
-
-<span class="nv">mpid</span><span class="o">=</span>mp-149
-<span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span><span class="w">  </span><span class="c1">## This line must be modified.</span>
-
-<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Cannot find </span><span class="nv">$dir_db</span><span class="s2">&quot;</span>
-<span class="w">    </span><span class="nb">exit</span>
-<span class="k">fi</span>
-
-akrun<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--directory<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span>
+  <section id="examples">
+<h1><span class="section-number">2. </span>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<section id="examples-for-required-packages">
+<h2><span class="section-number">2.1. </span>1. Examples for required packages<a class="headerlink" href="#examples-for-required-packages" title="Link to this heading"></a></h2>
+<p>Example jobs are available in the <code class="docutils literal notranslate"><span class="pre">auto-kappa/examples</span></code> directory
+for <code class="docutils literal notranslate"><span class="pre">alm</span></code> (<code class="docutils literal notranslate"><span class="pre">examples/1_alm</span></code>), <code class="docutils literal notranslate"><span class="pre">anphon</span></code> (<code class="docutils literal notranslate"><span class="pre">examples/2_anphon</span></code>),
+ASE (<code class="docutils literal notranslate"><span class="pre">examples/3_ase</span></code>), and Custodian (<code class="docutils literal notranslate"><span class="pre">examples/4_custodian</span></code>).
+Please go to each directory and run the jobs.</p>
+</section>
+<section id="auto-kappa-example">
+<h2><span class="section-number">2.2. </span>2. <code class="docutils literal notranslate"><span class="pre">auto-kappa</span></code> example<a class="headerlink" href="#auto-kappa-example" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">.../examples/5_single</span></code> directory contains an example to compute thermal conductivity of Silicon using auto-kappa.
+An example job script is shown below.
+Since all processes are included in this job, it takes about half an hour to complete.
+It is recommended to use a job scheduler to submit this job.
+Please modify it according to your environment.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-number">Listing 2.2.1 </span><span class="caption-text">read this file as an example job script to run <code class="docutils literal notranslate"><span class="pre">examples/5_single</span></code></span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">### Description</span>
+<span class="linenos"> 2</span><span class="c1"># volume_relaxation : relaxation calc. with the equation of state</span>
+<span class="linenos"> 3</span><span class="c1"># max_natoms        : maximum number of atoms in a supercell</span>
+<span class="linenos"> 4</span><span class="c1"># nmax_suggest      : maximum number of displacement patterns for the FD method</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="c1">### Abbreviation</span>
+<span class="linenos"> 7</span><span class="c1"># FC : force constant</span>
+<span class="linenos"> 8</span><span class="c1"># FD : finite displacement</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="nv">nprocs</span><span class="o">=</span><span class="m">2</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="c1">### Input for each material</span>
+<span class="linenos">13</span><span class="nv">file_structure</span><span class="o">=</span>./POSCAR.Si
+<span class="linenos">14</span><span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">   </span><span class="c1">## material ID for Silicon</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="c1">### Commands</span>
+<span class="linenos">17</span><span class="nv">c_mpirun</span><span class="o">=</span>mpirun
+<span class="linenos">18</span><span class="nv">c_vasp</span><span class="o">=</span>vasp
+<span class="linenos">19</span><span class="nv">c_alm</span><span class="o">=</span>alm
+<span class="linenos">20</span><span class="nv">c_anphon</span><span class="o">=</span>anphon
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="c1">### Variables</span>
+<span class="linenos">23</span><span class="nv">vol_relax</span><span class="o">=</span><span class="m">1</span><span class="w">     </span><span class="c1">## Structural relaxation with the equation of state</span>
+<span class="linenos">24</span><span class="nv">nmax_suggest</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Maximum number of displacement patterns for the FD method. If 1, always use LASSO approach.</span>
+<span class="linenos">25</span><span class="nv">max_natoms</span><span class="o">=</span><span class="m">150</span><span class="w">  </span><span class="c1">## Maximum number of atoms in a supercell</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="c1">### Check command existence</span>
+<span class="linenos">28</span><span class="k">for</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="nv">$c_alm</span><span class="w"> </span><span class="nv">$c_anphon</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="linenos">29</span><span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span><span class="nv">$command</span><span class="w"> </span><span class="p">&amp;</span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="linenos">30</span><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$command</span><span class="s2"> could not be found&quot;</span>
+<span class="linenos">31</span><span class="w">        </span><span class="nb">exit</span>
+<span class="linenos">32</span><span class="w">    </span><span class="k">fi</span>
+<span class="linenos">33</span><span class="k">done</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="c1">### Run auto-kappa</span>
+<span class="linenos">36</span>akrun<span class="w"> </span><span class="se">\</span>
+<span class="linenos">37</span><span class="w">    </span>--file_structure<span class="w"> </span><span class="nv">$file_structure</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">38</span><span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">39</span><span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">40</span><span class="w">    </span>--mpirun<span class="w">         </span><span class="nv">$c_mpirun</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">41</span><span class="w">    </span>--command_vasp<span class="w">   </span><span class="nv">$c_vasp</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">42</span><span class="w">    </span>--command_alm<span class="w">    </span><span class="nv">$c_alm</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">43</span><span class="w">    </span>--command_anphon<span class="w"> </span><span class="nv">$c_anphon</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">44</span><span class="w">    </span>--volume_relaxation<span class="w"> </span><span class="nv">$vol_relax</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">45</span><span class="w">    </span>--max_natoms<span class="w">   </span><span class="nv">$max_natoms</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">46</span><span class="w">    </span>--nmax_suggest<span class="w"> </span><span class="nv">$nmax_suggest</span><span class="w"> </span><span class="se">\</span>
+<span class="linenos">47</span><span class="w">    </span>--calculate_forces<span class="w"> </span><span class="m">1</span>
 </pre></div>
+</div>
 </div>
 </section>
 </section>
