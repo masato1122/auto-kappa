@@ -64,7 +64,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#id1">1.3. Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#examples">1.4. Examples</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">2. Examples</a></li>
@@ -181,45 +180,6 @@ sh<span class="w"> </span>./install.sh
 </pre></div>
 </div>
 </section>
-<section id="examples">
-<h2><span class="section-number">1.4. </span>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<p><strong>1. Test for VASP and ALAMODE</strong></p>
-<p>Test jobs are available in the <code class="docutils literal notranslate"><span class="pre">auto-kappa/examples</span></code> directory.
-Please refer to the <code class="docutils literal notranslate"><span class="pre">README</span></code> file in that directory for details.
-You will find <code class="docutils literal notranslate"><span class="pre">1_alm</span></code>, <code class="docutils literal notranslate"><span class="pre">2_anphon</span></code>, and so on, which are test jobs for
-ALAMODE (<code class="docutils literal notranslate"><span class="pre">alm</span></code> and <code class="docutils literal notranslate"><span class="pre">anphon</span></code>), ASE, Custodian, and Auto-kappa.</p>
-<p><strong>2. ``database`` example</strong></p>
-<p>The calculation in the database directory automatically computes the thermal conductivity of silicon.
-Since all processes are included in this job, it takes about half an hour to complete.
-It is recommended to use a job scheduler to submit this job.
-An example job script is shown below. Please modify it according to your environment.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
-<span class="c1">#PBS -q default</span>
-<span class="c1">#PBS -l nodes=1:ppn=24  ## Only single-node calculations are supported.</span>
-<span class="c1">#PBS -j oe</span>
-<span class="c1">#PBS -N test            ## job name</span>
-
-<span class="nb">export</span><span class="w"> </span><span class="nv">LANG</span><span class="o">=</span>C
-<span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w">  </span><span class="c1">## Set OMP_NUM_THREADS=1</span>
-<span class="nb">cd</span><span class="w"> </span><span class="nv">$PBS_O_WORKDIR</span>
-
-<span class="nv">nprocs</span><span class="o">=</span><span class="m">24</span><span class="w">               </span><span class="c1">## ncores must be smaller than ppn, which is set above.</span>
-
-<span class="nv">mpid</span><span class="o">=</span>mp-149<span class="w">             </span><span class="c1">## Si (mp-149)</span>
-<span class="nv">dir_db</span><span class="o">=</span><span class="si">${</span><span class="nv">directory_of_downloaded_phoonondb</span><span class="si">}</span>/<span class="si">${</span><span class="nv">mpid</span><span class="si">}</span><span class="w">  </span><span class="c1">## This line must be modified.</span>
-
-<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-e<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Cannot find </span><span class="nv">$dir_db</span><span class="s2">&quot;</span>
-<span class="w">    </span><span class="nb">exit</span>
-<span class="k">fi</span>
-
-akrun<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--directory<span class="w"> </span><span class="nv">$dir_db</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--outdir<span class="w"> </span><span class="nv">$mpid</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--nprocs<span class="w"> </span><span class="nv">$nprocs</span>
-</pre></div>
-</div>
-<span class="target" id="sec-automation"></span></section>
 </section>
 
 
