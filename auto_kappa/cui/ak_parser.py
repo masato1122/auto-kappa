@@ -228,7 +228,19 @@ def get_parser():
     #########################
     parser.add_argument("--vasp_parameters", dest="vasp_parameters", type=str, default=None, 
                         help="VASP parameters: For example, \"ISORBIT=False,DIFFG=1e-7\"\n\n\n")
-    
+
+    ##########################
+    ## parameters for MLIPS ##
+    ##########################
+    parser.add_option("--use_mlips", dest="use_mlips", action="store_true", 
+            default=False, help="Use MLIPS to calculate forces [False]")
+
+    parser.add_option("--model_name", dest="model_name", type="string", default="esen",
+            help="MLIPS model name [mace]. Supported models are \"mace\" and \"esen\".")
+
+    parser.add_option("--all_mlips", dest="all_mlips", action="store_true", 
+            default=False, help="Use MLIPS for all the calculations including relaxation [False]")
+
     #########################################
     ### Parameters for test calculations  ###
     #########################################

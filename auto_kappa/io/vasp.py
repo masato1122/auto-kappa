@@ -23,7 +23,7 @@ from auto_kappa.structure.two import get_normal_index
 import logging
 logger = logging.getLogger(__name__)
 
-def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
+def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False, use_mlips=False):
     """ Get dataset of displacements and forces from many vasprun.xml files.
     
     Args
@@ -46,8 +46,10 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
         The translational displacement is allowed along the out-of-plane direction.
     """
     from ase.geometry import get_distances
-    
-    line = directory + '/*/vasprun.xml'
+    if use_mlips:
+        line = directory + '/*/forces.xyz'
+    else:
+        line = directory + '/*/vasprun.xml'
     all_files = glob.glob(line)
     
     ## get keys
@@ -57,14 +59,21 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
         key = fn.split('/')[-2]
         if key == 'prist':
             continue
-        if not wasfinished(dirname):
+        if use_mlips:
+            finised = wasfinished_mlips(dirname)
+        else:
+            finised = wasfinished(dirname)
+        if not finised:
             continue
         all_keys.append(key)
     all_keys = sorted(all_keys, key=int)
     
     ## get offset data
     try:
-        atoms0 = ase.io.read(offset_xml, format='vasp-xml')
+        if use_mlips:
+            atoms0 = ase.io.read(offset_xml)
+        else:
+            atoms0 = ase.io.read(offset_xml, format='vasp-xml')
     except Exception:
         logger.warning(f" Warning: cannot read {offset_xml}")
         return None
@@ -92,9 +101,14 @@ def get_dfset(directory, offset_xml=None, outfile=None, nset=None, fd2d=False):
     all_lines = []
     # count = 0
     for ii, key in enumerate(all_keys):
-        fn = "%s/%s/vasprun.xml" % (directory, key)
-        atoms1 = ase.io.read(fn, format='vasp-xml')
-        
+        if use_mlips:
+            fn = "%s/%s/forces.xyz" % (directory, key)
+            atoms1 = ase.io.read(fn)
+            print(f" Reading forces.xyz file: {fn}")
+        else:
+            fn = "%s/%s/vasprun.xml" % (directory, key)
+            atoms1 = ase.io.read(fn, format='vasp-xml')
+            print(f" Reading vasprun.xml file: {fn}")
         disp_large, _ = get_distances(
                 positions0, p2=atoms1.get_positions(),
                 cell=atoms0.cell, pbc=True)
@@ -257,6 +271,57 @@ def wasfinished(directory, filename='vasprun.xml', tar=None):
 #     except Exception:
 #         logger.warning(f" Warning: cannot find {filename}")
 #     return structure
+
+def wasfinished_mlips(directory):
+    """Check if MLIPS calculation is finished by checking multiple possible output files.
+    
+    Args:
+        directory: Path to the directory to check
+        
+    Returns:
+        bool: True if calculation appears finished, False otherwise
+    """
+    # List of files to check (in order of preference)
+    check_files = [
+        'CONTCAR',      # Relaxed structure (most reliable for relaxation)
+        'forces.xyz',   # Forces output from MLIPS
+        'trajectory.xyz', # Optimization trajectory
+        'mlips.log'     # MLIPS log file
+    ]
+    
+    for filename in check_files:
+        fn_target = os.path.join(directory, filename)
+        try:
+            if filename == 'CONTCAR':
+                # Check if CONTCAR exists and is not empty
+                if os.path.exists(fn_target) and os.path.getsize(fn_target) > 0:
+                    # Additional check: try to read the structure
+                    try:
+                        import ase.io
+                        atoms = ase.io.read(fn_target, format='vasp')
+                        if len(atoms) > 0:
+                            return True
+                    except Exception:
+                        continue
+            
+            elif filename == 'forces.xyz':
+                # Check if forces.xyz exists and has reasonable content
+                if os.path.exists(fn_target):
+                    with open(fn_target, 'r') as f:
+                        lines = f.readlines()
+                    # Check if file has at least 3 lines (natoms, comment, first atom)
+                    if len(lines) >= 3:
+                        return True
+                        
+            elif filename in ['trajectory.xyz', 'mlips.log']:
+                # Check if file exists and is not empty
+                if os.path.exists(fn_target) and os.path.getsize(fn_target) > 0:
+                    return True
+                    
+        except Exception:
+            continue
+    
+    return False
 
 def read_incar(filename):
     incar = None

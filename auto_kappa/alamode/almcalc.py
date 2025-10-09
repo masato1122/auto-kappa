@@ -950,7 +950,8 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                     temperature=500., classical=False,
                     output_dfset=None,
                     amin_params={},
-                    calculate_both_old_new_structures=False
+                    calculate_both_old_new_structures=False,
+                    use_mlips=False,
                     # max_limit_of_estimated_time=24.*30.,
                     ):
         """ Calculate forces for harmonic or cubic IFCs and make a DFSET file in
@@ -1104,6 +1105,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
             
             self._job_for_each_structure(
                 ii, target_structures, outdir0, order, calculator, 
+                use_mlips=use_mlips,
                 **amin_params_set)
             
         ### output DFSET
@@ -1113,7 +1115,7 @@ class AlamodeCalc(AlamodeForceCalculator, AlamodeInputWriter, AlamodePlotter,
                 fd2d = True
             else:
                 fd2d = False
-            self._make_dfset_file(order, nsuggest, outdir0, fd2d=fd2d)
+            self._make_dfset_file(order, nsuggest, outdir0, fd2d=fd2d, use_mlips=use_mlips)
         logger.info("")
     
     def _write_alamode_input_harmonic(

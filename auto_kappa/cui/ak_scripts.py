@@ -123,6 +123,13 @@ def main():
         elif ak_params['relaxed_cell'].lower()[0] == "p":
             ak_params['relaxed_cell'] = "primitive"
     
+    ### mlips for whole calculation
+    if ak_params['all_mlips']:
+        ak_params['use_mlips'] = True
+        ak_params['nonanalytic'] = 0  # Auto-disable NAC for full MLIPS
+        print("\nUsing MLIPS for whole calculation")
+        print("NAC automatically disabled for MLIPS compatibility")
+
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
         get_required_parameters(
@@ -204,7 +211,9 @@ def main():
             command=command_vasp,
             params_modified=vasp_params_mod,
             mater_dim=ak_params['mater_dim'],
-            base_directory=base_dir
+            base_directory=base_dir,
+            use_mlips=ak_params['all_mlips'],
+            model_name=ak_params['model_name'],
             )
     
     ### Relaxation calculation
@@ -291,7 +300,11 @@ def main():
     # logger.debug(" <<<<<<< DEBUG")
     
     ### Prepare an ase.calculators.vasp.vasp.Vasp obj for force calculation
-    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'])
+    if ak_params['use_mlips']:
+        print("\nUsing MLIPS for force calculation")
+    else:
+        print("\nUsing VASP for force calculation")
+    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'], use_mlips=ak_params['use_mlips'], model_name=ak_params['model_name'])
     
     ### Analyze phonon properties
     ignore_log = ak_params['ignore_log']
@@ -314,6 +327,7 @@ def main():
             #
             four=ak_params['four'],
             frac_kdensity_4ph=ak_params['frac_kdensity_4ph'],
+            use_mlips=ak_params['use_mlips'],
             )
     
     ### Calculate PES

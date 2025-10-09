@@ -125,7 +125,7 @@ class AlamodeForceCalculator():
         return structures, displacements
     
     def _job_for_each_structure(
-        self, job_idx, structures, base_dir, order, calculator, **amin_params_set):
+        self, job_idx, structures, base_dir, order, calculator, use_mlips, **amin_params_set):
         
         # print(structures.keys())
         # for key, struct in structures.items():
@@ -202,28 +202,39 @@ class AlamodeForceCalculator():
             sys.exit()
         
         ### set AMIN
-        try:
-            amin = prev_params["AMIN"]
-        except Exception:
-            amin = get_amin_parameter(
-                calculator.directory, struct4vasp.cell.array, **amin_params_set)
-        
-        if amin is not None:
-            calculator.set(amin=amin)
+        if not use_mlips:
+            try:
+                amin = prev_params["AMIN"]
+            except Exception:
+                amin = get_amin_parameter(
+                    calculator.directory, struct4vasp.cell.array, **amin_params_set)
             
-            ### once AMIN is used, AMIN is set for calculations afterward.
-            amin_params_set["num_of_errors"] = 0
+            if amin is not None:
+                calculator.set(amin=amin)
+                
+                ### once AMIN is used, AMIN is set for calculations afterward.
+                amin_params_set["num_of_errors"] = 0
 
-        ### Write VASP input files only when the directory does not exist
-        ### to make sure that the structure file is not overwritten.
-        self._prepare_vasp_files(calculator, struct4vasp, 
-                                 pristine_structure=structures['prist'])
+        if use_mlips:
+            ### Prepare MLIPS input files
+            self._prepare_mlips_files(calculator, struct4vasp,
+                                     pristine_structure=structures['prist'])
+                        ### Calculate forces with Custodian
+            if self.calculate_forces:
+                self._calculate_forces_mlips(
+                    calculator, struct4vasp, outdir)
+                self._counter_done += 1
+        else:
+            ### Write VASP input files only when the directory does not exist
+            ### to make sure that the structure file is not overwritten.
+            self._prepare_vasp_files(calculator, struct4vasp, 
+                                    pristine_structure=structures['prist'])
         
-        ### Calculate forces with Custodian
-        if self.calculate_forces:
-            self._calculate_forces_for_each(
-                calculator, struct4vasp, method='custodian', max_num_try=3)
-            self._counter_done += 1
+            ### Calculate forces with Custodian
+            if self.calculate_forces:
+                self._calculate_forces_for_each(
+                    calculator, struct4vasp, method='custodian', max_num_try=3)
+                self._counter_done += 1
             
         ### print log
         time_min = self._print_each_end(
@@ -242,6 +253,84 @@ class AlamodeForceCalculator():
         
         self._counter_calc += 1
     
+
+    def _prepare_mlips_files(self, calculator, structure, pristine_structure=None):
+        """ Prepare MLIPS files and write displacement information.
+        """
+        ## Make output directory
+        if os.path.exists(calculator.directory) == False:
+            os.makedirs(calculator.directory, exist_ok=True)
+        
+        ## Write structure file as POSCAR
+        try:
+            from ase import Atoms
+            atoms = Atoms(
+                structure.symbols,
+                cell=structure.cell,
+                positions=structure.positions,
+                pbc=True,
+            )
+            ase.io.write(calculator.directory + "/POSCAR", atoms, format='vasp')
+            logger.info(f"\n Structure written to {calculator.directory}/POSCAR")
+        except Exception as e:
+            logger.error(f"\n Failed to write POSCAR file: {e}")
+            
+        ### Write displacement information
+        try:
+            write_displacement_info(
+                structure=structure,
+                pristine_structure=pristine_structure,
+                outdir=calculator.directory
+            )
+        except Exception as e:
+            logger.error(f"\n Failed to write displacement information: {e}")
+    
+    def _calculate_forces_mlips(self, calculator, structure, outdir):
+        import time
+        from ase import Atoms
+
+        ### Make sure that the output directory exists
+        os.makedirs(outdir, exist_ok=True)
+        
+        ### Record time
+        start_time = time.time()
+
+        try:
+            ### Make ASE Atoms object
+            atoms = Atoms(
+                structure.symbols,
+                cell=structure.cell,
+                positions=structure.positions,
+                pbc=True,
+            )
+
+            ### Make MLIPS calculator
+            atoms.calc = calculator
+
+            ### Calculate forces
+            forces = atoms.get_forces()
+            try:
+                energy = atoms.get_potential_energy()
+            except Exception:
+                energy = 0.0
+
+            ### Get primitive cell
+            primitive_cell = self.primitive
+
+            ### Save forces
+            forces_file = outdir + "/forces.xyz"
+            atoms.write(forces_file)
+            logger.info(f"\n Forces written to {forces_file}")
+
+            ### Record calculation information
+            end_time = time.time()
+            calc_time = end_time - start_time
+            logger.info(f"\n Forces calculated with MLIPS in {calc_time:.2f} seconds.")
+
+        except Exception as e:
+            logger.error(f"\n Failed to calculate forces with MLIPS: {e}")
+            sys.exit()
+
     def _prepare_vasp_files(self, calculator, structure, pristine_structure=None):
         """ Prepare VASP input files and write displacement information.
         """
@@ -291,7 +380,7 @@ class AlamodeForceCalculator():
         logger.info(msg)
         return time
         
-    def _make_dfset_file(self, order, nsuggest, base_dir, fd2d=False):
+    def _make_dfset_file(self, order, nsuggest, base_dir, fd2d=False, use_mlips=False):
         
         if order == 1:
             fn0 = self.outfiles['harm_dfset']
@@ -302,13 +391,16 @@ class AlamodeForceCalculator():
         
         ###
         os.makedirs(self.out_dirs['result'], exist_ok=True)
-        offset_xml = base_dir + '/prist/vasprun.xml'
+        if use_mlips:
+            offset_xml = base_dir + '/prist/forces.xyz'
+        else:
+            offset_xml = base_dir + '/prist/vasprun.xml'
         outfile = self.out_dirs['result'] + "/" + fn0
         
         out = get_dfset(
             base_dir, offset_xml=offset_xml,
             outfile=self.get_relative_path(outfile),
-            nset=nsuggest-1, fd2d=fd2d)
+            nset=nsuggest-1, fd2d=fd2d, use_mlips=use_mlips)
 
         return out
 

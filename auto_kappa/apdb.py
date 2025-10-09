@@ -29,7 +29,8 @@ from auto_kappa.structure.crystal import (
     )
 from auto_kappa.structure.two import adjust_vacuum_size
 from auto_kappa.calculators.vasp import run_vasp, backup_vasp
-from auto_kappa.io.vasp import print_vasp_params, wasfinished
+from auto_kappa.calculators.mlips import MLIPSCalculatorFactory, run_calculation
+from auto_kappa.io.vasp import print_vasp_params, wasfinished, wasfinished_mlips
 from auto_kappa.cui import ak_log
 from auto_kappa.vasp.params import reflect_previous_jobs
 from auto_kappa.compat import get_previously_used_structure
@@ -48,7 +49,9 @@ class ApdbVasp():
             amin_params = {},
             params_modified = None,
             mater_dim=3,
-            base_directory=None
+            base_directory=None,
+            use_mlips=False,
+            model_name="esen",
             ):
         """
         Args
@@ -93,6 +96,8 @@ class ApdbVasp():
         self._mat_u2s = scell_matrix
         self._mater_dim = mater_dim
         self._base_dir = base_directory
+        self.use_mlips = use_mlips
+        self.model_name = model_name
         
         if primitive_matrix is None:
             msg = " Error: primitive_matrix must be given."
@@ -227,7 +232,7 @@ class ApdbVasp():
     def supercell(self):
         return self._structures['super']
     
-    def get_calculator(self, mode, directory=None, kpts=None, **args):
+    def get_calculator(self, mode, directory=None, kpts=None, use_mlips=False, model_name='esen', **args):
         """ Return VASP calculator created by ASE
         
         Args
@@ -258,6 +263,11 @@ class ApdbVasp():
         elif 'force' in mode.lower() or mode.lower() == 'md':
             structure = self.supercell
         
+        if use_mlips:
+            calc = MLIPSCalculatorFactory.create_calculator(model_name=model_name)
+            if directory is not None:
+                calc.directory = directory
+            return calc
         ### merge ``args`` and ``self.params_mod``
         ### `args`` is prior to ``self.params_mod`
         merged_params_mod = self.params_mod.copy()
@@ -571,7 +581,261 @@ class ApdbVasp():
             return -1
         
         return 0
-    
+
+    def run_mlips_relaxation(
+        self, directory=None, kpts=None, 
+        standardize_each_time=True,
+        volume_relaxation=0,
+        cell_type='p',
+        force=False, num_full=2, verbose=1,
+        fmax=0.01, max_steps=500, 
+        **args):
+        """
+        Run MLIPS calculation for strict relaxation.
+
+        For MLIPS: Simplified single-step comprehensive relaxation that optimizes
+        both atomic positions and cell parameters simultaneously, taking advantage
+        of MLIPS's fast evaluation and stability.
+        """
+        ### relaxation cell type
+        if cell_type[0].lower() == 'p':
+            cell_type = 'primitive'
+            to_primitive = True
+        elif cell_type[0].lower() == 'c' or cell_type[0].lower() == 'u':
+            cell_type = 'conventional'
+            to_primitive = False
+        else:
+            msg = " Error"
+            logger.info(msg)
+            sys.exit()
+        
+        ### message
+        if verbose != 0:
+            line = "MLIPS Structure optimization"
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
+            msg += "\n\n Cell type : %s" % cell_type
+            logger.info(msg)
+
+        ### Get the relaxed structure obtained with the old version
+        ### For the old version, check appropriate files based on the calculator method
+        calculation_finished = False
+        if volume_relaxation == 0:
+            calculation_finished = wasfinished_mlips(directory)
+        if calculation_finished:
+            contcar_file = directory + "/CONTCAR"
+            if os.path.isabs(contcar_file):
+                prim = ase.io.read(contcar_file, format='vasp')
+            else:
+                # Try to read from force.xyz or other MLIPS output files
+                msg = "\n Warning: CONTCAR not found for MLIPS calculation"
+                logger.warning(msg)
+                calculation_finished = False
+        
+        if calculation_finished:
+            unitcell = transform_prim2unit(prim, self.primitive_matrix)
+            self.update_structures(unitcell)
+            msg = "\n Already finised with the old version (single full relaxation)"
+            msg += "\n Read the structure from CONTCAR"
+            logger.info(msg)
+            return 0
+
+        ### Read previously used structure
+        test_job = False
+        
+        unitcell = get_previously_used_structure(self.base_directory, self.primitive_matrix,
+                                                 orig_structures=self.structures.copy())
+        
+        if unitcell is not None and not test_job:
+            self.update_structures(unitcell)
+            return 0
+
+        ### symmetry
+        spg_before = get_spg_number(self.unitcell)
+
+        ### perform relaxation calculations
+        count = 0
+        count_err = 0
+        max_sym_err = 2
+
+        ### run a single MLIPS relaxation calculation
+        max_relax_steps = 1
+        logger.info("\n MLIPS relaxation calculation (single step)")
+
+        while True:
+            if self.mater_dim < 3:
+                break
+            
+            ### set working directory and mode
+            if count == 0:
+                dir_cur = directory + "/mlips_relax"
+                mode = 'relax-full'
+                num = 1
+            else:
+                break # only one step for MLIPS relaxation
+
+            ### print message
+            if verbose != 0:
+                line = "MLIPS conprehensive relaxation (%d)" % num
+            msg = "\n " + line
+            msg += "\n " + "-" * len(line)
+            logger.info(msg)
+
+            ##
+            if count == 0:
+                if count_err == 0:
+                    print_params = True
+            else:
+                fn = dir_pre + "/CONTCAR"
+                if os.path.exists(fn) == False:
+                    msg = "\n Error: %s does not exist." % fn
+                    logger.error(msg)
+                    sys.exit()
+                
+                print_params = False
+            
+            ### get the structure used for the analysis
+            if to_primitive:
+                structure = self.primitive
+            else:
+                structure = self.unitcell
+
+            ### run a relaxation calculation
+            out = self.run_mlips(
+                mode, dir_cur, kpts,
+                structure=structure, force=force,
+                print_params=print_params,
+                cell_type=cell_type,
+                verbose=0,
+                standardization=standardize_each_time,
+                model_name=self.model_name,
+                **args
+            )
+
+            if out == -1:
+
+                ### backup failed result
+                backup_vasp(dir_cur, delete_files=True)
+
+                count_err += 1
+                if max_sym_err == count_err:
+                    msg =  "\n The calculation was failed %d times." % (count_err)
+                    msg += "\n Abort the relaxation calculation."
+                    logger.info(msg)
+                    return -1
+                else:
+                    logger.info("\n Retry the relaxation calculation.")
+                    continue
+
+            ### update
+            dir_pre = dir_cur
+
+            count += 1
+            count_err = 0
+
+            # check termination condition
+            if count == max_relax_steps:
+                break
+        
+        ### update structures
+        self.update_structures(self.unitcell, standardization=True)
+
+        ### strict relaxation with Birch-Murnaghan EOS
+        if volume_relaxation or self.mater_dim < 3:
+            
+            from auto_kappa.vasp.relax import MLIPSStrictRelaxation
+            outdir = directory + "/volume_mlips"
+
+            if to_primitive:
+                structure = self.primitive
+            else:
+                structure = self.unitcell
+
+            init_struct = change_structure_format(structure, format='pmg')
+
+            ### check the previous optimal structure
+            struct_opt = None
+            struct_opt = _get_previous_optimal_structure(
+                directory, prim_matrix=self.primitive_matrix, to_primitive=to_primitive)
+
+            if struct_opt is None or test_job:
+                # Create MLIPS calculator
+                mlips_calc = MLIPSCalculatorFactory.create_calculator(
+                    model_name=self.model_name)
+                # Create StrictRelaxation object with MLIPS calculator
+                relax = MLIPSStrictRelaxation(init_struct, outdir=outdir, dim=self.mater_dim)
+
+                Vs, Es = relax.with_different_volumes(
+                        initial_strain_range=[-0.03, 0.05], 
+                        nstrains=15,
+                        fmax=0.01,      # Force convergence for MLIPS
+                        maxstep=0.2,    # Maximum step size
+                        max_steps=500   # Maximum optimization steps
+                        )
+
+                ### output optimized structure file
+                struct_opt = relax.get_optimal_structure()
+            else:
+                logger.info(" Found previous optimal structure. Skip MLIPS strict relaxation.")
+
+            try:
+                # ### output figure
+                # figname = outdir + '/fig_bm.png'
+                # relax.plot_bm(figname=figname.replace(os.getcwd(), "."))
+
+                figname = outdir + f'/fig_bm_{self.model_name}.png'
+                relax.plot_physical_properties(figname=figname)
+
+                ### print results
+                relax.print_results()
+
+            except Exception:
+                pass
+
+            ### output optimized structure file (POSCAR.opt)
+            outfile = outdir + "/POSCAR.opt"
+            if not isinstance(struct_opt, ase.Atoms):
+                struct_ase = change_structure_format(struct_opt, format='ase')
+            else:
+                struct_ase = struct_opt.copy()
+            ase.io.write(outfile, struct_ase, format='vasp', direct=True, vasp5=True, sort=False)
+
+            ### update structures
+            if to_primitive:
+                unitcell = transform_prim2unit(struct_ase, self.primitive_matrix, format='ase')
+            else:
+                unitcell = struct_ase.copy()
+
+            ## Adjust the vaccum space size for VASP calculation
+            if self.mater_dim < 3:
+                unitcell = adjust_vacuum_size(unitcell)
+
+            self.update_structures(unitcell)
+
+        ## Adjust the vacuum space size based the supercell
+        if self.mater_dim < 3:
+            unit_mod = adjust_vacuum_size(self.unitcell, self.scell_matrix)
+            self.update_structures(unit_mod)
+
+        ### Check the crystal symmetry before and after the relaxation
+        spg_after = get_spg_number(self.primitive)
+
+        self._write_relax_yaml({
+            'directory': directory,
+            'cell_type': cell_type,
+            'structure': self.unitcell,
+            'spg': [spg_before, spg_after],
+            'volume_relaxation': volume_relaxation,
+        })
+
+        ### output structures
+        self.output_structures(verbose=False)
+        if spg_before != spg_after:
+            ak_log.symmetry_error(spg_before, spg_after)
+            return -1
+        
+        return 0
+
     def output_structures(self, verbose=True):
         """ Output structures (>= ver.0.4.0)
         """
@@ -750,6 +1014,134 @@ class ApdbVasp():
             self.update_structures(new_unitcell, standardization=standardization)
         
         return 0
+    
+    def run_mlips(self, mode: None, directory: str, kpts: None, 
+                 structure=None, cell_type=None,
+                 method='ase', force=False, print_params=False, 
+                 standardization=True, verbose=1, vaccum_thickness=None,
+                 model_name='esen', **args):
+        """ Run MLIPS calculation for relaxation and born effective charge calculation
+        
+        Args
+        -------
+        mode : string
+            "relax-full", "relax-freeze", "force", "nac", or "md"
+        
+        directory : string
+            output directory
+        
+        kpts : array of float, shape=(3,)
+
+        structure : structure obj
+
+        cell_tyep : string
+            cell type of ``structure``: primitive or conventional
+            This is used only for ``mode = relax-***``
+        
+        method : string
+            "ase"
+
+        force : bool, default=False
+            If it's True, the calculation will be done forcelly even if it had
+            already finished.
+        
+        vaccum_thickness : float, default=None
+            If the material dimension is 2 and this parameter is given,
+            the vacuum thickness will be set to the given value.
+        
+        args : dict
+            input parameters for MLIPS
+        
+        Return
+        --------
+        integer :
+            0. w/o error
+            1. symmetry was changed during the relaxation calculation
+        
+        """
+        if verbose != 0:
+            line = "MLIPS calculation (%s)" % (mode)
+            msg = "\n\n " + line
+            msg += "\n " + "=" * (len(line))
+            logger.info(msg)
+
+        ### perform the calculation
+        if wasfinished_mlips(directory) and force == False:
+            msg = "\n The calculation has already been done."
+            logger.info(msg)
+        
+        else:
+            ### ver.1 relax with one shot
+            calc = self.get_calculator(
+                    mode.lower(), directory=directory, kpts=kpts, 
+                    use_mlips=True, model_name=model_name, **args)
+            
+            ### set structure
+            if structure is None:
+                structure = self.primitive
+            
+            ### update MLIPS parameters based on the previous jobs
+            reflect_previous_jobs(
+                calc, structure, method=method, 
+                amin_params=self.amin_params)
+            
+            ### print MLIPS parameters
+            if print_params:
+                logger.info(f"\n MLIPS model: {model_name}"
+                            f"\n Calculation mode: {mode}")
+            
+            ### Adjust the vacuum size for calculation
+            if self.mater_dim == 2 and vaccum_thickness is not None:
+                #
+                # Note: This adjustment of the vacuum size leads to a difference 
+                # in the cell size along the out-of-plane direction and 
+                # alters the displacement-force dataset. However, this change 
+                # does not affect the final result, i.e., the force constants.
+                # 
+                from auto_kappa.structure.two import set_vacuum_to_2d_structure
+                struct_2d = set_vacuum_to_2d_structure(structure, vaccum_thickness)
+                struct4calc = change_structure_format(struct_2d, format='ase')
+            else:
+                struct4calc = structure
+            
+            ### run a MLIPS job
+            if 'relax' in mode.lower():
+                # For relaxation calculation, use ASE's optimizer
+                result = run_calculation(
+                    calc, 
+                    struct4calc, 
+                    calc_type=self.model_name,
+                    fmax=0.01,      # Force convergence for MLIPS
+                    max_steps=500   # Maximum optimization steps
+                )
+            else:
+                # For single-point calculation, use standard function
+                struct4calc.calc = calc
+                struct4calc.get_potential_energy()
+                result = 0
+
+        ### Read the relaxed structure
+        if 'relax' in mode.lower():
+            contcar_file = directory + "/CONTCAR"
+            if os.path.exists(contcar_file):
+                try:
+                    new_unitcell = ase.io.read(contcar_file, format='vasp')
+                except Exception:
+                    # Fallback: use the current structure from calculator
+                    new_unitcell = struct4calc.copy()
+            else:
+                new_unitcell = struct4calc.copy()
+
+            num_init = get_spg_number(structure)
+            num_mod = get_spg_number(new_unitcell)
+            if num_init != num_mod:
+                ak_log.symmetry_error(num_init, num_mod)
+                return -1
+
+            self.update_structures(new_unitcell, standardization=standardization)
+        
+        return 0
+
 
 def _error_in_vasprun(filename):
     dir_file = os.path.dirname(filename)
@@ -815,7 +1207,8 @@ def _get_previous_optimal_structure(outdir, prim_matrix=None, to_primitive=True)
     format = 'pmg'
     
     filenames = [
-        f"{outdir}/volume/POSCAR.opt",
+        f"{outdir}/volume/POSCAR.opt",    # VASP strict relaxation
+        f"{outdir}/volume_mlips/POSCAR.opt",  # MLIPs strict relaxation
         # f"{outdir}/../harm/force/prist/POSCAR",
     ]
     
