@@ -129,6 +129,13 @@ def main():
             ak_params['relaxed_cell'] = "unitcell"
         elif ak_params['relaxed_cell'].lower()[0] == "p":
             ak_params['relaxed_cell'] = "primitive"
+
+    ### mlips for whole calculation
+    if ak_params['all_mlips']:
+        ak_params['use_mlips'] = True
+        ak_params['nonanalytic'] = 0  # Auto-disable NAC for full MLIPS
+        print("\nUsing MLIPS for whole calculation")
+        print("NAC automatically disabled for MLIPS compatibility")
     
     ### Get required parameters for the calculation!
     cell_types, structures, trans_matrices, kpts_used, nac = (
@@ -212,18 +219,30 @@ def main():
             command=command_vasp,
             params_modified=vasp_params_mod,
             mater_dim=ak_params['mater_dim'],
-            base_directory=base_dir
+            base_directory=base_dir,
+            use_mlips=ak_params['use_mlips'],
+            model_name=ak_params['model_name'],
             )
     
     ### Relaxation calculation
-    out = apdb.run_relaxation(
-            out_dirs["relax"],
-            kpts_used["relax"],
-            volume_relaxation=ak_params['volume_relaxation'],
-            cell_type=cell_types["relax"],
-            max_error=ak_params["max_relax_error"],
-            nsw_params=ak_params["nsw_params"],
-            )
+    if ak_params['all_mlips']:
+        out = apdb.run_mlips_relaxation(
+                directory=out_dirs["relax"],
+                kpts=kpts_used["relax"],
+                volume_relaxation=ak_params['volume_relaxation'],
+                cell_type=cell_types["relax"],
+                # max_error=ak_params["max_relax_error"],  # Not used for MLIPS
+                # nsw_params=ak_params["nsw_params"],  # Not needed for MLIPS
+                )
+    else:
+        out = apdb.run_relaxation(
+                out_dirs["relax"],
+                kpts_used["relax"],
+                volume_relaxation=ak_params['volume_relaxation'],
+                cell_type=cell_types["relax"],
+                max_error=ak_params["max_relax_error"],
+                nsw_params=ak_params["nsw_params"],
+                )
     
     ### Stop the calculation because of the symmetry error
     if out < 0:
@@ -303,7 +322,7 @@ def main():
         print("\nUsing MLIPS for force calculation")
     else:
         print("\nUsing VASP for force calculation")
-    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'], use_mlips=ak_params['use_mlips'])
+    calc_force = apdb.get_calculator('force', kpts=kpts_used['harm'], use_mlips=ak_params['use_mlips'], model_name=ak_params['model_name'])
     
     ### Analyze phonon properties
     ignore_log = ak_params['ignore_log']

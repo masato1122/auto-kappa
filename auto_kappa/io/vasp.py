@@ -239,25 +239,55 @@ def read_dfset(filename, natoms=None, nstructures=None):
     return disps, forces
 
 def wasfinished_mlips(directory):
-    """Check if MLIPS calculation is finished by checking if forces.xyz exists and has content.
+    """Check if MLIPS calculation is finished by checking multiple possible output files.
     
     Args:
         directory: Path to the directory to check
         
     Returns:
-        bool: True if forces.xyz exists and has content, False otherwise
+        bool: True if calculation appears finished, False otherwise
     """
-    fn_target = directory + '/forces.xyz'
-    try:
-        with open(fn_target, 'r') as f:
-            lines = f.readlines()
-        # Check if file has at least 3 lines (natoms, comment, first atom)
-        if len(lines) >= 3:
-            return True
-        else:
-            return False
-    except Exception:
-        return False
+    # List of files to check (in order of preference)
+    check_files = [
+        'CONTCAR',      # Relaxed structure (most reliable for relaxation)
+        'forces.xyz',   # Forces output from MLIPS
+        'trajectory.xyz', # Optimization trajectory
+        'mlips.log'     # MLIPS log file
+    ]
+    
+    for filename in check_files:
+        fn_target = os.path.join(directory, filename)
+        try:
+            if filename == 'CONTCAR':
+                # Check if CONTCAR exists and is not empty
+                if os.path.exists(fn_target) and os.path.getsize(fn_target) > 0:
+                    # Additional check: try to read the structure
+                    try:
+                        import ase.io
+                        atoms = ase.io.read(fn_target, format='vasp')
+                        if len(atoms) > 0:
+                            return True
+                    except Exception:
+                        continue
+            
+            elif filename == 'forces.xyz':
+                # Check if forces.xyz exists and has reasonable content
+                if os.path.exists(fn_target):
+                    with open(fn_target, 'r') as f:
+                        lines = f.readlines()
+                    # Check if file has at least 3 lines (natoms, comment, first atom)
+                    if len(lines) >= 3:
+                        return True
+                        
+            elif filename in ['trajectory.xyz', 'mlips.log']:
+                # Check if file exists and is not empty
+                if os.path.exists(fn_target) and os.path.getsize(fn_target) > 0:
+                    return True
+                    
+        except Exception:
+            continue
+    
+    return False
 
 def wasfinished(directory, filename='vasprun.xml', tar=None):
     """ 
