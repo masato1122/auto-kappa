@@ -188,16 +188,16 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.load">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.load" title="Link to this definition"></a></dt>
-<dd><p>Loads a class from a provided json file.</p>
+<dd><p>Load an instance from a JSON file written by <a class="reference internal" href="#auto_kappa.io.alm.AlamodeInput.save" title="auto_kappa.io.alm.AlamodeInput.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_path</strong> (<em>os.PathLike</em>) – The json file to load from.</p>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The JSON file to load from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An instance of the class being reloaded.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>MSONable</p>
+<dd class="field-odd"><p><em>MSONable</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -220,29 +220,25 @@ Raises KeyError if the dict is empty.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mkdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.save" title="Link to this definition"></a></dt>
-<dd><p>Utility that uses the standard tools of MSONable to convert the
-class to json format, but also save it to disk. In addition, this
-method intelligently uses pickle to individually pickle class objects
-that are not serializable, saving them separately. This maximizes the
-readability of the saved class information while allowing _any_
-class to be at least partially serializable to disk.</p>
-<p>For a fully MSONable class, only a class.json file will be saved to
-the location {save_dir}/class.json. For a partially MSONable class,
-additional information will be saved to the save directory at
-{save_dir}. This includes a pickled object for each attribute that
-e serialized.</p>
+<dd><p>Serialize the instance to JSON on disk, pickling fields if needed.</p>
+<p>For a fully MSONable class, only <code class="docutils literal notranslate"><span class="pre">{save_dir}/class.json</span></code> is written.
+For a partially MSONable class, non-serializable attributes are
+pickled individually into the same directory, keeping the JSON
+portion readable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>os.PathLike</em>) – The file to which to save the json object. A pickled object of
-the same name but different extension might also be saved if the
-class is not entirely MSONable.</p></li>
-<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, makes the provided directory, including all parent
-directories.</p></li>
-<li><p><strong>json_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the serializer.</p></li>
-<li><p><strong>pickle_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to pickle.dump.</p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – If True, will not allow you to overwrite existing files.</p></li>
+<li><p><strong>json_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The file to which to save the JSON object. A pickled
+companion file with the same stem but a different extension
+may also be written if the class is not entirely MSONable.</p></li>
+<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, create the target directory (including parents).</p></li>
+<li><p><strong>json_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to the JSON serializer.</p></li>
+<li><p><strong>pickle_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">pickle.dump</span></code>.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – If True, refuse to overwrite existing files.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -268,9 +264,15 @@ directories.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.unsafe_hash">
 <span class="sig-name descname"><span class="pre">unsafe_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.unsafe_hash" title="Link to this definition"></a></dt>
-<dd><p>Returns an hash of the current object. This uses a generic but low
-performance method of converting the object to a dictionary, flattening
-any nested keys, and then performing a hash on the resulting object</p>
+<dd><p>Return a hash of the current object.</p>
+<p>This uses a generic but low performance method of converting the
+object to a dictionary, flattening any nested keys, and then
+performing a hash on the resulting object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -284,13 +286,13 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.validate_monty_v1">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.validate_monty_v1" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v1.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v1.x.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlamodeInput.validate_monty_v2">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlamodeInput.validate_monty_v2" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v2.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v2.x.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -446,16 +448,16 @@ pymatgen.loadfn.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.load">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.load" title="Link to this definition"></a></dt>
-<dd><p>Loads a class from a provided json file.</p>
+<dd><p>Load an instance from a JSON file written by <a class="reference internal" href="#auto_kappa.io.alm.AlmInput.save" title="auto_kappa.io.alm.AlmInput.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_path</strong> (<em>os.PathLike</em>) – The json file to load from.</p>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The JSON file to load from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An instance of the class being reloaded.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>MSONable</p>
+<dd class="field-odd"><p><em>MSONable</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -493,29 +495,25 @@ Raises KeyError if the dict is empty.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mkdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.save" title="Link to this definition"></a></dt>
-<dd><p>Utility that uses the standard tools of MSONable to convert the
-class to json format, but also save it to disk. In addition, this
-method intelligently uses pickle to individually pickle class objects
-that are not serializable, saving them separately. This maximizes the
-readability of the saved class information while allowing _any_
-class to be at least partially serializable to disk.</p>
-<p>For a fully MSONable class, only a class.json file will be saved to
-the location {save_dir}/class.json. For a partially MSONable class,
-additional information will be saved to the save directory at
-{save_dir}. This includes a pickled object for each attribute that
-e serialized.</p>
+<dd><p>Serialize the instance to JSON on disk, pickling fields if needed.</p>
+<p>For a fully MSONable class, only <code class="docutils literal notranslate"><span class="pre">{save_dir}/class.json</span></code> is written.
+For a partially MSONable class, non-serializable attributes are
+pickled individually into the same directory, keeping the JSON
+portion readable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>os.PathLike</em>) – The file to which to save the json object. A pickled object of
-the same name but different extension might also be saved if the
-class is not entirely MSONable.</p></li>
-<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, makes the provided directory, including all parent
-directories.</p></li>
-<li><p><strong>json_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the serializer.</p></li>
-<li><p><strong>pickle_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to pickle.dump.</p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – If True, will not allow you to overwrite existing files.</p></li>
+<li><p><strong>json_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The file to which to save the JSON object. A pickled
+companion file with the same stem but a different extension
+may also be written if the class is not entirely MSONable.</p></li>
+<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, create the target directory (including parents).</p></li>
+<li><p><strong>json_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to the JSON serializer.</p></li>
+<li><p><strong>pickle_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">pickle.dump</span></code>.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – If True, refuse to overwrite existing files.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -559,9 +557,15 @@ directories.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.unsafe_hash">
 <span class="sig-name descname"><span class="pre">unsafe_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.unsafe_hash" title="Link to this definition"></a></dt>
-<dd><p>Returns an hash of the current object. This uses a generic but low
-performance method of converting the object to a dictionary, flattening
-any nested keys, and then performing a hash on the resulting object</p>
+<dd><p>Return a hash of the current object.</p>
+<p>This uses a generic but low performance method of converting the
+object to a dictionary, flattening any nested keys, and then
+performing a hash on the resulting object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -575,13 +579,13 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.validate_monty_v1">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.validate_monty_v1" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v1.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v1.x.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AlmInput.validate_monty_v2">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AlmInput.validate_monty_v2" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v2.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v2.x.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -745,16 +749,16 @@ See the following URL for more detailed description.
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.load">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.load" title="Link to this definition"></a></dt>
-<dd><p>Loads a class from a provided json file.</p>
+<dd><p>Load an instance from a JSON file written by <a class="reference internal" href="#auto_kappa.io.alm.AnphonInput.save" title="auto_kappa.io.alm.AnphonInput.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_path</strong> (<em>os.PathLike</em>) – The json file to load from.</p>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The JSON file to load from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An instance of the class being reloaded.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>MSONable</p>
+<dd class="field-odd"><p><em>MSONable</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -802,29 +806,25 @@ Raises KeyError if the dict is empty.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mkdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.save" title="Link to this definition"></a></dt>
-<dd><p>Utility that uses the standard tools of MSONable to convert the
-class to json format, but also save it to disk. In addition, this
-method intelligently uses pickle to individually pickle class objects
-that are not serializable, saving them separately. This maximizes the
-readability of the saved class information while allowing _any_
-class to be at least partially serializable to disk.</p>
-<p>For a fully MSONable class, only a class.json file will be saved to
-the location {save_dir}/class.json. For a partially MSONable class,
-additional information will be saved to the save directory at
-{save_dir}. This includes a pickled object for each attribute that
-e serialized.</p>
+<dd><p>Serialize the instance to JSON on disk, pickling fields if needed.</p>
+<p>For a fully MSONable class, only <code class="docutils literal notranslate"><span class="pre">{save_dir}/class.json</span></code> is written.
+For a partially MSONable class, non-serializable attributes are
+pickled individually into the same directory, keeping the JSON
+portion readable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>os.PathLike</em>) – The file to which to save the json object. A pickled object of
-the same name but different extension might also be saved if the
-class is not entirely MSONable.</p></li>
-<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, makes the provided directory, including all parent
-directories.</p></li>
-<li><p><strong>json_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the serializer.</p></li>
-<li><p><strong>pickle_kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to pickle.dump.</p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – If True, will not allow you to overwrite existing files.</p></li>
+<li><p><strong>json_path</strong> (<em>PathLike</em><em> | </em><em>str</em>) – The file to which to save the JSON object. A pickled
+companion file with the same stem but a different extension
+may also be written if the class is not entirely MSONable.</p></li>
+<li><p><strong>mkdir</strong> (<em>bool</em>) – If True, create the target directory (including parents).</p></li>
+<li><p><strong>json_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to the JSON serializer.</p></li>
+<li><p><strong>pickle_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">pickle.dump</span></code>.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – If True, refuse to overwrite existing files.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -884,9 +884,15 @@ If kpmode == 2, deltak (default: 0.2) and kpts will be set.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.unsafe_hash">
 <span class="sig-name descname"><span class="pre">unsafe_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.unsafe_hash" title="Link to this definition"></a></dt>
-<dd><p>Returns an hash of the current object. This uses a generic but low
-performance method of converting the object to a dictionary, flattening
-any nested keys, and then performing a hash on the resulting object</p>
+<dd><p>Return a hash of the current object.</p>
+<p>This uses a generic but low performance method of converting the
+object to a dictionary, flattening any nested keys, and then
+performing a hash on the resulting object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -900,13 +906,13 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.validate_monty_v1">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.validate_monty_v1" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v1.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v1.x.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="auto_kappa.io.alm.AnphonInput.validate_monty_v2">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_monty_v2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_MSONable__input_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#auto_kappa.io.alm.AnphonInput.validate_monty_v2" title="Link to this definition"></a></dt>
-<dd><p>Pydantic validator with correct signature for pydantic v2.x</p>
+<dd><p>Pydantic validator with correct signature for pydantic v2.x.</p>
 </dd></dl>
 
 <dl class="py method">
