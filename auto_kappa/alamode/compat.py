@@ -160,9 +160,13 @@ def get_previously_calculated_structure(dir_forces, include_pristine=True):
         if key == 'prist' and include_pristine == False:
             continue
         if wasfinished_vasp(dirname):
-            structures[key] = ase.io.read(fn, format='vasp-xml')
+            try:
+                structures[key] = ase.io.read(fn, format='vasp-xml')
+            except (ValueError, Exception) as e:
+                logger.warning(f" Could not read {fn}: {e} (skipping)")
     
     return dict(sorted(structures.items(), key=_custom_sort_key))
+
 
 def get_number_of_same_structures(structures1, structures2):
     """ Get the number of same structures.
