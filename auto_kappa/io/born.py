@@ -17,8 +17,6 @@ import xmltodict
 
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core import Lattice, Structure
-from pymatgen.analysis.structure_matcher import StructureMatcher
-
 from auto_kappa.io.fcs import FCSxml
 # from auto_kappa.structure import change_structure_format
 
@@ -92,34 +90,66 @@ class BORNINFO:
             self.set_prim_fcs()
         return self.alm.structure
     
-    def get_transformation(self, params={"ltol": 0.05, "stol": 0.1, "angle_tol": 0.5}):
-        ## Get transformation from VASP primitive to FC primitive
-        matcher = StructureMatcher(primitive_cell=False, **params)
-        if not matcher.fit(self.vasp.structure, self.alm.structure):
-            msg = f"\n Structures in vasprun.xml and force constants file do not match."
+    def get_transformation(self, tol_frac=0.15):
+        """ Find atom mapping from VASP primitive to FC primitive by nearest-position matching.
+
+        StructureMatcher.get_transformation() is intentionally avoided here because it may
+        find non-trivial crystallographic symmetry transformations (e.g. screw axes) even
+        for identical structures, causing Born effective charges to be assigned to the wrong
+        atoms in BORNINFO.  Direct nearest-neighbour matching in fractional coordinates
+        always returns the position-preserving mapping and is therefore correct.
+        """
+        vasp_sites = list(self.vasp.structure)
+        alm_sites = list(self.alm.structure)
+
+        if len(vasp_sites) != len(alm_sites):
+            msg = f"\n Structures in vasprun.xml and force constants file have different numbers of atoms."
             msg += f"\n - VASP file       : {self.file_vasp}"
             msg += f"\n - Force constants : {self.file_fcs}"
             logger.error(msg)
             sys.exit()
-        
-        tmat_v2a, ftrans_v2a, map_v2a = \
-            matcher.get_transformation(self.vasp.structure, self.alm.structure)
-        
-        ## Get rotation matrix from VASP to FC primitive
+
+        ## Match each VASP atom to the nearest ALM atom of the same species.
+        ## Distances are evaluated in fractional coordinates with periodic images.
+        map_v2a = []
+        used_alm = set()
+        for i, vsite in enumerate(vasp_sites):
+            best_j, best_d = -1, float('inf')
+            for j, asite in enumerate(alm_sites):
+                if j in used_alm:
+                    continue
+                if str(vsite.specie) != str(asite.specie):
+                    continue
+                diff = vsite.frac_coords - asite.frac_coords
+                diff -= np.round(diff)   # minimum image
+                dist = float(np.max(np.abs(diff)))
+                if dist < best_d:
+                    best_d = dist
+                    best_j = j
+            if best_j == -1 or best_d > tol_frac:
+                msg = f"\n Cannot match VASP atom {i} ({vsite.specie}) to any atom in the force-constants structure"
+                msg += f"\n (nearest distance in fractional coords: {best_d:.4f}, tolerance: {tol_frac})"
+                msg += f"\n - VASP file       : {self.file_vasp}"
+                msg += f"\n - Force constants : {self.file_fcs}"
+                logger.error(msg)
+                sys.exit()
+            map_v2a.append(best_j)
+            used_alm.add(best_j)
+
+        ## Rotation matrix from VASP lattice to FC primitive lattice
         L_vasp = self.vasp.structure.lattice.matrix
         L_fc = self.alm.structure.lattice.matrix
         R_v2a = np.linalg.inv(L_fc) @ L_vasp
-        return tmat_v2a, ftrans_v2a, map_v2a, R_v2a
-        
+        return map_v2a, R_v2a
+
     def set_born_info(self):
         """ Get Born effective charge and dielectric tensor for ALM calculation
         1. Read vasprun.xml to get Born effective charge and dielectric tensor
-        2. Get transformed dielectric tensor and Born effective charge. 
+        2. Get transformed dielectric tensor and Born effective charge.
         """
-        # tmat : transformation (supercell) matrix
-        # fracT : fractional translation vector
-        # map   : mapping of atom indices from VASP to ALM
-        tmat_v2a, fracT_v2a, map_v2a, R_v2a = self.get_transformation()
+        # map   : mapping of atom indices from VASP to ALM, map[idx_vasp] = idx_alm
+        # R     : rotation matrix from VASP lattice to FC primitive lattice
+        map_v2a, R_v2a = self.get_transformation()
         self.alm.dielectric_tensor = _transform_dielectric_tensor(self.vasp.dielectric_tensor, R_v2a)
         self.alm.born_charges = _transform_born_charges(self.vasp.born_charges, R_v2a, map_v2a)
         # return self.alm.dielectric_tensor, self.alm.born_charges
