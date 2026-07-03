@@ -1,5 +1,11 @@
 # Ver. 1.1.1 (2026)
 
+- Fixed a bug in BORNINFO generation where `StructureMatcher.get_transformation()`
+  returned non-identity atom mappings for highly symmetric crystals (e.g. CdAs2,
+  I4₁/amd), causing Born effective charge tensors to be assigned to the wrong atoms
+  and reversing the sign of off-diagonal components for symmetry-related atom pairs.
+  Replaced with direct nearest-neighbour matching in fractional coordinates.
+
 - Arrange the workflow related to --analyze_with_larger_sc, --scph, and --four options.
 
 
