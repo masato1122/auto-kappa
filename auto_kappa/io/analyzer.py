@@ -52,18 +52,19 @@ def get_average_at_degenerate_point(omega, tau, eps=1e-3):
     nb = len(omega[0])
     tau_ave = np.zeros_like(tau)
     for ik in range(nk):
-        for ib1 in range(nb-1):
+        ib1 = 0
+        while ib1 < nb:
             # -- get degenerated modes
-            idx_deg = []
-            for ib2 in range(ib1,nb):
+            idx_deg = [ib1]
+            for ib2 in range(ib1+1,nb):
                 if abs(omega[ik,ib2] - omega[ik,ib1]) > eps:
                     break
                 else:
                     idx_deg.append(ib2)
             # -- cal average
-            tau_ave[ik,idx_deg] = (
-                    np.ones_like(idx_deg) * 
-                    np.average(tau[ik,idx_deg]))
+            tau_ave[ik,idx_deg] = np.average(tau[ik,idx_deg])
+            # -- skip the modes already averaged not to overwrite them
+            ib1 = idx_deg[-1] + 1
     return tau_ave
 
 _skip_logged = set()

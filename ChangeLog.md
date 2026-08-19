@@ -1,10 +1,38 @@
-# Ver. 1.1.1 (2026)
+# Ver. 1.1.3 (Aug. 19, 2026)
+
+- **The average over degenerate modes is now taken for the scattering rate (i.e. the self-energy
+  Gamma), not for the lifetime, in agreement with ANPHON.** ANPHON averages the ph-ph damping
+  `damping3` before it is combined with the isotope/boundary contributions and converted to a
+  lifetime (`Conductivity::compute_kappa()`), whereas `Scattering` averaged the lifetime after all
+  scattering processes had been summed. Since tau is proportional to 1/Gamma, the arithmetic mean
+  of the lifetimes differs from the inverse of the mean rate whenever the rates of the degenerate
+  modes are not exactly identical. The averaging now happens in `set_scattering_rate_phph()`.
+  (`auto_kappa/io/scattering.py`, `tests/test_analyzer_degeneracy.py`)
+
+- **Lifetime averaging over degenerate modes no longer overwrites the averaged values.**
+  `get_average_at_degenerate_point()` had two defects. (1) The band loop ran over `range(nb-1)`,
+  so the highest band was never used as the starting index of a degenerate group and kept its
+  zero-initialized value whenever it was not degenerate with the band below it, zeroing that
+  mode's lifetime and its contribution to kappa. (2) A group was re-detected starting from every
+  band it contains, and each pass overwrote the value written before, so the last mode of every
+  group was left unaveraged: for `omega = [0, 0, 0, 120, 120, 300]` and `tau = [3, 5, 10, 2, 8, 1]`
+  the result was `[6, 7.5, 10, 5, 8, 1]` instead of `[6, 6, 6, 5, 5, 1]`, with the error growing
+  with the degeneracy (e.g. triply degenerate optical modes at the Gamma point of cubic crystals).
+  Each degenerate group is now detected once and the already-averaged modes are skipped, matching
+  ANPHON's `Conductivity::average_self_energy_at_degenerate_point()`.
+  (`auto_kappa/io/analyzer.py`, `tests/test_analyzer_degeneracy.py`)
+
+
+# Ver. 1.1.2 (Jul. 3, 2026)
 
 - Fixed a bug in BORNINFO generation where `StructureMatcher.get_transformation()`
   returned non-identity atom mappings for highly symmetric crystals (e.g. CdAs2,
   I4₁/amd), causing Born effective charge tensors to be assigned to the wrong atoms
   and reversing the sign of off-diagonal components for symmetry-related atom pairs.
   Replaced with direct nearest-neighbour matching in fractional coordinates.
+
+
+# Ver. 1.1.1 (2026)
 
 - Arrange the workflow related to --analyze_with_larger_sc, --scph, and --four options.
 
