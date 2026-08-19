@@ -204,11 +204,13 @@ class Scattering():
     
     def set_lifetime(self):
         """calculate lifetime and thermal conductivity
+        
+        The average over degenerate modes is taken for the ph-ph scattering
+        rate in ``set_scattering_rate_phph()``, not for the lifetime, so that
+        the treatment agrees with ANPHON.
         """
-        lifetime = convert_scatrate2lifetime(
+        self._lifetime = convert_scatrate2lifetime(
                 self.total_scattering_rate)  # ps
-        self._lifetime = get_average_at_degenerate_point(
-                self.result['frequencies'], lifetime)
         
     @property
     def kmode(self):
@@ -455,8 +457,14 @@ class Scattering():
         itarget = np.argmin(abs(self.result['temperatures'] - self.temperature))
         
         ## 1/ps
-        self.scattering_rates['phph'] = convert_gamma2scatrate(
-            self.result['gammas'][itarget,:,:])
+        rscat = convert_gamma2scatrate(self.result['gammas'][itarget,:,:])
+        
+        ## Average the ph-ph scattering rate (i.e. the self-energy Gamma, as the
+        ## two are proportional) over degenerate modes before it is combined
+        ## with the other scattering processes, in the same way as ANPHON's
+        ## Conductivity::average_self_energy_at_degenerate_point().
+        self.scattering_rates['phph'] = get_average_at_degenerate_point(
+            self.result['frequencies'], rscat)
         
         # if self.has_gap(tol_gap=10.0) != False:
         #     logger.info(f'\n Note: Band gap exists. '
